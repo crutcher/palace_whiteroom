@@ -1,0 +1,613 @@
+\chapter{Situating the Drivers on the Framework}
+\label{ch:situating}
+
+\chapterorient{We have met the six analyses (\cref{ch:targets}) and watched a
+single run move from configuration to product through one lifecycle
+(\cref{ch:lifecycle}). This chapter is where those threads tie together. We make
+the shared \emph{skeleton} explicit, then ask the question the whole book turns
+on: of the six analyses, how many genuinely different things happen in the
+middle ``solve'' stage? The answer---\emph{four}---is the most important
+taxonomy in the book. We name the four \emph{solve corners} and the three
+\emph{reduction shapes}, and we lay out the grid that the rest of the book
+fills in, one cell at a time. By the end you will be able to place any of the
+six drivers on the framework and say exactly which stage it swaps.}
+
+\section{The skeleton, made explicit}
+
+Every analysis Palace runs, we claimed in \cref{ch:targets}, is the same
+machine with a few parts swapped. \Cref{ch:lifecycle} showed the machine as an
+actual program: parse the configuration, build a mesh, dispatch on the analysis
+type, run a solve, and write out the product---with an optional adaptive
+refinement loop wrapped around the solve. Strip that lifecycle down to its
+load-bearing core and four words remain:
+\[
+  \texttt{config} \;\longrightarrow\; \texttt{assemble} \;\longrightarrow\;
+  \texttt{solve} \;\longrightarrow\; \texttt{reduce} \;\longrightarrow\;
+  \texttt{product}.
+\]
+This is \emph{the skeleton}. It is worth saying slowly, because everything in
+the book hangs on it (\cref{fig:skeleton}).
+
+\begin{itemize}[nosep]
+  \item \textbf{config.} The user's description of the problem---geometry,
+  materials, excitations, and the choice of analysis---parsed into a single
+  read-only record. Nothing downstream ever mutates it.
+  \item \textbf{assemble.} Turn the continuous physics on the mesh into one or
+  more discrete \emph{operators}: large (conceptually) matrices like the
+  stiffness $\Kop$, the mass $\Mop$, and the damping $\Cop$. Assembly is a
+  \emph{fold} over the weak-form terms (\cref{ch:fem}); for now, treat it as the
+  box that produces the operators.
+  \item \textbf{solve.} Use those operators to compute the field, or fields, the
+  analysis needs. This is the stage with all the variety, and the subject of
+  the next section.
+  \item \textbf{reduce.} Collapse the computed field(s) into the small physical
+  quantity the user actually asked for---a capacitance matrix, a list of
+  resonant frequencies, a table of S-parameters.
+  \item \textbf{product.} The reduced quantity, written out. The reason the run
+  existed.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm and 11mm]
+  \node[data] (cfg) {config};
+  \node[stage, right=of cfg] (asm) {assemble};
+  \node[stage, right=of asm] (solve) {\textbf{solve}};
+  \node[stage, right=of solve] (red) {reduce};
+  \node[product, right=of red] (prod) {product};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{$\Kop,\Mop,\dots$} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{field(s)} (red);
+  \draw[flow] (red) -- (prod);
+  % AMR back-edge
+  \draw[backflow] (red.south) ++(0,-1mm)
+    .. controls +(0,-7mm) and +(0,-7mm) .. (asm.south)
+    node[midway, below, font=\scriptsize, text=simRust]
+      {refine mesh (AMR outer fold)};
+\end{tikzpicture}
+\caption[The skeleton]{The skeleton every analysis shares:
+\texttt{config} $\to$ \texttt{assemble} $\to$ \texttt{solve} $\to$
+\texttt{reduce} $\to$ \texttt{product}.
+The dashed back-edge is the adaptive-mesh-refinement outer loop
+(\cref{ch:amr}): when refinement is on, the reduced error estimate feeds a mesh
+update and the whole assemble--solve--reduce body runs again; when it is off,
+the body runs exactly once. The bold \texttt{solve} box is where the six
+analyses diverge---and they diverge into only four shapes.}
+\label{fig:skeleton}
+\end{figure}
+
+One feature of the lifecycle does not fit inside a single left-to-right pass:
+adaptive mesh refinement. When refinement is enabled, the run does not stop
+after one reduce. Instead the error it estimates feeds a mesh update, and the
+entire assemble--solve--reduce body runs again on the finer mesh---and again,
+until the error is small enough or a step budget is spent. That is the dashed
+back-edge in \cref{fig:skeleton}. It is an \emph{outer fold} wrapped around the
+skeleton: each pass begins from the mesh the previous pass refined. When
+refinement is off, the fold degenerates to a single pass, and the skeleton is
+exactly the straight line. We will meet this outer fold again as a genuine
+computation in \cref{ch:amr}; for now, note only that it leaves the
+five-stage skeleton intact and merely runs it more than once.
+
+\begin{keyidea}
+The skeleton is \texttt{config} $\to$ \texttt{assemble} $\to$ \texttt{solve}
+$\to$ \texttt{reduce} $\to$ \texttt{product},
+optionally wrapped in an adaptive-refinement outer fold. The configuration is
+read-only; assembly produces operators; the solve produces fields; the
+reduction produces the physical product. Of the five stages, four are nearly
+identical across all six analyses. \emph{Almost the entire difference between
+the six analyses lives in the \texttt{solve} stage}---and, to a lesser degree,
+in the \texttt{reduce} stage. This chapter classifies both.
+\end{keyidea}
+
+\section{The four solve corners}
+
+Here is the central observation of the book. Look at what the ``solve'' stage
+actually does in each of the six analyses, and ignore the physics: ignore which
+equation, which function space, which materials. Ask only about the
+\emph{shape} of the computation---how many solves happen, whether they depend on
+one another, whether the operator stays fixed or changes, and whether we write
+the loop or hand the whole problem to a library. When you strip the physics
+away like this, the six analyses collapse onto just \emph{four} distinct shapes.
+We call them the four \emph{solve corners}.
+
+Two questions separate them (\cref{fig:corners}). First: \emph{does the operator
+stay fixed, or does it change as we go?} An analysis might assemble its operator
+once and reuse it for every solve, or it might have to rebuild the operator
+before each solve. Second: \emph{is the computation a map or a fold?} A
+\emph{map} runs a collection of \emph{independent} solves---each one could be
+done on a separate computer, in any order, because none depends on another's
+result. A \emph{fold} runs a \emph{chain} of solves---each one starts from the
+previous one's output, so they are intrinsically sequential. Crossing these two
+questions gives a $2\times 2$ grid; three of its cells are occupied by real
+corners, and a fourth corner sits outside the grid entirely, because in it we do
+not write a loop at all. We take the four in turn.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % axis labels
+  \node[cornertag, anchor=south] at (0,4.55) {operator \emph{fixed}};
+  \node[cornertag, anchor=south] at (4.6,4.55) {operator \emph{varying}};
+  \node[cornertag, rotate=90, anchor=south] at (-2.55,3.3) {a \textbf{map} (independent)};
+  \node[cornertag, rotate=90, anchor=south] at (-2.55,0.9) {a \textbf{fold} (chained)};
+
+  % --- top-left: fixed-operator map ---
+  \begin{scope}[shift={(-1.3,2.5)}]
+    \node[stage, minimum width=24mm, minimum height=22mm, anchor=south west,
+      fill=simBgBlue, align=center] (q1) at (0,0) {};
+    \node[anchor=north, font=\scriptsize\bfseries] at (1.2,2.0)
+      {Fixed-operator map};
+    % one operator box, three independent solves off it
+    \node[opbox, minimum width=7mm] (op1) at (0.35,1.0) {$\Kop$};
+    \foreach \i/\y in {1/1.45,2/1.0,3/0.55}{
+      \node[product, minimum width=4mm, minimum height=3.5mm, scale=0.6]
+        (s1\i) at (1.95,\y) {};
+      \draw[flow, shorten >=1pt] (op1.east) -- (s1\i.west);}
+    \node[anchor=north, font=\scriptsize\ttfamily] at (1.2,0.42)
+      {solve\_family};
+    \node[anchor=north, font=\scriptsize\itshape] at (1.2,0.08)
+      {electrostatic, magnetostatic};
+  \end{scope}
+
+  % --- top-right: operator-varying map ---
+  \begin{scope}[shift={(3.3,2.5)}]
+    \node[stage, minimum width=24mm, minimum height=22mm, anchor=south west,
+      fill=simBgBlue, align=center] (q2) at (0,0) {};
+    \node[anchor=north, font=\scriptsize\bfseries] at (1.2,2.0)
+      {Operator-varying map};
+    \foreach \i/\y in {1/1.5,2/1.0,3/0.5}{
+      \node[opbox, minimum width=6mm, scale=0.75] (op2\i) at (0.5,\y)
+        {$\Kop(\omega)$};
+      \node[product, minimum width=4mm, minimum height=3.5mm, scale=0.6]
+        (t2\i) at (1.95,\y) {};
+      \draw[flow, shorten >=1pt] (op2\i.east) -- (t2\i.west);}
+    \node[anchor=north, font=\scriptsize\ttfamily] at (1.2,0.42)
+      {frequency\_sweep};
+    \node[anchor=north, font=\scriptsize\itshape] at (1.2,0.08)
+      {driven};
+  \end{scope}
+
+  % --- bottom-left: state-threaded fold ---
+  \begin{scope}[shift={(-1.3,0.0)}]
+    \node[stage, minimum width=24mm, minimum height=22mm, anchor=south west,
+      fill=simBgGreen, align=center] (q3) at (0,0) {};
+    \node[anchor=north, font=\scriptsize\bfseries] at (1.2,2.0)
+      {State-threaded fold};
+    \foreach \i/\x in {1/0.3,2/0.95,3/1.6}{
+      \node[opbox, minimum width=4mm, minimum height=4mm, scale=0.7]
+        (f\i) at (\x,1.0) {};}
+    \draw[flow, shorten >=1pt] (f1.east) -- (f2.west);
+    \draw[flow, shorten >=1pt] (f2.east) -- (f3.west);
+    \node[anchor=north, font=\scriptsize\ttfamily] at (1.2,0.42)
+      {fold\_solve};
+    \node[anchor=north, font=\scriptsize\itshape] at (1.2,0.08)
+      {transient, AMR loop};
+  \end{scope}
+
+  % --- bottom-right: black-box (outside the grid) ---
+  \begin{scope}[shift={(3.3,0.0)}]
+    \node[extern, minimum width=24mm, minimum height=22mm, anchor=south west,
+      align=center] (q4) at (0,0) {};
+    \node[anchor=north, font=\scriptsize\bfseries] at (1.2,2.0)
+      {Opaque black-box};
+    \node[extern, minimum width=12mm, minimum height=8mm] (bb) at (1.2,1.0)
+      {\scriptsize library};
+    \node[anchor=north, font=\scriptsize\ttfamily] at (1.2,0.42)
+      {eigsolve};
+    \node[anchor=north, font=\scriptsize\itshape] at (1.2,0.08)
+      {eigenmode, boundary-mode};
+  \end{scope}
+
+  \node[font=\scriptsize\itshape, text=simViolet, align=center]
+    at (4.5,-0.65) {(no loop we write)};
+\end{tikzpicture}
+\caption[The four solve corners]{The four solve corners. Two questions
+classify a solve: is the operator \emph{fixed} or \emph{varying} as we proceed
+(columns), and is the computation a \emph{map} of independent solves or a
+\emph{fold} of chained solves (rows)? Three corners occupy the resulting grid.
+A fixed-operator map (top-left) reuses one operator across independent solves; an
+operator-varying map (top-right) rebuilds the operator before each independent
+solve; a state-threaded fold (bottom-left) chains solves so each starts from the
+last one's output. The fourth corner (bottom-right, dashed) sits \emph{outside}
+the grid: we write no loop at all---we hand the whole problem to a library
+routine. Each corner names its combinator and the drivers that use it.}
+\label{fig:corners}
+\end{figure}
+
+\subsection{Corner 1: the fixed-operator map}
+
+The simplest corner. Assemble the operator \emph{once}, then run a family of
+independent solves that all reuse it. Each solve has the same operator on the
+left-hand side and a different right-hand side; the solves do not depend on one
+another, so they form a \emph{map} over the family of right-hand sides.
+
+The exemplar is electrostatics (\cref{ch:electrostatics}). To compute the
+capacitance of $n$ conductors, we assemble the stiffness operator $\Kop$ once,
+then solve $\Kop\,\vx_i = \vb_i$ for $n$ different right-hand sides---one per
+conductor held at unit voltage. The operator $\Kop$ never changes; only the
+right-hand side does. We capture $\Kop$ once, outside the loop, and map the
+solver over the family. Magnetostatics works identically, with a different
+operator and a different family. In the framework's vocabulary this corner is
+the combinator \code{solve\_family}, written
+\[
+  \texttt{solve\_family}\;\Kop\;[\vb_1,\dots,\vb_n]
+    \;=\; [\,\texttt{solve}\;\Kop\;\vb_1,\;\dots,\;\texttt{solve}\;\Kop\;\vb_n\,].
+\]
+The single load-bearing fact is the \emph{hoist}: the operator is set up once,
+before the map, not once per element. Everything else about this corner follows
+from that.
+
+\subsection{Corner 2: the operator-varying map}
+
+Now keep the map---a family of independent solves---but change one thing: the
+operator is no longer fixed. It must be rebuilt before each solve.
+
+The exemplar is the driven analysis (\cref{ch:driven}). To compute S-parameters
+across a frequency band, we solve the time-harmonic system at each frequency
+$\omega$ in the sweep. But the system operator depends on frequency:
+$\mat{A}(\omega) = \Kop + i\omega\,\Cop - \omega^2\Mop$. So inside the sweep,
+\emph{before each solve}, we must reassemble $\mat{A}(\omega)$ at the current
+frequency. The solves are still independent---frequency $\omega_3$ does not need
+the answer at $\omega_2$---so this is still a map, not a fold. What distinguishes
+it from corner~1 is precisely that the operator is rebuilt \emph{inside} the
+loop rather than hoisted outside it. The combinator is \code{frequency\_sweep}.
+
+This contrast---hoist the operator versus rebuild it---is small to state and
+large in consequence, and it is the entire structural difference between
+electrostatics and the driven analysis. We will return to it in detail in
+\cref{ch:driven}; for now, hold onto the picture in \cref{fig:corners}: one
+operator feeding many solves (corner~1) versus a fresh operator for each solve
+(corner~2).
+
+\begin{pitfall}
+It is tempting to call corner~2 a ``harder version of corner~1'' and leave it
+at that. It is harder, but the difference is not a matter of degree---it is a
+matter of \emph{kind}. In corner~1 the expensive operator setup happens once and
+is amortized over the whole family; in corner~2 it happens every single
+iteration. An implementation that ``optimizes'' corner~2 by accidentally
+hoisting the operator out of the loop does not run faster---it computes the
+wrong answer, because it solves every frequency against the operator of the
+first one. The position of one setup call relative to one loop is load-bearing.
+\end{pitfall}
+
+\subsection{Corner 3: the state-threaded fold}
+
+Drop the independence. In corners~1 and~2 the solves were a map: independent,
+reorderable, parallelizable. In corner~3 they are a \emph{fold}: each solve
+begins from the state the previous solve produced. The computation is a chain,
+and the chain cannot be reordered or parallelized, because step $k$ literally
+needs the output of step $k-1$ as its input.
+
+The exemplar is the transient analysis (\cref{ch:transient}). To compute the
+time-domain response, we march forward in time: the field state at time
+$t_{k+1}$ is computed from the field state at time $t_k$ by taking one time
+step. The state is \emph{threaded} through the computation, each step
+transforming it and handing it to the next. This is a \emph{fold}, the
+fundamental sequential combinator we will study at length in \cref{ch:fold}; in
+the framework it is \code{fold\_solve}. The adaptive-refinement outer loop from
+\cref{fig:skeleton} is also a fold of this shape---each refinement pass begins
+from the mesh the last pass produced---which is why the same combinator appears
+for both.
+
+The distinction between corner~3 and the two map corners is the distinction
+between a \emph{movie} and a \emph{contact sheet}. A map produces a set of
+independent snapshots that happen to be collected together; a fold produces a
+single evolving history in which each frame depends on the last. We will see in
+\cref{ch:fold} that the map is in fact the degenerate special case of the fold
+in which each step ignores the running state---but the operational difference,
+parallelizable versus strictly sequential, is real and central.
+
+\subsection{Corner 4: the opaque black-box}
+
+The fourth corner is different in nature from the other three. In corners~1--3
+\emph{we} write the loop: we control the map or the fold, and we can see every
+solve it performs. In corner~4 we write no loop at all. We assemble the
+operators, hand the entire problem to a specialized library routine, and receive
+the answer. The iteration that produces it happens \emph{inside} the library,
+where our framework cannot see it.
+
+The exemplar is the eigenmode analysis (\cref{ch:eigenvalues}). To find the
+resonant frequencies of a cavity, we assemble the operator pencil
+$(\Kop,\Cop,\Mop)$ once and pass it to an eigenvalue solver---SLEPc or ARPACK,
+in Palace's case---with a single call. The solver runs its own sophisticated
+iteration (a Krylov--Schur or Arnoldi process; \cref{ch:eigenvalues}) and
+returns the converged eigenpairs. We do not see the iteration; we see one call
+and its result. The boundary-mode analysis uses the same corner, on a
+two-dimensional cross-section rather than a volume. In the framework this corner
+is the combinator \code{eigsolve}, and it is deliberately \emph{opaque}: it
+names the library boundary and the contract across it, and stops there.
+
+This opacity is not a gap in our understanding; it is an honest record of where
+Palace's authors chose to call out to someone else's code. \Cref{ch:eigenvalues}
+both documents that boundary and---separately---reconstructs what the library
+does internally, in our own vocabulary, so that the black box becomes a glass
+box for the reader who wants to look inside.
+
+\begin{keyidea}
+The four solve corners are the most important taxonomy in this book. They are
+distinguished by two questions plus one exception:
+\begin{itemize}[nosep]
+  \item \textbf{Fixed-operator map} (\code{solve\_family}): assemble once, then
+  map an independent family of solves over the fixed operator. \emph{Hoist the
+  operator.} Exemplars: electrostatic, magnetostatic.
+  \item \textbf{Operator-varying map} (\code{frequency\_sweep}): a map of
+  independent solves, but rebuild the operator \emph{inside} the loop because it
+  changes each step. \emph{Do not hoist.} Exemplar: driven.
+  \item \textbf{State-threaded fold} (\code{fold\_solve}): a chain, not a map---
+  each step's input is the previous step's output. \emph{Sequential.}
+  Exemplars: transient, and the AMR outer loop.
+  \item \textbf{Opaque black-box} (\code{eigsolve}): no loop we write at all;
+  one call to a library solver returns the answer. Exemplars: eigenmode,
+  boundary-mode.
+\end{itemize}
+Every later chapter that studies a driver is, in part, the study of which corner
+that driver sits in and why.
+\end{keyidea}
+
+\section{The three reduction shapes}
+
+The solve stage has four shapes; the reduce stage has three. After a driver has
+produced its field or family of fields, the \texttt{reduce} stage collapses
+them into the small physical quantity the user wants. As with the solve stage,
+the physics differs from analysis to analysis but the \emph{shape} of the
+reduction does not---and there are only three shapes (\cref{fig:reductions}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- (a) symmetric Gram matrix ---
+  \begin{scope}[shift={(0,0)}]
+    \foreach \i in {0,1,2}{
+      \foreach \j in {0,1,2}{
+        \pgfmathtruncatemacro{\sym}{(\i==\j)?1:0}
+        \node[draw=simGray, semithick,
+          fill={\ifnum\i=\j simBgRust\else simBgBlue\fi},
+          minimum size=6.5mm, inner sep=0pt]
+          (g\i\j) at (\j*0.66, -\i*0.66) {};}}
+    % symmetry mirror line
+    \draw[densely dashed, simRust, semithick]
+      (-0.45,0.45) -- (1.77,-1.77);
+    \node[font=\scriptsize\bfseries, align=center] at (0.66,-2.45)
+      {Rank-2 Gram};
+    \node[font=\scriptsize, align=center] at (0.66,-2.9)
+      {symmetric: $G_{ij}=G_{ji}$};
+    \node[font=\scriptsize\itshape, align=center] at (0.66,-3.4)
+      {capacitance,\\inductance};
+  \end{scope}
+
+  % --- (b) non-symmetric port-projection ---
+  \begin{scope}[shift={(4.2,0)}]
+    \foreach \i in {0,1,2}{
+      \foreach \j in {0,1,2}{
+        \node[draw=simGray, semithick, fill=simBgGreen,
+          minimum size=6.5mm, inner sep=0pt]
+          (p\i\j) at (\j*0.66, -\i*0.66) {};}}
+    \node[font=\scriptsize, text=simGreen] at (0.66,0.55)
+      {ports out};
+    \node[font=\scriptsize, rotate=90, text=simGreen] at (-0.62,-0.66)
+      {ports in};
+    \node[font=\scriptsize\bfseries, align=center] at (0.66,-2.45)
+      {Rank-2 projection};
+    \node[font=\scriptsize, align=center] at (0.66,-2.9)
+      {\emph{not} symmetric};
+    \node[font=\scriptsize\itshape, align=center] at (0.66,-3.4)
+      {S-parameters};
+  \end{scope}
+
+  % --- (c) rank-1 scalar / mode table ---
+  \begin{scope}[shift={(8.4,0)}]
+    \foreach \i in {0,1,2,3}{
+      \node[draw=simGray, semithick, fill=simBgGold,
+        minimum width=18mm, minimum height=5mm, inner sep=0pt]
+        (r\i) at (0, -\i*0.6) {};}
+    \node[font=\scriptsize] at (0,0) {mode 1: $f_1, Q_1$};
+    \node[font=\scriptsize] at (0,-0.6) {mode 2: $f_2, Q_2$};
+    \node[font=\scriptsize] at (0,-1.2) {mode 3: $f_3, Q_3$};
+    \node[font=\scriptsize] at (0,-1.8) {$\vdots$};
+    \node[font=\scriptsize\bfseries, align=center] at (0,-2.45)
+      {Rank-1 table};
+    \node[font=\scriptsize, align=center] at (0,-2.9)
+      {one row per element};
+    \node[font=\scriptsize\itshape, align=center] at (0,-3.4)
+      {eigenfreq.\,$+\,Q$,\\energy, modes};
+  \end{scope}
+\end{tikzpicture}
+\caption[The three reduction shapes]{The three reduction shapes. A
+\emph{rank-2 Gram} (left) is a symmetric matrix of energy-like inner products
+over a family of solutions, $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\,\vx_i$; its
+symmetry (dashed mirror) is structural. A \emph{rank-2 projection} (centre) is
+also a matrix, but it projects an ``in'' family onto an ``out'' family and is
+\emph{deliberately not} a Gram---it is generally non-symmetric. A \emph{rank-1
+table} (right) is a one-dimensional list: one row of scalars per mode, per
+domain, or per propagation mode. The distinction between the left and centre
+shapes is the single most over-unified point in the design---see the pitfall.}
+\label{fig:reductions}
+\end{figure}
+
+\subsection{The rank-2 symmetric Gram}
+
+The first shape is a \emph{Gram matrix}: a symmetric matrix of energy-like inner
+products formed over a family of solutions. Given a solution family
+$\vx_1,\dots,\vx_n$ and the assembled operator $\Kop$, the Gram reduction
+computes
+\[
+  G_{ij} \;=\; w(i,j)\;\vx_j^{\!\top}\,\Kop\,\vx_i,
+\]
+a matrix whose $(i,j)$ entry is an operator-weighted inner product of solutions
+$i$ and $j$. Because $\Kop$ is symmetric, $G_{ij}=G_{ji}$: the result is a
+symmetric matrix, structurally, not by coincidence.
+
+Both capacitance and inductance are Gram reductions. They use the \emph{same
+verb}---\code{gram\_reduce} in the framework---and differ only in the weight
+$w(i,j)$. Capacitance uses the unit weight $w(i,j)=1$ (the energy form
+$C_{ii}=2U/V^2$ with unit applied voltage); inductance uses the
+current-normalized weight $w(i,j)=1/(I_i I_j)$. One verb, two weights, two
+physical products. This is the cleanest instance of the book's recurring
+refrain: the same machine with one part---here, a scalar weight function---
+swapped. We study it fully in \cref{ch:reductions}.
+
+\subsection{The rank-2 port-projection}
+
+The second shape is also a matrix, and it is tempting to file it under the
+first. Resist. The S-parameter matrix is a \emph{projection}, not a Gram. Its
+entry $S_{ij}(\omega)$ records how much of a wave entering port $j$ leaves port
+$i$: it projects the solved field for each driven port onto each output port's
+mode. It is a matrix indexed by (out-port, in-port), but the two index families
+play different roles, the operation is a linear projection rather than an
+energy-weighted self-inner-product, and the result is in general
+\emph{not symmetric}. The framework gives it its own verb,
+\code{sparameter\_reduce}, deliberately distinct from \code{gram\_reduce}.
+
+\begin{pitfall}
+Two reductions producing matrices is not enough to make them the same reduction.
+The Gram products (capacitance, inductance) and the port-projection
+(S-parameters) both yield rank-2 results, and a tidy-minded designer is sorely
+tempted to unify them under one ``matrix reduction'' verb. This is a mistake.
+The Gram is a \emph{symmetric self-pairing} of a family with itself through an
+operator; the port-projection is an \emph{asymmetric projection} of one family
+onto a different basis. Forcing them into one verb either smuggles a false
+symmetry into the S-matrix or burdens the Gram with machinery it does not need.
+The right move---which the framework makes---is two verbs that happen to share
+an output rank. \emph{Sharing a shape is not sharing a meaning.}
+\end{pitfall}
+
+\subsection{The rank-1 scalar or mode table}
+
+The third shape is a \emph{table}: a one-dimensional list with one row per
+element, each row holding a few scalars (or, in one case, a few small fields).
+There is no matrix structure, no pairing of a family with itself---just a map
+over a collection, producing one tuple per item.
+
+Three products live here. Eigenfrequencies and quality factors form a table with
+one row per mode: $(f_m, Q_m)$ for each resonant mode. Energy and participation
+factors form a table with one row per material domain: how much of the field
+energy sits in each region. And waveguide propagation modes form a table with
+one row per mode, each carrying a propagation constant $k_n$ and a small
+transverse field pattern (the one case where the row holds fields, not just
+scalars). All three are rank-1 reductions---a \code{map} over the items the
+driver produced, with no cross-coupling between rows.
+
+\begin{keyidea}
+The three reduction shapes are: the \textbf{rank-2 symmetric Gram} (capacitance,
+inductance---one verb, the weight is the only difference); the \textbf{rank-2
+port-projection} (S-parameters---a projection, deliberately not a Gram); and the
+\textbf{rank-1 scalar or mode table} (eigenfrequency$+Q$, energy and
+participation, waveguide modes---one row per item). A matrix-shaped result does
+not by itself mean a Gram: the projection shares the Gram's rank but not its
+symmetry or its meaning.
+\end{keyidea}
+
+\section{The driver \texorpdfstring{$\times$}{x} framework grid}
+
+We can now lay the six drivers on the framework all at once. \Cref{tab:grid}
+is the grid the rest of the book fills in. Each row is a driver; each column is
+a stage of the skeleton---the function space it assembles on, what it assembles,
+which solve corner its solve sits in, which reduction shape its reduce uses, and
+the product it yields. Every cell is a forward reference: the chapters of
+Parts~II through~V supply the contents of these cells in full, one stage at a
+time.
+
+\begin{table}[t]
+\centering
+\caption[The driver $\times$ framework grid]{The driver $\times$ framework grid:
+the six drivers laid on the skeleton. Reading across a row tells you how that
+analysis is built; reading down a column tells you how that stage varies across
+analyses. The \emph{solve corner} and \emph{reduction} columns are the two that
+this chapter named; almost every difference between rows lives there. The
+electrostatic row is the simplest; every other row is the electrostatic row
+with one or two stages swapped (last paragraph).}
+\label{tab:grid}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}llp{27mm}ll@{}}
+\toprule
+Driver & FE space & \multicolumn{1}{l}{Assemble} & Solve corner & Reduction $\to$ product \\
+\midrule
+Electrostatic & $\Hone$ & $\Kop$ once
+  & fixed-operator map & Gram ($w{=}1$) $\to$ capacitance \\
+Magnetostatic & $\Hcurl$ & $\Kop$ once
+  & fixed-operator map & Gram ($w{=}\tfrac{1}{I_iI_j}$) $\to$ inductance \\
+Driven & $\Hcurl$ & $\Kop,\Cop,\Mop$ once; $\mat{A}(\omega)$ rebuilt in loop
+  & operator-varying map & projection $\to$ S-parameters \\
+Transient & $\Hcurl$ & $\Kop,\Cop,\Mop$ once
+  & state-threaded fold & table $\to$ field history \\
+Eigenmode & $\Hcurl$ & $\Kop,\Cop,\Mop$ once
+  & opaque black-box & table $\to$ frequencies, $Q$ \\
+Boundary mode & $\Hcurl{\oplus}\Hone$ & block pencil (2-D)
+  & opaque black-box & table $\to$ waveguide modes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Read down the \emph{Solve corner} column and the chapter's central claim becomes
+a glance: two drivers map over a fixed operator, one maps over a varying
+operator, one folds a threaded state, and two hand the whole problem to a black
+box. Read down the \emph{Reduction} column and the three shapes appear: two
+Grams, one projection, three tables. The physics columns (space, assemble)
+supply variety too, but they are the subject of Part~II; the two columns this
+chapter named are the ones that organize the book.
+
+There is a punchline, and it is worth stating plainly. \emph{Electrostatics is
+the universal entry point, and every other analysis is electrostatics with one
+stage swapped.} Magnetostatics swaps the function space ($\Hone\to\Hcurl$) and
+the Gram weight, and changes nothing else. The driven analysis keeps the map but
+swaps the solve corner from fixed to operator-varying, and swaps the reduction
+from Gram to projection. The transient analysis swaps the map for a fold.
+Eigenmode swaps the loop-we-write for a black box. Boundary mode is eigenmode on
+a two-dimensional cross-section. Six analyses, one anchor, a handful of swaps:
+that is the whole architecture of the simulator, and it is why the book can
+teach electrostatics once, in depth (\cref{ch:electrostatics}), and then present
+each remaining analysis as a small, well-localized set of differences from it.
+
+\summarysection
+The skeleton is
+\texttt{config} $\to$ \texttt{assemble} $\to$ \texttt{solve} $\to$
+\texttt{reduce} $\to$ \texttt{product},
+optionally wrapped in an adaptive-refinement outer fold. Almost all the variety
+between the six analyses lives in two stages. The \texttt{solve} stage has four
+\emph{corners}: the fixed-operator map (\code{solve\_family}; electrostatic,
+magnetostatic), the operator-varying map (\code{frequency\_sweep}; driven), the
+state-threaded fold (\code{fold\_solve}; transient and the AMR loop), and the
+opaque black-box (\code{eigsolve}; eigenmode, boundary-mode). The \texttt{reduce}
+stage has three \emph{shapes}: the rank-2 symmetric Gram (capacitance and
+inductance, one verb differing only by weight), the rank-2 port-projection
+(S-parameters, a projection and deliberately not a Gram), and the rank-1
+scalar-or-mode table (eigenfrequency$+Q$, energy, waveguide modes). The driver
+$\times$ framework grid (\cref{tab:grid}) places all six on these axes, and the
+punchline organizes the rest of the book: electrostatics is the universal entry
+point, and every other analysis swaps one stage.
+
+\furtherreading
+The four-corners and three-shapes taxonomy is this book's own organizing
+device, distilled from the structure of the Palace solver
+itself~\citep{palace2023}; reading the source's six driver entry points side by
+side is the best way to see the shared skeleton in the wild. The distinction
+between an independent map and a state-threaded fold is the functional
+programmer's daily bread; we build it from scratch in \cref{ch:fold}, assuming
+nothing. For the numerical content behind the corners---why the fixed-operator
+map can amortize a factorization, why the eigenvalue corner is best left to a
+specialized library---Saad's account of iterative methods~\citep{saad2003} is
+the standard reference, and we draw on it throughout Part~IV.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of the four solve corners, state the two-question
+  classification that places it: is the operator fixed or varying, and is the
+  computation a map or a fold? (The black-box corner answers ``neither row''---
+  explain why.)
+  \item The driven analysis (corner~2) and electrostatics (corner~1) both run a
+  family of independent solves. Pinpoint the single line of pseudocode whose
+  position---inside the loop versus outside it---is the entire difference between
+  them. Why does moving it change the \emph{answer}, not merely the speed?
+  \item Capacitance and inductance share one reduction verb and differ only in a
+  weight. Write down each weight, and explain in one sentence why inductance
+  needs the current normalization that capacitance does not.
+  \item S-parameters and capacitance both produce a matrix, yet the book insists
+  they are different reduction shapes. Give two structural reasons the
+  S-parameter matrix is not a Gram. (Hint: consider symmetry, and consider what
+  each index ranges over.)
+  \item Using \cref{tab:grid}, describe the transient analysis as ``the
+  electrostatic analysis with these stages swapped.'' Exactly which cells change,
+  and which stay the same?
+\end{enumerate}

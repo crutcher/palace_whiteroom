@@ -1,0 +1,909 @@
+\chapter{Named Shape Groups and Rank-Agnostic Congruence}
+\label{ch:shapes}
+
+\chapterorient{The previous chapter introduced tensors and promised a precise
+account of their \emph{shapes}. This is that account. We will build a small
+notation that lets a \emph{single} function signature describe an operation on
+vectors, matrices, and higher tensors all at once---a property we call
+\emph{rank-agnostic congruence}---and we will see why the obvious first
+attempt, writing \code{Tensor[N]} for ``the same shape as the other operand,''
+silently throws that property away. By the end you will be able to read and
+write the shape contracts that label every function in
+\cref{part:framework}: named shape groups for congruence, the range-first
+operator-shape form, the fixed-meaning axes of the matrix-free kernel, and the
+one typing rule---scalar promotion---that lets a real number quietly join a
+complex computation.}
+
+\section{The problem with \texorpdfstring{\code{Tensor[N]}}{Tensor[N]}}
+\label{sec:sh-problem}
+
+In \cref{ch:tensors} we wrote a tensor's shape as a bracketed list of axis
+extents: a length-$N$ vector is \lstinline[style=l4style]|Tensor[N]|, an
+$m\times n$ matrix is \lstinline[style=l4style]|Tensor[m, n]|, the
+distribution field of \cref{ch:bigidea} is
+\lstinline[style=l4style]|Tensor[H, W, VY=3, VX=3]|. Each entry in the bracket
+is one axis; the \emph{number} of entries is the tensor's \emph{rank}. A
+vector has rank $1$, a matrix rank $2$, the distribution field rank $4$.
+
+This is a perfectly good notation for writing down \emph{one} concrete shape.
+The trouble starts the moment we try to write a \emph{function} that should
+work at more than one rank. Consider the humble \code{axpy}
+operation---``$\alpha$ times $\vx$ plus $\vy$''---the workhorse of every
+iterative solver in this book:
+\[
+  \mathrm{axpy}(\alpha,\vx,\vy) \;=\; \alpha\,\vx + \vy .
+\]
+What does \code{axpy} require of its arguments? Only that $\vx$ and $\vy$ have
+\emph{the same shape}, whatever that shape is, so that the scaled $\vx$ can be
+added to $\vy$ entry by entry. It does not care whether they are vectors,
+matrices, or rank-$7$ tensors. Scaling and adding are \emph{elementwise}: they
+look at one entry at a time and never consult the rank at all.
+
+Now watch what happens when we reach for our only shape notation so far and
+try to write \code{axpy}'s signature. The natural-looking attempt is
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]   -- WRONG (pins rank 1)
+\end{lstlisting}
+The intent was surely ``the two tensors share a shape, call it \texttt{N}, and
+the result has that shape too.'' But that is \emph{not} what this signature
+says. The bracket \lstinline[style=l4style]|[N]| has exactly one entry, so it
+denotes a tensor of \emph{rank one}: a flat vector of length \texttt{N}. By
+writing \lstinline[style=l4style]|Tensor[N]| three times we have indeed said
+``all three have the same shape''---but we have \emph{also} said, without
+meaning to, ``and that shape is one-dimensional.'' A caller who hands
+\code{axpy} two $3\times 3$ matrices will be turned away at the door, even
+though scaling and adding $3\times 3$ matrices is exactly as sensible as
+scaling and adding vectors.
+
+\begin{pitfall}
+\lstinline[style=l4style]|Tensor[N]| does \emph{not} mean ``the same shape as
+the other operand.'' It means ``a tensor of rank one, with its single axis of
+length \texttt{N}.'' The single letter inside the brackets is a name for
+\emph{one axis}, not for \emph{a whole shape of unknown rank}. Reusing the
+same letter across operands forces them to agree---but it forces them to agree
+\emph{at rank one}. Using \lstinline[style=l4style]|Tensor[N]| to mean
+``congruent, any rank'' is the single most common shape-notation error, and it
+silently narrows a general operation to vectors only.
+\end{pitfall}
+
+The mismatch is worth seeing at a glance.
+\Cref{fig:sh-pinned-vs-flex} sets the rank-$1$ commitment of
+\lstinline[style=l4style]|Tensor[N]| beside the flexible notation we are about
+to build. The cure is a way to name a \emph{whole run of axes}---possibly
+several, possibly we-don't-know-how-many---and to say ``this other tensor has
+the same run.'' That is the named shape group, and the rest of the chapter
+develops it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % --- LEFT: Tensor[N], one pinned box ---
+  \begin{scope}[shift={(-3.6,0)}]
+    \node[font=\scriptsize\bfseries, simRust] at (0,1.55) {\code{Tensor[N]}};
+    \node[font=\scriptsize\itshape, simGray, text width=30mm, align=center]
+      at (0,1.15) {one axis: rank pinned to 1};
+    \draw[draw=simRust, fill=simBgRust, thick] (-0.5,-0.45) rectangle (0.5,0.45);
+    \node[font=\small, simInk] at (0,0) {$N$};
+    % a lock to convey "pinned"
+    \node[font=\scriptsize, simRust] at (0,-0.95) {rank $=1$, fixed};
+  \end{scope}
+  % divider
+  \draw[simGray!40, densely dotted] (-1.4,-1.4) -- (-1.4,1.7);
+  % --- RIGHT: Tensor[(S: ...)], flexible bracket ---
+  \begin{scope}[shift={(1.9,0)}]
+    \node[font=\scriptsize\bfseries, simBlue] at (0.55,1.55)
+      {\lstinline[style=l4style]|Tensor[(S: ...)]|};
+    \node[font=\scriptsize\itshape, simGray, text width=42mm, align=center]
+      at (0.55,1.15) {a named run \texttt{S}: any number of axes};
+    % a row of boxes under a spanning bracket
+    \foreach \i/\lab in {0/{},1/{},2/{}}{
+      \draw[draw=simBlue, fill=simBgBlue, thick]
+        (\i*0.95-0.45,-0.45) rectangle (\i*0.95+0.45,0.45);
+      \node[font=\footnotesize, simGray] at (\i*0.95, 0) {$\cdot$};
+    }
+    \node[font=\scriptsize, simGray] at (3.05,0) {$\cdots$};
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, simBlue]
+      (-0.55,-0.6) -- (2.45,-0.6)
+      node[midway, below=6pt, font=\scriptsize, simBlue] {the group \texttt{S}};
+  \end{scope}
+\end{tikzpicture}
+\caption[Pinned axis versus flexible group]{The rank-$1$ commitment of
+\lstinline[style=l4style]|Tensor[N]| (left, rust) versus the rank-agnostic
+named group \lstinline[style=l4style]|Tensor[(S: ...)]| (right, blue).
+\lstinline[style=l4style]|Tensor[N]| is a single boxed axis: its rank is
+locked at one. \lstinline[style=l4style]|Tensor[(S: ...)]| is a labelled
+bracket that spans \emph{some} run of axes---one, three, however many---and
+gives that run a name, \texttt{S}, without ever committing to how many there
+are.}
+\label{fig:sh-pinned-vs-flex}
+\end{figure}
+
+\section{Named shape groups}
+\label{sec:sh-groups}
+
+The fix is to give a \emph{name} to a run of axes without fixing how many
+axes the run contains. We write the binding form
+\[
+  \texttt{(S: ...)}
+\]
+and read it ``the shape pattern \texttt{...}, called \texttt{S}.'' The three
+dots \texttt{...} are a genuine piece of the notation---a \emph{rank
+wildcard} that matches \emph{zero or more} axes of any extent. So
+\lstinline[style=l4style]|Tensor[(S: ...)]| is ``a tensor whose entire shape
+is some run of axes, and we will call that run \texttt{S}.'' It is true of a
+vector (the run is one axis), of a matrix (two axes), of a rank-$7$ tensor
+(seven axes), and even of a scalar (the run is empty). The notation has
+declined to commit to a rank, which is exactly the freedom \code{axpy} needs.
+
+A name is only useful if we can refer back to it. The second half of the
+notation is the \emph{use} form, written with a dollar sigil:
+\[
+  \texttt{\$S}
+\]
+which means ``a run of axes \emph{congruent to} the group \texttt{S} bound
+earlier''---the same number of axes, each of the same extent. The sigil is
+the whole point: it makes a \emph{back-reference} look different from a
+\emph{fresh binding}. \lstinline[style=l4style]|(S: ...)| introduces the name;
+\lstinline[style=l4style]|$S| reuses it.
+
+\begin{definition}[Named shape group]
+\label{def:sh-group}
+A \emph{named shape group} \lstinline[style=l4style]|(S: ...)| binds a name
+\texttt{S} to a contiguous run of tensor axes \emph{without committing to the
+rank or to the individual extents of that run}. The binding occurs exactly
+once, at the group's first appearance. Every later occurrence
+\lstinline[style=l4style]|$S|, written with the \texttt{\$} sigil, is a
+\emph{use}: it asserts that the shape it labels is \emph{congruent} to the
+bound run---the same number of axes, matched extent for extent. Two shapes
+are \emph{congruent} when they are identical axis-for-axis (modulo the
+shape algebra of \cref{sec:sh-equational}).
+\end{definition}
+
+With this in hand, \code{axpy}'s signature becomes what we always meant:
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]
+\end{lstlisting}
+Read left to right: \code{axpy} takes a scalar; then a tensor of \emph{some}
+shape, which binds the group \texttt{S}; then a second tensor whose shape must
+be \emph{congruent} to \texttt{S}; and it returns a tensor, again congruent
+to \texttt{S}. The first operand \emph{introduces} the shape; the second
+operand and the result \emph{borrow} it. Nothing here mentions a rank, so the
+one signature describes \code{axpy} on vectors, on matrices, and on every
+higher tensor at once. \Cref{fig:sh-hero} is the picture to keep in mind: a
+tensor is a row of axis-boxes, a group is a bracket spanning some of them, and
+a \lstinline[style=l4style]|$S| use is an arrow pointing back to the binding,
+asserting ``the same run, here, again.''
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % Top: binding operand --- a tensor as a row of axis boxes, bracketed as (S: ...)
+  \begin{scope}[shift={(0,1.5)}]
+    \foreach \i in {0,1,2}{
+      \draw[draw=simBlue, fill=simBgBlue, thick]
+        (\i*0.9,-0.35) rectangle (\i*0.9+0.7,0.35);
+    }
+    \node[font=\scriptsize, simGray] at (2.55,0) {$\cdots$};
+    \draw[draw=simBlue, fill=simBgBlue, thick] (3.0,-0.35) rectangle (3.7,0.35);
+    \draw[decorate, decoration={brace, amplitude=4pt}, simBlue]
+      (-0.05,0.5) -- (3.75,0.5)
+      node[midway, above=4pt, font=\scriptsize\bfseries, simBlue] (Sbind)
+      {binds \texttt{S}};
+    \node[font=\scriptsize\ttfamily, simInk, left=4mm of {(-0.05,0)}]
+      (xlab) at (-1.7,0) {\lstinline[style=l4style]|Tensor[(S: ...)]|};
+  \end{scope}
+  % Middle: use operand --- congruent, $S
+  \begin{scope}[shift={(0,0)}]
+    \foreach \i in {0,1,2}{
+      \draw[draw=simTeal, fill=simBgGreen, thick]
+        (\i*0.9,-0.35) rectangle (\i*0.9+0.7,0.35);
+    }
+    \node[font=\scriptsize, simGray] at (2.55,0) {$\cdots$};
+    \draw[draw=simTeal, fill=simBgGreen, thick] (3.0,-0.35) rectangle (3.7,0.35);
+    \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simTeal]
+      (-0.05,-0.5) -- (3.75,-0.5)
+      node[midway, below=4pt, font=\scriptsize\bfseries, simTeal] (Suse)
+      {uses \texttt{\$S}};
+    \node[font=\scriptsize\ttfamily, simInk] at (-1.7,0)
+      {\lstinline[style=l4style]|Tensor[$S]|};
+  \end{scope}
+  % the back-arrow: $S use --> S binding (congruence assertion)
+  \draw[-{Stealth[length=2.6mm]}, simRust, thick]
+    (4.0,-0.1) .. controls (4.9,0.55) and (4.9,1.45) .. (4.0,2.0)
+    node[midway, right=1pt, font=\scriptsize\itshape, simRust, align=left]
+    {congruent:\\same run};
+\end{tikzpicture}
+\caption[The shape-algebra hero figure]{A named shape group at work. Each
+tensor is a row of axis-boxes; its rank is how many boxes there are, left
+unspecified by the trailing \texttt{...}. The top operand's whole shape is
+bracketed and \emph{bound} to the name \texttt{S}. The bottom operand is
+written \lstinline[style=l4style]|Tensor[$S]|: the \texttt{\$} sigil makes it a
+\emph{use}, and the rust back-arrow is the assertion it carries---``my shape is
+\emph{congruent} to the run that bound \texttt{S}.'' Neither tensor's rank is
+fixed; only their \emph{agreement} is.}
+\label{fig:sh-hero}
+\end{figure}
+
+\subsection{Why not just reuse a shape variable?}
+\label{sec:sh-vs-variable}
+
+A sharp reader will object: we could have written \code{axpy} with a single
+\emph{shape variable} $\sigma$ standing for the whole shape,
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[s] -> Tensor[s] -> Tensor[s]
+\end{lstlisting}
+where \texttt{s} (the typeset $\sigma$) names ``the entire shape, any rank.''
+That is correct, and when the \emph{whole} shape is shared it is the lighter
+spelling. Named groups earn their keep in the cases a bare variable cannot
+reach, of which there are two.
+
+First, a group can name a \emph{partial} run while leaving the rest free.
+Suppose an operation shares a leading block of axes between two operands but
+lets each carry its own trailing axis:
+\begin{lstlisting}[style=l4style]
+batched_op :: Tensor[(S: ...), k] -> Tensor[$S, m] -> Tensor[$S, k, m]
+\end{lstlisting}
+Here \texttt{S} is the shared leading run; \texttt{k} and \texttt{m} are
+free trailing axes that differ between the operands. A single variable
+$\sigma$ cannot express ``share \emph{these} axes but not \emph{that} one.''
+The group splits a shape into a named congruent part and a free part---the
+binding \lstinline[style=l4style]|(S: a, ...)| even mixes a pinned leading
+axis \texttt{a} with a wildcard tail, so a group is as fine-grained as the
+contract needs.
+
+Second, and more quietly, a group makes the rank-agnosticism
+\emph{visible}. A bare $\sigma$ relies on the reader knowing the convention
+that a lone shape variable spans any rank; the trailing \texttt{...} inside
+\lstinline[style=l4style]|(S: ...)| says it on the page. When the surrounding
+code also uses concrete rank-$1$ shapes like
+\lstinline[style=l4style]|Tensor[N]| for genuine flat vectors---and the next
+section shows it does---the explicit wildcard is what stops a reader from
+misreading the congruence contract as another rank-$1$ commitment.
+
+\begin{keyidea}
+A named shape group \lstinline[style=l4style]|(S: ...)| binds a name to a run
+of axes \emph{of unknown rank}; a later use \lstinline[style=l4style]|$S|
+asserts a second shape is \emph{congruent} to it. This is
+\emph{rank-agnostic congruence}: one signature, e.g.\
+\lstinline[style=l4style]|axpy :: Scalar -> Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]|,
+correctly describing an operation on vectors, on matrices, and on every
+higher tensor simultaneously---because it constrains the operands to
+\emph{agree} without ever constraining their \emph{rank}. The
+\texttt{\$} sigil is the difference between a fresh binding and a back-reference.
+\end{keyidea}
+
+\section{Worked example: \texorpdfstring{\code{axpy}}{axpy} at two ranks}
+\label{sec:sh-wex-axpy}
+
+The claim is that one signature serves all ranks. The way to believe it is to
+run the same signature against two concrete arguments---a vector and a
+matrix---and watch the congruence check succeed both times, then watch the
+wrong signature reject the matrix.
+
+\begin{workedexample}{Why \code{axpy} wants a named group}{sh-axpy}
+\textbf{The signature under test.}
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]
+\end{lstlisting}
+We instantiate it twice and resolve the group \texttt{S} each time.
+
+\tcblower
+\textbf{Instance 1 --- a rank-$1$ vector.} Apply \code{axpy} with
+$\alpha = 2$, $\vx,\vy$ of shape \lstinline[style=l4style]|[3]| (length-$3$
+vectors). The first tensor operand binds the group:
+\[
+  \texttt{S} \;\mapsto\; \texttt{[3]} \qquad(\text{rank } 1).
+\]
+The second operand's required shape is \lstinline[style=l4style]|$S = [3]|: the
+supplied $\vy$ is \lstinline[style=l4style]|[3]|, which is congruent.
+\emph{Check passes.} The result shape is \lstinline[style=l4style]|$S = [3]|,
+a length-$3$ vector. Elementwise: $2x_i + y_i$ at each of the $3$ entries.
+
+\textbf{Instance 2 --- a rank-$2$ matrix-shaped field.} Now apply the
+\emph{same} \code{axpy} with $\alpha = 2$, but $\vx,\vy$ of shape
+\lstinline[style=l4style]|[3, 3]| (think of a $3\times 3$ block of a
+tensor-valued material coefficient, or a matrix-shaped field). The first
+operand binds the group to a \emph{rank-$2$} run:
+\[
+  \texttt{S} \;\mapsto\; \texttt{[3, 3]} \qquad(\text{rank } 2).
+\]
+The second operand's required shape is now \lstinline[style=l4style]|$S = [3, 3]|;
+the supplied $\vy$ is \lstinline[style=l4style]|[3, 3]|, congruent.
+\emph{Check passes.} The result is \lstinline[style=l4style]|[3, 3]|;
+elementwise $2x_{ij} + y_{ij}$ across all $9$ entries. The signature never
+mentioned a rank, so it bound \texttt{S} to whatever the first operand
+brought---rank $1$ in instance~1, rank $2$ in instance~2.
+
+\textbf{The wrong signature, same two instances.} Replace the group with the
+rank-$1$ form:
+\begin{lstlisting}[style=l4style]
+axpy_bad :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]
+\end{lstlisting}
+\emph{Instance 1} still type-checks: the vectors are
+\lstinline[style=l4style]|[3]|, so \texttt{N} resolves to $3$ and all three
+slots agree. \emph{Instance 2 fails.} The matrices are
+\lstinline[style=l4style]|[3, 3]|---rank $2$---but
+\lstinline[style=l4style]|Tensor[N]| demands rank $1$. There is no value of
+the single axis \texttt{N} that can match a two-axis shape: matching
+\lstinline[style=l4style]|[N]| against \lstinline[style=l4style]|[3, 3]|
+fails on \emph{rank} before any extent is even compared. The matrix case is
+rejected---not because scaling-and-adding a matrix is ill-defined (it is
+perfectly well-defined) but because the signature accidentally outlawed it.
+\end{workedexample}
+
+\begin{remark}
+Notice \emph{where} the two signatures diverge: at the rank check, which
+happens \emph{before} extents are compared. \lstinline[style=l4style]|Tensor[N]|
+fixes the number of axes to one; \lstinline[style=l4style]|Tensor[(S: ...)]|
+leaves it open and binds it from the argument. Everything downstream---the
+elementwise arithmetic, the laws like
+\lstinline[style=l4style]|axpy 0 v y = y|---is identical between the two ranks.
+The \emph{only} thing the group buys is permission to run at a rank the
+operation never cared about in the first place.
+\end{remark}
+
+\Cref{fig:sh-boundary} abstracts what just happened into the rule the matcher
+follows at \emph{every} function boundary: bind the group from the first
+shape it labels, then test each later use for congruence, rank first.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 10mm]
+  % the function boundary as a vertical gate
+  \node[stage, minimum height=30mm, text width=4mm] (gate) at (0,0) {};
+  \node[font=\scriptsize\bfseries, simBlue, above=1mm of gate]
+    {function boundary};
+  % incoming binding operand
+  \node[data, left=14mm of gate.west, yshift=8mm, text width=22mm] (bind)
+    {1st operand\\\lstinline[style=l4style]|Tensor[(S: ...)]|};
+  % incoming use operand
+  \node[data, left=14mm of gate.west, yshift=-8mm, text width=22mm] (use)
+    {2nd operand\\\lstinline[style=l4style]|Tensor[$S]|};
+  % the resolved value of S (the gate's memory)
+  \node[font=\scriptsize\ttfamily, simRust, right=4mm of gate, yshift=8mm,
+        align=left] (resolved)
+    {bind:\\ $\texttt{S}\mapsto$ this shape};
+  \node[font=\scriptsize, simTeal, right=4mm of gate, yshift=-8mm,
+        align=left] (checked)
+    {check:\\ rank? then extents?};
+  \draw[flow] (bind.east) -- node[above, font=\scriptsize, simGray]{bind} (gate.west|-bind.east);
+  \draw[flow] (use.east) -- node[below, font=\scriptsize, simGray]{test} (gate.west|-use.east);
+  \draw[refedge, simRust] (gate.east|-resolved) -- (resolved);
+  \draw[refedge, simTeal] (gate.east|-checked) -- (checked);
+  % the two-step rule annotated below
+  \node[font=\scriptsize\itshape, simGray, below=8mm of gate, text width=70mm,
+        align=center]
+    {\textbf{1.}~rank mismatch $\Rightarrow$ reject \emph{immediately}
+     (this is where \lstinline[style=l4style]|Tensor[N]| fails the matrix).\quad
+     \textbf{2.}~ranks agree $\Rightarrow$ compare extents, axis by axis,
+     modulo the shape algebra (\cref{sec:sh-equational}).};
+\end{tikzpicture}
+\caption[The congruence check at a boundary]{What the shape matcher does at a
+function boundary. The \emph{first} shape that labels a group \texttt{S}
+\emph{binds} it (rust)---fixing both the rank and the extents \texttt{S} now
+stands for. Every \emph{later} use \lstinline[style=l4style]|$S| is
+\emph{tested} for congruence (teal): \textbf{first} the rank must match---a
+mismatch is rejected on the spot, which is exactly how
+\lstinline[style=l4style]|Tensor[N]| turns away a rank-$2$ argument
+(\cref{wex:sh-axpy})---and \textbf{then}, only if the ranks agree, the
+extents are compared axis by axis. The same two-step gate guards \code{axpy},
+\code{apply\_linop}, and every other signature in this book.}
+\label{fig:sh-boundary}
+\end{figure}
+
+\section{Operator shapes: domain and range}
+\label{sec:sh-operators}
+
+Congruence groups describe operations whose operands share a shape. But the
+most important objects in this book---the linear operators $\mat{K}$, $\mat{M}$,
+$\mat{A}(\omega)$ of \cref{ch:targets}---are maps whose \emph{input} and
+\emph{output} shapes generally \emph{differ}. A matrix that takes a length-$n$
+vector to a length-$m$ vector has two shapes to name, not one. The notation
+extends to cover this with two groups: a \emph{range} group and a
+\emph{domain} group.
+
+We write them \emph{range-first}:
+\begin{lstlisting}[style=l4style]
+LinOp[(R: ...), (D: ...)]
+\end{lstlisting}
+for an operator from domain shape \texttt{D} to range shape \texttt{R}, both
+of unknown rank. The order---range, then domain---is the matrix convention in
+disguise. An $m\times n$ matrix is written rows-first ($m$) and maps a
+length-$n$ \emph{domain} to a length-$m$ \emph{range}; the symbol order
+$(m,n)$ is (range, domain). \lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]|
+is the rank-agnostic version of that same $(m,n)$ ordering. Applying the
+operator is then a pair of uses, one for each group:
+\begin{lstlisting}[style=l4style]
+apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[$D] -> Tensor[$R]
+\end{lstlisting}
+the operand is a use of the \emph{domain} group (\lstinline[style=l4style]|$D|);
+the result is a use of the \emph{range} group (\lstinline[style=l4style]|$R|).
+\Cref{fig:sh-operator} draws the flow: a domain-shaped tensor enters, the
+operator carries it across, a range-shaped tensor leaves.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm and 13mm]
+  \node[data, text width=18mm] (in) {input\\\lstinline[style=l4style]|Tensor[$D]|};
+  \node[stage, right=of in, text width=34mm] (op)
+    {\lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]|};
+  \node[data, right=of op, text width=18mm] (out)
+    {output\\\lstinline[style=l4style]|Tensor[$R]|};
+  \draw[flow] (in) -- node[above, font=\scriptsize, simGray] {domain} (op);
+  \draw[flow] (op) -- node[above, font=\scriptsize, simGray] {range} (out);
+  % range-first annotation under the operator
+  \node[font=\scriptsize\itshape, simGray, below=5mm of op, text width=46mm,
+        align=center]
+    {written \emph{range-first}: \texttt{(R: ...)} then \texttt{(D: ...)},\\
+     matching the $m\times n$ (rows $\times$ cols) matrix order};
+  % brace pointing out the (R,D) ordering
+  \draw[decorate, decoration={brace, amplitude=4pt}, simBlue]
+    ([yshift=6mm]op.north west) -- ([yshift=6mm]op.north east)
+    node[midway, above=4pt, font=\scriptsize, simBlue]
+    {range $\leftarrow$ domain};
+\end{tikzpicture}
+\caption[Operator shapes are range-first]{A linear operator names two shape
+groups: a range group \texttt{R} and a domain group \texttt{D}, written
+\emph{range-first} to match the rows-then-columns ordering of an $m\times n$
+matrix. Application \lstinline[style=l4style]|apply_linop op| takes a
+domain-shaped input \lstinline[style=l4style]|Tensor[$D]| and produces a
+range-shaped output \lstinline[style=l4style]|Tensor[$R]|. Both groups are
+rank-agnostic: the operator could map vectors to vectors, fields to fields,
+or one rank to another.}
+\label{fig:sh-operator}
+\end{figure}
+
+\subsection{The square case: \texorpdfstring{$\mat{A}\colon V\to V$}{A : V to V}}
+\label{sec:sh-square}
+
+A great many operators in this book are \emph{endomorphisms}: their domain and
+range are the same space. The system matrix $\mat{K}$ of an eigenproblem, a
+preconditioner $\mat{M}^{-1}$, the time-stepping operator of a transient
+solve---each takes a state vector and returns a vector of the very same shape.
+For these we do not need two independent groups; we bind \emph{one} and use it
+for the range as well:
+\begin{lstlisting}[style=l4style]
+LinOp[(S: ...), $S]
+\end{lstlisting}
+``an operator whose range shape \emph{is} its domain shape \texttt{S}.'' This
+is the operator-shape echo of the congruent \code{axpy} signature: there, the
+two \emph{operands} shared a group; here, the operator's \emph{domain and
+range} share one. Applied, a square operator threads a shape straight through:
+\begin{lstlisting}[style=l4style]
+apply_linop :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]
+\end{lstlisting}
+which is exactly the signature a Krylov solver wants from its operator
+(\cref{ch:matrixfree})---feed it a vector, get back a vector you can feed it
+again.
+
+\begin{workedexample}{An operator-apply congruence check}{sh-matvec}
+\textbf{Setup.} Take the matrix-free mass operator $\mat{M}$ of
+\cref{sec:mf-wex1}, acting on the flat global dof-vector. At L1 the global
+vector is a genuine rank-$1$ object, so we instantiate the square form with a
+concrete rank-$1$ domain.
+\begin{lstlisting}[style=l4style]
+applyM :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]
+\end{lstlisting}
+
+\tcblower
+\textbf{Bind from the operator's domain.} The operator $\mat{M}$ acts on
+length-$N$ dof-vectors, $N=3$ in that example. Instantiating the square
+operator type against $\mat{M}$ resolves
+\[
+  \texttt{S} \;\mapsto\; \texttt{[3]} ,
+\]
+so both the domain and range are \lstinline[style=l4style]|[3]|.
+
+\textbf{Check the operand.} We apply $\mat{M}$ to $\vv=(1,2,3)$, shape
+\lstinline[style=l4style]|[3]|. The required operand shape is
+\lstinline[style=l4style]|$S = [3]|; the supplied $\vv$ is
+\lstinline[style=l4style]|[3]|. \emph{Congruent---check passes.}
+
+\textbf{Check the result.} The result shape is \lstinline[style=l4style]|$S = [3]|.
+The pipeline of \cref{sec:mf-wex1} returned $\mat{M}\vv = (0.667, 2.000, 1.333)$,
+shape \lstinline[style=l4style]|[3]|. \emph{Congruent---and crucially, the
+output can be fed straight back into \code{applyM}}, because its shape is again
+\texttt{S}. That re-feedability is precisely what the square form
+\lstinline[style=l4style]|LinOp[(S: ...), $S]| guarantees, and it is what makes
+the Krylov subspace $\{\vv, \mat{M}\vv, \mat{M}^2\vv, \dots\}$ of
+\cref{ch:matrixfree} type-check at every power.
+\end{workedexample}
+
+\begin{notationbox}
+At the \emph{lowest} layers of the spec---where Palace's operators act on
+genuine flat dof-vectors of a definite length---the older concrete spelling
+\lstinline[style=l4style]|LinearOperator[M, N]| over rank-$1$
+\lstinline[style=l4style]|Tensor[N]| vectors is faithful and is kept. There
+the lengths $M$, $N$ really are single flat-vector lengths, and the rank-$1$
+commitment is correct rather than accidental. The group form
+\lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]| is the rank-agnostic
+\emph{calculus} rendering, used at the higher layers where the same operator
+is described over structured, possibly higher-rank shapes. Both spellings
+coexist; choosing between them is choosing whether the rank is genuinely
+fixed (keep \lstinline[style=l4style]|[N]|) or genuinely open (use a group).
+\end{notationbox}
+
+\section{Named axes of fixed meaning}
+\label{sec:sh-fixedaxes}
+
+There is a second kind of name in our shape brackets, and it is easy to
+confuse with a congruence group until the distinction is drawn sharply. A
+congruence group like \texttt{S} is a \emph{variable}: it stands for whatever
+run of axes the first operand happens to bring, and its whole job is to assert
+that two shapes \emph{agree}. A \emph{named axis of fixed meaning} is the
+opposite: it is a single axis whose letter denotes one specific, fixed
+quantity, the same way \lstinline[style=l4style]|Tensor[H, W, VY=3, VX=3]| of
+\cref{ch:bigidea} names a height, a width, and two velocity axes. \texttt{H}
+is not a congruence variable to be resolved; it is \emph{the height}, always.
+
+The book's recurring family of fixed-meaning axes is the element-local
+vocabulary of the matrix-free kernel, which we met in \cref{ch:matrixfree}.
+Recall its five letters:
+\begin{description}[leftmargin=1.6em, style=nextline, nosep]
+\item[\texttt{E}] the element count---how many mesh elements the operator runs over.
+\item[\texttt{L}] local dofs per element, $(p+1)^d$ for a degree-$p$ element.
+\item[\texttt{P}] quadrature points per element.
+\item[\texttt{C}] value (or derivative) components carried at a quadrature point.
+\item[\texttt{G}] geometry-factor components stored per quadrature point.
+\end{description}
+and its three rank-structured tensors, \lstinline[style=l4style]|Tensor[(E, L)]|,
+\lstinline[style=l4style]|Tensor[(E, P, C)]|, and
+\lstinline[style=l4style]|Tensor[(E, P, G)]|. Each of these five letters has a
+\emph{definite} meaning fixed by the finite-element construction; none of them
+is a back-reference, and none is rank-agnostic.
+\Cref{fig:sh-axis-vs-group} sets the two kinds of name side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % LEFT: fixed-meaning axes E, P, C
+  \begin{scope}[shift={(-3.5,0)}]
+    \node[font=\scriptsize\bfseries, simGreen] at (0.0,1.7)
+      {\lstinline[style=l4style]|Tensor[(E, P, C)]|};
+    \node[font=\scriptsize\itshape, simGray, text width=34mm, align=center]
+      at (0.0,1.25) {fixed-meaning axes};
+    \foreach \i/\lab/\mean in {0/E/{elements},1/P/{quad pts},2/C/{comps}}{
+      \draw[draw=simGreen, fill=simBgGreen, thick]
+        (\i*1.05-0.45,-0.35) rectangle (\i*1.05+0.45,0.35);
+      \node[font=\small, simInk] at (\i*1.05,0) {$\lab$};
+      \node[font=\scriptsize, simGray] at (\i*1.05,-0.75) {\mean};
+    }
+    \node[font=\scriptsize\itshape, simGreen, text width=34mm, align=center]
+      at (0.0,-1.35) {each letter = one fixed quantity\\ (a definite role)};
+  \end{scope}
+  % divider
+  \draw[simGray!40, densely dotted] (-1.05,-1.7) -- (-1.05,2.0);
+  % RIGHT: congruence group S
+  \begin{scope}[shift={(2.0,0)}]
+    \node[font=\scriptsize\bfseries, simBlue] at (0.55,1.7)
+      {\lstinline[style=l4style]|Tensor[(S: ...)] / Tensor[$S]|};
+    \node[font=\scriptsize\itshape, simGray, text width=42mm, align=center]
+      at (0.55,1.25) {congruence variable};
+    \foreach \i in {0,1}{
+      \draw[draw=simBlue, fill=simBgBlue, thick]
+        (\i*0.85,-0.35) rectangle (\i*0.85+0.65,0.35);
+    }
+    \node[font=\scriptsize, simGray] at (1.95,0) {$\cdots$};
+    \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simBlue]
+      (-0.05,-0.5) -- (2.3,-0.5)
+      node[midway, below=4pt, font=\scriptsize, simBlue] {\texttt{S}: any run};
+    \node[font=\scriptsize\itshape, simBlue, text width=42mm, align=center]
+      at (0.55,-1.35) {one name = ``the same run again''\\ (a back-reference, any rank)};
+  \end{scope}
+\end{tikzpicture}
+\caption[Fixed-meaning axis versus congruence group]{Two kinds of name in a
+shape bracket. \emph{Left (green):} a \emph{fixed-meaning axis}---\texttt{E},
+\texttt{P}, \texttt{C} of the matrix-free kernel (\cref{ch:matrixfree}). Each
+letter denotes one specific finite-element quantity; the rank is fixed (here,
+three) and each axis has a definite role. \emph{Right (blue):} a
+\emph{congruence group} \texttt{S}. The single name does not denote a quantity
+at all; it denotes ``the same run of axes as wherever \texttt{S} was bound,''
+of any rank. A fixed-meaning axis answers \emph{what is this axis};
+a congruence group answers \emph{does this shape match that one}.}
+\label{fig:sh-axis-vs-group}
+\end{figure}
+
+\begin{keyidea}
+Distinguish two kinds of name in a shape bracket. A \emph{named axis of fixed
+meaning} (\texttt{E}, \texttt{L}, \texttt{P}, \texttt{C}, \texttt{G};
+\texttt{H}, \texttt{W}) is \emph{one} axis with a definite, permanent role---it
+answers ``what is this axis.'' A \emph{named shape group}
+(\texttt{(S: ...)} / \texttt{\$S}) is a \emph{congruence variable} spanning a
+run of \emph{unknown} rank---it answers ``does this shape match that one.''
+The first is concrete and rank-bearing; the second is abstract and
+rank-agnostic. They share the look of a letter in brackets and nothing else.
+\end{keyidea}
+
+The two kinds even meet at a boundary. The flat global dof-vector is a genuine
+rank-$1$ \lstinline[style=l4style]|Tensor[N]|---neither a fixed-meaning
+element-local axis nor a congruence group, just a flat vector. The gather and
+scatter of \cref{ch:matrixfree} are exactly the crossing between that flat
+\texttt{N} world and the fixed-meaning \lstinline[style=l4style]|(E, L)| world:
+\lstinline[style=l4style]|element_restrict :: ... -> Tensor[N] -> Tensor[(E, L)]|
+turns one flat vector into the element-local family, and its transpose turns it
+back. Three different notational species---a rank-$1$ flat axis, a congruence
+group, a fixed-meaning family---live in the same pipeline, and keeping them
+straight is what makes the pipeline legible.
+
+\section{Scalar promotion: one operator, two scalar types}
+\label{sec:sh-promotion}
+
+So far we have reasoned about \emph{shapes}. There is one rule about
+\emph{element types} that the shape contracts lean on, and it is worth stating
+in its own right because it removes what would otherwise be a swarm of
+near-duplicate operators. It is called \emph{scalar promotion}.
+
+The setting: Palace works with both \emph{real} and \emph{complex} tensors.
+The driven and eigenmode analyses (\cref{ch:targets}) produce complex fields;
+the electrostatic and magnetostatic analyses are real. An operation like
+\code{axpy} therefore comes in a real flavour (real scalar, real vectors) and
+a complex flavour (complex scalar, complex vectors). But there is a third
+combination that arises constantly in practice: a \emph{real} scalar
+multiplying a \emph{complex} vector. A step size, a relaxation weight, a
+quadrature factor---these are real numbers, and they routinely scale complex
+fields.
+
+Rather than mint a separate operator for that mixed case, the calculus admits
+a single typing rule:
+\[
+  \boxed{\ \texttt{real} \;\sqsubseteq\; \texttt{complex}\ }
+\]
+read ``a real scalar may stand wherever a complex scalar is expected,''
+promoted to a complex number with \emph{zero imaginary part}. The promotion is
+\emph{exact}: zero is representable exactly, so $\alpha$ and $\alpha + 0i$ are
+the very same number to the last bit, and every algebraic law of the operator
+holds identically before and after promotion. \Cref{fig:sh-lattice} draws the
+one-step lattice.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  \node[draw=simViolet, fill=simBgViolet, rounded corners=3pt, thick,
+        minimum width=20mm, minimum height=8mm, font=\small] (c) at (0,1.4)
+    {\texttt{complex}};
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=20mm, minimum height=8mm, font=\small] (r) at (0,0)
+    {\texttt{real}};
+  \draw[-{Stealth[length=2.6mm]}, simRust, thick] (r) -- (c)
+    node[midway, right=2mm, font=\scriptsize\itshape, simRust, align=left]
+    {promote:\\ $\alpha \mapsto \alpha + 0i$\\ (exact)};
+  \node[font=\scriptsize\itshape, simGray, left=12mm of {(0,0.7)}, text width=26mm,
+        align=right] at (-2.1,0.7)
+    {the lattice\\ \texttt{real} $\sqsubseteq$ \texttt{complex}};
+  % the forbidden reverse, struck out
+  \draw[-{Stealth[length=2.2mm]}, simGray, dotted] (c.west) to[bend right=40]
+    node[midway, left=1pt, font=\scriptsize, simGray] {\,no} (r.west);
+\end{tikzpicture}
+\caption[The scalar-promotion lattice]{Scalar promotion is the one-step
+ordering \texttt{real} $\sqsubseteq$ \texttt{complex}. A real scalar may be
+\emph{promoted} upward into a complex operation by attaching a zero imaginary
+part, $\alpha \mapsto \alpha + 0i$---exactly, with no rounding. The reverse
+(grey, dotted) is forbidden: a complex scalar cannot be demoted into a real
+operation, because its imaginary part would have nowhere to go. The promotion
+collapses what would otherwise be two near-identical operators (real-scalar
+and complex-scalar overloads) into one.}
+\label{fig:sh-lattice}
+\end{figure}
+
+\begin{definition}[Scalar promotion]
+\label{def:sh-promotion}
+For a tensor operator with scalar arguments and tensor operands of element
+type $T \in \{\texttt{real}, \texttt{complex}\}$:
+if $T = \texttt{complex}$, a scalar argument supplied as \texttt{real} is
+\emph{promoted} to \texttt{complex} by setting its imaginary part to zero, and
+the operator is applied as its complex form. The promotion is exact and the
+operator's algebraic laws are invariant under it. It is a property of the
+\emph{type system}---a coercion at the boundary---not a separate operator.
+\end{definition}
+
+This is the difference between a \emph{typing rule} and an \emph{operator
+variant}. Were the real-scalar-against-complex-vector case a distinct
+operator, every algebraic law would have to be restated for it, every call
+site would have to choose which overload it meant, and every lowering would
+carry the real fast-path as algebraic content. Promoting instead collapses all
+of that: there is one \code{axpy}, its scalar argument's type is lifted by
+\texttt{real} $\sqsubseteq$ \texttt{complex} when the vectors are complex, and
+the laws are written once.
+
+\begin{workedexample}{A real coefficient times a complex field}{sh-promotion}
+\textbf{Setup.} A driven-analysis update scales a complex field $\vx$ by a
+real relaxation weight and adds it to a complex accumulator $\vy$:
+\[
+  \alpha = 0.5 \ (\texttt{real}), \qquad
+  \vx = (1+2i,\; 3-i), \qquad
+  \vy = (i,\; 2),
+\]
+both vectors \lstinline[style=l4style]|Tensor[2]| of \texttt{complex} element
+type. We call \lstinline[style=l4style]|axpy alpha x y|.
+
+\tcblower
+\textbf{Shape side (the group).} The signature
+\lstinline[style=l4style]|axpy :: Scalar -> Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]|
+binds $\texttt{S} \mapsto \texttt{[2]}$ from $\vx$; $\vy$ and the result are
+congruent. \emph{Shape check passes}---this is the same machinery as
+\cref{wex:sh-axpy}, indifferent to the element type.
+
+\textbf{Type side (the promotion).} The vectors are \texttt{complex}, but
+$\alpha = 0.5$ is \texttt{real}. By \texttt{real} $\sqsubseteq$ \texttt{complex}
+it is promoted to $0.5 + 0i$, \emph{exactly}. No separate ``real-times-complex
+axpy'' is invoked; the one complex \code{axpy} runs with a promoted scalar.
+
+\textbf{Compute.}
+\begin{align*}
+  \alpha\vx + \vy
+  &= (0.5{+}0i)\,(1{+}2i,\; 3{-}i) + (i,\; 2) \\
+  &= (0.5{+}i,\; 1.5{-}0.5i) + (i,\; 2)
+   = (0.5 + 2i,\; 3.5 - 0.5i).
+\end{align*}
+The result is \lstinline[style=l4style]|Tensor[2]| complex, congruent to
+\texttt{S}, as the signature promised.
+\end{workedexample}
+
+\subsection{Where promotion does \emph{not} apply}
+\label{sec:sh-promotion-limits}
+
+The rule is deliberately narrow, and its edges matter as much as its content.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Not the reverse direction.} A \emph{complex} scalar against a
+\emph{real} tensor is \emph{not} promoted---there is no demotion. The complex
+scalar's imaginary part has no destination in a real result, so the lattice
+runs one way only (\cref{fig:sh-lattice}, dotted arrow). This combination is a
+type error, not a coercion.
+
+\item \textbf{Not reductions whose output is already a scalar.} An operation
+like \lstinline[style=l4style]|dot :: Tensor[$S] -> Tensor[$S] -> Scalar| has
+no \emph{input} scalar to promote---its scalar is the \emph{output}, and the
+output type is fixed by the vectors' element type (complex vectors give a
+complex result). The same goes for a norm
+\lstinline[style=l4style]|nrm2 :: Tensor[$S] -> Real|, whose result is real
+regardless. Promotion is about an \emph{incoming} scalar argument; a reduction
+has none.
+
+\item \textbf{All-or-none across a scalar tuple.} An operator with several
+scalar arguments (such as
+\lstinline[style=l4style]|axpby :: Scalar -> Tensor[$S] -> Scalar -> Tensor[$S] -> Tensor[$S]|)
+promotes \emph{all} of its scalars together or none. A mixture---one real, one
+complex, against complex vectors---is not part of the contract.
+\end{itemize}
+
+\begin{pitfall}
+Scalar promotion lifts a \texttt{real} scalar \emph{into} a complex operation
+($\alpha \mapsto \alpha + 0i$); it never lifts a complex scalar into a real
+one, and it never touches a reduction's \emph{output} scalar. If you find
+yourself wanting to ``promote'' a complex coefficient down to a real result,
+the type is genuinely wrong---there is no information-preserving way to do it,
+and the calculus rejects it rather than silently discarding the imaginary part.
+\end{pitfall}
+
+\section{The shape equational theory, lightly}
+\label{sec:sh-equational}
+
+One loose end remains in \cref{def:sh-group}: congruence asks that two shapes
+be ``identical axis-for-axis''---but identical in what sense? Sometimes two
+shapes that look different on the page denote the same run of extents. A
+reshape that merges a height axis \texttt{h} and a width axis \texttt{w} into a
+single flattened axis produces an extent written \lstinline[style=l4style]|h*w|;
+an operation that consumes the flattened tensor must recognise
+\lstinline[style=l4style]|h*w| and \lstinline[style=l4style]|w*h| as the same
+length, and \lstinline[style=l4style]|[h, w]| as reshape-compatible with
+\lstinline[style=l4style]|[h*w]|. Shape matching is therefore not raw
+character-by-character comparison; it is comparison \emph{modulo a small
+algebra} of axis extents---the obvious arithmetic, commutative and associative
+in $+$ and $\times$.
+
+For the working purposes of this chapter, two facts suffice. First, when a
+signature reuses a group (\lstinline[style=l4style]|$S| after
+\lstinline[style=l4style]|(S: ...)|) or repeats a shape variable, the matcher
+must (i) agree on \emph{rank}---the same number of axes---and then (ii) agree
+on each axis extent \emph{up to this small algebra}, so that
+\lstinline[style=l4style]|h*w| matches \lstinline[style=l4style]|w*h|. Second,
+the rank check comes first: a rank mismatch fails immediately, which is exactly
+why \lstinline[style=l4style]|Tensor[N]| could never match a rank-$2$ argument
+in \cref{wex:sh-axpy}, regardless of any extent arithmetic. The full,
+formal treatment of this shape algebra---the rewriting system that decides when
+two extent expressions are equal---is deferred to \cref{app:shapes}; the
+intuition above is all the running text needs.
+
+\begin{notationbox}
+A practical consequence: prefer to write a shared shape as a \emph{group} or a
+\emph{variable}, not as an algebraic coincidence. If two operands must agree,
+say so with \lstinline[style=l4style]|(S: ...)| / \lstinline[style=l4style]|$S|
+and let the matcher enforce it. Reserve the extent algebra
+(\lstinline[style=l4style]|h*w| and friends) for the places where a genuine
+reshape or factorisation has \emph{produced} a composite extent. Congruence is
+a contract you assert; the extent algebra is a fact the matcher verifies.
+\end{notationbox}
+
+\summarysection
+A tensor's \emph{rank} is the number of axes in its shape bracket, and the
+naive notation \lstinline[style=l4style]|Tensor[N]| pins that rank to one: it
+names a single axis, so reusing it across operands forces them to agree
+\emph{at rank one}, silently outlawing the matrix and higher-rank cases that
+elementwise operations handle perfectly well. The cure is the \emph{named
+shape group}: \lstinline[style=l4style]|(S: ...)| binds a name to a run of axes
+of \emph{unknown} rank, and a later use \lstinline[style=l4style]|$S| (the
+\texttt{\$} sigil marking a back-reference) asserts a second shape is
+\emph{congruent} to it. This gives \emph{rank-agnostic congruence}: one
+signature, \lstinline[style=l4style]|axpy :: Scalar -> Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]|,
+correct on vectors, matrices, and every higher tensor at once. Operators whose
+domain and range shapes differ name two groups \emph{range-first},
+\lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]|, collapsing to the square
+form \lstinline[style=l4style]|LinOp[(S: ...), $S]| for endomorphisms.
+Congruence groups are \emph{variables} and must be kept distinct from
+\emph{named axes of fixed meaning}---the \texttt{E}/\texttt{L}/\texttt{P}/%
+\texttt{C}/\texttt{G} family of the matrix-free kernel---whose letters denote
+definite, rank-bearing quantities. Finally, \emph{scalar promotion}
+(\texttt{real} $\sqsubseteq$ \texttt{complex}) is a typing rule, not an
+operator variant: a real scalar joins a complex operation by gaining a zero
+imaginary part, exactly, collapsing the real/complex overloads into one
+operator---but never in reverse, and never on a reduction's output scalar.
+
+\furtherreading
+The view of a matrix as a map between shaped spaces, rather than a grid of
+numbers, is the organising idea of Trefethen and
+Bau~\citep{trefethenbau1997}; their opening lectures on matrix--vector
+products and the four fundamental subspaces are the linear-algebra backdrop for
+the range-first operator-shape convention of \cref{sec:sh-operators}. The
+named-axis style of shape annotation---carrying an axis's \emph{meaning} in its
+name---is folklore in the array-programming and tensor-compiler communities;
+the matrix-free element-local family of \cref{sec:sh-fixedaxes} is a concrete
+instance, developed in full in \cref{ch:matrixfree}. The formal shape algebra
+underlying \cref{sec:sh-equational} is collected in \cref{app:shapes}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Rank counting.} For each shape, state the rank and say whether
+  it could be the binding of a group \lstinline[style=l4style]|(S: ...)| in a
+  call where the other operand is a length-$4$ vector:
+  \lstinline[style=l4style]|[4]|, \lstinline[style=l4style]|[2, 2]|,
+  \lstinline[style=l4style]|[4, 1]|, \lstinline[style=l4style]|[]|.
+  (Recall congruence requires agreement on rank \emph{first}.)
+
+  \item \textbf{The wrong signature, again.} A colleague writes a scaling
+  operator as \lstinline[style=l4style]|scale :: Scalar -> Tensor[M] -> Tensor[M]|
+  and reports it ``works fine on all our test vectors.'' Construct the smallest
+  input on which it wrongly fails, and rewrite the signature so it does not.
+
+  \item \textbf{Partial congruence.} Write a signature for an operation that
+  takes two tensors sharing a leading run of axes but each carrying its own
+  \emph{single} trailing axis (lengths \texttt{p} and \texttt{q} respectively),
+  and returns a tensor with the shared run followed by \emph{both} trailing
+  axes. (Hint: \lstinline[style=l4style]|(S: ...)| with two free trailing
+  dims.)
+
+  \item \textbf{Range-first.} An operator maps a rank-$2$ field of shape
+  \lstinline[style=l4style]|[a, b]| to a rank-$1$ vector of shape
+  \lstinline[style=l4style]|[c]|. Write its
+  \lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]| type and the type of its
+  \lstinline[style=l4style]|apply_linop|. Which group is which?
+
+  \item \textbf{Square or not.} Decide for each whether the operator is an
+  endomorphism (deserving \lstinline[style=l4style]|LinOp[(S: ...), $S]|) or a
+  general map (deserving two groups): (a) a preconditioner $\mat{M}^{-1}$;
+  (b) the gather \lstinline[style=l4style]|element_restrict| of
+  \cref{ch:matrixfree}; (c) the time-stepping operator of a transient solve;
+  (d) the basis evaluation $B_{\diffop}$ mapping
+  \lstinline[style=l4style]|[E, L]| to \lstinline[style=l4style]|[E, P, C]|.
+
+  \item \textbf{Axis or group?} For each letter as it appears in the named
+  shape, classify it as a \emph{fixed-meaning axis} or a \emph{congruence
+  group}, and justify: \texttt{E} in \lstinline[style=l4style]|Tensor[(E, L)]|;
+  \texttt{S} in \lstinline[style=l4style]|Tensor[$S]|; \texttt{H} in
+  \lstinline[style=l4style]|Tensor[H, W, VY=3, VX=3]|; \texttt{D} in
+  \lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]|.
+
+  \item \textbf{Promotion or error?} For each call against \texttt{complex}
+  vectors $\vx,\vy$ unless stated, say whether scalar promotion applies, does
+  nothing, or is a type error: (a) \lstinline[style=l4style]|axpy| with a real
+  $\alpha$; (b) \lstinline[style=l4style]|axpy| with a complex $\alpha$ against
+  \emph{real} $\vx,\vy$; (c) \lstinline[style=l4style]|dot x y| (real
+  $\vx,\vy$); (d) \lstinline[style=l4style]|nrm2 x|; (e)
+  \lstinline[style=l4style]|axpby| with one real and one complex scalar.
+
+  \item \textbf{Exactness.} Explain why the promotion $\alpha \mapsto \alpha +
+  0i$ introduces \emph{no} rounding error, and why this exactness is what lets
+  the operator's algebraic laws be stated once rather than twice. Contrast with
+  a hypothetical \texttt{float32} $\sqsubseteq$ \texttt{float64} promotion: is
+  \emph{that} one exact in both directions? Which direction, if either, is safe?
+\end{enumerate}

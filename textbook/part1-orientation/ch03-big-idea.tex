@@ -1,0 +1,466 @@
+\chapter{The Big Idea: Tensor-Field Simulation}
+\label{ch:bigidea}
+
+\chapterorient{We have seen what the simulator computes (\cref{ch:targets}) and
+the stages every run passes through (\cref{ch:lifecycle}). This chapter is about
+the single idea that organizes the whole book---the lens through which we will
+read every operator, every solver, every driver. It is a small idea, and a
+familiar one once you see it: \emph{a simulation is a sequence of transformations
+of immutable arrays of numbers.} Not a program that scribbles over a block of
+memory, but a chain of pure functions, each taking a field and returning a new
+one. By the end you will understand why we choose this lens, what it buys us, and
+the three questions it teaches us to ask of any computation.}
+
+\section{A field is a tensor}
+
+Every analysis in \cref{ch:targets} solves for a \emph{field}: a quantity that
+takes a value at every point of space. The electrostatic analysis solves for the
+potential $V$, one number at each point. The magnetostatic analysis solves for
+the vector potential $\vA$, three numbers at each point. The eigenmode analysis
+solves for a mode field $\vE$, again a vector at each point.
+
+A computer cannot store a value at \emph{every} point---there are infinitely
+many. So the first thing any simulator does is \emph{discretize}: it replaces the
+continuous field with a finite list of numbers, the \emph{degrees of freedom}
+(DoFs), from which the field everywhere can be reconstructed. How that list is
+chosen---which points, which basis functions---is the business of the finite
+element method, and we build it carefully in \cref{part:fieldtheory}. For now,
+only the shape of the answer matters: \emph{a discretized field is a finite,
+ordered collection of numbers}. If a mesh has $N$ degrees of freedom, the
+potential becomes a list of $N$ real numbers; the $\vE$-field becomes a list of
+$N$ numbers too (one per edge degree of freedom).
+
+Such an ordered, rectangular collection of numbers is exactly what we call a
+\emph{tensor}. A list of $N$ numbers is a tensor of shape $[N]$. A grid of $H$
+rows and $W$ columns is a tensor of shape $[H, W]$. A field that stores a
+3-vector at each cell of an $H \times W$ grid is a tensor of shape $[H, W, 3]$.
+The numbers $N$, or $H, W, 3$, are the \emph{axes} of the tensor; each axis has a
+length, and we will increasingly give each axis a \emph{name} so we never lose
+track of what it counts.
+
+\begin{keyidea}
+A discretized field \emph{is} a tensor---a finite, named-axis array of numbers.
+The whole simulator, from this height, is a machine that consumes tensors
+(the mesh, the materials, the excitation) and produces tensors (the solution
+field) and finally small tensors (the capacitance matrix, the table of
+frequencies). To understand the simulator is to understand the transformations
+that carry one tensor to the next.
+\end{keyidea}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % --- left: a field over a mesh, as Tensor[N] ---
+  \begin{scope}[shift={(-3.4,0)}]
+    % little triangulated patch
+    \draw[simGray, semithick] (-0.9,-0.7) -- (0.9,-0.7) -- (0.6,0.7) -- (-0.7,0.6) -- cycle;
+    \draw[simGray, semithick] (-0.9,-0.7) -- (0.6,0.7);
+    \draw[simGray, semithick] (0.9,-0.7) -- (-0.7,0.6);
+    \foreach \p in {(-0.9,-0.7),(0.9,-0.7),(0.6,0.7),(-0.7,0.6),(-0.05,-0.0)}{
+      \fill[simRust] \p circle (1.4pt);}
+    \node[font=\scriptsize\itshape, simGray] at (0,-1.15) {a field on a mesh};
+  \end{scope}
+  \node[font=\Large] at (-1.7,0) {$\rightsquigarrow$};
+  % the Tensor[N] box
+  \node[opbox, minimum width=30mm, minimum height=9mm] (tN) at (0.1,0)
+    {\lstinline[style=l4style]|Tensor[N]|};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of tN]
+    {$N$ degrees of freedom, one axis};
+  % --- right: a multi-axis tensor Tensor[H, W, 3] ---
+  \begin{scope}[shift={(4.6,0)}]
+    \def\dx{0.16}\def\dy{0.10}
+    % a small 3-deep stack of HxW grids to suggest axes
+    \foreach \k/\c in {0/simBgGray,1/simBgBlue,2/simBgRust}{
+      \begin{scope}[shift={(\k*\dx,\k*\dy)}]
+        \fill[\c, draw=simGray] (-0.8,-0.55) rectangle (0.8,0.55);
+        \draw[simGray!60] (-0.8,-0.18) -- (0.8,-0.18);
+        \draw[simGray!60] (-0.8,0.18) -- (0.8,0.18);
+        \draw[simGray!60] (-0.27,-0.55) -- (-0.27,0.55);
+        \draw[simGray!60] (0.27,-0.55) -- (0.27,0.55);
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.15,0.0) {$H$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.85) {$W$};
+    \node[font=\scriptsize, simRust] at (1.15,0.75) {$3$};
+    \node[font=\scriptsize\ttfamily, simInk, below=4mm of {(0,-0.55)}] (lab)
+      at (0.1,-1.0) {Tensor[H, W, 3]};
+  \end{scope}
+\end{tikzpicture}
+\caption[A tensor as a labeled box of axes]{Two tensors, drawn as labeled boxes
+of axes. \emph{Left:} a scalar field on a mesh of $N$ degrees of freedom is a
+one-axis tensor, written \lstinline[style=l4style]|Tensor[N]|. \emph{Right:} a
+field storing a 3-vector at every cell of an $H\times W$ grid is a three-axis
+tensor \lstinline[style=l4style]|Tensor[H, W, 3]|, with named axes $H$, $W$, and
+the length-3 component axis. Reading and reasoning about these shapes is a skill
+we develop in full in \cref{ch:tensors}; here we need only the picture.}
+\label{fig:tensorbox}
+\end{figure}
+
+\Cref{fig:tensorbox} shows the two pictures we will lean on. On the left, a
+scalar field over a mesh, collapsed into a single-axis tensor
+\lstinline[style=l4style]|Tensor[N]|; on the right, a small multi-axis tensor
+\lstinline[style=l4style]|Tensor[H, W, 3]| whose three named axes remind us that
+a tensor is not just ``a big array'' but an array \emph{with structure we can
+name}. We will treat shapes seriously---they are a kind of type, and they catch
+mistakes the way ordinary types do---beginning in \cref{ch:tensors}. In this
+chapter we keep them at arm's length and let the picture do the work.
+
+\section{Two ways to evolve a state}
+
+Now suppose we have our field as a tensor and we want to advance it: collide and
+stream a fluid, take a time step, apply one iteration of a solver. There are two
+very different mental models for ``advancing,'' and the choice between them is the
+true subject of this chapter.
+
+\subsection{The picture you probably have: in-place mutation}
+
+If you have written numerical code in C or Fortran---or read any classical
+simulation textbook---you carry a particular picture of how a field evolves. You
+allocate an array. You loop over its entries. You \emph{overwrite} them in place.
+The canonical inner loop looks like this update of a vector $\vy$ by a scaled
+vector $\vx$ (the operation BLAS calls \texttt{axpy}, for ``$a$ times $x$ plus
+$y$''):
+
+\begin{lstlisting}[style=l4style, language=]
+for (int i = 0; i < n; i++)
+    y[i] = a * x[i] + y[i];     // overwrite y[i] in place
+\end{lstlisting}
+
+\noindent After the loop, the array named \texttt{y} holds different numbers than
+before. The \emph{name} \texttt{y} survived; the \emph{values} it points to were
+destroyed and replaced. There is exactly one block of memory, and it is mutated.
+A whole simulation, in this picture, is a long sequence of such overwrites: the
+same arrays, scribbled over again and again, step after step, until the final
+state is whatever happens to be left in memory when the loop ends.
+
+This picture is not wrong---it is, more or less, what the silicon does, and it is
+why classical simulators are fast. But it has a quiet cost: the meaning of the
+program is tangled up with \emph{when} each overwrite happens. To know what
+\texttt{y} holds, you must know exactly which loop iterations have run and in what
+order. The data and its history are the same thing.
+
+\subsection{The picture we will use: pure functions over immutable values}
+
+Here is the other model. A tensor is a \emph{value}, like the number $7$. You
+never change a value; you only compute new ones from it. The expression $3 + 4$
+does not ``overwrite'' the $3$---it produces a fresh $7$ and leaves $3$ untouched.
+We treat tensors the same way. The \texttt{axpy} update becomes a \emph{pure
+function}: it takes $a$, $\vx$, and $\vy$, and \emph{returns a brand-new tensor},
+leaving its inputs exactly as they were.
+
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]
+axpy a x y = a * x + y      -- returns a FRESH tensor; x and y unchanged
+\end{lstlisting}
+
+\noindent The arrow signature reads ``\texttt{axpy} takes a scalar and two
+length-$N$ tensors and gives back a length-$N$ tensor.'' Nothing is overwritten.
+If we want to advance a state $\vs$ repeatedly, we do not loop over memory; we
+\emph{thread a sequence of distinct values} through a step function:
+\[
+  \vs_0 \;\xrightarrow{\;\mathrm{step}\;}\; \vs_1
+        \;\xrightarrow{\;\mathrm{step}\;}\; \vs_2
+        \;\xrightarrow{\;\mathrm{step}\;}\; \cdots
+\]
+Each $\vs_{k+1} = \mathrm{step}(\vs_k)$ is a fresh tensor produced from the one
+before it. The old states still ``exist'' as values---we simply stop referring to
+them, and the machine is free to reclaim their memory. \Cref{fig:mutvalue}
+draws the two models side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  % ============ LEFT: in-place mutation ============
+  \begin{scope}
+    \node[font=\bfseries\small, simRust] at (0,2.55) {In-place mutation};
+    % a single memory cell, mutated across steps
+    \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+          minimum width=20mm, minimum height=9mm] (cell) at (0,1.3)
+      {\ttfamily y};
+    \node[font=\scriptsize\itshape, simGray, right=1mm of cell]
+      {one block of memory};
+    % self-loop "overwrite" arrows
+    \draw[backflow] (cell.north west) to[out=140,in=40,looseness=5]
+      node[above,font=\scriptsize]{\texttt{y := a*x + y}} (cell.north east);
+    \node[font=\scriptsize, simRust] at (0,-0.05) {step 1};
+    \node[font=\scriptsize, simRust] at (0,-0.55) {step 2};
+    \node[font=\scriptsize, simRust] at (0,-1.05) {step 3};
+    \draw[backflow] (-1.0,-0.05) -- (cell.south west);
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=34mm]
+      at (0,-1.85) {the same cell, scribbled over again and again};
+  \end{scope}
+  % ============ RIGHT: value threading ============
+  \begin{scope}[shift={(6.6,0)}]
+    \node[font=\bfseries\small, simBlue] at (0,2.55) {Value threading};
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=13mm, minimum height=8mm] (s0) at (0,1.4) {$\vs_0$};
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=13mm, minimum height=8mm] (s1) at (0,0.0) {$\vs_1$};
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=13mm, minimum height=8mm] (s2) at (0,-1.4) {$\vs_2$};
+    \draw[flow] (s0) -- node[right,font=\scriptsize]{\texttt{step}} (s1);
+    \draw[flow] (s1) -- node[right,font=\scriptsize]{\texttt{step}} (s2);
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=36mm]
+      at (0,-2.25) {distinct immutable tensors, each produced from the last};
+  \end{scope}
+\end{tikzpicture}
+\caption[Array mutation versus value threading]{The same computation under two
+memory models. \emph{Left:} one block of memory named \texttt{y} is overwritten
+in place, step after step; to know what it holds you must know how many steps have
+run. \emph{Right:} each step is a pure function producing a \emph{fresh}
+immutable tensor $\vs_{k+1}$ from $\vs_k$; the states are distinct values and the
+chain of arrows \emph{is} the computation's history.}
+\label{fig:mutvalue}
+\end{figure}
+
+\begin{pitfall}
+The value-threading picture does \emph{not} mean we keep every intermediate
+tensor in memory forever, nor that we copy a giant array on every step. It is a
+statement about \emph{meaning}, not about machine resources. An implementation is
+free to reuse the storage of $\vs_k$ for $\vs_{k+1}$ once nothing else refers to
+$\vs_k$---exactly the in-place overwrite, recovered as an optimization. We are
+choosing how to \emph{describe} the computation, not forbidding the compiler from
+being clever. \Cref{ch:monad} makes this reuse precise.
+\end{pitfall}
+
+\subsection{Same algorithm, two memory models}
+
+It is worth seeing, plainly, that these two pictures compute \emph{the same
+thing}. Whether we overwrite \texttt{y} in place or thread a chain of fresh
+tensors $\vs_0 \to \vs_1 \to \vs_2$, the arithmetic performed is identical and so
+is the final answer. \Cref{fig:twomodels} makes this concrete: one dependency
+graph, the bare sequence of arithmetic operations, annotated twice---once as
+overwrites of a single cell, once as a chain of values.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=11mm]
+  % the shared op chain
+  \node[opbox, minimum width=14mm] (a) {step};
+  \node[opbox, minimum width=14mm, right=14mm of a] (b) {step};
+  \node[opbox, minimum width=14mm, right=14mm of b] (c) {step};
+  \node[data, left=10mm of a] (in) {field};
+  \node[data, right=10mm of c] (out) {result};
+  \draw[flow] (in) -- (a);
+  \draw[flow] (a) -- (b);
+  \draw[flow] (b) -- (c);
+  \draw[flow] (c) -- (out);
+  % mutation annotation (above, rust)
+  \node[font=\scriptsize, simRust] at ($(in)+(0,0.62)$) {\texttt{y}};
+  \node[font=\scriptsize, simRust] at ($(a)!0.5!(b)+(0,0.62)$) {\texttt{y}};
+  \node[font=\scriptsize, simRust] at ($(b)!0.5!(c)+(0,0.62)$) {\texttt{y}};
+  \node[font=\scriptsize, simRust] at ($(c)!0.5!(out)+(0,0.62)$) {\texttt{y}};
+  \node[font=\scriptsize\itshape, simRust, anchor=west] at (-3.0,0.62)
+    {as mutation:};
+  % value annotation (below, blue)
+  \node[font=\scriptsize, simBlue] at ($(in)+(0,-0.62)$) {$\vs_0$};
+  \node[font=\scriptsize, simBlue] at ($(a)!0.5!(b)+(0,-0.62)$) {$\vs_1$};
+  \node[font=\scriptsize, simBlue] at ($(b)!0.5!(c)+(0,-0.62)$) {$\vs_2$};
+  \node[font=\scriptsize, simBlue] at ($(c)!0.5!(out)+(0,-0.62)$) {$\vs_3$};
+  \node[font=\scriptsize\itshape, simBlue, anchor=west] at (-3.0,-0.62)
+    {as values:};
+\end{tikzpicture}
+\caption[One algorithm, two annotations]{The same dependency graph, annotated
+twice. The boxes are the actual arithmetic; the chain of arrows is fixed. Read it
+along the top (rust) and every arrow carries the \emph{same name} \texttt{y}---a
+single cell, overwritten three times. Read it along the bottom (blue) and every
+arrow carries a \emph{distinct value} $\vs_k$---a chain of immutable tensors. The
+two readings are the same computation; they differ only in what the names mean.}
+\label{fig:twomodels}
+\end{figure}
+
+This is the crucial observation, and it is liberating: \emph{choosing the
+value-threading reading costs us nothing in the final answer.} It is a change of
+\emph{description}, not of algorithm. So if it costs nothing, why prefer it? The
+next section is the answer.
+
+\section{Why the pure picture pays}
+
+Three payoffs, in increasing order of how much they shape the rest of the book.
+
+\paragraph{The data flow becomes the dependency graph.}
+In the mutation picture, the arrows in \cref{fig:twomodels} are implicit---you
+recover them by tracing which loop reads which array after which write. In the
+value picture, the arrows are \emph{explicit and literal}: $\vs_1$ is the input to
+the step that makes $\vs_2$, full stop. A pure function's output depends on
+exactly its inputs and nothing else---no hidden global it quietly read, no array
+some other loop overwrote behind its back. So the program text \emph{is} the
+mathematical dependency graph. This is not a metaphor; it is what lets us, later,
+read off an algorithm's structure---what it iterates, what it folds, what it can
+do in parallel---directly from its written form (\cref{ch:fold}).
+
+\paragraph{Pure pieces compose without surprises.}
+Because a pure step depends only on its inputs, two steps that do not share an
+input cannot interfere, and a step behaves the same no matter what ran before it.
+This makes the pieces \emph{composable}: we can snap them together, reason about
+each in isolation, substitute one implementation for another, and trust that the
+whole behaves as the sum of its parts. Half of this book is the discovery that
+six very different-looking simulators are built from one small set of such pieces,
+combined in slightly different ways. That discovery is only possible because the
+pieces compose cleanly---which is only true because they are pure.
+
+\paragraph{The pure picture is the one the accelerator wants.}
+Our eventual target is not a single CPU walking an array one entry at a time; it
+is a GPU (or another massively parallel backend) applying an operation to
+\emph{all} entries of a tensor at once. Such hardware is happiest when told ``here
+is an immutable input tensor; produce an output tensor''---a pure, whole-tensor
+transformation with no aliasing and no ordering hazards to police. The
+value-threading description is, almost word for word, the form these backends
+consume. We call this the \emph{implementation view}: the same spec, read as a
+library of pure tensor functions ready to lower onto an accelerator. It is the
+destination of the whole book, assembled explicitly in \cref{part:collection}.
+
+\begin{keyidea}
+Mutation and value-threading compute the same answer, so the choice is free---and
+we spend that freedom on the pure picture because it makes the \emph{data flow
+explicit} (the program text is the dependency graph), makes the \emph{pieces
+compose} (pure functions don't interfere), and matches the \emph{accelerator
+backend} (whole-tensor, no aliasing). Clarity, composability, and the GPU: three
+reasons, one decision.
+\end{keyidea}
+
+\section{A physical analogy: stream, then collide}
+
+A small physical example makes the ``make a new state from the old one'' rhythm
+concrete. The lattice-Boltzmann method simulates a fluid by tracking, at each cell
+of a grid, how much fluid is moving in each of a few discrete directions---a
+little tensor of \emph{populations} per cell. One time step has two sub-steps. In
+\emph{streaming}, every population slides to the neighboring cell in its
+direction. In \emph{collision}, the populations within each cell relax toward a
+local equilibrium. Stream, then collide; that is one step.
+
+In a classical code this is a nest of loops overwriting a population array in
+place. In our picture it is a pure function from the old state to a fresh one:
+
+\begin{lstlisting}[style=l4style]
+step :: FluidState -> FluidState
+step s =
+  let streamed = stream  s.populations in   -- slide to neighbors
+  let collided = collide streamed       in   -- relax toward equilibrium
+  { ...s, populations: collided, t: s.t + 1 }
+\end{lstlisting}
+
+\noindent The step reads the current state \texttt{s}, computes two intermediate
+tensors (\texttt{streamed}, then \texttt{collided}), and returns a \emph{new}
+record with the advanced populations and an incremented step count. Nothing is
+overwritten. A whole simulation is just this step, applied again and again to its
+own output---exactly the $\vs_0 \to \vs_1 \to \vs_2$ chain of
+\cref{fig:mutvalue}. Our solvers will have the same shape: a step that turns one
+field-state into the next, threaded through an iteration. We have borrowed the
+fluid's rhythm; we will reuse it for time integration in \cref{ch:transient} and,
+combinator by combinator, throughout \cref{part:framework}.
+
+\begin{physicsbox}
+``Stream then collide'' is the lattice-Boltzmann heartbeat, but the
+\emph{shape}---read the current state, compute a fresh next state, advance a
+counter---is universal. A time-domain Maxwell step does it. One iteration of a
+linear solver does it. One round of mesh refinement does it. Every sequential
+computation in this book is a step function threaded through an iteration; the
+physics only changes what happens \emph{inside} the step.
+\end{physicsbox}
+
+\section{Three questions the calculus asks}
+
+We have made one decision---describe simulations as pure transformations of
+immutable tensors. To turn that decision into a working language, we will, in
+\cref{part:framework}, build a small \emph{calculus}: a tiny, precise notation for
+exactly these transformations. We close this chapter with a first look at the
+three questions that calculus is organized to answer. You have already met all
+three informally in this chapter; naming them now plants the signposts for
+Part~III.
+
+\begin{enumerate}[label=\textbf{Q\arabic*.}, leftmargin=*]
+  \item \textbf{What operations happen?} The verbs---the primitive
+  transformations and the named combinations of them. \texttt{axpy} is a verb;
+  \texttt{stream} and \texttt{collide} are verbs; ``apply this operator,''
+  ``take this inner product,'' ``assemble this matrix'' are verbs. Pinning down
+  the vocabulary of operations, each with its shape signature like
+  \lstinline[style=l4style]|axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]|,
+  is the work of \cref{ch:tensors} and \cref{ch:operators}.
+
+  \item \textbf{Who owns the state?} Not every value plays the same role. The
+  evolving field-state is threaded from step to step; a solver's matrix entries
+  are fixed once and only read; a step's scratch intermediates live and die
+  inside one step. Keeping these straight---which values evolve, which are
+  read-only parameters, which are ephemeral---is what lets us thread state purely
+  without losing track of it. \Cref{ch:monad} gives this its own discipline,
+  the \emph{state monad}, and shows that the entire ``mutation'' of a solve is one
+  carefully placed write.
+
+  \item \textbf{How is state evolution coordinated?} A list of verbs is not yet an
+  algorithm; something must say \emph{do this, then this, repeat until converged,
+  collect the results}. That coordination---sequencing, iteration, convergence
+  tests, mapping over a family---is itself made of a few reusable shapes we call
+  \emph{combinators}. The most important is the \emph{fold}: apply a step to its
+  own output, over and over, threading a state through. \Cref{ch:fold} is built
+  around it.
+\end{enumerate}
+
+\begin{notationbox}
+These three questions---\emph{what operations}, \emph{who owns state}, \emph{how
+coordinated}---are exactly the three axes the formal calculus separates, and they
+are the spine of \cref{part:framework}: one question per cluster of chapters
+(verbs and shapes; the state monad; the fold and its relatives). Whenever a later
+chapter feels intricate, return here and ask which of the three it is answering.
+\end{notationbox}
+
+We now have the lens. \Cref{ch:situating} uses it immediately: it lays the six
+analyses of \cref{ch:targets} onto this framework, showing that the ``solve''
+stage of every one is one of just four coordination shapes---four ways of
+threading the step. With that, Part~I is complete, and we can begin building the
+field theory and the calculus the rest of the book rests on.
+
+\summarysection
+A discretized field is a \emph{tensor}: a finite, named-axis array of numbers, the
+degrees of freedom collected into a rectangular shape like
+\lstinline[style=l4style]|Tensor[N]| or \lstinline[style=l4style]|Tensor[H, W, 3]|.
+A simulation is a sequence of transformations of such tensors. There are two ways
+to describe ``transformation.'' The classical one---\emph{in-place mutation}---
+overwrites a single block of memory step after step, tangling a value with the
+history of writes that produced it. The one we adopt---\emph{pure functions over
+immutable values}---threads a chain of distinct tensors $\vs_0 \to \vs_1 \to
+\cdots$, each freshly produced from the last. The two compute the same answer, so
+the choice is free; we spend it on the pure picture because it makes the data flow
+into an explicit dependency graph, makes the pieces compose without interference,
+and matches the whole-tensor form a GPU/accelerator backend wants (the
+implementation view). The lattice-Boltzmann ``stream then collide'' step is the
+prototype of the step functions our solvers thread. Finally, the calculus we build
+in Part~III is organized around three questions: \emph{what operations happen},
+\emph{who owns the state}, and \emph{how state evolution is coordinated}.
+
+\furtherreading
+The shift from mutable arrays to pure functions over immutable values is the
+central idea of functional programming; the classic, readable entry points are
+Wadler's exposition of how monads tame state and effects in a pure
+language~\citep{wadler1995monads}, and the standard reference for the language
+that crystallized these ideas~\citep{peytonjones2003}. No functional-programming
+background is assumed---\cref{ch:monad} builds the state monad we will need from
+scratch. The tensor-and-shape model previewed here is developed fully in
+\cref{ch:tensors}; the fold, our central combinator, in \cref{ch:fold}. Readers
+who want the physical analogy in depth will find the lattice-Boltzmann method in
+any computational fluid dynamics text; we use only its rhythm, not its details.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item A scalar potential on a mesh with $N=10^6$ degrees of freedom, and an
+  $\vE$-field on the same mesh, are both stored as
+  \lstinline[style=l4style]|Tensor[N]|. What does the single axis $N$ count in
+  each case, and why is it the \emph{same} $N$? (Hint: revisit which degrees of
+  freedom each field lives on; the full story is \cref{ch:functionspaces}.)
+  \item Write the \texttt{axpy} update $y \leftarrow a x + y$ once as a C-style
+  in-place loop and once as a pure function returning a fresh tensor. For each,
+  state precisely what is true of the input \texttt{x} and the input \texttt{y}
+  \emph{after} the operation completes.
+  \item In \cref{fig:twomodels} the two readings differ only in what the names on
+  the arrows mean. Explain why a compiler is nonetheless free to \emph{implement}
+  the value-threading reading as in-place mutation. What condition on $\vs_k$ must
+  hold for it to reuse that tensor's storage for $\vs_{k+1}$?
+  \item Three of this chapter's payoffs were: explicit dependency graph,
+  composability, accelerator-friendliness. For each, give a one-sentence reason it
+  is a \emph{consequence of purity}---that is, of a step depending on nothing but
+  its declared inputs.
+  \item The lattice-Boltzmann \texttt{step} returns
+  \lstinline[style=l4style]|{ ...s, populations: collided, t: s.t + 1 }|, a fresh
+  record. Rewrite ``stream then collide'' as a description that mutates a single
+  population array in place, and identify the one place where the pure version's
+  meaning would become ambiguous if two such steps were run on overlapping memory.
+\end{enumerate}

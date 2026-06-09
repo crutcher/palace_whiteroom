@@ -1,0 +1,801 @@
+\chapter{Eigenmodes: Resonant Frequencies and Q}
+\label{ch:eigenmodes}
+
+\chapterorient{We have studied electrostatics (\cref{ch:electrostatics}) as the
+anchor pipeline: \texttt{assemble} an operator once, run a family of independent
+solves over it, and \texttt{reduce} the results to a physical product. This
+chapter takes that same skeleton and swaps exactly one corner---the
+\texttt{solve}. Instead of a linear solve we write ourselves, the eigenmode
+analysis hands the whole assembled problem to an opaque eigenvalue library and
+receives the answer. It is the fourth solve corner from \cref{ch:situating}: the
+black box. We will see that almost everything else about the pipeline is
+unchanged, that the one Palace-written loop is the harmless post-processing
+readout, and that the price of the black box is a subtlety---spurious
+non-physical modes---that we must handle \emph{before} the solve, not after.}
+
+\section{The physical question: how does a cavity ring?}
+
+Strike a wine glass and it sings at a definite pitch. Pluck a guitar string and
+it vibrates at a fundamental frequency plus a ladder of overtones. A closed
+electromagnetic cavity---a hollow metal box, a superconducting resonator, a
+dielectric puck---does exactly the same thing with electromagnetic fields. With
+\emph{no external drive at all}, the cavity supports a discrete set of standing
+electromagnetic oscillations, its \emph{resonant modes}. Each mode rings at its
+own \emph{resonant frequency} $f$, decays at its own rate (captured by a
+\emph{quality factor} $Q$), and has its own spatial pattern of $\vE$ and $\vB$
+(\cref{fig:cavity-setup}). The eigenmode analysis computes the lowest few of
+these---typically the handful of modes nearest some target frequency---because
+those are the ones that matter for a filter passband, a qubit's readout
+resonator, or an accelerator cavity.
+
+\begin{physicsbox}
+A \emph{closed} cavity is a region of space bounded (mostly) by conducting
+walls, with no source inside and no port feeding energy in. Maxwell's equations
+on such a domain are \emph{homogeneous}: there is no right-hand side. A
+homogeneous linear system has only the trivial solution $\vE=\mathbf 0$
+\emph{except} at special frequencies, where a nonzero field can sustain itself.
+Those special frequencies are the resonant frequencies; the self-sustaining
+fields are the modes. Physically, the cavity is a trap: a mode is a field
+pattern that bounces between the walls and reinforces itself, neither growing nor
+(in the ideal lossless case) decaying. Finding the modes is therefore not a
+matter of \emph{driving} the cavity and seeing what comes out---it is a matter of
+asking \emph{at what frequencies can the cavity oscillate on its own?}
+\end{physicsbox}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % cavity walls
+  \draw[thick, simInk, fill=simBgGray] (0,0) rectangle (6.2,3.0);
+  \node[anchor=south west, font=\scriptsize, text=simGray] at (0.05,3.02)
+    {conducting walls (PEC): $\vn\times\vE=\mathbf 0$};
+  % standing-wave E field pattern (vertical arrows, sin envelope)
+  \foreach \x in {0.4,0.8,...,5.8}{
+    \pgfmathsetmacro{\amp}{1.05*sin(deg(pi*\x/6.2))}
+    \draw[->, simBlue, thick] (\x,1.5) -- (\x,{1.5+\amp});
+    \draw[->, simBlue, thick] (\x,1.5) -- (\x,{1.5-\amp});
+  }
+  % envelope
+  \draw[densely dashed, simRust, semithick, domain=0:6.2, samples=80, smooth]
+    plot (\x,{1.5+1.15*sin(deg(pi*\x/6.2))});
+  \draw[densely dashed, simRust, semithick, domain=0:6.2, samples=80, smooth]
+    plot (\x,{1.5-1.15*sin(deg(pi*\x/6.2))});
+  \node[text=simBlue] at (3.1,2.85) {$\vE$};
+  \node[text=simRust, anchor=west, font=\scriptsize] at (6.25,2.4)
+    {standing-wave envelope};
+  % half-wavelength bracket
+  \draw[<->, simGreen, thick] (0,0.25) -- (6.2,0.25)
+    node[midway, fill=simBgGray, inner sep=1pt, text=simGreen]
+      {$L=\tfrac{1}{2}\lambda$ (fundamental)};
+\end{tikzpicture}
+\caption[A cavity's lowest mode]{The fundamental mode of a closed cavity. With no
+external drive, the field cannot escape the conducting walls (the perfect-electric-conductor
+boundary forces the tangential $\vE$ to vanish there, \cref{ch:bc}), so it forms a
+standing wave: an electric-field pattern (blue) whose amplitude follows a fixed
+spatial envelope (dashed) and oscillates in time at the resonant frequency. The
+fundamental fits exactly half a wavelength across the cavity, $L=\tfrac12\lambda$;
+higher modes fit more half-wavelengths and ring at higher frequencies. The
+eigenmode analysis computes these patterns and their frequencies directly, from
+the geometry alone.}
+\label{fig:cavity-setup}
+\end{figure}
+
+\subsection{The same skeleton, one corner swapped}
+
+In \cref{ch:situating} we reduced every Palace analysis to one skeleton,
+\[
+  \texttt{config} \to \texttt{assemble} \to \texttt{solve}
+  \to \texttt{reduce} \to \texttt{product},
+\]
+and we placed electrostatics (\cref{ch:electrostatics}) at its center as the
+universal anchor. Eigenmode analysis is the \emph{same machine} with a single
+part swapped---but the part it swaps is the most consequential one. In
+electrostatics the \texttt{solve} stage is a \emph{fixed-operator map}: assemble
+the stiffness $\Kop$ once, then call our own linear solver $\Kop\vx_i=\vb_i$ once
+per conductor, in a loop we write and control (\code{solve\_family}). In the
+eigenmode analysis the \texttt{solve} stage is not a linear solve at all, and
+there is no loop we write: we assemble the operator pencil, hand it whole to an
+eigenvalue library, and get the converged modes back from a single call.
+
+\begin{keyidea}
+The eigenmode pipeline is the anchor pipeline with the solve corner replaced.
+Electrostatics solves $\Kop\vx_i=\vb_i$ in a Palace-written loop; the eigenmode
+analysis solves the \emph{eigenproblem} $\Kop\vx=\lambda\Mop\vx$, and the entire
+iteration that does so lives \emph{inside an opaque library}. Palace writes no
+solve loop here at all. \emph{The only loop Palace writes in the eigenmode driver
+is the post-processing readout map over the modes the library already
+converged.} This is the fourth solve corner of \cref{ch:situating}: the opaque
+black box.
+\end{keyidea}
+
+The rest of this chapter walks the three stages in order---assemble, the
+black-box solve, reduce---then handles the one subtlety the black box forces on
+us (spurious modes), and closes by reading out the mode fields and naming a few
+applications.
+
+\section{Assemble: the eigenproblem pencil, built once}
+\label{sec:eig-assemble}
+
+The assemble stage is almost unchanged from the anchor. We build operators by
+folding weak-form terms over the finite-element space (\cref{ch:fem}); the only
+difference is \emph{which} operators, and that there is more than one.
+
+The fields live in the Nédélec edge-element space $\Hcurl$ (\cref{ch:functionspaces}),
+the natural home for $\vE$: it builds tangential continuity across element faces
+into the basis, exactly matching the physics of an electric field at a material
+interface. On that space we assemble up to three operators:
+\begin{itemize}[nosep]
+  \item the \textbf{curl--curl stiffness} $\Kop$, the discretization of
+  $\Curl(\nu\,\Curl\,\cdot\,)$ where $\nu=1/\mu$ is the reluctivity---this is the
+  ``spring constant'' of the electromagnetic field, the operator that resists
+  curvature;
+  \item the \textbf{mass} $\Mop$, the discretization of $\varepsilon\,(\cdot)$
+  weighted by permittivity---the ``inertia'' of the field;
+  \item optionally the \textbf{damping} $\Cop$, present only when the cavity is
+  \emph{lossy} (finite wall conductivity, lossy dielectric, or a resistive
+  port)---the operator that drains energy.
+\end{itemize}
+All three come from the same assemble fold we have used since \cref{ch:fem}; in
+the source they are three calls,
+\lstinline[style=l4style]|GetStiffnessMatrix|,
+\lstinline[style=l4style]|GetDampingMatrix|, and
+\lstinline[style=l4style]|GetMassMatrix|, each run \emph{once}.
+
+\subsection{Lossless: the generalized eigenproblem}
+
+When the cavity is lossless, $\Cop$ is absent and Maxwell's source-free
+time-harmonic equation, discretized, becomes a \emph{generalized eigenvalue
+problem} (\cref{ch:reductions-pde}):
+\begin{equation}
+  \Kop\,\vx \;=\; \lambda\,\Mop\,\vx,
+  \qquad \lambda = \omega^2,
+  \label{eq:gevp}
+\end{equation}
+where $\vx$ is the vector of degrees of freedom of the mode field $\vE$, the
+eigenvalue $\lambda$ is the squared angular frequency $\omega^2$, and the
+eigenvector $\vx$ \emph{is} the discretized mode. This is exactly the generalized
+EVP we met abstractly in \cref{ch:reductions-pde} and studied numerically in
+\cref{ch:eigenvalues}; here it arrives with a concrete physical reading. Each
+eigenpair $(\lambda,\vx)$ is one resonance: $\omega=\sqrt\lambda$ is its angular
+frequency, $\vx$ is its field pattern.
+
+\begin{notationbox}
+The eigenvalue is the \emph{square} of the angular frequency, $\lambda=\omega^2$,
+not the frequency itself. This is the single most important bookkeeping fact in
+the chapter. It means the solver returns $\lambda$, and the readout must
+\emph{un-transform} it---$\omega=\sqrt\lambda$---to get a frequency, then divide
+by $2\pi$ to get the ordinary frequency $f=\omega/2\pi$ in hertz. Forgetting the
+square root, or the $2\pi$, is the classic first-run-off-by-a-lot bug. We meet
+the un-transform again in \cref{sec:eig-reduce}.
+\end{notationbox}
+
+\subsection{Lossy: the quadratic eigenproblem}
+
+When the cavity loses energy, the damping operator $\Cop$ enters and the problem
+becomes \emph{quadratic} in the eigenvalue (\cref{ch:reductions-pde}):
+\begin{equation}
+  \bigl(\Kop + \lambda\,\Cop + \lambda^2\,\Mop\bigr)\,\vx \;=\; \mathbf 0,
+  \qquad \lambda = i\,\omega.
+  \label{eq:qevp}
+\end{equation}
+Now $\lambda$ is not $\omega^2$ but $i\omega$, so a lossy mode's eigenvalue is
+\emph{complex}: its imaginary part carries the frequency and its real part the
+decay rate. The quadratic form is what lets a mode decay---the term linear in
+$\lambda$ couples frequency to loss. We do not solve \cref{eq:qevp} by hand;
+\cref{ch:eigenvalues} showed how a quadratic eigenproblem is linearized into a
+larger ordinary one that the same library swallows. For our purposes the
+quadratic case differs from the linear case only in (i) which operators the
+pencil carries, and (ii) how the eigenvalue un-transforms to $\omega$. Both
+differences are absorbed into the single \emph{problem-type} parameter the solve
+takes; the shape of the pipeline does not change.
+
+\begin{definition}[The operator pencil]
+The \emph{pencil} is the bundle of assembled operators handed to the eigensolver:
+the pair $(\Kop,\Mop)$ for the linear generalized eigenproblem \cref{eq:gevp}, or
+the triple $(\Kop,\Cop,\Mop)$ for the quadratic eigenproblem \cref{eq:qevp},
+together with a spectral-transform target $\sigma$ (\cref{ch:eigenvalues}) telling
+the solver \emph{which} part of the spectrum we want. The pencil is assembled
+exactly once; nothing in the solve mutates it.
+\end{definition}
+
+\begin{keyidea}
+Assembly produces an operator \emph{pencil}, not a single matrix: $(\Kop,\Mop)$
+for a lossless cavity (the generalized EVP $\Kop\vx=\lambda\Mop\vx$,
+$\lambda=\omega^2$) or $(\Kop,\Cop,\Mop)$ for a lossy one (the quadratic EVP
+$(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$, $\lambda=i\omega$). It is built
+\emph{once}, exactly like the single $\Kop$ of electrostatics---the assemble
+corner is shared; only the count and the meaning of the operators differ.
+\end{keyidea}
+
+\section{Solve: the opaque black box}
+\label{sec:eig-solve}
+
+Here is where the pipeline diverges sharply from the anchor. We have the pencil.
+What do we do with it?
+
+In electrostatics we would now write a loop: for each right-hand side, call our
+own conjugate-gradient or direct solver, collect the answer. We control that
+loop; we can see every linear solve it performs; the iteration is
+\emph{ours}. The eigenmode analysis does nothing of the kind. We make a single
+call,
+\[
+  \texttt{eigs} \;=\; \texttt{eigsolve}\;\bigl(\text{pencil},\ \sigma,\
+  n_{\text{modes}}\bigr),
+\]
+handing the entire assembled problem---operators, target, requested mode
+count---to a specialized eigenvalue library (SLEPc or ARPACK in Palace's case,
+\cref{ch:eigenvalues}). The library runs its own sophisticated iteration, a
+Krylov--Schur or Arnoldi process with a shift-and-invert spectral transform
+(\cref{ch:krylovschur}), and returns the converged eigenpairs. We do not write
+that iteration. We do not see it. We see one call and its result
+(\cref{fig:eig-pipeline}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 10mm, font=\small]
+  \node[data] (cfg) {config};
+  \node[stage, right=of cfg, align=center] (asm)
+    {assemble\\pencil};
+  \node[extern, right=of asm, minimum width=22mm, minimum height=11mm,
+        align=center] (solve) {\textbf{eigsolve}\\\scriptsize SLEPc / ARPACK};
+  \node[stage, right=of solve, align=center] (map) {map\\readout};
+  \node[product, right=of map, align=center] (prod) {$(f,Q)$\\table};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above, font=\scriptsize]{$(\Kop,\Cop,\Mop),\sigma$} (solve);
+  \draw[flow] (solve) -- node[above, font=\scriptsize]{eigenpairs} (map);
+  \draw[flow] (map) -- (prod);
+  % the library's hidden inner loop: callback for operator apply
+  \draw[refedge] (solve.south) ++(0,-1mm)
+    .. controls +(0,-7mm) and +(0,-7mm) .. ($(solve.south)+(0,-1mm)$)
+    node[midway, below, font=\scriptsize, text=simViolet, align=center]
+      {hidden inner loop:\\Krylov--Schur + shift-invert\\(calls back for $\mathbf{A}\vx$)};
+  % the one Palace-written loop annotation
+  \node[font=\scriptsize, text=simGreen, align=center, below=2mm of map]
+    {the \emph{only} loop\\Palace writes};
+\end{tikzpicture}
+\caption[The eigenmode pipeline]{The eigenmode pipeline, drawn to contrast with
+the electrostatic anchor (\cref{ch:electrostatics}). Assembly builds the operator
+pencil once. The \texttt{eigsolve} box is dashed and violet---the convention of
+\cref{ch:situating} for a corner where \emph{we write no loop}: the entire
+eigen-iteration (Krylov--Schur with shift-and-invert, \cref{ch:krylovschur})
+happens inside the library, which only calls back out to us for the operator
+application $\mathbf A\vx$. The single Palace-written loop is the post-processing
+\texttt{map readout} (green) that turns each converged eigenpair into a row of the
+$(f,Q)$ table. Compare \cref{ch:electrostatics}, where the solve box is a solid
+Palace-written \code{solve\_family} loop instead of a black box.}
+\label{fig:eig-pipeline}
+\end{figure}
+
+\subsection{The black box still calls back}
+
+``Opaque'' does not mean ``self-contained.'' The library does not know what
+$\Kop$, $\Cop$, or $\Mop$ \emph{are}; it knows only that it can ask us to apply
+them. The shift-and-invert spectral transform (\cref{ch:eigenvalues}) needs to
+apply the operator $(\Kop-\sigma\Mop)^{-1}\Mop$ to a vector on every inner step,
+and \emph{that inverse is itself a linear solve}. So the library, mid-iteration,
+calls back into our code asking us to apply the operator---and to apply that
+inverse we run one of our own linear solves (the very \code{ksp\_solve}
+machinery from electrostatics, \cref{ch:electrostatics}). The picture is a black
+box with a wire poking out: the library owns the outer eigen-iteration, but the
+operator applications---including an inner linear solve buried inside the
+shift-and-invert---are still ours. We see those applications; we do not see how
+the library schedules them or decides it has converged.
+
+\begin{keyidea}
+The eigensolver is opaque but not isolated: it runs the outer eigen-iteration
+itself, and \emph{calls back} into our code for each operator application
+$\mathbf A\vx$. Because the spectral transform applies $(\Kop-\sigma\Mop)^{-1}$,
+each callback contains an \emph{inner linear solve}---the same linear-solve
+machinery electrostatics uses, now nested one level down, inside someone else's
+loop. The opacity is precise: we own the operator applies, the library owns the
+iteration and the convergence test.
+
+\end{keyidea}
+
+\subsection{Why hand it off at all?}
+
+It is fair to ask why we surrender control here when we kept it for every other
+solve corner. The answer is honest engineering, not laziness. A robust
+eigenvalue iteration that finds a few interior eigenpairs of a large
+non-symmetric (in the lossy case) pencil, restarts to control memory, locks
+converged pairs, and deflates against them is a substantial piece of numerical
+software---Krylov--Schur with all its restart and purging logic
+(\cref{ch:krylovschur}). Palace's authors made the deliberate choice to call a
+mature library (SLEPc, itself wrapping PETSc; or ARPACK) rather than rewrite it.
+Our framework records that choice faithfully: the \code{eigsolve} combinator is
+\emph{deliberately} opaque. It names the library boundary, states the contract
+across it (in: a pencil and a target; out: converged eigenpairs and a count), and
+stops.
+
+\begin{pitfall}
+The opacity of \code{eigsolve} is a property of \emph{Palace's} code, not of the
+mathematics. It is tempting to read ``black box'' as ``we do not understand the
+eigen-iteration.'' We do---\cref{ch:eigenvalues} and \cref{ch:krylovschur} build
+Krylov--Schur from scratch. The black box marks where \emph{Palace} stops writing
+its own loop and calls out, not where understanding stops. A reader who wants to
+see inside the box opens those two chapters, which reconstruct exactly what the
+library does, in our own vocabulary. The honest record is: \emph{Palace} treats
+it as a black box; the book does not.
+\end{pitfall}
+
+\subsection{Contrast with the anchor's solve}
+
+The contrast with electrostatics is worth drawing as a side-by-side
+(\cref{fig:solve-vs-map}), because it is the whole point of the chapter. In
+electrostatics the solve stage is a loop \emph{we} write, the
+\code{solve\_family} fixed-operator map: visible, controllable, one linear solve
+per right-hand side. In the eigenmode analysis the solve stage is a single
+library call, and the only loop we write comes \emph{after} the solve---the
+readout map over the modes the library has already produced. The difference is
+not which equation we solve; it is who owns the iteration.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- left: electrostatic solve (a loop we write) ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, align=center] at (1.6,2.55)
+      {Electrostatic: a loop \emph{we} write};
+    \node[opbox, minimum width=8mm] (k) at (0.1,1.2) {$\Kop$};
+    \foreach \i/\y in {1/1.85,2/1.2,3/0.55}{
+      \node[product, minimum width=5mm, minimum height=4mm, scale=0.7]
+        (es\i) at (2.1,\y) {};
+      \draw[flow, shorten >=1pt] (k.east) -- (es\i.west);}
+    \node[font=\scriptsize\ttfamily, text=simGreen] at (1.6,-0.05)
+      {solve\_family (corner 1)};
+    \node[font=\scriptsize\itshape, align=center] at (1.6,-0.55)
+      {one linear solve per RHS,\\every solve visible};
+  \end{scope}
+  % divider
+  \draw[simGray, densely dashed] (4.0,-0.9) -- (4.0,2.8);
+  % --- right: eigenmode solve (a black box) ---
+  \begin{scope}[shift={(4.6,0)}]
+    \node[font=\small\bfseries, align=center] at (1.6,2.55)
+      {Eigenmode: a black box};
+    \node[opbox, minimum width=8mm, align=center] (pen) at (0.0,1.2)
+      {$(\Kop,$\\$\Cop,\Mop)$};
+    \node[extern, minimum width=13mm, minimum height=9mm] (bb) at (1.9,1.2)
+      {\scriptsize eigsolve};
+    \draw[flow, shorten >=1pt] (pen.east) -- (bb.west);
+    \node[product, minimum width=8mm, minimum height=5mm, scale=0.75]
+      (out) at (3.35,1.2) {\scriptsize eigs};
+    \draw[flow, shorten >=1pt] (bb.east) -- (out.west);
+    \node[font=\scriptsize\ttfamily, text=simViolet] at (1.6,-0.05)
+      {eigsolve (corner 4)};
+    \node[font=\scriptsize\itshape, align=center] at (1.6,-0.55)
+      {one call, iteration hidden;\\our loop is the readout, after};
+  \end{scope}
+\end{tikzpicture}
+\caption[Solve corner vs.\ map corner]{The two solve stages side by side. Left:
+electrostatics runs a \code{solve\_family} map---a Palace-written loop of
+independent linear solves over the fixed operator $\Kop$, every solve visible
+(\cref{ch:electrostatics}). Right: the eigenmode analysis runs \code{eigsolve}---a
+single call into an opaque library (dashed violet), whose internal iteration we do
+not see. The eigenmode driver's \emph{own} loop is not in the solve at all; it is
+the post-processing readout map that follows. This is the structural heart of the
+chapter: same skeleton, the solve corner swapped from a loop-we-write to a
+loop-we-do-not.}
+\label{fig:solve-vs-map}
+\end{figure}
+
+\section{Keeping the modes physical: the gradient null-space}
+\label{sec:eig-spurious}
+
+There is a subtlety that the black box forces us to confront, and it is not
+optional. The curl--curl stiffness operator $\Kop$ has a large \emph{null
+space}: for \emph{any} scalar potential $\phi$, the gradient field $\Grad\phi$
+satisfies $\Curl\Grad\phi=\mathbf 0$ identically, so $\Kop(\Grad\phi)=\mathbf 0$.
+On the discrete space this means $\Kop$ has a whole subspace of eigenvectors with
+eigenvalue \emph{zero}---one for every discrete gradient. These are not
+resonances. They are an artifact of the curl--curl operator's structure, the
+discrete shadow of the Helmholtz decomposition (\cref{ch:bc}): every $\Hcurl$
+field splits into a curl part (the physics) and a gradient part (the null space),
+and only the curl part carries a real mode.
+
+If we hand the raw pencil to the eigensolver and ask for the modes nearest zero
+frequency, it will dutifully return a cloud of these spurious zero and
+near-zero ``modes''---numerically polluted gradients---and bury the real
+low-frequency resonances among them (\cref{fig:spurious}). The black box cannot
+tell physics from artifact; it returns eigenpairs, and these are genuine
+eigenpairs of the matrix we gave it. The fix has to happen on \emph{our} side,
+\emph{before} the solve.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- before: spectrum with a spurious cloud near 0 ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries] at (3.0,1.9) {Before projection};
+    \draw[->, thick, simInk] (0,0) -- (6.2,0) node[right]{$\omega$};
+    \draw[thick, simInk] (0,-0.1) -- (0,0.1) node[above, font=\scriptsize]{$0$};
+    % spurious cloud near 0
+    \foreach \x in {0.05,0.12,0.2,0.28,0.35,0.45,0.55,0.62,0.7,0.8}{
+      \fill[simRust] (\x,0) circle (1.6pt);}
+    \node[text=simRust, font=\scriptsize, align=center] at (0.5,0.75)
+      {spurious gradient\\null-space modes};
+    \draw[simRust, ->] (0.5,0.5) -- (0.4,0.12);
+    % real modes
+    \foreach \x in {2.4,3.6,4.9}{
+      \fill[simBlue] (\x,0) circle (2.4pt);}
+    \node[text=simBlue, font=\scriptsize] at (3.6,0.55) {real resonances};
+    \node[text=simRust, font=\scriptsize, align=center] at (3.0,-0.7)
+      {the real modes are \emph{buried} in the cloud};
+  \end{scope}
+  % --- after: clean spectrum ---
+  \begin{scope}[shift={(0,-2.6)}]
+    \node[font=\small\bfseries] at (3.0,1.9) {After divergence-free projection};
+    \draw[->, thick, simInk] (0,0) -- (6.2,0) node[right]{$\omega$};
+    \draw[thick, simInk] (0,-0.1) -- (0,0.1) node[above, font=\scriptsize]{$0$};
+    % only real modes
+    \foreach \x in {2.4,3.6,4.9}{
+      \fill[simBlue] (\x,0) circle (2.4pt);}
+    \node[text=simBlue, font=\scriptsize] at (3.6,0.55) {real resonances};
+    \node[text=simGreen, font=\scriptsize, align=center] at (0.5,0.7)
+      {null space\\removed};
+    \draw[simGreen, ->] (0.5,0.42) -- (0.18,0.1);
+    \node[text=simGreen, font=\scriptsize, align=center] at (3.0,-0.7)
+      {the solver now returns physical modes first};
+  \end{scope}
+\end{tikzpicture}
+\caption[Spurious modes and the projection]{The gradient null-space and its
+removal. Top: the curl--curl operator $\Kop$ annihilates every gradient field
+($\Kop\Grad\phi=\mathbf 0$), so its raw spectrum carries a cloud of spurious
+zero/near-zero ``modes'' (rust) that are numerical gradients, not resonances; the
+real low-frequency resonances (blue) are buried among them, and the solver,
+asked for the modes nearest zero, returns the artifacts first. Bottom: the
+\emph{divergence-free projection} (\cref{ch:bc}) restricts the solve to the
+gradient-free subspace, deleting the null-space cloud so the eigensolver returns
+the physical resonances directly. The projection is wired in \emph{before} the
+solve, because the black box cannot tell artifact from physics on its own.}
+\label{fig:spurious}
+\end{figure}
+
+The fix is the \emph{divergence-free projection} of \cref{ch:bc}. We restrict the
+solve to the subspace of fields orthogonal to all gradients---the divergence-free
+(curl) part of the Helmholtz decomposition---so the null-space directions are
+simply unavailable to the eigensolver. Concretely, Palace builds a projector $P$
+onto the divergence-free subspace and wires it into the eigensolver: the starting
+vector is projected, and the projector is applied so the iteration never strays
+into the gradient subspace. With the null space projected out, the spectrum the
+library sees has no spurious cloud, and the modes it returns are physical
+resonances.
+
+\begin{keyidea}
+The curl--curl operator's gradient null space ($\Kop\Grad\phi=\mathbf 0$ for
+every scalar $\phi$, \cref{ch:bc}) produces a cloud of spurious zero-frequency
+``modes'' that are not resonances. The \emph{divergence-free projection} restricts
+the solve to the gradient-free subspace, removing them, so the black box returns
+physical modes. This projection is wired in \emph{before} the opaque solve---it
+must be, because the black box cannot distinguish artifact from physics once it
+is running. Handling the null space is the one place where the eigenmode pipeline
+demands real physics knowledge the anchor never needed.
+\end{keyidea}
+
+\section{Reduce: the eigenfrequency-and-Q table}
+\label{sec:eig-reduce}
+
+The library returns converged eigenpairs $(\lambda_m,\vx_m)$. The reduce stage
+turns them into the physical product the user asked for: a small \emph{table},
+one row per mode (\cref{ch:reductions}, \cref{ch:situating})---the rank-1
+``Shape~3'' reduction. Each row carries the mode's resonant frequency $f_m$ and
+its quality factor $Q_m$. This stage \emph{is} the one Palace-written loop in the
+driver: a \code{map} over the converged modes, with no coupling between rows
+(mode~3's row does not depend on mode~2's), which is exactly what makes it a map
+and not a fold.
+
+\subsection{From eigenvalue to frequency: the un-transform}
+
+The first column of the table is the resonant frequency, and getting it right is
+pure bookkeeping---the un-transform of the eigenvalue back to a physical
+frequency (\cref{ch:eigenvalues}). Two things must be undone. First, the
+\emph{problem-type} transform from \cref{sec:eig-assemble}: for the linear EVP
+the eigenvalue is $\lambda=\omega^2$, so $\omega=\sqrt\lambda$; for the quadratic
+EVP it is $\lambda=i\omega$, so $\omega=\lambda/i$. Second, any \emph{spectral
+shift} $\sigma$ used to target the interior of the spectrum
+(\cref{ch:eigenvalues}) must be inverted---the solver works in shifted
+coordinates, and the physical eigenvalue is recovered by undoing the shift,
+exactly as in the shift-and-invert worked example of \cref{ch:eigenvalues}. With
+$\omega$ in hand, the eigenfrequency is its real part over $2\pi$:
+\begin{equation}
+  f_m \;=\; \frac{\Re\,\omega_m}{2\pi}.
+  \label{eq:freadout}
+\end{equation}
+
+\subsection{From the complex eigenvalue to Q}
+
+The second column is the quality factor, and it lives entirely in the imaginary
+part. A lossless cavity's $\omega$ is purely real and the mode rings forever; a
+lossy cavity's $\omega$ has a positive imaginary part, the decay rate, and the
+mode rings down. The quality factor measures how many radians of oscillation the
+mode completes per e-folding of its amplitude. In the energy/loss convention
+(\cref{ch:reductions}),
+\begin{equation}
+  Q_m \;=\; \frac{\omega_m}{\kappa_m}
+        \;=\; \frac{\Re\,\omega_m}{2\,\Im\,\omega_m},
+  \label{eq:qreadout}
+\end{equation}
+where $\kappa_m$ is the mode's loss rate. The factor of $2$ converts the
+amplitude decay rate ($\Im\,\omega$) to the energy decay rate (energy is
+amplitude squared, so it decays twice as fast); different texts place the $2$
+differently, which is precisely why the reduction takes $\kappa$ as a parameter
+rather than hard-coding the convention.
+
+\begin{notationbox}
+The loss rate $\kappa_m$ is not always read straight off $\Im\,\omega$. When the
+loss enters through a specific physical channel---a resistive lumped port, say---Palace
+computes $\kappa_m$ as a \emph{participation ratio}: the fraction of the mode's
+energy dissipated in that channel, $\kappa_m=\tfrac12 R\,\abs{I_m}^2/E_m$ (resistor
+self-energy over total mode energy), which then enters \cref{eq:qreadout} as
+$Q_m=\omega_m/\kappa_m$. The two readings agree---$\Im\,\omega$ \emph{is} the
+total loss rate---but the participation form attributes the loss to its source,
+which is what a designer wants to know. Either way $Q$ is a scalar ratio, one
+number per mode.
+\end{notationbox}
+
+\subsection{The lossless limit}
+
+The honest edge case is the lossless cavity: $\Im\,\omega\to 0$, $\kappa\to 0$,
+and \cref{eq:qreadout} divides by zero. The physical answer is $Q\to\infty$: an
+ideal lossless resonator rings forever. The reduction does not produce a
+\texttt{NaN}; it tests $\kappa=0$ and returns $Q=\infty$ directly, the one piece
+of control flow in an otherwise purely arithmetic readout. The infinite-$Q$ case
+is real, not exceptional: it is the limit every low-loss design---a
+superconducting cavity, a high-$Q$ dielectric resonator---approaches, and the
+table reports it faithfully.
+
+\begin{keyidea}
+The reduce stage is a \code{map} over the converged eigenpairs producing a
+rank-1 table, one $(f,Q)$ row per mode. The frequency is the eigenvalue
+\emph{un-transformed} ($\omega=\sqrt\lambda$ linear, $\lambda/i$ quadratic; shift
+undone) and read as $f=\Re\,\omega/2\pi$. The quality factor is the
+energy/loss ratio $Q=\Re\,\omega/(2\,\Im\,\omega)=\omega/\kappa$, with the
+$\kappa\to0$ lossless limit handled as $Q=\infty$ rather than a division error.
+This is the \emph{only} loop the eigenmode driver writes, and it is a pure
+post-processing map---never a solve.
+\end{keyidea}
+
+\section{Worked examples}
+
+\begin{workedexample}{The modes of a 1-D cavity, by hand}{cavity1d}
+We compute the lowest resonances of the simplest cavity: a one-dimensional
+segment of length $L$ with conducting ends, the electromagnetic analog of a
+string fixed at both ends. The continuous problem is
+\[
+  -u''(x) = \lambda\, u(x), \qquad u(0)=u(L)=0, \qquad \lambda = \omega^2/c^2,
+\]
+whose exact modes are $u_n(x)=\sin(n\pi x/L)$ with $\lambda_n=(n\pi/L)^2$, giving
+the familiar resonant-frequency ladder
+\[
+  f_n \;=\; \frac{c}{2\pi}\sqrt{\lambda_n} \;=\; \frac{n\,c}{2L},
+  \qquad n=1,2,3,\dots
+\]
+The fundamental fits half a wavelength across the cavity ($f_1=c/2L$,
+\cref{fig:cavity-setup}); each higher mode adds one more half-wavelength. We will
+recover this ladder as the eigenvalues of a \emph{discrete} pencil
+$\Kop\vx=\lambda\Mop\vx$, exactly the matrices the eigensolver would receive.
+
+\emph{Discretize.} Put $N$ interior nodes at spacing $h=L/(N+1)$ and use the
+standard second-difference stencil for $-u''$ and the (lumped) identity for the
+mass. With $N=3$ ($h=L/4$), the stiffness and mass matrices are
+\[
+  \Kop = \frac{1}{h^2}\!\begin{pmatrix} 2 & -1 & 0\\ -1 & 2 & -1\\ 0 & -1 & 2\end{pmatrix},
+  \qquad
+  \Mop = \mathsf{I}_3,
+\]
+so the pencil reduces to the ordinary eigenproblem $\Kop\vx=\lambda\vx$ for the
+tridiagonal $\Kop$.
+
+\emph{Solve the $3\times3$ eigenproblem.} The eigenvalues of the symmetric
+tridiagonal $\begin{psmallmatrix}2&-1&0\\-1&2&-1\\0&-1&2\end{psmallmatrix}$ are
+known in closed form, $2-2\cos\!\bigl(\tfrac{k\pi}{4}\bigr)$ for $k=1,2,3$:
+\[
+  2-\sqrt2 \approx 0.586,\qquad 2,\qquad 2+\sqrt2 \approx 3.414.
+\]
+Dividing by $h^2=(L/4)^2=L^2/16$ gives the discrete $\lambda_k$:
+\[
+  \lambda_1 \approx \frac{9.37}{L^2},\quad
+  \lambda_2 = \frac{32}{L^2},\quad
+  \lambda_3 \approx \frac{54.6}{L^2}.
+\]
+\emph{Compare to the exact ladder.} The exact values are
+$\lambda_n=(n\pi/L)^2 = \{9.87, 39.5, 88.8\}/L^2$. The lowest discrete eigenvalue,
+$9.37/L^2$, is within $5\%$ of the exact $9.87/L^2$---a coarse three-node mesh
+already pins the fundamental. The higher discrete eigenvalues sag below the exact
+ones (the familiar dispersion error of a coarse mesh: short-wavelength modes are
+underresolved), and they would tighten toward the ladder as $N$ grows. The
+\emph{eigenvectors} of the $3\times3$ matrix are
+$\vx_k=(\sin\tfrac{k\pi}{4},\sin\tfrac{2k\pi}{4},\sin\tfrac{3k\pi}{4})$---the
+samples of $\sin(k\pi x/L)$ at the interior nodes, the discrete standing waves.
+
+\emph{Read out the frequency.} Take the fundamental. Un-transform
+$\lambda_1$ to a frequency: $\omega_1=c\sqrt{\lambda_1}=c\sqrt{9.37}/L=3.06\,c/L$,
+so $f_1=\omega_1/2\pi=0.487\,c/L$, against the exact $f_1=c/2L=0.500\,c/L$. The
+discrete eigenvalue, un-transformed exactly as \cref{sec:eig-reduce} prescribes,
+lands within $3\%$ of the physical resonant frequency---and \emph{this little
+$3\times3$ problem is, in miniature, precisely what the black box does at scale}:
+build $(\Kop,\Mop)$, find $\lambda$, un-transform to $f$. The only difference at
+full size is the matrix dimension and the fact that we hand the eigenproblem to a
+library instead of reading the eigenvalues off a known formula.
+\end{workedexample}
+
+\begin{workedexample}{The Q of a lossy mode, and the lossless limit}{qfactor}
+A lossy eigenmode solve returns a converged eigenpair whose recovered angular
+frequency, after the un-transform of \cref{sec:eig-reduce}, is the complex number
+\[
+  \omega_m \;=\; \omega_r + i\,\omega_i
+            \;=\; 2\pi\,(\SI{6.000}{\giga\hertz}) \;+\; i\,\bigl(2\pi\cdot\SI{1.5}{\mega\hertz}\bigr).
+\]
+The real part is a \SI{6}{\giga\hertz} oscillation; the imaginary part is the
+amplitude decay rate. We want the table row $(f_m, Q_m)$.
+
+\emph{Frequency.} By \cref{eq:freadout}, the frequency is the real part over
+$2\pi$:
+\[
+  f_m \;=\; \frac{\Re\,\omega_m}{2\pi} \;=\; \SI{6.000}{\giga\hertz}.
+\]
+
+\emph{Quality factor.} By \cref{eq:qreadout} with the energy/loss convention
+$Q=\Re\,\omega/(2\,\Im\,\omega)$,
+\[
+  Q_m \;=\; \frac{\omega_r}{2\,\omega_i}
+        \;=\; \frac{2\pi\cdot 6.000\times 10^{9}}{2\cdot 2\pi\cdot 1.5\times 10^{6}}
+        \;=\; \frac{6.000\times 10^{9}}{3.0\times 10^{6}}
+        \;=\; 2000 .
+\]
+A $Q$ of $2000$ is a sharp resonance: the mode completes about $2000$
+radians---roughly $320$ full cycles---before its amplitude falls by a factor of
+$e$. The factor of $2$ in the denominator is the amplitude-to-energy conversion
+(\cref{sec:eig-reduce}); had we used the bare $\omega_r/\omega_i$ convention we
+would have reported $4000$, which is why the reduction carries $\kappa$ as a
+parameter and never hard-codes the factor.
+
+\emph{The lossless limit.} Now let the loss vanish, $\omega_i\to 0$: a perfect
+cavity. The denominator of \cref{eq:qreadout} goes to zero and $Q_m\to\infty$.
+The reduction does not divide by zero and emit a \texttt{NaN}; it tests
+$\kappa=0$ and returns $Q=\infty$, the honest physical answer---a lossless cavity
+rings forever. This single guard is the one branch in an otherwise straight-line
+arithmetic readout, and it exists because the infinite-$Q$ case is the ideal that
+every superconducting or low-loss design approaches, not an error to be trapped.
+\end{workedexample}
+
+\section{Reading out the mode fields, and where this goes}
+\label{sec:eig-fields}
+
+The $(f,Q)$ table is the headline product, but each converged eigenpair also
+carries the mode \emph{field}, and the readout map recovers it too. The
+eigenvector $\vx_m$ \emph{is} the electric mode field $\vE_m$, in the
+$\Hcurl$ degrees of freedom; the magnetic field follows from Faraday's law as the
+curl of $\vE$,
+\begin{equation}
+  \vB_m \;=\; -\frac{1}{i\,\omega_m}\,\Curl\,\vE_m,
+  \label{eq:bfield}
+\end{equation}
+one curl and a complex scale per mode. (An eigenvector is defined only up to a
+complex scalar, so Palace fixes the phase by a normalization before recording
+the field---otherwise the same mode could come back rotated arbitrarily in the
+complex plane.) These fields are what a designer plots to \emph{see} the mode:
+where the electric field piles up (the high-field regions that set the breakdown
+limit), where the magnetic field loops, which part of the structure a given
+resonance lives in.
+
+The whole pipeline, finally, is the clean composition the framework names
+(\cref{lst:eigcompose}): assemble the pencil, one black-box solve, one readout
+map.
+
+\begin{figure}[t]
+\begin{lstlisting}[style=l4style, caption={[The eigenmode composition]The
+eigenmode feature as a composition of firm vocabulary. Assemble the
+$(\Kop,\Cop,\Mop)$ pencil once (three folds), hand it to the opaque
+\texttt{eigsolve} black box once, and \texttt{map} the per-mode readout over the
+converged eigenpairs. The only Palace-written loop is the final \texttt{map};
+the solve is a single opaque call.}, label={lst:eigcompose}]
+eigenmode :: EigenmodeConfig -> EigenmodeResult
+eigenmode cfg =
+  let space  = nd_space cfg                          -- H(curl) edge space
+      k      = fe_assemble space [ curl_curl  (reluctivity cfg) ]   -- K, once
+      c      = fe_assemble space [ damping    (conductivity cfg) ]  -- C, once (may be empty)
+      m      = fe_assemble space [ mass_term  (permittivity cfg) ]  -- M, once
+      pencil = eig_pencil k c m (target cfg) (n_modes cfg)          -- bundle + target
+      eigs   = eigsolve pencil (initial_space cfg)   -- ONE opaque black-box solve
+  in  map (readout cfg) eigs                          -- the only loop we write: readout map
+\end{lstlisting}
+\end{figure}
+
+\begin{remark}[Applications]
+The eigenmode analysis is the workhorse behind a surprising range of devices.
+Microwave \emph{cavity filters} are built by coupling several resonators, each a
+controlled mode whose $f$ and $Q$ this analysis predicts before any metal is cut.
+Superconducting-qubit \emph{readout resonators} and \emph{coupling buses} are
+high-$Q$ modes of on-chip cavities; the eigenmode solve gives their frequencies
+and participation ratios (\cref{sec:eig-reduce}), which set qubit--cavity
+coupling and dictate where loss must be controlled. Particle-accelerator
+\emph{RF cavities} are designed mode-by-mode for a target accelerating frequency.
+In every case the deliverable is the same rank-1 table: a short list of
+$(f,Q)$ rows, plus the field patterns that explain them.
+\end{remark}
+
+A close cousin of this analysis appears one chapter on. The \emph{boundary-mode}
+(wave-port) analysis of \cref{ch:waveports} is, in the taxonomy of
+\cref{ch:situating}, eigenmode on a two-dimensional cross-section: the same
+opaque black-box solve corner, the same rank-1 table shape, applied to the
+transverse modes of a waveguide cross-section rather than the volume modes of a
+cavity. Having understood the volume eigenmode, the wave-port analysis will read
+as a small, well-localized change of domain.
+
+\summarysection
+The eigenmode analysis is the anchor pipeline (\cref{ch:electrostatics}) with the
+\texttt{solve} corner swapped for the fourth corner of \cref{ch:situating}: the
+opaque black box. \emph{Assemble} builds an operator \emph{pencil} once---$(\Kop,\Mop)$
+for a lossless cavity (the generalized EVP $\Kop\vx=\lambda\Mop\vx$,
+$\lambda=\omega^2$) or $(\Kop,\Cop,\Mop)$ for a lossy one (the quadratic EVP,
+$\lambda=i\omega$). \emph{Solve} is a single \code{eigsolve} call into a
+specialized library (SLEPc/ARPACK, Krylov--Schur with shift-and-invert,
+\cref{ch:eigenvalues}, \cref{ch:krylovschur}); Palace writes no eigen-iteration
+loop, and the library only calls back for the operator applies (each containing
+an inner linear solve from the shift-invert). Before the solve, the
+\emph{divergence-free projection} (\cref{ch:bc}) removes the curl--curl operator's
+spurious gradient null-space ``modes,'' so the black box returns physical
+resonances. \emph{Reduce} is a \code{map} over the converged eigenpairs producing
+the rank-1 $(f,Q)$ table: $f=\Re\,\omega/2\pi$ after the eigenvalue un-transform
+(\cref{ch:eigenvalues}, \cref{ch:reductions}), $Q=\Re\,\omega/(2\,\Im\,\omega)$
+with the lossless $\kappa\to0$ limit reported as $Q=\infty$. The mode fields read
+out as $\vE=\vx$ and $\vB=-\tfrac{1}{i\omega}\Curl\vE$. The single Palace-written
+loop in the whole driver is that final readout map---never a solve.
+
+\furtherreading
+Pozar's \emph{Microwave Engineering}~\citep{pozar2011} is the standard
+device-level account of cavity resonators, resonant frequency, and the quality
+factor, including the energy/loss definition of $Q$ and the loaded-versus-unloaded
+distinction we glossed over. Jin's \emph{Finite Element Method in
+Electromagnetics}~\citep{jin2014} develops the curl--curl eigenproblem on
+$\Hcurl$ edge elements in full, including the gradient null-space and the
+divergence-free constraint that tames it (\cref{sec:eig-spurious})---the FEM-level
+companion to this chapter. For the eigensolver itself---why a few interior
+eigenpairs of a large pencil are best found by Krylov--Schur with a
+shift-and-invert spectral transform, and why that is the right thing to hand to a
+library---Saad's \emph{Numerical Methods for Large Eigenvalue
+Problems}~\citep{saad2011eig} is the reference; \cref{ch:eigenvalues} and
+\cref{ch:krylovschur} build the relevant machinery on its foundation.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{The swapped corner.} State precisely which stage of the
+  \texttt{config}$\to$\texttt{assemble}$\to$\texttt{solve}$\to$\texttt{reduce}
+  skeleton differs between electrostatics (\cref{ch:electrostatics}) and the
+  eigenmode analysis, and which stages are unchanged. In one sentence, name the
+  single structural property of the solve stage that makes the eigenmode corner
+  ``opaque.''
+  \item \textbf{The only loop.} The chapter insists the eigenmode driver writes
+  exactly one loop, and that it is not a solve. Which loop is it, what does each
+  of its iterations produce, and why is it a \code{map} (independent rows) rather
+  than a \code{fold} (chained state)?
+  \item \textbf{Un-transform.} A linear-EVP solve returns the eigenvalue
+  $\lambda=39.5/L^2$ (in units where $c=1$). Recover the ordinary frequency $f$.
+  Then a quadratic-EVP solve returns $\lambda=i\,(2\pi\cdot 4.0\times10^9)$;
+  recover $f$ from \emph{it}. Why do the two cases use different un-transforms?
+  \item \textbf{Q and the factor of two.} A mode has
+  $\omega=2\pi(\SI{10}{\giga\hertz})+i\,2\pi(\SI{5}{\mega\hertz})$. Compute $Q$ in
+  the energy/loss convention $Q=\Re\,\omega/(2\,\Im\,\omega)$. A colleague reports
+  $Q=2000$ for the same mode; what convention did they use, and which factor did
+  they drop?
+  \item \textbf{The lossless limit.} Explain why the reduce stage tests
+  $\kappa=0$ and returns $Q=\infty$ rather than letting \cref{eq:qreadout} divide
+  by zero. Is $Q=\infty$ a numerical degeneracy to be avoided, or a physical
+  answer to be reported? Give one real device whose $Q$ this limit describes.
+  \item \textbf{Spurious modes.} The curl--curl operator satisfies
+  $\Kop\Grad\phi=\mathbf 0$ for every scalar field $\phi$. Explain why this gives
+  the raw eigenproblem a cloud of zero-eigenvalue ``modes,'' why those are not
+  resonances, and why the divergence-free projection must be applied
+  \emph{before} the black-box solve rather than filtered out of its output
+  afterward.
+  \item \textbf{The callback.} The eigensolver is opaque, yet the chapter says it
+  ``calls back'' into Palace's code mid-iteration. What does it call back to
+  compute, and why does that callback contain an \emph{inner} linear solve?
+  Relate the inner solve to the shift-and-invert spectral transform of
+  \cref{ch:eigenvalues}.
+  \item \textbf{Refining the mesh.} In \cref{wex:cavity1d} the coarse $3\times3$
+  mesh gave $\lambda_1\approx 9.37/L^2$ against the exact $9.87/L^2$. Without
+  recomputing, predict qualitatively what happens to the three discrete
+  eigenvalues as $N$ grows from $3$ to $30$: which converge fastest, and why does
+  the highest mode lag? (Hint: how many nodes per wavelength does each mode get?)
+\end{enumerate}

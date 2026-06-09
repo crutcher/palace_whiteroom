@@ -1,0 +1,470 @@
+\chapter{A Simulation's Life Cycle}
+\label{ch:lifecycle}
+
+\chapterorient{In the last chapter we stood outside the machine and watched a
+configuration go in and a physical product come out. Now we open the lid just
+far enough to see the stages the run passes through---parse, configure,
+dispatch, build the mesh, solve, refine, output---and what travels between them.
+One stage will turn out to be the hinge on which all six analyses swing, and one
+will be our first glimpse of the single most important structure in the book:
+the \emph{fold}. By the end you will be able to trace any Palace run from the
+press of \textsf{enter} to the file it writes, and to point to the exact line
+where ``one program'' becomes ``six.''}
+
+\section{From black box to pipeline}
+
+\Cref{ch:targets} showed every analysis as one black box: configuration in,
+product out. That picture is true but coarse. If we slice the box open along the
+direction the data flows, we find not one step but a short \emph{pipeline} of
+them, run in sequence, the same sequence every time, for every analysis. This
+chapter is a tour of that pipeline---the \emph{lifecycle} of a simulation.
+
+The lifecycle is worth a chapter of its own for two reasons. First, it is the
+\emph{shared skeleton}: all six analyses pass through exactly these stages in
+exactly this order, so understanding the lifecycle once means understanding the
+top-level shape of all six at once. Second, two of its stages carry the book's
+central ideas in seed form---the \emph{dispatch} that turns one program into six,
+and the \emph{adaptive loop} that gives us our first fold. We meet both here, in
+their natural habitat, before we study either in depth.
+
+In real source, the lifecycle lives in two files. A short driver, \code{main.cpp},
+sets the run up and chooses which analysis to perform; a shared base class,
+\code{basesolver.cpp}, runs the chosen analysis under an adaptive outer loop.
+We will not read C++ in this book---we read the lifecycle as a sequence of pure
+transformations on values---but it helps to know that the two halves we are
+about to describe are two real, separate pieces of the program.
+
+\section{The six stages}
+
+\Cref{fig:lifecycle} is the whole chapter in one picture. A run proceeds left to
+right through six stages. Most of the arrows are ordinary forward flow; one is
+dashed and points \emph{backward}---the adaptive loop, the only place the
+pipeline ever revisits a stage. Keep the figure in view; the subsections below
+walk the stages one at a time.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 9mm]
+  \node[stage] (parse) {parse\\config};
+  \node[stage, right=of parse] (dev) {configure\\device};
+  \node[stage, right=of dev] (disp) {dispatch on\\problem type};
+  \node[stage, right=of disp] (mesh) {build\\mesh};
+  % the solve / estimate / refine band
+  \node[opbox, below=12mm of disp, xshift=10mm] (solve) {Solve};
+  \node[opbox, right=of solve] (est) {estimate};
+  \node[opbox, right=of est] (mark) {mark};
+  \node[opbox, right=of mark] (ref) {refine};
+  \node[product, below=12mm of mesh, xshift=22mm] (out) {output\\product};
+  % top row forward flow
+  \draw[flow] (parse) -- (dev);
+  \draw[flow] (dev) -- (disp);
+  \draw[flow] (disp) -- (mesh);
+  % into the solve band
+  \draw[flow] (mesh.south) |- (solve.west);
+  % the adaptive band, left to right
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{soln.} (est);
+  \draw[flow] (est) -- node[above,font=\scriptsize]{$\eta_K$} (mark);
+  \draw[flow] (mark) -- (ref);
+  % the back-edge: refine -> solve (the AMR loop)
+  \draw[backflow] (ref.south) -- ++(0,-6mm) -| node[pos=0.25,below,font=\scriptsize]{refined mesh}
+    (solve.south);
+  % exit to output
+  \draw[flow] (est.south) -- ++(0,-3mm) -| (out.north);
+  % a faint band behind the loop
+  \begin{scope}[on background layer]
+    \node[band, fill=simBgGold, fit=(solve)(est)(mark)(ref),
+      inner sep=6pt] (loopband) {};
+  \end{scope}
+  \node[cornertag, above=0.5pt of loopband.north] {the adaptive estimate--mark--refine loop};
+\end{tikzpicture}
+\caption[The simulation lifecycle]{The lifecycle of a single run. Four set-up
+stages along the top---\emph{parse}, \emph{configure}, \emph{dispatch},
+\emph{build mesh}---feed into the shaded \emph{solve--estimate--mark--refine}
+loop, whose dashed back-edge is the only place the pipeline revisits a stage.
+When adaptive refinement is switched off, the loop runs its body exactly once
+and the back-edge is never taken; what remains is a straight line from config to
+product. The hinge stage is \emph{dispatch}, expanded in \cref{fig:dispatch}.}
+\label{fig:lifecycle}
+\end{figure}
+
+\subsection{Parse the configuration}
+
+The run begins with a single file: a configuration written by the user. Parsing
+it produces one in-memory value---call it the \code{config}---that holds
+everything the run needs to know: the mesh file and polynomial order, the
+material properties, the boundary excitations, the refinement settings, and,
+crucially, the \emph{problem type} naming which of the six analyses to perform.
+In Palace this value is an \code{IoData} record built in one line near the top of
+\code{main.cpp}.
+
+The single most important fact about the \code{config} is that it is
+\emph{read-only}. It is built once, at the start, and then \emph{never modified}.
+Every later stage consults it but none writes to it. We will lean on this fact
+repeatedly: because the configuration cannot change mid-run, every stage that
+depends only on the configuration computes the same thing no matter when we run
+it, which is exactly the property that lets us reorder, hoist, and parallelize
+the later stages with confidence.
+
+\begin{notationbox}
+We use \code{config} for the parsed configuration value throughout the book. It
+is a \emph{record}---a bundle of named fields, like
+\lstinline[style=l4style]|{problem_type, mesh, materials}|---and we read its
+fields with a dot, as in \lstinline[style=l4style]|config.problem_type|. Records
+get their full treatment in \cref{ch:bigidea}; for now, think of \code{config} as
+a read-only struct.
+\end{notationbox}
+
+\subsection{Configure the device}
+
+Before any arithmetic happens, the run brings up the hardware and numerical
+libraries it will compute on: it selects a \emph{device} (a CPU or a GPU),
+initializes the tensor backend that will run the element kernels, and starts the
+linear-algebra and eigenvalue libraries. All of these choices are read from the
+\code{config}; none of them touches the physics.
+
+This stage is mostly plumbing, and we will say little more about it---but its
+\emph{existence} is the seed of one of the book's themes. The reason Palace can
+ask, in one line of configuration, to run the very same simulation on a laptop
+CPU or a datacenter GPU is that the computation downstream is expressed
+\emph{against an abstract device}, not against any particular one. The functional,
+immutable-tensor presentation this book develops is precisely the shape that
+makes a single description run on many devices. We will return to this point in
+\cref{ch:bigidea}; here, simply note that ``configure the device'' is where the
+backend is chosen, and that everything after it is device-agnostic.
+
+\subsection{Dispatch on the problem type}
+
+Now comes the hinge. The run reads one field of the \code{config}---the problem
+type---and on the strength of that single value selects which of the six
+analyses to perform. In source it is a \code{switch} on
+\lstinline[style=l4style]|config.problem_type| with six branches; in our reading
+it is a function that maps a problem type to a \emph{driver}, the object that
+knows how to run one analysis end to end:
+\begin{lstlisting}[style=l4style]
+dispatch :: ProblemType -> Driver
+dispatch ELECTROSTATIC = electrostaticDriver
+dispatch MAGNETOSTATIC = magnetostaticDriver
+dispatch EIGENMODE     = eigenmodeDriver
+dispatch DRIVEN        = drivenDriver
+dispatch TRANSIENT     = transientDriver
+dispatch BOUNDARYMODE  = boundaryModeDriver
+\end{lstlisting}
+
+This is the place where ``one program'' becomes ``six.'' Everything before
+dispatch is shared by all analyses; everything after is, in part, specialized to
+the one we chose. We call this point the \emph{specialization seam}, and it is so
+central that it gets its own figure (\cref{fig:dispatch}) and its own section
+(\cref{sec:seam}) below.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+  \node[stage, minimum width=24mm] (sw) {\code{switch}\\\footnotesize\itshape problem type};
+  % six driver boxes in a fan
+  \node[opbox, above right=10mm and 22mm of sw] (es) {electrostatic};
+  \node[opbox, above right=3mm  and 22mm of sw] (ms) {magnetostatic};
+  \node[opbox, right=22mm of sw, yshift=2mm]    (em) {eigenmode};
+  \node[opbox, below right=3mm  and 22mm of sw] (dr) {driven};
+  \node[opbox, below right=10mm and 22mm of sw] (tr) {transient};
+  \node[opbox, below right=17mm and 22mm of sw] (bm) {boundary-mode};
+  \draw[flow] (sw.east) -- (es.west);
+  \draw[flow] (sw.east) -- (ms.west);
+  \draw[flow] (sw.east) -- (em.west);
+  \draw[flow] (sw.east) -- (dr.west);
+  \draw[flow] (sw.east) -- (tr.west);
+  \draw[flow] (sw.east) -- (bm.west);
+  % one-word hints
+  \node[cornertag, right=2mm of es] {capacitance};
+  \node[cornertag, right=2mm of ms] {inductance};
+  \node[cornertag, right=2mm of em] {resonance};
+  \node[cornertag, right=2mm of dr] {S-parameters};
+  \node[cornertag, right=2mm of tr] {time march};
+  \node[cornertag, right=2mm of bm] {waveguide};
+\end{tikzpicture}
+\caption[The dispatch fan-out]{The specialization seam. A single
+\code{switch} on the problem type fans out to six drivers, one per analysis,
+each tagged with the product it computes. This is the only branch in the entire
+lifecycle that depends on \emph{which} analysis we are running; every other stage
+is shared. The six drivers are the subject of \cref{part:modalities}; that they
+share one skeleton is the claim \cref{ch:situating} makes precise.}
+\label{fig:dispatch}
+\end{figure}
+
+\subsection{Build the mesh}
+
+With a driver chosen, the run builds the computational mesh: it loads the
+geometry file named in the \code{config}, applies any driver-specific
+preprocessing, partitions it, and performs any \emph{a-priori} refinement the
+user requested. The output is a \code{mesh}---the discretized geometry on which
+the fields will live.
+
+Two things about this stage matter for the chapters ahead. First, the mesh is
+the first value the lifecycle \emph{produces} (as opposed to merely reads): the
+\code{config} came from the user, but the \code{mesh} is computed. Second, mesh
+construction is \emph{driver-agnostic in shape}: every analysis builds a mesh the
+same way, even though the function spaces later laid over it differ. We treat the
+mesh as the second of the values that flow between stages, after the config.
+
+\subsection{Solve}
+
+Here the actual physics happens. The chosen driver takes the mesh and the
+configuration, assembles the operators the analysis needs, solves the resulting
+system, and reduces the solution to the analysis's physical product. This is the
+\emph{assemble--solve--reduce} skeleton we met in \cref{ch:targets}, now occupying
+a single stage of the lifecycle. Its internals are different for each driver---an
+electrostatic solve is a handful of linear solves, an eigenmode solve is one
+opaque eigenvalue call, a transient solve is a march through time---and unpacking
+those differences is the work of \cref{part:modalities}.
+
+For the lifecycle, the solve stage produces two outputs, and it is worth being
+precise about both. The obvious one is the \emph{product}: the capacitance
+matrix, the S-parameters, the field history---the thing the user ran the
+simulation to obtain. The less obvious one is a set of \emph{error
+indicators}: one nonnegative number $\eta_K$ per mesh element, estimating how
+much of the solution's error is concentrated there. The product is what the user
+wants; the error indicators are what the \emph{next} stage wants.
+
+\subsection{Estimate, mark, refine---the adaptive loop}
+\label{sec:amrloop}
+
+The final structural stage is the one that makes \cref{fig:lifecycle} a loop
+rather than a line. Having solved once and obtained error indicators, the run
+asks a question: is the solution accurate enough? If the total error is below the
+user's tolerance, it stops and outputs the product. If not, it improves the mesh
+where the error is worst and solves again. Concretely:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Estimate.} Turn the solution into the per-element error
+  indicators $\eta_K$ (this is folded into the solve stage above; we name it
+  separately because it is conceptually its own step).
+  \item \textbf{Mark.} Select the subset of elements carrying the bulk of the
+  error---a small set responsible for a large fraction of $\sum_K \eta_K^2$.
+  \item \textbf{Refine.} Subdivide the marked elements, producing a finer mesh
+  concentrated exactly where the solution needs the most resolution.
+  \item \textbf{Repeat.} Solve again on the refined mesh, re-estimate, and loop,
+  until the error falls below tolerance or a resource budget is exhausted.
+\end{enumerate}
+
+This is \emph{adaptive mesh refinement} (AMR), and it is studied in full in
+\cref{ch:amr}. What concerns us here is its \emph{shape}, because that shape is
+the most important structure in this book.
+
+\subsection{Finalize and output}
+
+When the loop terminates, the run writes the product to disk, records run
+metadata (timings, memory, the configuration used), and tears down the device
+and libraries. The product itself---the capacitance, the modes, the field
+history---is written by the driver, not by the top-level \code{main}; \code{main}
+writes only the metadata. This matters less for the physics than for the
+bookkeeping: it tells us that the ``output'' of the lifecycle is exactly the
+driver's product, and that the lifecycle ROOT contributes the \emph{scaffold}
+around it, not the product itself.
+
+\section{What flows between the stages}
+
+We have named the stages; now read the figure the other way and ask what travels
+the arrows. Four kinds of value flow through the lifecycle, and keeping them
+straight is half of understanding it.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The configuration] enters at parse and is \emph{read-only} thereafter.
+  Every stage may consult it; none may change it. It is the one value present
+  from the first stage to the last.
+  \item[The mesh] is produced by the build stage and consumed by every solve.
+  It is the one value the \emph{loop} modifies: each refinement replaces the mesh
+  with a finer one. Outside the loop it is built once and read.
+  \item[The solution and its error indicators] are produced by each solve. The
+  solution becomes (after reduction) the product; the error indicators drive the
+  mark--refine decision. They are the values that \emph{close the loop}---the
+  output of one iteration that becomes (via the refined mesh) the input of the
+  next.
+  \item[The product] is the final output: the physical quantity the user asked
+  for. It is produced by the driver and written out at finalize.
+\end{description}
+
+\begin{keyidea}
+The configuration is read-only and lives for the whole run; the mesh is built
+once and then \emph{refined in the loop}; the solution and error indicators are
+recomputed every iteration; the product is written at the end. The only value
+that genuinely \emph{threads through} the adaptive loop---changing from one
+iteration to the next---is the mesh (carrying its indicators). Everything else is
+either fixed for the run or recomputed from scratch each pass. That single
+threaded value is what makes the loop a \emph{fold}.
+\end{keyidea}
+
+\section{The specialization seam: one program, six analyses}
+\label{sec:seam}
+
+We promised in \cref{ch:targets} that the six analyses are one machine with parts
+swapped. The lifecycle lets us say exactly \emph{where} the swap happens: at the
+dispatch stage, and almost nowhere else.
+
+Read \cref{fig:lifecycle} again with this question in mind: which stages depend on
+\emph{which} analysis we are running? Parsing the config does not---it reads the
+same file format for all six. Configuring the device does not. Building the mesh
+does not, in shape. The adaptive loop does not---estimate, mark, and refine are
+the same procedure regardless of what was solved. Even \emph{finalize} is
+uniform. The \emph{only} stage that branches on the problem type is dispatch, and
+the only stage whose internals differ between analyses is the solve it selects.
+
+This is why we call dispatch the \emph{specialization seam}. Above it, the program
+is one shared skeleton; below it, a driver fills in the one stage---solve---that
+genuinely differs. The drivers are not six unrelated programs sharing a launcher;
+they are six fillings of one mould. \Cref{ch:situating} makes this precise by
+showing that even the solve stage varies in a tightly constrained
+way---there are only \emph{four kinds} of solve among the six analyses---and that
+the reductions that follow come in only three shapes.
+
+\begin{pitfall}
+It is tempting to read ``six drivers'' as ``six programs'' and conclude that the
+shared lifecycle is just a convenience---a common \code{main} that happens to
+launch any of them. That gets the emphasis backwards. The lifecycle is not
+incidental scaffolding around six independent solvers; it is the \emph{primary
+structure}, and the drivers are specializations of its one variable stage. The
+whole book is organized around this inversion: we study the shared skeleton first
+(in \cref{ch:situating} and the parts that follow) and the per-analysis
+differences last (\cref{part:modalities}), because the shared part is larger and
+more fundamental than the differences.
+\end{pitfall}
+
+\section{First sight of the fold}
+\label{sec:fold}
+
+Return to the adaptive loop of \cref{sec:amrloop}, and look past what it
+\emph{does} to the \emph{shape} of how it does it. We have a starting value (the
+initial mesh). We repeatedly apply a step that takes the current value and
+produces the next one (solve, estimate, mark, refine $\to$ a finer mesh). We stop
+when a condition on the accumulated state holds (the error is small enough, or
+the budget is spent). And we report a result derived along the way (the product
+of the final solve).
+
+A starting value, a step that carries state forward, a stopping condition, a
+result threaded through: this pattern is a \emph{fold}. It is the single most
+reused structure in this book, and the adaptive loop is your first encounter with
+it. In the framework's vocabulary the combinator is called \code{fold\_solve},
+and the adaptive loop is written, schematically,
+\begin{lstlisting}[style=l4style]
+-- run the driver under the adaptive estimate-mark-refine loop
+adaptive cfg drv mesh0 = fold_solve step mesh0
+  where step m = let (product, etas) = drv cfg m   -- solve + estimate
+                     m'               = refine (mark etas) m
+                 in  (product, m')                 -- carry the refined mesh forward
+\end{lstlisting}
+
+The crucial property of a fold---the one that distinguishes it from a simple
+loop over independent items---is that each step \emph{depends on the previous}.
+The mesh fed to iteration $n+1$ is exactly the mesh that iteration $n$ produced;
+the iterations do not commute and cannot be run in parallel or reordered. This is
+in sharp contrast to, say, the electrostatic analysis's inner solves, which run
+the \emph{same} operator against several independent right-hand sides and could
+be done in any order. The distinction between an independent family of solves (a
+\emph{map}) and a state-threaded chain of solves (a \emph{fold}) is one of the
+four ``solve corners'' \cref{ch:situating} will name, and the fold is studied as a
+combinator in its own right in \cref{ch:fold}.
+
+\begin{keyidea}
+The adaptive loop is a \emph{fold}: a step applied repeatedly, each pass
+consuming the value the previous pass produced, terminating on a condition over
+the accumulated state. The threaded value is the mesh. This same fold structure
+will reappear as the engine of time-stepping, of Krylov solvers, and of
+eigenvalue iterations---once you can see the fold here, you will see it
+everywhere.
+\end{keyidea}
+
+\subsection{When the loop degenerates to a line}
+
+There is one more observation, small but clarifying. Adaptive refinement is
+\emph{optional}: a user who wants a single solve on a fixed mesh simply sets the
+maximum refinement count to zero. When they do, the loop's stopping condition is
+true before the first refinement, so the body runs exactly once: solve, estimate,
+done. The back-edge in \cref{fig:lifecycle} is never taken, and the lifecycle
+collapses to a straight line---config, device, dispatch, mesh, one solve, output.
+
+This is worth dwelling on because it means the \emph{non-adaptive} lifecycle is
+not a different program; it is the adaptive lifecycle with its fold run for a
+single iteration. A fold of one step is just that step. So the electrostatic
+analysis of \cref{ch:targets}, which most readers will picture as a simple
+straight-through computation, is in truth the very same adaptive lifecycle---it
+has just degenerated to a single pass. We lose nothing by always picturing the
+loop; the line is its special case.
+
+\begin{example}
+A capacitance extraction with refinement disabled runs: parse the config;
+configure the CPU; dispatch to the electrostatic driver; build the mesh; solve
+once (yielding the capacitance matrix and a set of error indicators that nobody
+will consult); find that the refinement budget is zero, so skip refinement; write
+the capacitance matrix; finalize. Six stages, the loop run once. Re-enable
+refinement and the only change is that the solve--estimate--mark--refine band
+repeats until the indicators fall below tolerance---the same program, its fold
+unrolled further.
+\end{example}
+
+\section{Where this leaves us}
+
+We have opened the black box of \cref{ch:targets} into a pipeline of six stages
+and identified its two load-bearing features: the \emph{dispatch} that
+specializes one shared skeleton into six analyses, and the \emph{adaptive loop}
+whose shape is a fold. We have catalogued the four kinds of value that flow
+between stages, and we have seen that the familiar straight-through simulation is
+just the adaptive lifecycle with its fold run once.
+
+Two threads now lead forward. The \emph{specialization} thread asks: given that
+the analyses differ only at the solve stage, exactly how do they differ?
+\Cref{ch:situating} answers with the four solve corners and three reduction
+shapes---the map that the rest of the book fills in. The \emph{representation}
+thread asks: what is this ``value-threading,'' ``read-only configuration,''
+``fold'' language we have started speaking, and why is it the right one for a
+simulator? \Cref{ch:bigidea} answers that, taking up the shift from in-place
+array mutation to pure functions over immutable tensors that the whole book is
+built on.
+
+\summarysection
+Every Palace run follows the same lifecycle: parse the read-only configuration;
+configure the compute device; \emph{dispatch} on the problem type to one of six
+drivers; build the mesh; run the driver's \emph{solve} (assemble--solve--reduce),
+which yields both a product and per-element error indicators; and run the
+\emph{adaptive estimate--mark--refine loop}, refining the mesh where the error is
+worst and re-solving until the error is small enough, before writing the product.
+Four kinds of value flow through: the read-only config (whole run), the mesh
+(built once, refined in the loop), the solution and its error indicators
+(recomputed each pass), and the product (written at the end). Dispatch is the
+\emph{specialization seam}---the one stage that branches on the analysis---so the
+six analyses are one shared skeleton with a single swapped stage. The adaptive
+loop is a \emph{fold}: a step that threads the mesh forward, our first sight of
+the structure that organizes the entire book; when refinement is off, the fold
+runs once and the lifecycle is a straight line.
+
+\furtherreading
+The lifecycle described here is implemented in the Palace solver's top-level
+driver and its shared solver base class~\citep{palace2023}; readers comfortable
+with C++ can profitably read \code{main.cpp} (the set-up and dispatch) alongside
+this chapter. The adaptive-refinement loop rests on a-posteriori error estimation
+and bulk marking, due to Zienkiewicz and Zhu~\citep{zienkiewiczzhu1987} and
+D\"orfler~\citep{dorfler1996} respectively; we develop both in \cref{ch:amr}. The
+fold, the structural heart of \cref{sec:fold}, is a staple of functional
+programming; a reader curious to get ahead may consult any introduction to the
+subject~\citep{peytonjones2003}, though we build the idea from nothing in
+\cref{ch:fold}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item List the six stages of the lifecycle in order. For each, state whether
+  its behaviour depends on which of the six analyses is being run. (Exactly one
+  should depend on it in its \emph{branching}, and one more in its
+  \emph{internals}.)
+  \item The configuration is read-only for the entire run. Name two concrete
+  benefits this gives---one about reasoning, one about hardware. (Hint: re-read
+  the parse and configure-device subsections.)
+  \item A user sets the maximum refinement count to zero. Trace the lifecycle
+  step by step and explain, in terms of the fold, why the result is a single
+  straight-through solve. How many times does the step run?
+  \item Of the four kinds of value that flow between stages, exactly one is
+  threaded through the adaptive loop (changed from one iteration to the next).
+  Which? Why does that single threaded value make the loop a fold rather than a
+  map?
+  \item The dispatch stage is the only one that branches on the problem type.
+  Suppose someone proposed adding a seventh analysis to Palace. Using
+  \cref{fig:lifecycle}, predict which stages they would have to touch and which
+  they could leave untouched. (We test this prediction against reality in
+  \cref{part:modalities}.)
+\end{enumerate}

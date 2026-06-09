@@ -1,0 +1,1086 @@
+\chapter{The Fold: \texttt{iterate\_while} and the Iteration Combinators}
+\label{ch:fold}
+
+\chapterorient{This is the keystone of the framework. We met the \emph{fold} once
+already, in \cref{ch:lifecycle}, as the shape of the adaptive loop; we promised
+then that the same shape would turn out to be the engine of time-stepping, of
+Krylov solvers, and of eigenvalue iterations. Now we make good on that promise.
+We start from the \texttt{for}-loop every reader knows and recast it, step by
+step, as a value carried forward through a single combinator named
+\texttt{iterate\_while}. We develop its meaning fully---its \texttt{while}
+convention, the one rule about its predicate that everything depends on, its two
+sister combinators, and the demand-driven pruning that is the calculus's
+signature move. By the end you will be able to read any iterative algorithm in
+this book as one specialization of the one combinator taught here.}
+
+\section{From the loop you know to the fold you need}
+
+Every reader of this book has written a \texttt{for}-loop. You set a variable to
+a starting value, and then, over and over, you change it: read its current value,
+do some work, store a new value back. When a condition fails, you stop and report
+what the variable holds. A running sum is the canonical example. In the
+imperative style you grew up with, summing a list looks like this:
+\begin{lstlisting}[style=l4style]
+total = 0
+for x in xs:
+    total = total + x      -- mutate `total` in place, each pass
+return total
+\end{lstlisting}
+The variable \code{total} is \emph{mutated}: the same storage cell is overwritten
+on every pass. \Cref{ch:bigidea} argued at length that mutation is exactly the
+property we must give up to run a computation on an immutable-tensor backend. So
+we are obliged to find another way to say ``the same thing'' without the
+overwrite---and the way we find will turn out to be more powerful than the loop
+it replaces.
+
+The trick is to stop thinking of \code{total} as a cell that changes and start
+thinking of it as a \emph{value carried forward}. Each pass does not modify a
+variable; it \emph{computes a new value from the old one}. ``Carry a value;
+take a step that produces the next value; repeat.'' The carried value here is the
+running total; the step is ``add the next element''; the repetition walks the
+list. Nothing is overwritten---each step's output is a fresh value, and the old
+one is simply not referred to again.
+
+This reframing has a name in functional programming: it is a \emph{fold}. A fold
+takes a starting value (the \emph{seed}), a step that combines the seed-so-far
+with the next thing, and a structure to walk; it threads the accumulated value
+through the structure and returns the final accumulation. The running sum is
+\code{foldl (+) 0 xs}---``fold the list \code{xs} from the left, starting at
+\code{0}, combining with \code{+}.'' \Cref{fig:loopfold} sets the imperative loop
+and the fold side by side: the same computation, the mutation traded for a carry.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- left: the imperative loop, a cell overwritten ---
+  \begin{scope}[xshift=0cm]
+    \node[font=\small\bfseries, text=simRust] at (0,2.5) {imperative: one cell, overwritten};
+    \node[data, minimum width=14mm] (cell) at (0,1.4) {\code{total}};
+    \draw[backflow] (cell.east) .. controls (2.2,1.4) and (2.2,2.2) .. (cell.north)
+      node[pos=0.5, right=10mm, font=\scriptsize, text=simRust] {$\gets$ overwrite};
+    \node[opbox] (add) at (0,0.0) {\code{total = total + x}};
+    \draw[flow] (cell.south) -- (add.north);
+    \draw[flow] (add.south) -- ++(0,-0.5)
+      node[below, font=\scriptsize] {next pass writes \code{total} again};
+  \end{scope}
+  % divider
+  \draw[simGray!50, thick] (4.0,-0.9) -- (4.0,2.7);
+  % --- right: the fold, a value threaded forward ---
+  \begin{scope}[xshift=8cm]
+    \node[font=\small\bfseries, text=simBlue] at (0,2.5) {fold: a value carried forward};
+    \node[data] (t0) at (-2.4,1.0) {$0$};
+    \node[opbox] (s1) at (-1.0,1.0) {step};
+    \node[data] (t1) at (0.2,1.0) {$a_1$};
+    \node[opbox] (s2) at (1.4,1.0) {step};
+    \node[data] (t2) at (2.6,1.0) {$a_2$};
+    \draw[flow] (t0)--(s1); \draw[flow] (s1)--(t1);
+    \draw[flow] (t1)--(s2); \draw[flow] (s2)--(t2);
+    \draw[flow, simGray] (t2) -- ++(0.9,0) node[right, font=\scriptsize] {$\cdots$};
+    \node[font=\scriptsize, text=simGreen] at (-1.0,0.3) {$x_1$};
+    \node[font=\scriptsize, text=simGreen] at (1.4,0.3) {$x_2$};
+    \draw[flow, simGreen, shorten >=1pt] (-1.0,0.45)--(s1.south);
+    \draw[flow, simGreen, shorten >=1pt] (1.4,0.45)--(s2.south);
+  \end{scope}
+\end{tikzpicture}
+\caption[The loop-to-fold bridge]{The same running sum, two ways. On the left,
+the imperative loop keeps one storage cell \code{total} and \emph{overwrites} it
+each pass---the dashed back-edge is the mutation we must give up. On the right,
+the fold threads a \emph{value} forward: each step consumes the carried value
+($0$, then $a_1$, then $a_2,\dots$) and the next input $x_i$ and produces a fresh
+value. Nothing is overwritten; each arrow carries a distinct immutable value.
+This carry-threading picture is the whole chapter in miniature.}
+\label{fig:loopfold}
+\end{figure}
+
+\subsection{Three folds you already know}
+
+Before we build the simulator's combinator, it pays to fix three patterns from
+the functional vocabulary of \cref{ch:language}. Each is a way of walking a
+structure; the differences between them are exactly the differences that will
+matter for iteration.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[\code{map}] applies a function to each element \emph{independently} and
+  collects the results: \lstinline[style=l4style]|map f [x1,x2,x3] = [f x1, f x2, f x3]|.
+  The crucial word is \emph{independently}: \code{f x2} does not depend on
+  \code{f x1}, so the three applications could be done in any order, or all at
+  once. A \code{map} has no carry.
+  \item[\code{foldl}] threads an accumulator \emph{left to right}, each step
+  depending on the one before:
+  \lstinline[style=l4style]|foldl (+) 0 [x1,x2,x3] = ((0 + x1) + x2) + x3|.
+  Here order \emph{does} matter: the accumulator entering step~2 is exactly what
+  step~1 produced. This dependency is the essence of a fold.
+  \item[\code{foldr}] threads from the \emph{right}:
+  \lstinline[style=l4style]|foldr (+) 0 [x1,x2,x3] = x1 + (x2 + (x3 + 0))|. For an
+  associative operator like \code{+} the two folds agree, but in general they
+  bracket the work differently. We will rarely need \code{foldr}; we note it for
+  completeness and because it makes the directionality of \code{foldl} vivid.
+\end{description}
+
+The distinction between \code{map} and \code{foldl} is the one to carry forward.
+A \code{map} is a family of \emph{independent} computations; a \code{foldl} is a
+\emph{chain} in which each link consumes the previous. We met exactly this
+distinction in \cref{ch:lifecycle}: the electrostatic analysis's several solves
+against independent right-hand sides are a \code{map}, while the adaptive loop,
+in which each refined mesh comes from the last, is a fold. \Cref{ch:situating}
+named it one of the four ``solve corners.'' Iteration---running a step until it
+converges---is a fold whose structure is not a fixed list but ``keep going until
+a condition holds.''
+
+\begin{keyidea}
+A \emph{fold} carries a value forward through a sequence of steps, each step
+consuming the value the previous step produced. It is the structure-with-a-carry,
+as opposed to \code{map}, the structure-without. Mutation (``overwrite a cell'')
+becomes value-threading (``compute the next value''). Every iterative algorithm
+in this book is a fold; the rest of the chapter builds the one combinator that
+expresses all of them.
+\end{keyidea}
+
+\subsection{Folds that compute, not just accumulate}
+
+Summing a list is a fold over a structure that is already laid out---the list
+tells us how many steps to take. The folds a simulator runs are different in one
+way: \emph{the number of steps is not known in advance}. Newton's method for a
+square root, fixed-point iteration, a Krylov solve, a time march---each takes a
+step and then \emph{asks whether to take another}, based on the value it now
+holds. The structure being folded is not a list of inputs; it is the open-ended
+``again?'' of a convergence test.
+
+Two familiar examples make the shape concrete, and we will return to both as
+worked examples below.
+
+\emph{Newton's method.} To find $\sqrt{2}$, solve $x^2 - 2 = 0$ by Newton
+iteration: from a guess $x$, the next guess is
+\[
+  x' \;=\; x - \frac{x^2 - 2}{2x} \;=\; \tfrac{1}{2}\!\left(x + \tfrac{2}{x}\right).
+\]
+We carry $x$, take that step, and repeat until $x$ stops changing (until the
+\emph{residual} $|x^2 - 2|$ is small). Carry, step, test, repeat: a fold.
+
+\emph{Fixed-point iteration.} To solve $x = g(x)$ for a contraction $g$, simply
+iterate $x' = g(x)$ from any starting point; under a contraction the iterates
+converge to the unique fixed point. Again: carry $x$, step by applying $g$, stop
+when $x$ barely moves. A fold.
+
+Both share the lifecycle's shape from \cref{sec:fold}: a starting value, a step
+that carries state forward, a stopping condition over the accumulated state, a
+result threaded through. What they lack---and what a simulator needs---is a
+\emph{single named operator} that captures this shape once so that every
+algorithm can be written as an instance of it. That operator is
+\code{iterate\_while}.
+
+\section{\texorpdfstring{\texttt{iterate\_while}}{iterate\_while}: the canonical primitive}
+\label{sec:iteratewhile}
+
+Here is the combinator the whole book turns on. We give its signature first, then
+read it slowly, then draw it.
+
+\begin{lstlisting}[style=l4style]
+iterate_while
+  :: a                                     -- the initial carry
+  -> (a -> Bool)                           -- the predicate: keep going?
+  -> (a -> { state: a, ...extras })        -- the step: next carry + per-step extras
+  -> { final_state: a, trajectory: [{ ...extras }] }
+\end{lstlisting}
+
+Read it argument by argument. The first argument is an \emph{initial carry}, a
+value of some type \code{a}---it might be a number, a tensor, or a whole record
+of solver state. The second is a \emph{predicate}, a pure function from the carry
+to a Boolean, answering ``should we take another step?'' The third is the
+\emph{step}: from the current carry it produces a record holding the
+\code{state}---the \emph{next} carry---together with any per-step
+\emph{extras} it wishes to report. The result is a record with two fields: the
+\code{final\_state} the carry settled on, and a \code{trajectory}, the list of
+all the per-step extras records in order.
+
+\begin{notationbox}
+The \lstinline[style=l4style]|{ state: a, ...extras }| notation is a record
+(\cref{ch:records}) whose \code{state} field has type \code{a} and which is
+\emph{open} in its remaining fields: \code{...extras} stands for ``and whatever
+other fields this particular step chooses to emit.'' One step might emit
+\lstinline[style=l4style]|{ state: x', residual_norm: r }|; another might emit
+\lstinline[style=l4style]|{ state: x' }| with no extras at all. The combinator
+does not care which: it forwards the \code{state} as the next carry and piles the
+rest into the \code{trajectory}.
+\end{notationbox}
+
+In words: \emph{from an initial carry, while a predicate holds of the current
+carry, take a step that produces the next carry plus per-step extras, collecting
+those extras into a trajectory.} That single sentence is the meaning of
+\code{iterate\_while}, and \cref{fig:threaded} draws it. The carry flows left to
+right along the top; before each step a predicate gate decides whether to
+proceed; the step emits a fresh carry forward and drops its extras downward into
+the growing trajectory.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  % carry spine
+  \node[data, minimum width=10mm] (a0) at (0,0) {$a_0$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.8, inner sep=1pt,
+        font=\scriptsize, text=simInk] (p0) at (1.8,0) {$p(a_0)$?};
+  \node[opbox, minimum width=12mm] (f0) at (3.9,0) {step};
+  \node[data, minimum width=10mm] (a1) at (5.9,0) {$a_1$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.8, inner sep=1pt,
+        font=\scriptsize, text=simInk] (p1) at (7.7,0) {$p(a_1)$?};
+  \node[opbox, minimum width=12mm] (f1) at (9.8,0) {step};
+  \node[font=\scriptsize, simGray] (more) at (11.6,0) {$\cdots$};
+  % forward carry flow
+  \draw[flow] (a0)--(p0);
+  \draw[flow] (p0)-- node[above,font=\scriptsize]{yes} (f0);
+  \draw[flow] (f0)-- node[above,font=\scriptsize]{\code{.state}} (a1);
+  \draw[flow] (a1)--(p1);
+  \draw[flow] (p1)-- node[above,font=\scriptsize]{yes} (f1);
+  \draw[flow] (f1)-- node[above,font=\scriptsize]{\code{.state}} (more);
+  % `no` exits to final_state
+  \node[product] (fin) at (7.7,-2.4) {\code{final\_state}};
+  \draw[backflow] (p0.south) |- (fin.west);
+  \draw[backflow] (p1.south) -- (fin.north);
+  % extras drop into trajectory
+  \node[data, fill=simBgGold, draw=simGold, minimum width=44mm] (traj) at (6.85,-1.3)
+    {\code{trajectory}: $[\,\{\dots e_0\},\ \{\dots e_1\},\ \dots\,]$};
+  \draw[refedge] (f0.south) -- (f0.south|-traj.north);
+  \draw[refedge] (f1.south) -- (f1.south|-traj.north);
+  \node[font=\scriptsize, text=simGold!80!black] at (3.9,-0.85) {extras $e_0$};
+  \node[font=\scriptsize, text=simGold!80!black] at (9.8,-0.85) {extras $e_1$};
+\end{tikzpicture}
+\caption[The threaded carry of \texttt{iterate\_while}]{\texttt{iterate\_while}
+as a threaded carry. The carry $a_0, a_1, \dots$ flows forward along the top.
+Before each step the predicate gate $p(\cdot)$ tests the \emph{current carry};
+on ``yes'' the step runs, emitting the next carry through its \code{.state}
+field and dropping its per-step \emph{extras} downward into the growing
+\code{trajectory}. The first ``no'' exits the loop, surfacing the current carry
+as \code{final\_state}. The predicate fires \emph{first}, before any step---this
+is a \texttt{while} loop, not a \texttt{do}/\texttt{while}.}
+\label{fig:threaded}
+\end{figure}
+
+\subsection{The small-step rule}
+
+We can make the meaning of \code{iterate\_while} exact in one recursive rule,
+taken verbatim from the calculus's semantics (\cref{ch:language}). Given a carry
+$a$, a predicate $p$, and a step $f$:
+\[
+\begin{aligned}
+\textsf{iterate\_while}\ a\ p\ f \;\to\;\ &\textsf{if}\ p(a)\\
+  &\quad\textsf{then}\ \textsf{let}\ \{\textsf{state}\!:\!a',\ \dots e\} = f(a)\ \textsf{in}\\
+  &\qquad \textsf{let}\ \{\textsf{final\_state},\ \textsf{trajectory}\} = \textsf{iterate\_while}\ a'\ p\ f\ \textsf{in}\\
+  &\qquad \{\textsf{final\_state},\ \textsf{trajectory}\!:\ [\{\dots e\}] \mathbin{+\!\!+} \textsf{trajectory}\}\\
+  &\quad\textsf{else}\ \{\textsf{final\_state}\!:\ a,\ \textsf{trajectory}\!:\ [\,]\,\}
+\end{aligned}
+\]
+Read it in prose. Test $p(a)$. If \emph{false}, stop: the answer is $a$ as
+\code{final\_state} with an empty trajectory. If \emph{true}, run one step
+$f(a)$, obtaining the next carry $a'$ and this step's extras $e$; recurse on
+$a'$; and prepend $e$ to whatever trajectory the recursion returns. The recursion
+sits in tail position, so an implementation realizes it as an ordinary loop, not
+a stack of deferred calls. This is the entire operational content of the
+combinator. Everything else in the chapter is a consequence of, or a discipline
+around, this one rule.
+
+\subsection{Unrolling the recursion}
+
+The recursive rule is exact, but its shape is easiest to see when we
+\emph{unroll} it---write out what it does for a concrete run of three steps
+before the predicate finally fails. \Cref{fig:unroll} does exactly that. The
+carry $a_0$ passes the predicate and is fed to the first step, producing $a_1$
+and extras $e_1$; $a_1$ passes and yields $a_2, e_2$; $a_2$ passes and yields
+$a_3, e_3$; and then the predicate fails on $a_3$, so the loop stops. The carry
+has walked $a_0 \to a_1 \to a_2 \to a_3$, each link a single step, and the three
+extras records have lined up into the trajectory
+$[\,e_1, e_2, e_3\,]$ in iteration order.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm]
+  % carry chain
+  \foreach \i/\lbl in {0/{a_0},1/{a_1},2/{a_2},3/{a_3}}{
+    \node[data, minimum width=8mm] (c\i) at (\i*3.0,0) {$\lbl$};
+  }
+  \foreach \i/\j in {0/1,1/2,2/3}{
+    \node[opbox, minimum width=13mm] (st\j) at (\i*3.0+1.5,0) {step};
+    \draw[flow] (c\i)--(st\j);
+    \draw[flow] (st\j)-- node[above,font=\scriptsize]{\code{.state}} (c\j);
+  }
+  % predicate annotations above the carries that pass
+  \foreach \i in {0,1,2}{
+    \node[font=\scriptsize, text=simGreen] at (\i*3.0,0.78) {$p$: yes};
+  }
+  \node[font=\scriptsize, text=simRust] at (9.0,0.78) {$p$: no\,(stop)};
+  % extras drop down to trajectory
+  \node[data, fill=simBgGold, draw=simGold, minimum width=58mm] (traj) at (4.5,-1.7)
+    {\code{trajectory} $=[\,e_1,\ e_2,\ e_3\,]$};
+  \foreach \j/\e in {1/{e_1},2/{e_2},3/{e_3}}{
+    \draw[refedge, simGold!80!black] (st\j.south) -- (st\j.south|-traj.north);
+    \node[font=\scriptsize, text=simGold!80!black] at ($(st\j.south)+(0,-0.45)$) {$\e$};
+  }
+  % final_state
+  \node[product, minimum width=18mm] (fs) at (9.0,-1.7) {\code{final\_state}\,$=a_3$};
+  \draw[flow] (c3.south) -- (fs.north);
+\end{tikzpicture}
+\caption[A fold unrolled over three steps]{The recursion of
+\cref{sec:iteratewhile} unrolled for a run of three steps. The carry threads
+$a_0 \to a_1 \to a_2 \to a_3$, each arrow one step. The predicate passes
+(\textcolor{simGreen}{yes}) on $a_0, a_1, a_2$ and fails
+(\textcolor{simRust}{no}) on $a_3$, ending the loop. Each step drops its
+extras downward; the three records line up, in order, as the
+\code{trajectory} $[\,e_1, e_2, e_3\,]$, and the final carry $a_3$ becomes
+\code{final\_state}. Compare \cref{fig:loopfold}: the carry spine is the same
+forward-threaded value, now with extras peeling off below.}
+\label{fig:unroll}
+\end{figure}
+
+This unrolled picture is the one to hold in mind for the rest of the book.
+Whenever a later chapter says ``the solver folds \code{krylov\_step} with
+\code{iterate\_while},'' it means precisely \cref{fig:unroll} with ``step''
+replaced by the solver's per-step kernel: a carry of solver state threading
+forward, a predicate gating each pass, and a residual history peeling off into
+the trajectory.
+
+\subsection{What the signature makes structural}
+\label{sec:structural}
+
+It is worth pausing to ask why this particular signature, and not some looser
+one. An ordinary \texttt{for}-loop lets the body do anything: read any variable,
+write any variable, test any condition. The combinator's signature deliberately
+forbids most of that, and each thing it forbids buys a property we will rely on.
+Four are worth naming.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The predicate sees the carry only.] Its type
+  \lstinline[style=l4style]|a -> Bool| mentions neither the extras nor any
+  ambient state. This forces every termination quantity into the carry
+  (\cref{sec:predicaterule})---a discipline, but one that makes ``what does this
+  loop stop on?'' answerable by reading the carry's type alone.
+  \item[The carry is value-threaded; the extras are record-spread.] There is no
+  accumulator living \emph{outside} the carry. Anything that must persist across
+  iterations is in the carry; anything that is a per-step output is in the extras
+  and ends up in the trajectory. The two roles cannot be confused because they
+  occupy different slots of the step's return record.
+  \item[Per-step output is a declared field, not a side effect.] A step does not
+  ``log'' a residual or ``print'' a metric; it \emph{returns} one, as a field of
+  its output record. This is what makes the demand-driven pruning of
+  \cref{sec:pruning} possible---an output that is a value can be observed or not
+  observed, and pruned when not.
+  \item[The trajectory is observed structurally.] The list of extras is an
+  ordinary value the consumer may read or ignore. Because it is a value and not an
+  effect, the calculus can see, at the call site, whether anyone reads it---and
+  eliminate the work that produces it when no one does.
+\end{description}
+
+None of these is enforced by comments or conventions you must remember; each is a
+consequence of the \emph{type}. The signature is doing the work that, in an
+imperative loop, the programmer's discipline would have to do---and doing it in a
+form a compiler can check and a backend can exploit.
+
+\section{The \texttt{while} convention and the predicate rule}
+\label{sec:predicaterule}
+
+Two facts about the predicate are load-bearing, and getting them wrong is the
+most common way to misuse the combinator. We state them as rules and then earn
+them.
+
+\paragraph{Rule 1: the predicate fires first.} Look again at the small-step
+rule. The very first thing it does is test $p(a)$---\emph{before} any step runs.
+If the predicate is already false on the initial carry, the body never executes
+and the result is the initial carry with an empty trajectory. This is the
+\texttt{while} convention (test, then maybe step), not the
+\texttt{do}/\texttt{while} convention (step, then test). The distinction is not
+pedantry: a solver handed an already-converged input should do zero work, and the
+\texttt{while} convention guarantees it.
+
+\paragraph{Rule 2: the predicate is pure on the carry.} The predicate's type is
+\lstinline[style=l4style]|a -> Bool|. Its \emph{only} input is the carry. It
+cannot read external mutable state, it cannot read the simulator's monadic
+environment (\cref{ch:monad}), and---this is the subtle one---it cannot read the
+\emph{extras} the step produces. It sees the carry, and nothing else.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- LEFT: the correct rule ---
+  \begin{scope}
+    \node[font=\small\bfseries, text=simGreen] at (0,2.4) {correct: predicate reads the carry};
+    \node[data, minimum width=22mm, align=center] (carry) at (0,1.3)
+      {\code{carry}\\[-1pt]\scriptsize\itshape (incl.\ residual, flag)};
+    \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.6, inner sep=1pt,
+          font=\scriptsize] (pred) at (0,-0.2) {\code{p(carry)}};
+    \draw[flow] (carry)--(pred);
+    \node[font=\scriptsize, text=simGreen] at (2.0,0.55) {one input,};
+    \node[font=\scriptsize, text=simGreen] at (2.0,0.2) {no cycle};
+  \end{scope}
+  \draw[simGray!50, thick] (3.6,-1.2) -- (3.6,2.6);
+  % --- RIGHT: the pitfall, crossed out ---
+  \begin{scope}[xshift=8.2cm]
+    \node[font=\small\bfseries, text=simRust] at (0,2.4) {pitfall: predicate reads the extras};
+    \node[opbox, minimum width=16mm] (step) at (-1.3,1.3) {step};
+    \node[data, fill=simBgGold, draw=simGold, minimum width=16mm] (ex) at (1.3,1.3) {\code{extras}};
+    \node[diamond, draw=simRust, fill=simBgRust, aspect=1.6, inner sep=1pt,
+          font=\scriptsize] (badp) at (-1.3,-0.4) {\code{p(extras)}};
+    \draw[flow] (step.east)-- node[above,font=\scriptsize]{$e$} (ex.west);
+    \draw[flow, simRust] (ex.south) .. controls (1.3,-0.4) and (0.2,-0.4) .. (badp.east);
+    \draw[flow, simRust, densely dashed] (badp.north) .. controls (-1.3,0.6) and (-1.3,0.7) .. (step.south)
+      node[pos=0.5, left, font=\scriptsize, text=simRust] {gates};
+    % the big X
+    \draw[simRust, very thick] (-2.4,-1.0) -- (2.4,1.9);
+    \draw[simRust, very thick] (-2.4,1.9) -- (2.4,-1.0);
+    \node[font=\scriptsize, text=simRust, align=center] at (0,-1.55)
+      {circular: the test needs an extra\\the step has not produced yet};
+  \end{scope}
+\end{tikzpicture}
+\caption[The predicate-on-carry rule]{Left: the rule. The predicate reads the
+\emph{carry}, which already contains everything termination depends on (a
+residual, a converged flag, an iteration count). One input, no cycle. Right: the
+pitfall (\cref{sec:predicaterule}). Letting the predicate read the step's
+\emph{extras} creates a circular dependency---the gate that decides whether to
+run the step needs a value only the step can produce. The fix is to fold any
+termination quantity into the carry, so the predicate reads it from there.}
+\label{fig:predrule}
+\end{figure}
+
+Why must the predicate be pure on the carry? Because termination must be decided
+\emph{before} the step runs (Rule~1), and the extras are produced \emph{by} the
+step. If the predicate were allowed to read the extras, then on the first
+iteration there would be no extras to read---the step that produces them has not
+run. That is a circular dependency, drawn crossed-out on the right of
+\cref{fig:predrule}. The calculus forbids it structurally: the predicate's type
+mentions only \code{a}, so there is simply no way to write a predicate that
+reads the extras.
+
+\paragraph{The consequence: fold termination quantities into the carry.} This is
+not a limitation; it is a discipline that clarifies every algorithm. Whatever the
+loop terminates on---a residual norm below tolerance, a ``converged'' flag, an
+iteration count reaching a cap---must live \emph{in the carry}, computed by the
+step and read by the predicate on the next pass. The extras hold only the
+quantities that are \emph{outputs} (things a monitor or a plot might want); the
+carry holds the quantities that are \emph{control inputs} (things the predicate
+needs).
+
+A solver that stops when its residual drops below \code{tol} does \emph{not}
+write a predicate that inspects ``the residual the step just produced.'' It
+carries a \code{residual} field in its state, has the step compute and store it
+there, and writes the predicate
+\lstinline[style=l4style]|\s -> s.residual > tol|. A solver capped at
+\code{max\_it} iterations carries an \code{it} counter in the state and writes
+\lstinline[style=l4style]|\s -> s.it < max_it && not s.converged|. The carry is
+where convergence lives.
+
+\begin{pitfall}
+The single most common mistake with \code{iterate\_while} is trying to let the
+predicate test a quantity the step just produced---``loop while the new residual
+exceeds the tolerance,'' reaching for the residual as an \emph{extra}. This is a
+\emph{circular dependency}: the predicate fires \emph{before} the step
+(Rule~1), so on the first pass the extra does not exist yet. The calculus rules
+it out: the predicate has type \lstinline[style=l4style]|a -> Bool| and can read
+only the carry. \textbf{The fix is always the same}---fold the termination
+quantity into the carry. Let the step compute the residual and store it in a
+carry field; let the predicate read \emph{that} field. The residual then enters
+the next iteration's predicate as part of the carry, exactly when it exists.
+\Cref{wex:pitfall} shows the wrong and right versions side by side.
+\end{pitfall}
+
+\section{The family: three combinators, one shape}
+\label{sec:family}
+
+The combinator of \cref{sec:iteratewhile} is the central member of a small
+family. The other two are specializations: one drops a feature it does not need,
+one adds a feature for a particular recurrence. \Cref{fig:family} lines all three
+up; we take them in turn.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=3mm]
+  \def\colw{43mm}
+  % --- pure ---
+  \node[stage, minimum width=\colw, align=center] (pureH) at (0,0)
+    {\code{iterate\_while\_pure}};
+  \node[opbox, minimum width=\colw, align=left, below=of pureH] (pureB)
+    {carry only,\\no extras\\$\Rightarrow$ returns \code{final\_state}};
+  \node[cornertag, below=1mm of pureB] {plain loop};
+  % --- base ---
+  \node[stage, minimum width=\colw, align=center, right=14mm of pureH] (baseH)
+    {\code{iterate\_while}};
+  \node[opbox, minimum width=\colw, align=left, below=of baseH] (baseB)
+    {carry $+$ extras\\$\Rightarrow$ \code{final\_state}\\$+$ \code{trajectory}};
+  \node[cornertag, below=1mm of baseB] {the canonical combinator};
+  % --- with_prev ---
+  \node[stage, minimum width=\colw, align=center, right=14mm of baseH] (prevH)
+    {\code{iterate\_while\_with\_prev}};
+  \node[opbox, minimum width=\colw, align=left, below=of prevH] (prevB)
+    {carry $+$ extras\\$+$ a threaded \code{prev}\\(two-term recurrence)};
+  \node[cornertag, below=1mm of prevB] {bootstrap then steady};
+  % arrows showing specialization
+  \draw[depedge] (baseH) -- node[above,font=\scriptsize]{$e=()$} (pureH);
+  \draw[depedge] (prevH) -- node[above,font=\scriptsize]{\code{prev}$=()$} (baseH);
+\end{tikzpicture}
+\caption[The iteration-combinator family]{The three members of the iteration
+family. The center is \code{iterate\_while}: a carry, a predicate, a step with
+extras. Drop the extras ($e=()$) and the trajectory is always empty, leaving
+\code{iterate\_while\_pure}, a plain loop returning just the final carry. Add a
+second threaded value, the previous iterate, and you get
+\code{iterate\_while\_with\_prev}, the driver for two-term recurrences; collapse
+its \code{prev} to nothing and it degenerates back to the center. One shape,
+three settings.}
+\label{fig:family}
+\end{figure}
+
+\subsection{\texttt{iterate\_while\_pure}: the plain loop}
+
+Many loops have no per-step output to report---they only thread a carry forward
+and want the final value. For these the extras are empty, the trajectory is
+always \code{[]}, and carrying it around is noise. The \emph{sugar}
+\code{iterate\_while\_pure} drops it:
+\begin{lstlisting}[style=l4style]
+iterate_while_pure :: a -> (a -> Bool) -> (a -> a) -> a
+\end{lstlisting}
+The step is now just \lstinline[style=l4style]|a -> a| (next carry, no record),
+and the result is just the final carry, no trajectory record to destructure. It
+is defined in terms of the general combinator---it \emph{is} the general
+combinator with an empty extras record, projected onto its \code{final\_state}:
+\begin{lstlisting}[style=l4style]
+iterate_while_pure a p f
+  = (iterate_while a p (\x -> { state: f x })).final_state
+\end{lstlisting}
+Newton's method, fixed-point iteration, and a fixed-degree polynomial smoother
+all fit \code{iterate\_while\_pure}: each threads a single carry and wants only
+the answer. We use it whenever there is nothing per-step worth keeping.
+
+\subsection{\texttt{iterate\_while\_with\_prev}: two-term recurrences}
+
+Some iterations need not only the current carry but the \emph{previous} one. The
+conjugate-gradient method (\cref{ch:cg}) builds each search direction from the
+current residual \emph{and} a coefficient computed from the previous residual;
+a three-term Chebyshev recurrence needs the iterate from two steps back. These
+are \emph{two-term recurrences}, and they have an awkward first step: there is no
+``previous'' on iteration zero, so the naive code carries a special
+\lstinline[style=l4style]|if it == 0| branch inside the step.
+
+The framework removes that branch by splitting the loop into a one-time
+\emph{bootstrap} that manufactures the first ``previous'' value, followed by a
+\emph{steady} step that is branch-free because it always has a real previous to
+work with. The combinator that drives this pattern is
+\code{iterate\_while\_with\_prev}:
+\begin{lstlisting}[style=l4style]
+iterate_while_with_prev
+  :: (a -> { state: a, prev: b, ...extras })       -- bootstrap_step (runs once)
+  -> a                                             -- initial carry
+  -> ((a, b) -> { state: a, prev: b, ...extras })  -- steady_step (carry, prev)
+  -> (a -> Bool)                                    -- predicate (carry only)
+  -> { final_state: a, trajectory: [{ ...extras }] }
+\end{lstlisting}
+The \code{bootstrap\_step} fires exactly once, producing both the next carry and
+the initial \code{prev}. The \code{steady\_step} then runs the loop, taking the
+current carry \emph{and} the threaded \code{prev} as inputs and producing the
+next carry, the next \code{prev}, and any extras. The combinator threads
+\code{prev} for you; the step never writes the plumbing.
+
+Two disciplines carry over unchanged from the base combinator. The predicate is
+\emph{still} pure on the carry alone---it does not read \code{prev}, so any
+quantity \code{prev} feeds into termination must be folded into the carry, exactly
+as in \cref{sec:predicaterule}. And when no previous value is actually
+needed---when \code{prev} can be the empty record---this combinator degenerates
+to plain \code{iterate\_while} preceded by one bootstrap step, which is why
+\cref{fig:family} draws an arrow collapsing it back to the center. The two are one
+family: \code{iterate\_while} is the no-previous idiom, and
+\code{iterate\_while\_with\_prev} is its strict generalization for recurrences
+that look one step back.
+
+\begin{remark}
+Why split the bootstrap out rather than keep the \lstinline[style=l4style]|if it == 0|
+test inside the step? Because the split makes the steady step \emph{branch-free}
+and the steady carry \emph{one slot lighter}---the previous value lives in the
+combinator's threading, not in the state schema. A branch-free step is easier to
+reason about, easier to lower to a tensor backend, and free of a conditional that
+runs (and is mispredicted) on every iteration but is meaningful on only the
+first. \Cref{ch:rotations} studies this ``first-iteration unrolling'' as a
+rotation in its own right.
+\end{remark}
+
+\section{Demand-driven pruning: the calculus's signature move}
+\label{sec:pruning}
+
+We now come to the most elegant property of the combinator, and one of the most
+important ideas in the framework. Look again at the step's output record:
+\lstinline[style=l4style]|{ state: a, ...extras }|. A step may declare optional
+outputs---a residual norm, a breakdown diagnostic, a monitoring metric---\emph{as
+record fields, unconditionally}. It always ``produces'' them, in the sense that
+they appear in its type. Yet computing a residual norm every iteration is real
+work; a production solver that just wants the answer should not pay for
+monitoring it will never read.
+
+The naive resolutions to this tension are all familiar and all unpleasant. A
+\emph{verbosity flag} threaded through the step (``if \code{verbose}, also compute
+the residual''). A \emph{conditional branch} around every optional output. A
+\emph{logging monad} (a Writer effect) carrying metrics alongside the state. Each
+adds a second code path, and each forces ``monitored'' and ``unmonitored'' to be,
+in some sense, different algorithms.
+
+The calculus does none of this. Instead it uses \emph{demand-driven pruning}: the
+step declares all its outputs unconditionally, and \emph{whether each output is
+actually computed is decided by what a consumer reads}. If a downstream consumer
+reads the \code{trajectory}, the per-step extras are computed. If a consumer reads
+only \code{final\_state} and never touches the trajectory, then---by the calculus's
+evaluation rule---the extras computation is \emph{pruned away entirely}, at every
+step, as if it were never written. The same combinator, the same step
+definition, the same algorithm: only the consumer's demand differs, and the work
+follows the demand.
+
+\begin{keyidea}
+Demand-driven pruning makes ``compute residuals for monitoring'' and ``skip
+residuals for speed'' the \emph{same algorithm}. The step declares every output
+unconditionally; a consumer reads what it wants; outputs nothing reads are
+eliminated. There is no verbosity flag, no conditional branch, no logging
+monad---there is one step definition, and the demand at the call site decides
+what materializes. This is the property that lets the entire book write each
+solver \emph{once} and use it for both diagnostics and production.
+\end{keyidea}
+
+\subsection{Pruning is graph dead-code elimination}
+
+The mechanism is exactly the dead-code elimination a compiler performs, lifted to
+the evaluation of the whole computation graph. The calculus is a
+\emph{graph-evaluation language}: every operator produces a record of outputs, and
+at solve time only the outputs that some root consumer transitively reaches are
+computed. An output no consumer reaches is dead code, and dead code is pruned.
+
+\Cref{fig:pruning} draws this. On the left is the full trajectory: a consumer
+reads it, so every step computes its extras and they pile into the list. On the
+right, a consumer reads only \code{final\_state}; the trajectory is dead, so the
+arrows that would compute and collect the extras are greyed out, and what remains
+is the bare carry spine---precisely \code{iterate\_while\_pure}. Formally, when
+only \code{final\_state} is observed, the combinator is equivalent to
+\begin{lstlisting}[style=l4style]
+{ final_state: iterate_while_pure a p f_state, trajectory: [] }
+\end{lstlisting}
+where \code{f\_state} is the part of the step that computes only the next carry.
+The residual-collecting solve and the bare solve are two demands on one
+definition.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ============ LEFT: trajectory observed (all live) ============
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.5,2.3) {consumer reads \code{trajectory}};
+    \foreach \i/\x in {0/0,1/1.5,2/3.0}{
+      \node[data, minimum width=7mm] (a\i) at (\x,1.2) {$a_{\i}$};
+      \node[opbox, minimum width=7mm, minimum height=5mm] (s\i) at (\x+0.75,1.2) {};
+    }
+    \node[data, minimum width=7mm] (a3) at (4.5,1.2) {$a_3$};
+    \foreach \i in {0,1,2}{ \draw[flow] (a\i.east)--(s\i.west); }
+    \draw[flow] (s0.east)--(a1.west); \draw[flow] (s1.east)--(a2.west);
+    \draw[flow] (s2.east)--(a3.west);
+    % extras live
+    \node[data, fill=simBgGold, draw=simGold, minimum width=34mm] (tj) at (2.1,-0.3)
+      {\code{trajectory} $=[e_0,e_1,e_2]$};
+    \foreach \i in {0,1,2}{ \draw[refedge, simGold!80!black] (s\i.south)--(s\i.south|-tj.north); }
+    \node[product, minimum width=18mm] (fs) at (4.5,-0.3) {\code{final\_state}};
+    \draw[flow] (a3.south)--(fs.north);
+  \end{scope}
+  \draw[simGray!50, thick] (5.7,-1.0) -- (5.7,2.5);
+  % ============ RIGHT: only final_state observed (extras pruned) ============
+  \begin{scope}[xshift=6.6cm]
+    \node[font=\small\bfseries, text=simGreen] at (1.5,2.3) {consumer reads only \code{final\_state}};
+    \foreach \i/\x in {0/0,1/1.5,2/3.0}{
+      \node[data, minimum width=7mm] (b\i) at (\x,1.2) {$a_{\i}$};
+      \node[opbox, minimum width=7mm, minimum height=5mm] (t\i) at (\x+0.75,1.2) {};
+    }
+    \node[data, minimum width=7mm] (b3) at (4.5,1.2) {$a_3$};
+    \foreach \i in {0,1,2}{ \draw[flow] (b\i.east)--(t\i.west); }
+    \draw[flow] (t0.east)--(b1.west); \draw[flow] (t1.east)--(b2.west);
+    \draw[flow] (t2.east)--(b3.west);
+    % extras PRUNED (greyed)
+    \node[data, fill=white, draw=simGray!40, text=simGray!55, minimum width=34mm] (tjx) at (2.1,-0.3)
+      {\textcolor{simGray!55}{\code{trajectory} (pruned)}};
+    \foreach \i in {0,1,2}{ \draw[refedge, simGray!35] (t\i.south)--(t\i.south|-tjx.north); }
+    \node[product, minimum width=18mm] (fsx) at (4.5,-0.3) {\code{final\_state}};
+    \draw[flow] (b3.south)--(fsx.north);
+  \end{scope}
+\end{tikzpicture}
+\caption[Demand-driven pruning]{Demand-driven pruning as graph dead-code
+elimination. \emph{Left}: a consumer reads the \code{trajectory}, so every step
+computes its extras $e_i$ and they collect into the list---all live. \emph{Right}:
+a consumer reads only \code{final\_state}; the trajectory is now dead code, so the
+extras computations and the collection arrows (greyed) are eliminated, leaving
+only the carry spine. The step definition is identical in both panels; only what
+the consumer demands differs. The right panel is exactly
+\code{iterate\_while\_pure}.}
+\label{fig:pruning}
+\end{figure}
+
+This is the calculus's signature move, and it is worth pausing on how much it
+buys. In an ordinary imperative solver, the decision ``compute residuals or not''
+is a property of the \emph{code}---baked in by a flag or a branch, fixed when the
+solver is written. Here it is a property of the \emph{use}: the very same solver,
+unmodified, computes residuals exactly when something downstream looks at them.
+Monitoring becomes free to add and free to remove. We will lean on this in every
+solver chapter; it is why those chapters never present a ``debug version'' beside
+a ``fast version.''
+
+\section{What the combinator does, and does not, satisfy}
+\label{sec:laws}
+
+A combinator is only as useful as the rewrites it licenses. \code{iterate\_while}
+satisfies a handful of laws---facts that let us transform one expression into an
+equal one---and, just as importantly, fails to satisfy several tempting ones.
+Knowing both keeps us from ``simplifying'' a loop into something that means
+something different. We state the most useful affirmatively, and then catalogue
+the traps.
+
+\paragraph{The pruning law (the one that earns its keep).} If a consumer observes
+only \code{final\_state}, then \code{iterate\_while}~$a~p~f$ equals
+\lstinline[style=l4style]|{ final_state: iterate_while_pure a p f_state, trajectory: [] }|,
+where \code{f\_state} computes only the step's next carry. This is
+\cref{sec:pruning} stated as an equation: the monitored loop and the bare loop are
+\emph{equal} expressions whenever nothing reads the trajectory. It is the law
+that justifies writing one step definition and using it for both diagnostics and
+production.
+
+\paragraph{The base case.} If $p(a)$ is false at the outset,
+\code{iterate\_while}~$a~p~f = $
+\lstinline[style=l4style]|{ final_state: a, trajectory: [] }| for \emph{any}
+step \code{f}. The combinator does not run the body even once before testing---a
+direct reading of the small-step rule, and the formal content of Rule~1.
+
+Now the traps. Each is a rewrite that looks innocent and is wrong.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[You may not hoist the predicate out of the loop.] \code{iterate\_while}
+  re-evaluates $p$ on \emph{every} carry, not once. Replacing the loop with ``test
+  $p(a)$ once, then iterate unconditionally'' turns a terminating loop into an
+  infinite one---the predicate would never get the chance to become false. The
+  per-iteration re-test is the whole point.
+  \item[You may not fuse two loops into one.] Running
+  \code{iterate\_while}~$a~p_1~f$ and then \code{iterate\_while} on its result with
+  $p_2$ is \emph{not} the same as a single loop with a combined predicate. The two
+  phases stop on different conditions and concatenate their trajectories; a single
+  flattened loop has one predicate and one trajectory. (This is exactly why GMRES,
+  in \cref{ch:gmres}, wraps an \emph{outer} restart loop around its inner
+  \code{iterate\_while} rather than flattening the two.)
+  \item[You may not swap the predicate and the step.] Testing after the step
+  (\texttt{do}/\texttt{while}) is a \emph{different} combinator that can run one
+  more time than \code{iterate\_while} on an already-satisfied initial carry. The
+  two agree only when the initial predicate is true.
+  \item[There is no identity element, and the type does not promise termination.]
+  \code{iterate\_while} is a fold, not a monoid operation; there is no carry that
+  makes it a no-op for all predicates and steps. And nothing in the signature
+  guarantees the loop halts---a step that never lets the predicate go false
+  diverges. Termination is an obligation discharged \emph{by the algorithm}: a
+  bounded \code{max\_it} folded into the carry, or a convergence proof (Krylov
+  methods on well-conditioned systems), or an explicit done-state the step always
+  reaches.
+\end{description}
+
+The lesson of the non-laws is uniform: \code{iterate\_while} is a faithful record
+of an ordered, possibly-unbounded computation, and the order is observable. The
+combinator earns its simplicity by \emph{not} pretending iterations commute or
+that loops fuse for free---claims that would be convenient and false.
+
+\section{Why one combinator suffices}
+\label{sec:onecombinator}
+
+We close the conceptual development by collecting the claim the chapter has been
+building toward: \emph{one combinator expresses every iteration in the book}. The
+three patterns a simulator runs---independent steps, sequential carries, and
+convergence loops---are all \code{iterate\_while} (or its family), seen at
+different settings. \Cref{fig:threeuses} shows the three side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=2.5mm]
+  \def\cw{38mm}
+  % map
+  \node[stage, minimum width=\cw] (mH) at (0,0) {as a \textbf{map}};
+  \node[opbox, minimum width=\cw, align=left, below=of mH] (mB)
+    {predicate counts down\\a fixed list; steps are\\independent (no real carry)};
+  \node[cornertag, below=1mm of mB] {independent solves};
+  % fold
+  \node[stage, minimum width=\cw, right=12mm of mH] (fH) {as a \textbf{fold}};
+  \node[opbox, minimum width=\cw, align=left, below=of fH] (fB)
+    {carry threads forward;\\each step consumes the\\last (time-stepping)};
+  \node[cornertag, below=1mm of fB] {sequential chain};
+  % converge
+  \node[stage, minimum width=\cw, right=12mm of fH] (cH) {as a \textbf{converge}};
+  \node[opbox, minimum width=\cw, align=left, below=of cH] (cB)
+    {predicate tests a residual\\folded into the carry;\\stop at tolerance (Krylov)};
+  \node[cornertag, below=1mm of cB] {until converged};
+  % the unifying brace
+  \node[font=\small\bfseries, text=simBlue] (one) at ($(fH)+(0,1.4)$) {one \code{iterate\_while}};
+  \draw[depedge] (one) -- (mH.north);
+  \draw[depedge] (one) -- (fH.north);
+  \draw[depedge] (one) -- (cH.north);
+\end{tikzpicture}
+\caption[One combinator, three uses]{Three iteration patterns, one combinator.
+A \emph{map} of independent steps is \code{iterate\_while} with a predicate that
+walks a fixed count and steps that ignore the carry. A \emph{fold} is the
+sequential chain---time-stepping, where each step consumes the last. A
+\emph{converge} loop tests a residual folded into the carry and stops at a
+tolerance---the Krylov solvers. The full catalogue, with the precise sense in
+which a map is a degenerate fold, is \cref{ch:combinators}.}
+\label{fig:threeuses}
+\end{figure}
+
+A \emph{map}---a family of independent solves, like the electrostatic analysis's
+several right-hand sides---is \code{iterate\_while} with a predicate that simply
+counts off a fixed number of steps and a step whose output does not depend on the
+carry. (One ordinarily writes a map as \code{map}, not as a degenerate
+\code{iterate\_while}; the point is that it \emph{can} be seen this way, and
+\cref{ch:combinators} makes the relationship precise.) A \emph{fold}---a
+sequential chain like time-stepping, where each state comes from the last---is
+\code{iterate\_while} in its plainest reading. A \emph{convergence loop}---a
+Krylov solver running until its residual drops below tolerance---is
+\code{iterate\_while} with the residual folded into the carry and the predicate
+testing it. Maps, folds, and convergence loops: three faces of one combinator.
+
+\begin{keyidea}
+There is \emph{one} iteration combinator. Independent steps (a map), sequential
+carries (a fold), and convergence loops (run-until-converged) are all
+\code{iterate\_while} at different settings of its predicate and step. The
+solver's state-threading, the time-stepper's march, the adaptive loop of
+\cref{ch:lifecycle}---every iteration the simulator performs is one specialization
+of the combinator built in this chapter. Learn it once and you have learned the
+control structure of the entire simulator.
+\end{keyidea}
+
+The headline instance is the Krylov step. \Cref{ch:cg} and \cref{ch:gmres} build
+the conjugate-gradient and GMRES solvers, and at their heart each is a single
+\code{krylov\_step} folded by \code{iterate\_while}: the carry is the solver's
+working state (current iterate, residual, search direction, convergence flag),
+the step applies the operator once and updates that state, the predicate reads
+the convergence flag and iteration count from the carry, and the trajectory---when
+a consumer asks for it---is the residual history. Everything those chapters do is
+filling in the step; the loop is the one we have here. \Cref{ch:combinators}
+catalogues the full family of specializations, and \cref{ch:monad} explains how
+the step threads the simulator's monadic state while the carry stays a pure value.
+
+\section{Worked examples}
+
+\begin{workedexample}{Newton's method for $\sqrt{2}$ as a fold}{newton}
+We compute $\sqrt 2$ by Newton iteration, written as \code{iterate\_while}. The
+carry holds both the current estimate and the residual that the predicate will
+test---folding the termination quantity into the carry, exactly as
+\cref{sec:predicaterule} requires.
+
+The carry is a record \lstinline[style=l4style]|{ x: Float, residual: Float }|.
+The step applies the Newton update and recomputes the residual; the predicate
+tests the residual against a tolerance.
+\begin{lstlisting}[style=l4style]
+newton_sqrt2 :: Float -> { final_state: { x, residual }, trajectory: [...] }
+newton_sqrt2 x0 =
+  iterate_while
+    { x: x0, residual: abs (x0*x0 - 2) }        -- initial carry
+    (\s -> s.residual > 1e-12)                  -- predicate: pure on the carry
+    (\s -> let x' = 0.5 * (s.x + 2 / s.x)       -- Newton step
+           in  { state:    { x: x', residual: abs (x'*x' - 2) },
+                 residual: abs (x'*x' - 2) })   -- extra: the per-step residual
+\end{lstlisting}
+Starting from $x_0 = 1$, trace the carry. Each step computes
+$x' = \tfrac12(x + 2/x)$ and the residual $|x'^2 - 2|$:
+\begin{center}
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}clll@{}}
+\toprule
+step & carry $x$ & next $x' = \tfrac12(x + 2/x)$ & residual $|x'^2 - 2|$ \\
+\midrule
+0 & $1.000000000000$ & $1.500000000000$ & $2.5\times10^{-1}$ \\
+1 & $1.500000000000$ & $1.416666666667$ & $6.9\times10^{-3}$ \\
+2 & $1.416666666667$ & $1.414215686275$ & $6.0\times10^{-6}$ \\
+3 & $1.414215686275$ & $1.414213562374$ & $4.5\times10^{-12}$ \\
+4 & $1.414213562374$ & $1.414213562373$ & $<10^{-12}$ \;(stop) \\
+\bottomrule
+\end{tabular}
+\end{center}
+The residual falls roughly quadratically---each step doubles the correct digits.
+After step~4 the predicate \lstinline[style=l4style]|s.residual > 1e-12| is false,
+the loop halts, and \code{final\_state.x} is $\sqrt 2$ to twelve places. Two
+points to notice. First, the predicate never touches the freshly computed
+residual directly; it reads \code{s.residual} from the carry, which the
+\emph{previous} step stored there. Second, the residual appears \emph{both} in the
+carry (so the predicate can read it) and in the extras (so a consumer plotting
+convergence can read the trajectory)---two readers, one computed value.
+\end{workedexample}
+
+\begin{workedexample}{A geometric-series partial sum as \texttt{iterate\_while\_pure}}{geom}
+When a loop has nothing per-step to report, \code{iterate\_while\_pure} is the
+idiom. We sum the geometric series $\sum_{k=0}^{\infty} r^k = 1/(1-r)$ for
+$|r| < 1$ by accumulating partial sums until a new term changes the sum
+negligibly.
+
+The carry is a record \lstinline[style=l4style]|{ sum: Float, term: Float }|: the
+partial sum so far and the current term $r^k$. The step adds the term and
+advances it to $r^{k+1}$; the predicate stops when the term is below tolerance.
+There are no extras, so we use the pure form and read back only the final sum.
+\begin{lstlisting}[style=l4style]
+geom_sum :: Float -> Float
+geom_sum r =
+  (iterate_while_pure
+     { sum: 0.0, term: 1.0 }                    -- start: sum 0, term r^0 = 1
+     (\s -> abs s.term > 1e-10)                 -- stop when the term is tiny
+     (\s -> { sum: s.sum + s.term, term: s.term * r })   -- accumulate, advance
+  ).sum
+\end{lstlisting}
+For $r = \tfrac12$ the exact sum is $1/(1-\tfrac12) = 2$. Tracing the carry:
+\begin{center}
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}clll@{}}
+\toprule
+step & \code{term} ($= r^k$) & \code{sum} after adding & remaining error $2 - \text{sum}$ \\
+\midrule
+0 & $1.0000$    & $1.0000$ & $1.0000$ \\
+1 & $0.5000$    & $1.5000$ & $0.5000$ \\
+2 & $0.2500$    & $1.7500$ & $0.2500$ \\
+3 & $0.1250$    & $1.8750$ & $0.1250$ \\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ \\
+33 & $\approx10^{-10}$ & $\approx 2.0000$ & $<10^{-10}$ \;(stop) \\
+\bottomrule
+\end{tabular}
+\end{center}
+The carry threads two values, the predicate reads one of them (\code{term}), and
+because nothing per-step is collected the \code{iterate\_while\_pure} sugar saves
+us a trajectory we would never read. This is fixed-point iteration in disguise:
+the map $s \mapsto (\,s.\code{sum} + s.\code{term},\; r\cdot s.\code{term}\,)$ is a
+contraction, and the loop walks to its fixed point.
+\end{workedexample}
+
+\begin{workedexample}{The predicate-on-extras pitfall, wrong and right}{pitfall}
+This example shows the mistake of \cref{sec:predicaterule} concretely and its fix
+side by side. We want a generic ``iterate until the residual is below
+\code{tol}'' loop. The tempting but \emph{wrong} sketch tries to let the predicate
+read the residual the step produces as an extra:
+\begin{lstlisting}[style=l4style]
+-- WRONG: the predicate wants to read an extra the step has not produced yet.
+solve_BAD x0 =
+  iterate_while_BAD
+    x0
+    (\extras -> extras.residual > tol)       -- (!) reads the step's extra
+    (\x -> let x'  = step_body x
+               r   = residual_of x'
+           in  { state: x', residual: r })   -- residual is an *extra*
+\end{lstlisting}
+The predicate \lstinline[style=l4style]|\extras -> extras.residual > tol| needs an
+\code{extras} record to inspect---but the predicate fires \emph{before} the step
+(Rule~1), so on the first iteration no such record exists. The dependency is
+circular; \cref{fig:predrule} draws it crossed out. The calculus will not even
+let us write this: the predicate's type is \lstinline[style=l4style]|a -> Bool|,
+so it cannot name an \code{extras} argument at all.
+
+The fix folds the residual into the carry. The carry becomes a record carrying
+both the iterate and its residual; the step computes the residual and stores it
+in the carry; the predicate reads it from there:
+\begin{lstlisting}[style=l4style]
+-- RIGHT: the residual lives in the carry; the predicate reads it from there.
+solve_OK x0 =
+  iterate_while
+    { x: x0, residual: residual_of x0 }      -- residual folded into the carry
+    (\s -> s.residual > tol)                 -- predicate: pure on the carry
+    (\s -> let x' = step_body s.x
+               r  = residual_of x'
+           in  { state: { x: x', residual: r },   -- carry the residual forward
+                 residual: r })                   -- also surface it as an extra
+\end{lstlisting}
+Now the predicate reads \code{s.residual}, a field of the carry that the previous
+step stored---which exists from the start because the \emph{initial} carry
+computes it too. The residual is still available to trajectory consumers as an
+extra; it is simply \emph{also} in the carry so the predicate can see it. The
+single change---move the control quantity from the extras into the carry---turns
+the impossible loop into the canonical one. This is the move to reach for every
+time a predicate seems to need something the step produced.
+\end{workedexample}
+
+\begin{example}[A conjugate-gradient step, previewed]
+We can already sketch the shape \cref{ch:cg} fills in. A conjugate-gradient solve
+is \code{iterate\_while} whose carry is the CG working state---current iterate
+$\vx$, residual $\vr$, search direction $\vp$, residual norm, and a
+\code{converged} flag---and whose step is one \code{krylov\_step}: apply the
+operator once, update $\vx$, $\vr$, $\vp$, recompute the residual norm, and set
+\code{converged} when it drops below tolerance. The predicate reads the carry:
+\lstinline[style=l4style]|\s -> s.it < max_it && not s.converged|. The trajectory,
+when a consumer reads it, is the residual history. The entire control structure is
+the combinator of this chapter; \cref{ch:cg} supplies only the step body.
+\end{example}
+
+\summarysection
+An imperative loop overwrites a cell; a \emph{fold} carries a value forward,
+each step computing the next from the last. This single reframing---mutation into
+value-threading---turns every iteration in the book into an instance of one
+combinator, \code{iterate\_while}. Its signature is
+\lstinline[style=l4style]|a -> (a -> Bool) -> (a -> { state: a, ...extras }) -> { final_state, trajectory }|:
+from an initial carry, while a predicate holds of the current carry, take a step
+that produces the next carry plus per-step extras, collecting the extras into a
+trajectory. Two rules about the predicate are load-bearing: it fires
+\emph{first} (the \texttt{while} convention), and it is \emph{pure on the carry}
+(it sees the carry and nothing else). The consequence is the central discipline:
+any termination quantity---a residual, a flag, a count---must be \emph{folded into
+the carry}, computed by the step and read by the predicate. Trying instead to test
+an \emph{extra} the step produced is the predicate-on-extras pitfall, a circular
+dependency the calculus forbids by typing. The family has three members:
+\code{iterate\_while\_pure} (no extras, returns just the final carry),
+\code{iterate\_while} (the canonical form), and
+\code{iterate\_while\_with\_prev} (a bootstrap plus a branch-free steady step for
+two-term recurrences). \emph{Demand-driven pruning}---graph dead-code
+elimination---makes a monitored solve and a bare solve the \emph{same algorithm}:
+the step declares every output unconditionally, and outputs no consumer reads are
+eliminated, with no flag, branch, or logging monad. Finally, one combinator
+suffices: maps, folds, and convergence loops are all \code{iterate\_while} at
+different settings, and the headline instance, the Krylov step
+(\cref{ch:cg},~\cref{ch:gmres}), is a single step folded by exactly this loop.
+
+\furtherreading
+The fold and its relatives are foundational in functional programming; Peyton
+Jones's account of Haskell~\citep{peytonjones2003} develops \code{map},
+\code{foldl}, \code{foldr}, and the laws relating them. The idea that
+``effects''---here, the optional per-step outputs---can be expressed as values
+threaded through pure code, rather than as ambient mutation or a logging channel,
+is the subject of Wadler's monads tutorial~\citep{wadler1995monads}; we take up the
+state monad that threads the simulator's own mutable bookkeeping in
+\cref{ch:monad}. For the numerical iterations the combinator will drive---Krylov
+methods, their convergence, and the residual histories the trajectory
+records---Saad's monograph~\citep{saad2003} is the standard reference, and we build
+those solvers as folds in \cref{ch:cg} and \cref{ch:gmres}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item Write the running sum of a list as both an imperative \texttt{for}-loop and
+  a \code{foldl}. Identify, in each, the carry and the step. Which version could
+  you run in parallel, and which not? (Hint: which one has a carry?)
+  \item In \cref{wex:newton} the residual appears in two places in
+  the step's output record---in the carry's \code{residual} field and as a
+  top-level \code{residual} extra. Explain what each copy is for, and which
+  reader consumes which. What would break if you kept only the extra?
+  \item State the \texttt{while} convention precisely and contrast it with
+  \texttt{do}/\texttt{while}. Construct an initial carry on which the two
+  conventions give \emph{different} numbers of steps. Why does a solver want the
+  \texttt{while} convention?
+  \item A colleague proposes a predicate of type
+  \lstinline[style=l4style]|(a, extras) -> Bool| so the loop can ``stop as soon
+  as the step's residual is small.'' Explain the circular dependency this creates
+  on the first iteration, and rewrite their loop using the carry-folding fix of
+  \cref{sec:predicaterule}.
+  \item Using the small-step rule of \cref{sec:iteratewhile}, evaluate
+  \lstinline[style=l4style]|iterate_while a (\_ -> False) f| by hand for any step
+  \code{f}. What is the \code{final\_state}? The \code{trajectory}? How many times
+  does \code{f} run? Which of the two predicate rules does this exercise probe?
+  \item A solver is written with a step that always computes a residual norm as an
+  extra. In one run a consumer plots the residual history; in another it reads only
+  the final iterate. Using \cref{sec:pruning}, describe what computation each run
+  actually performs, and argue that the two are running the \emph{same} algorithm.
+  Why is this preferable to a \code{verbose} flag?
+  \item Express a fixed-degree polynomial smoother---a loop that runs exactly $d$
+  steps regardless of any residual---as \code{iterate\_while\_pure}. What does the
+  carry contain? What does the predicate test? (Hint: fold a step counter into the
+  carry.)
+  \item \emph{(Two-term recurrence.)} The Fibonacci sequence obeys
+  $F_{k+1} = F_k + F_{k-1}$, a two-term recurrence. Sketch its computation using
+  \code{iterate\_while\_with\_prev}: identify the bootstrap step (what is the first
+  ``previous''?), the steady step, the carry, and the predicate. Then argue that
+  the same sequence can be computed by plain \code{iterate\_while} if you widen the
+  carry to hold \emph{both} $F_k$ and $F_{k-1}$. What does
+  \code{iterate\_while\_with\_prev} buy over that widening?
+  \item \emph{(Synthesis.)} The adaptive loop of \cref{ch:lifecycle} threads the
+  mesh forward, refining it each pass until the error is small enough. Cast it as
+  \code{iterate\_while}: name the carry, the step, the predicate, and the
+  termination quantity that must be folded into the carry. Is its trajectory ever
+  read? If not, what does \cref{sec:pruning} say happens to the per-step extras?
+\end{enumerate}

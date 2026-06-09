@@ -1,0 +1,895 @@
+\chapter{Tensors and Shapes}
+\label{ch:tensors}
+
+\chapterorient{\Cref{ch:bigidea} sold you a slogan---\emph{a field is a
+tensor}---and then leaned on it without ever pinning down what a tensor
+\emph{is}. This chapter pays that debt. We say precisely what a tensor is in our
+calculus (an immutable, typed, multi-axis array of numbers), introduce
+\emph{shapes} as the type that travels with every tensor and is checked at every
+function boundary, and write down the handful of primitive operations---%
+\code{axpy}, \code{dot}, \code{matvec}, and friends---each with its shape
+contract drawn as a picture. Then comes the chapter's real payload: the
+\emph{tensor-field lift}, the modeling move that turns a per-degree-of-freedom
+loop over an array (the world of Part~II) into a single equation about a whole
+field. By the end you will read a shape the way you read a type, and you will see
+why ``loop over the entries'' and ``one statement about the field'' are usually,
+but not always, the same thing. The careful \emph{algebra} of shapes---how they
+combine, broadcast, and promote---is the next chapter, \cref{ch:shapes}; here we
+fix the vocabulary and the simplest shapes.}
+
+\section{What a tensor is}
+\label{sec:t-whatis}
+
+We have used the word ``tensor'' since \cref{ch:bigidea} as a synonym for ``a
+rectangular block of numbers.'' That is the right intuition, but our calculus
+asks three specific things of the word, and it is worth stating them plainly
+because each one earns its keep later.
+
+\begin{definition}[Tensor]
+\label{def:tensor}
+A \emph{tensor} is an \emph{immutable}, \emph{typed}, \emph{multi-axis} array of
+scalars:
+\begin{description}[leftmargin=1.6em, style=nextline, nosep]
+\item[immutable] once constructed, its entries never change. An operation that
+``modifies'' a tensor in fact returns a \emph{new} tensor and leaves its input
+untouched (\cref{ch:bigidea}).
+\item[typed] it carries a \emph{shape}---the number, sizes, and meanings of its
+axes---and a \emph{scalar type} (real or complex). The shape is part of the
+value, not a comment about it.
+\item[multi-axis] its entries are addressed by a tuple of integer indices, one
+per axis. A length-$N$ vector has one axis; an $m\times n$ matrix has two; the
+$[H,W,3]$ field of \cref{ch:bigidea} has three.
+\end{description}
+\end{definition}
+
+The \emph{number} of axes is the tensor's \emph{rank}: rank-1 for a vector,
+rank-2 for a matrix, rank-0 for a single scalar (\cref{sec:t-scalars}). Do not
+confuse this with the rank of a matrix in the linear-algebra sense (the dimension
+of its column space); throughout this book ``rank'' means ``number of axes''
+unless we say otherwise.
+
+\subsection{Reconnecting to Part~II: every field we built is a tensor}
+\label{sec:t-reconnect}
+
+This is not a new object. Every quantity Part~II constructed is already a tensor;
+we simply had not insisted on the word. Two cases anchor everything that follows.
+
+\paragraph{A discretized field is a \code{Tensor[N]}.}
+\Cref{ch:functionspaces} replaced a continuous field---the potential $V$, the
+mode field $\vE$---with a finite list of \emph{degrees of freedom} (DoFs): the
+coefficients that, multiplied against the basis functions, reconstruct the field
+everywhere. If the function space has $N$ degrees of freedom, that list is $N$
+numbers in a fixed order. As a tensor it has exactly one axis, of length $N$:
+
+\begin{center}
+\lstinline[style=l4style]|Tensor[N]| \quad---\quad a rank-1 tensor, the global
+DoF vector.
+\end{center}
+
+\noindent This is \emph{the} workhorse shape of the whole solver. The unknown we
+solve for, the right-hand side we solve against, every residual and search
+direction a Krylov method forms (\cref{ch:matrixfree})---all are
+\lstinline[style=l4style]|Tensor[N]|. The single axis $N$ counts degrees of
+freedom, and which DoFs they are is the business of the function space; the
+tensor only remembers \emph{how many} and \emph{in what order}.
+\Cref{fig:t-meshfield} draws the correspondence: the continuous field over the
+mesh on the left, and the flat \lstinline[style=l4style]|Tensor[N]| of its DoF
+coefficients on the right.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % LEFT: a triangulated mesh with a few highlighted nodes (DoFs)
+  \begin{scope}
+    \draw[simGray, semithick]
+      (-1.5,-1.0) -- (0.0,-1.1) -- (1.4,-0.8) --
+      (1.2,0.7) -- (-0.2,1.0) -- (-1.6,0.6) -- cycle;
+    \draw[simGray, semithick] (-1.5,-1.0) -- (-0.2,1.0);
+    \draw[simGray, semithick] (0.0,-1.1) -- (-0.2,1.0);
+    \draw[simGray, semithick] (0.0,-1.1) -- (1.2,0.7);
+    \draw[simGray, semithick] (1.4,-0.8) -- (1.2,0.7);
+    \draw[simGray, semithick] (-1.6,0.6) -- (-0.2,1.0);
+    \draw[simGray, semithick] (-1.5,-1.0) -- (-1.6,0.6);
+    % the DoF nodes, numbered
+    \foreach \p/\n in {{(-1.5,-1.0)}/0, {(0.0,-1.1)}/1, {(1.4,-0.8)}/2,
+                       {(1.2,0.7)}/3, {(-0.2,1.0)}/4, {(-1.6,0.6)}/5}{
+      \fill[simRust] \p circle (2.1pt);
+      \node[font=\tiny, simRust, anchor=south west] at \p {\n};}
+    \node[font=\scriptsize\itshape, simGray] at (0,-1.6) {a field on a mesh};
+    \node[font=\scriptsize\itshape, simGray] at (0,-1.95) {$N=6$ DoFs (one per node)};
+  \end{scope}
+  % collapse arrow
+  \node[font=\Large, simBlue] at (2.7,0) {$\rightsquigarrow$};
+  \node[font=\scriptsize\itshape, simBlue] at (2.7,0.55) {collect the};
+  \node[font=\scriptsize\itshape, simBlue] at (2.7,-0.55) {DoF coefficients};
+  % RIGHT: the Tensor[N] column with the 6 entries
+  \begin{scope}[shift={(4.9,0)}]
+    \fill[simBgBlue, draw=simBlue, thick] (-0.32,-1.2) rectangle (0.32,1.2);
+    \foreach \k in {0,1,2,3,4,5}{
+      \pgfmathsetmacro\yy{0.9-0.4*\k}
+      \draw[simBlue!35] (-0.32,\yy+0.2)--(0.32,\yy+0.2);
+      \node[font=\tiny, simRust] at (-0.62,\yy) {\k};
+      \node[font=\scriptsize, simInk] at (0.0,\yy) {$c_{\k}$};}
+    \node[font=\scriptsize, simRust] at (0.95,0) {$N$};
+    \draw[-{Stealth[length=1.6mm]}, simRust] (0.62,1.0)--(0.62,-1.0);
+    \node[font=\scriptsize\ttfamily, simInk] at (0.0,-1.6) {Tensor[N]};
+    \node[font=\scriptsize\itshape, simGray] at (0.0,-1.95) {rank-1 DoF vector};
+  \end{scope}
+\end{tikzpicture}
+\caption[A field over a mesh is a \code{Tensor[N]}]{The correspondence that
+underwrites the whole calculus. \emph{Left:} a field defined over a mesh, sampled
+by $N$ degrees of freedom---here one coefficient per node, $N=6$. \emph{Right:}
+those coefficients collected, in their fixed order, into a single rank-1 tensor
+\lstinline[style=l4style]|Tensor[N]|. The mesh, the basis, and the geometry choose
+\emph{which} DoFs and in \emph{what order} (the function-space machinery of
+\cref{ch:functionspaces}); the tensor remembers only the ordered list. From
+Part~III's height, the field \emph{is} this \lstinline[style=l4style]|Tensor[N]|.}
+\label{fig:t-meshfield}
+\end{figure}
+
+\paragraph{An element-local quantity is a small multi-axis tensor.}
+\Cref{ch:matrixfree} showed that the moment we gather the global vector down to
+individual elements, we acquire \emph{richer} shape. The gathered coefficients
+form a \lstinline[style=l4style]|Tensor[E, L]| ($E$ elements, $L$ local DoFs
+each); the values at quadrature points form a
+\lstinline[style=l4style]|Tensor[E, P, C]| ($P$ points, $C$ components); the
+geometry factor is a \lstinline[style=l4style]|Tensor[E, P, G]|. These are the
+\emph{same kind of object} as the flat DoF vector---immutable, typed, multi-axis
+arrays---only with more axes and more specific meanings. The gather/scatter pair
+$G,\,G^{\mathsf T}$ of \cref{ch:matrixfree} is precisely the bridge between the
+one-axis global vocabulary and the multi-axis element-local one.
+
+\Cref{fig:t-box} draws three representative tensors as labeled boxes of axes---a
+picture we will return to whenever a shape needs to be made concrete.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % --- Tensor[N]: a single tall column ---
+  \begin{scope}[shift={(-5.0,0)}]
+    \fill[simBgBlue, draw=simBlue, thick] (-0.28,-1.1) rectangle (0.28,1.1);
+    \foreach \y in {-0.825,-0.55,-0.275,0,0.275,0.55,0.825}{
+      \draw[simBlue!40] (-0.28,\y)--(0.28,\y);}
+    \node[font=\scriptsize, simRust] at (0.0,1.45) {$N$};
+    \draw[-{Stealth[length=1.6mm]}, simRust] (0.55,0.9)--(0.55,-0.9);
+    \node[font=\scriptsize\ttfamily, simInk] at (0.0,-1.5) {Tensor[N]};
+    \node[font=\scriptsize\itshape, simGray, text width=26mm, align=center]
+      at (0.0,-2.05) {global DoF vector\\(rank 1)};
+  \end{scope}
+  % --- Tensor[m, n]: a small grid ---
+  \begin{scope}[shift={(-1.4,0)}]
+    \fill[simBgGreen, draw=simGreen, thick] (-0.85,-0.7) rectangle (0.85,0.7);
+    \foreach \y in {-0.35,0,0.35}{\draw[simGreen!45] (-0.85,\y)--(0.85,\y);}
+    \foreach \x in {-0.51,-0.17,0.17,0.51}{\draw[simGreen!45] (\x,-0.7)--(\x,0.7);}
+    \node[font=\scriptsize, simInk] at (-1.15,0.0) {$m$};
+    \node[font=\scriptsize, simRust] at (0.0,-1.0) {$n$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.0,-1.5) {Tensor[m, n]};
+    \node[font=\scriptsize\itshape, simGray, text width=26mm, align=center]
+      at (0.0,-2.05) {a dense matrix\\(rank 2)};
+  \end{scope}
+  % --- Tensor[H, W, 3]: stacked grids ---
+  \begin{scope}[shift={(3.2,0)}]
+    \def\dx{0.17}\def\dy{0.11}
+    \foreach \k/\c in {0/simBgGray,1/simBgViolet,2/simBgRust}{
+      \begin{scope}[shift={(\k*\dx,\k*\dy)}]
+        \fill[\c, draw=simGray] (-0.8,-0.6) rectangle (0.8,0.6);
+        \draw[simGray!55] (-0.8,-0.2)--(0.8,-0.2);
+        \draw[simGray!55] (-0.8,0.2)--(0.8,0.2);
+        \draw[simGray!55] (-0.27,-0.6)--(-0.27,0.6);
+        \draw[simGray!55] (0.27,-0.6)--(0.27,0.6);
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.15,0.0) {$H$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.95) {$W$};
+    \node[font=\scriptsize, simRust] at (1.2,0.85) {$3$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.15,-1.5) {Tensor[H, W, 3]};
+    \node[font=\scriptsize\itshape, simGray, text width=28mm, align=center]
+      at (0.15,-2.05) {a 3-vector per grid cell\\(rank 3)};
+  \end{scope}
+\end{tikzpicture}
+\caption[A tensor as a labeled box of axes]{Three tensors, drawn as labeled
+boxes of their axes. \emph{Left:} the global DoF vector
+\lstinline[style=l4style]|Tensor[N]|, a single axis of length $N$---the shape
+every solver vector wears. \emph{Center:} a small dense matrix
+\lstinline[style=l4style]|Tensor[m, n]|, two axes. \emph{Right:} a field storing
+a 3-vector at each cell of an $H\times W$ grid,
+\lstinline[style=l4style]|Tensor[H, W, 3]|, three axes with the last pinned to
+size $3$. The \emph{rank} is the number of axes; the bracketed list is the
+\emph{shape}.}
+\label{fig:t-box}
+\end{figure}
+
+\subsection{Real and complex scalars}
+\label{sec:t-scalars}
+
+Every tensor's entries are scalars of a single type, and our calculus admits
+two: \emph{real} ($\Real$) and \emph{complex} ($\Complex$). The distinction is
+physical, not cosmetic. The electrostatic and magnetostatic analyses
+(\cref{ch:targets}) solve over $\Real$: a potential or vector-potential DoF is a
+real number. The driven and eigenmode analyses are
+\emph{time-harmonic}---a field oscillating as $e^{i\omega t}$ is most naturally a
+\emph{complex} amplitude, so their DoF vectors are
+\lstinline[style=l4style]|Tensor[N]| over $\Complex$. The transient analysis
+marches real fields in time. A tensor's scalar type travels with it just as its
+shape does, and operations must agree on it: you cannot silently add a real
+tensor to a complex one. The natural question---when \emph{may} a real tensor be
+treated as complex (the \emph{promotion} question)---we raise in
+\cref{sec:t-promotion} and answer with the rest of the shape algebra in
+\cref{ch:shapes}.
+
+\section{Shapes as type-level contracts}
+\label{sec:t-shapes}
+
+A tensor's shape is a small piece of data---a bracketed list of axes---but it
+plays the role of a \emph{type}. It is declared at construction, it travels with
+the value, and it is \emph{checked at every function boundary}. A function that
+expects a \lstinline[style=l4style]|Tensor[n]| and is handed a
+\lstinline[style=l4style]|Tensor[m, n]| is as wrong as a function that expects an
+integer and is handed a string---and just as with types, catching the mismatch at
+the boundary, before any arithmetic runs, is what makes the calculus safe to
+compose.
+
+\subsection{The bracket notation}
+\label{sec:t-bracket}
+
+We write a shape as a comma-separated list of axes inside square brackets,
+following the value's element type \code{Tensor}:
+
+\begin{itemize}[leftmargin=1.4em, nosep]
+\item \lstinline[style=l4style]|Tensor[N]| --- rank 1, a single axis of length
+$N$. The flat DoF vector.
+\item \lstinline[style=l4style]|Tensor[m, n]| --- rank 2, a small dense matrix
+of $m$ rows and $n$ columns.
+\item \lstinline[style=l4style]|Tensor[H, W, 3]| --- rank 3, with \emph{named}
+axes $H$ and $W$ and a last axis \emph{pinned} to the literal size $3$ (a
+3-vector per cell).
+\end{itemize}
+
+\noindent Two things in this notation are load-bearing. First, an axis may be a
+\emph{name} (like $N$, $H$, $W$, $m$, $n$) or a \emph{literal} (like the $3$): a
+name stands for a size we do not fix in the signature but require to
+\emph{match} wherever the same name appears, while a literal pins the axis to an
+exact extent. Second---and this is the point of giving axes \emph{names} rather
+than just sizes---a shape records the \emph{meaning} of each axis, not only its
+length. In \lstinline[style=l4style]|Tensor[E, P, C]| (\cref{ch:matrixfree}) the
+axes are not interchangeable: $E$ counts elements, $P$ quadrature points, $C$
+components, and a function that contracts the wrong one is wrong even if the
+lengths happen to coincide. The name is how we keep them straight.
+
+\begin{keyidea}
+A shape is a \emph{type}. It states the rank, the size of each axis, and---through
+named axes---the \emph{meaning} of each axis. It is part of the value, travels
+with it, and is checked at every function boundary. Reading a function's shape
+signature tells you what it consumes and produces before you read a line of its
+body; a shape mismatch is a type error, caught at the boundary, not a wrong
+number discovered later.
+\end{keyidea}
+
+\begin{notationbox}
+When two operands must have the \emph{same whole shape of unspecified rank}, the
+source calculus writes a single \emph{shape variable}---e.g.\
+\lstinline[style=l4style]|axpy :: Scalar -> Tensor[$S] -> Tensor[$S] -> Tensor[$S]|---%
+where \lstinline[style=l4style]|$S| names one common shape shared by all three.
+This rank-agnostic ``same shape'' notation, and the richer \emph{named shape
+groups} that let two tensors agree on \emph{part} of their shape, are the subject
+of \cref{ch:shapes}. In this chapter we keep to concrete axes
+(\lstinline[style=l4style]|Tensor[N]|, \lstinline[style=l4style]|Tensor[m, n]|)
+and read \lstinline[style=l4style]|$S| informally as ``the same shape on both
+sides.''
+\end{notationbox}
+
+\section{The primitive operations and their shape contracts}
+\label{sec:t-primitives}
+
+Here is where the linear algebra you already know meets typed tensors. Our
+calculus is built from a small set of \emph{primitive} operations---the verbs of
+\cref{ch:bigidea}'s first question. Each is a pure function, and each carries a
+\emph{shape contract}: a signature that says exactly which shapes it consumes and
+produces, and how their axes must line up. We give the six that recur most, each
+as a signature and a shape-matching picture; their full algebra (laws, identities,
+the operators that fold them together) is \cref{ch:operators}.
+
+\begin{lstlisting}[style=l4style]
+axpy    :: Scalar -> Tensor[$S] -> Tensor[$S] -> Tensor[$S]   -- a*x + y
+dot     :: Tensor[$S] -> Tensor[$S] -> Scalar                 -- inner product
+matvec  :: Tensor[m, n] -> Tensor[n] -> Tensor[m]             -- A . v
+outer   :: Tensor[m] -> Tensor[n] -> Tensor[m, n]             -- v (X) w
+reduce  :: Tensor[..., k] -> Tensor[...]                      -- collapse one axis
+broadcast :: Tensor[$S_a] -> (target: Shape) -> Tensor[target]-- stretch to fit
+\end{lstlisting}
+
+\noindent Read each signature left to right: the argument shapes, then the
+arrow, then the result shape. The two that share a shape (\code{axpy},
+\code{dot}) demand their operands be \emph{identical} in shape; the two that
+\emph{change} shape (\code{matvec}, \code{outer}) state the relation between input
+and output axes explicitly; and the two that move \emph{between} ranks
+(\code{reduce}, \code{broadcast}) add or drop an axis. \Cref{fig:t-shapematch}
+draws the central one, \code{matvec}, as a shape-matching diagram.
+
+\paragraph{\code{axpy} and \code{dot} --- same-shape contracts.}
+\code{axpy} computes $a\vx+\vy$: both vectors and the result are one common shape
+\lstinline[style=l4style]|$S| (in practice \lstinline[style=l4style]|Tensor[N]|),
+and the scalar $a$ scales every entry. \code{dot} consumes two tensors of the
+same shape and returns a single \code{Scalar}---it collapses \emph{all} axes by
+summation. Over $\Complex$, \code{dot} conjugates its first argument (the
+Hermitian inner product $\vx^{\mathsf H}\vy$); over $\Real$ this is the ordinary
+$\sum_i x_i y_i$. The contract these share is the simplest and the most common:
+\emph{the shapes must match exactly}, and a mismatch is rejected at the boundary.
+
+\paragraph{\code{matvec} --- the contraction contract.}
+\code{matvec} applies a small dense matrix to a vector. Its signature
+\lstinline[style=l4style]|matvec :: Tensor[m, n] -> Tensor[n] -> Tensor[m]| says
+the matrix's \emph{second} axis ($n$, its columns) must match the vector's single
+axis ($n$), they are summed away in the contraction, and what survives is the
+matrix's \emph{first} axis ($m$, its rows). This is exactly the rule from a first
+linear-algebra course---``columns of $A$ must match the length of $\vv$, and the
+product has as many entries as $A$ has rows''---now written as a shape contract
+the calculus checks. \Cref{fig:t-shapematch} is the picture: the inner $n$'s
+meet and cancel; the outer $m$ is the answer's shape.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % matrix [m, n]
+  \node[draw=simGreen, fill=simBgGreen, thick, minimum width=20mm,
+        minimum height=15mm] (A) at (0,0) {};
+  \node[font=\scriptsize, simInk] at ($(A.west)+(-0.45,0)$) {$m$};
+  \node[font=\scriptsize\bfseries, simRust] at ($(A.south)+(0,-0.45)$) {$n$};
+  \node[font=\scriptsize\ttfamily, simInk, above=1mm of A] {Tensor[m, n]};
+  % vector [n]
+  \node[draw=simBlue, fill=simBgBlue, thick, minimum width=6mm,
+        minimum height=15mm, right=12mm of A] (v) {};
+  \node[font=\scriptsize\bfseries, simRust] at ($(v.south)+(0,-0.45)$) {$n$};
+  \node[font=\scriptsize\ttfamily, simInk, above=1mm of v] {Tensor[n]};
+  % equals / arrow
+  \node[font=\Large] at ($(v.east)+(0.9,0)$) {$\Rightarrow$};
+  % result [m]
+  \node[draw=simRust, fill=simBgRust, thick, minimum width=6mm,
+        minimum height=15mm, right=18mm of v] (r) {};
+  \node[font=\scriptsize, simInk] at ($(r.west)+(-0.45,0)$) {$m$};
+  \node[font=\scriptsize\ttfamily, simInk, above=1mm of r] {Tensor[m]};
+  % the matching n's: a brace tying A's n and v's n
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simRust]
+    ($(A.south east)+(0,-0.75)$) -- ($(v.south west)+(0,-0.75)$)
+    node[midway, below=4pt, font=\scriptsize, simRust]
+    {inner $n$ must match, then cancels};
+  % the surviving m
+  \draw[-{Stealth[length=1.8mm]}, simGray, densely dashed]
+    (A.west) to[out=170,in=170,looseness=1.3] (r.west);
+  \node[font=\scriptsize\itshape, simGray] at (1.6,1.55)
+    {outer $m$ survives as the result shape};
+\end{tikzpicture}
+\caption[Shape matching at a \code{matvec} boundary]{The shape contract of
+\lstinline[style=l4style]|matvec :: Tensor[m, n] -> Tensor[n] -> Tensor[m]|, drawn
+as axis matching. The matrix's column axis $n$ and the vector's single axis $n$
+must agree (rust brace); the contraction sums over them and they vanish. The
+matrix's row axis $m$ is untouched and becomes the shape of the result. A vector
+of any length other than $n$ is rejected at the boundary, before a single
+multiply-add runs.}
+\label{fig:t-shapematch}
+\end{figure}
+
+\paragraph{\code{outer} --- the rank-raising contract.}
+\code{outer} is \code{matvec}'s opposite: it takes two vectors and
+\emph{builds} a matrix, $\vv\vw^{\mathsf T}$, whose $(i,j)$ entry is $v_i w_j$.
+Its signature \lstinline[style=l4style]|outer :: Tensor[m] -> Tensor[n] -> Tensor[m, n]|
+adds an axis rather than removing one: no axis is required to match, and the
+result's rank is the \emph{sum} of the inputs'.
+
+\paragraph{\code{reduce} and \code{broadcast} --- moving between ranks.}
+\code{reduce} collapses one axis by an associative combiner (a sum, a max, a
+product), turning a \lstinline[style=l4style]|Tensor[..., k]| into a
+\lstinline[style=l4style]|Tensor[...]|: the labeled axis is summed (or
+maxed, $\dots$) away and the rest of the shape survives. \code{dot} is the
+special case that reduces \emph{every} axis to a scalar. \code{broadcast} runs the
+other way: it \emph{stretches} a tensor to a larger target shape by repeating it
+along new or length-1 axes---the mechanism by which a single scalar weight
+multiplies a whole field, or a per-row factor scales every column. Its exact
+matching rule (which shapes may be broadcast to which) is shape \emph{algebra},
+and we defer it to \cref{ch:shapes}; here we note only that it is the
+rank-\emph{raising} counterpart of \code{reduce}.
+
+\begin{notationbox}
+These six are not the whole vocabulary---\cref{ch:operators} adds the named
+verbs (\code{nrm2}, \code{scal}, the operator-apply \code{apply\_linop}) and the
+combinators that fold them together. But they are the \emph{primitives} whose
+shape contracts every later operation is built from, and the discipline they
+establish---\emph{a signature is a contract, checked at the boundary}---is the one
+that makes the calculus composable.
+\end{notationbox}
+
+\subsection{Worked example: shape-checking a small 1-D solve}
+\label{sec:t-wex-shapes}
+
+Nothing fixes the contracts in the mind like running a real vector through them
+and watching the shapes line up. We take the discretized 1-D field of Part~II---a
+\lstinline[style=l4style]|Tensor[N]| of nodal values---and exercise \code{axpy},
+\code{dot}, and a \code{matvec} against the tridiagonal stiffness matrix, checking
+the shape at every boundary.
+
+\begin{workedexample}{Shape-checked \code{axpy}, \code{dot}, \code{matvec} on a 1-D field}{t-shapes}
+\textbf{Setup.} A 1-D mesh with $N=3$ interior nodes carries a discretized field
+$\vx=(x_0,x_1,x_2)=(1,2,3)$ and a second field $\vy=(y_0,y_1,y_2)=(4,5,6)$, both
+\lstinline[style=l4style]|Tensor[N]| with $N=3$ over $\Real$. The 1-D stiffness
+operator (the discrete second difference, $-\partial_{xx}$ on a unit-spacing
+mesh) is the tridiagonal matrix
+\[
+  \mat{K} \;=\;
+  \begin{pmatrix} 2 & -1 & 0 \\ -1 & 2 & -1 \\ 0 & -1 & 2 \end{pmatrix},
+  \qquad \mat{K} : \texttt{Tensor[m, n]},\ m=n=3 .
+\]
+
+\tcblower
+\textbf{\code{axpy} (same-shape contract).} Compute $\vy' = a\vx + \vy$ with
+$a=2$. The contract
+\lstinline[style=l4style]|axpy :: Scalar -> Tensor[$S] -> Tensor[$S] -> Tensor[$S]|
+demands both vectors share a shape: here \lstinline[style=l4style]|Tensor[3]| and
+\lstinline[style=l4style]|Tensor[3]| agree, so the call type-checks, and
+\[
+  \vy' = 2\cdot(1,2,3) + (4,5,6) = (6,9,12) \;:\; \texttt{Tensor[3]} .
+\]
+The result wears the same shape as the inputs---rank and length are preserved.
+
+\textbf{\code{dot} (reduce-to-scalar contract).} Compute $r=\vx\cdot\vy$. The
+contract \lstinline[style=l4style]|dot :: Tensor[$S] -> Tensor[$S] -> Scalar|
+again demands matching shapes (both \lstinline[style=l4style]|Tensor[3]|) and
+collapses \emph{all} axes:
+\[
+  r = 1{\cdot}4 + 2{\cdot}5 + 3{\cdot}6 = 32 \;:\; \texttt{Scalar} .
+\]
+The shape \lstinline[style=l4style]|Tensor[3]| has gone to rank-0---the axis was
+summed away.
+
+\textbf{\code{matvec} (contraction contract).} Compute $\vw = \mat{K}\vx$. The
+contract \lstinline[style=l4style]|matvec :: Tensor[m, n] -> Tensor[n] -> Tensor[m]|
+checks that $\mat{K}$'s column axis $n=3$ matches $\vx$'s single axis $3$---it
+does---then sums over them, leaving the row axis $m=3$:
+\[
+  \mat{K}\vx =
+  \begin{pmatrix} 2{\cdot}1-1{\cdot}2 \\ -1{\cdot}1+2{\cdot}2-1{\cdot}3 \\ -1{\cdot}2+2{\cdot}3 \end{pmatrix}
+  = (0,\,0,\,4) \;:\; \texttt{Tensor[3]} .
+\]
+The inner $3$'s cancelled (\cref{fig:t-shapematch}); the surviving $m=3$ is the
+result shape, again a \lstinline[style=l4style]|Tensor[3]| field.
+
+\textbf{The shapes line up.} Every call's boundary check passed because the axes
+agreed: \code{axpy} and \code{dot} on two \lstinline[style=l4style]|Tensor[3]|
+fields, \code{matvec} with the matrix's column count matching the vector's length.
+Hand \code{matvec} a length-$2$ vector instead and the check fails immediately
+($n=3\neq 2$), before any multiply-add---the type error caught at the boundary,
+exactly as a wrong-typed argument would be.
+\end{workedexample}
+
+\section{Immutability makes aliasing harmless}
+\label{sec:t-aliasing}
+
+\Cref{ch:bigidea} argued that we describe computations as pure functions over
+immutable values, and \cref{ch:records} carried the discipline into records. In
+tensor terms the immutability has a concrete, daily payoff worth stating on its
+own: \emph{aliasing is harmless}.
+
+When two names refer to the same tensor, we say they \emph{alias} it. In a
+mutable world, aliasing is a hazard---if \code{a} and \code{b} name the same
+array and someone writes through \code{a}, then \code{b}'s value changes out from
+under whoever was reading it, and the bug is among the nastiest in numerical
+code. The whole apparatus of ``defensive copies'' exists to guard against exactly
+this. But our tensors are immutable: \emph{no one can write through any name},
+because there is no write at all---an operation produces a fresh tensor and the
+old one stands. So two names pointing at one tensor can never interfere. Aliasing
+costs nothing and risks nothing; we share freely and copy never.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % the one immutable tensor
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=26mm, minimum height=12mm] (t) at (0,0)
+    {\footnotesize immutable tensor};
+  \node[font=\scriptsize\ttfamily, simInk, below=1mm of t] {Tensor[N]};
+  % two names pointing at it
+  \node[font=\ttfamily\small, simRust] (na) at (-3.3,1.4) {x};
+  \node[font=\ttfamily\small, simRust] (nb) at (-3.3,-1.4) {y};
+  \draw[-{Stealth[length=2mm]}, simRust] (na) -- (t.north west);
+  \draw[-{Stealth[length=2mm]}, simRust] (nb) -- (t.south west);
+  \node[font=\scriptsize\itshape, simGray, align=left, text width=30mm]
+    at (-3.6,0) {two names,\\one shared value};
+  % the "would-be write" that never happens
+  \node[font=\scriptsize, simGray, align=center, text width=34mm]
+    at (4.0,0.7) {a ``modification'' of \texttt{x}\dots};
+  \node[draw=simGreen, fill=simBgGreen, thick, rounded corners=2pt,
+        minimum width=22mm, minimum height=10mm] (t2) at (4.0,-0.8)
+    {\footnotesize \emph{new} tensor};
+  \draw[-{Stealth[length=2mm]}, simGreen] (t.east) -- node[above, font=\scriptsize]
+    {\texttt{f}} (t2.west);
+  \node[font=\scriptsize\itshape, simGray, below=1mm of t2, text width=34mm,
+        align=center] {\dots produces a fresh value;\\ \texttt{y} still sees the original};
+\end{tikzpicture}
+\caption[Aliasing is safe under immutability]{Two names, \texttt{x} and
+\texttt{y}, share a single immutable tensor (blue). Because the tensor cannot be
+written through any name, the sharing is invisible and free---no defensive copy
+is needed. A function \texttt{f} that ``modifies'' \texttt{x} does not touch the
+shared value at all; it \emph{returns a new tensor} (green), and \texttt{y}
+continues to see the original unchanged. Mutation hazards simply cannot arise.}
+\label{fig:t-aliasing}
+\end{figure}
+
+\begin{pitfall}
+``No copy needed'' is a statement about \emph{meaning}, exactly as in
+\cref{ch:bigidea}. It does \emph{not} mean an implementation literally keeps
+every tensor forever: once no live name refers to a tensor, its storage may be
+reclaimed---or, better, \emph{reused} in place for the next result, recovering the
+mutation an experienced numericist would have written by hand. Immutability frees
+the implementation to alias and to reuse \emph{because} it has proved the sharing
+can never be observed. The discipline that makes this precise---which tensor's
+storage may be reused for which result---is the state monad of \cref{ch:monad}.
+\end{pitfall}
+
+\section{The tensor-field lift}
+\label{sec:t-lift}
+
+We come to the chapter's central modeling move, and the true bridge from Part~II
+to Part~III. Part~II's assembly chapters spoke the language of \emph{loops over
+arrays}: ``for each degree of freedom $i$, do this to entry $i$.'' Part~III speaks
+the language of \emph{operations on whole fields}: ``do this to the field.'' The
+\emph{tensor-field lift} is the move that turns the first into the second.
+
+\subsection{From a per-DoF loop to a field equation}
+\label{sec:t-lift-what}
+
+Take the \code{axpy} update once more. As a loop over the $N$ degrees of freedom
+it reads, entry by entry,
+\begin{equation}
+  y_i \;\leftarrow\; a\,x_i + y_i, \qquad i = 0,1,\dots,N-1 .
+  \label{eq:t-axpy-loop}
+\end{equation}
+The loop is explicit: it names an index $i$, ranges it over the DoFs, and updates
+one entry per pass. The \emph{lift} observes that nothing in
+\cref{eq:t-axpy-loop} couples one index to another---entry $i$ is computed from
+entry $i$ alone---so the whole loop is captured, with nothing lost, by a single
+statement about the field as a vector in $\Real^N$ (or $\Complex^N$):
+\begin{equation}
+  \vy' \;=\; a\,\vx + \vy .
+  \label{eq:t-axpy-lift}
+\end{equation}
+The index $i$ has \emph{vanished}. \Cref{eq:t-axpy-lift} is one equation about
+two whole tensors \lstinline[style=l4style]|x, y :: Tensor[N]| and a scalar $a$;
+the per-DoF loop is now \emph{implicit}, recoverable but no longer written. This
+is exactly the pure \code{axpy} of \cref{ch:bigidea}, and the lift is \emph{why}
+its signature can speak of whole tensors without ever mentioning $i$.
+
+\begin{keyidea}
+The \emph{tensor-field lift} replaces a per-degree-of-freedom (or per-element)
+loop with a single statement about a \emph{whole tensor field}. The update
+$y_i \leftarrow a x_i + y_i$ \emph{for all $i$} becomes the one field equation
+$\vy' = a\vx + \vy$ in $\Real^N$; the loop over $i$ is left implicit. This is the
+move that lets the calculus describe a solver as operations on fields rather than
+as nested loops over arrays---the single most important translation between
+Part~II's assembly view and Part~III's calculus view.
+\end{keyidea}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % LEFT: the explicit per-DoF loop
+  \begin{scope}
+    \node[font=\bfseries\small, simRust] at (0,2.3) {per-DoF loop};
+    \node[draw=simRust, fill=simBgRust, rounded corners=2pt, thick,
+          minimum width=30mm, minimum height=22mm, align=left, font=\scriptsize\ttfamily,
+          text=simInk] (loop) at (0,0.5)
+      {for i in 0..N:\\[2pt]\ \ y[i] = a*x[i]\\[1pt]\ \ \ \ \ \ \ \ + y[i]};
+    \node[font=\scriptsize\itshape, simGray, below=1.5mm of loop, text width=34mm,
+          align=center] {$N$ separate updates,\\index $i$ explicit};
+  \end{scope}
+  % collapse arrow
+  \node[font=\Large, simBlue] at (3.3,0.5) {$\rightsquigarrow$};
+  \node[font=\scriptsize\itshape, simBlue, align=center, text width=22mm]
+    at (3.3,1.5) {lift\\(collapse the loop)};
+  % RIGHT: the single field equation
+  \begin{scope}[shift={(6.8,0)}]
+    \node[font=\bfseries\small, simBlue] at (0,2.3) {field equation};
+    \node[draw=simBlue, fill=simBgBlue, rounded corners=2pt, thick,
+          minimum width=30mm, minimum height=22mm, align=center, font=\normalsize,
+          text=simInk] (eq) at (0,0.5) {$\vy' = a\,\vx + \vy$};
+    \node[font=\scriptsize\itshape, simGray, below=1.5mm of eq, text width=36mm,
+          align=center] {one statement on whole tensors;\\ index $i$ gone, implicit};
+  \end{scope}
+\end{tikzpicture}
+\caption[The tensor-field lift]{The lift collapses a per-DoF loop into a single
+whole-field equation. \emph{Left (rust):} the explicit loop runs $N$ separate
+updates, naming and ranging the index $i$. \emph{Right (blue):} the lifted form
+is one equation about the whole tensors $\vx,\vy\in\Real^N$; the loop over $i$ has
+disappeared into the vector notation. The two compute the same thing whenever no
+index depends on another's result---the condition examined in
+\cref{sec:t-lift-valid}.}
+\label{fig:t-lift}
+\end{figure}
+
+\subsection{When the lift is valid}
+\label{sec:t-lift-valid}
+
+The lift is not magic, and it is not always legal. \Cref{eq:t-axpy-lift} is
+faithful to \cref{eq:t-axpy-loop} precisely because of a structural fact: the
+update at index $i$ reads inputs only at index $i$, never at some other index $j$
+whose value the loop is in the middle of changing. There are two ways a per-DoF
+loop can earn its lift.
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+\item[Per-DoF independence.] Each output entry depends only on input entries at
+the \emph{same} index (or on read-only data). \code{axpy}, \code{scal} ($\vx
+\mapsto a\vx$), and elementwise products are all of this kind, and they lift to
+whole-field equations directly. The weight stage $D$ of the matrix-free operator
+(\cref{ch:matrixfree})---a pointwise multiply against \code{geom\_data}---is the
+canonical multi-axis example: ``embarrassingly parallel,'' exactly because every
+index is independent, exactly the condition for a clean lift.
+\item[The coupling \emph{is} the operator.] Some operations \emph{do} couple
+indices---but the coupling is the defining content of the operation, not a
+loop-carried accident. \code{matvec}, and the full operator application
+\code{apply\_linop} ($\vy = \mat{A}\vx$) of \cref{ch:matrixfree}, mix every input
+entry into every output entry; that is what a linear operator \emph{is}. Such an
+operation lifts to a single field equation $\vy = \mat{A}\vx$ because the coupling
+is captured \emph{by the operator itself}, not by the order in which a loop visits
+indices. There is no loop-carried dependency to preserve; the dependency is the
+matrix.
+\end{description}
+
+\subsection{When the lift fails: a sequential reduction}
+\label{sec:t-lift-fails}
+
+The lift fails exactly when a loop \emph{carries a dependency forward}: the update
+at index $i$ reads a value the \emph{same loop} produced at an earlier index, so
+the order of the loop is part of the answer. Two small examples make the failure
+concrete.
+
+A \emph{running sum} (prefix sum) over a tensor,
+\begin{equation}
+  s_i \;=\; s_{i-1} + x_i, \qquad s_0 = x_0,
+  \label{eq:t-prefix}
+\end{equation}
+has no whole-field equation of the form ``$\vs = (\text{something})\,\vx$'' that
+respects it as a single independent statement, because $s_i$ \emph{needs}
+$s_{i-1}$---a value computed one step earlier in the same sweep. Try to write it
+as ``do all indices at once'' and you cannot: index $i$ has nothing to read until
+index $i-1$ is finished. The order is load-bearing.
+
+The same obstruction, in the solver world, is a \emph{Gauss--Seidel} sweep, where
+updating component $i$ uses the \emph{already-updated} components $j<i$ from the
+\emph{current} sweep:
+\begin{equation}
+  x_i \;\leftarrow\; \frac{1}{a_{ii}}\Big(b_i - \sum_{j<i} a_{ij}\,x_j^{\text{new}}
+       - \sum_{j>i} a_{ij}\,x_j^{\text{old}}\Big).
+  \label{eq:t-gs}
+\end{equation}
+The term $x_j^{\text{new}}$ for $j<i$ is the loop reading its own fresh output:
+the very loop-carried dependency the lift cannot absorb. \Cref{fig:t-liftfail}
+contrasts the two situations side by side---the independent fan (lifts) against
+the sequential chain (does not).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % LEFT: independent — lifts
+  \begin{scope}
+    \node[font=\bfseries\small, simBlue] at (0,2.1) {independent --- lifts};
+    \foreach \i in {0,1,2,3}{
+      \node[draw=simBlue, fill=simBgBlue, circle, minimum size=6mm,
+            font=\scriptsize] (xi\i) at (\i*0.95,1.1) {$x_{\i}$};
+      \node[draw=simBlue, fill=simBgBlue, circle, minimum size=6mm,
+            font=\scriptsize] (yi\i) at (\i*0.95,-0.4) {$y'_{\i}$};
+      \draw[-{Stealth[length=1.6mm]}, simBlue] (xi\i) -- (yi\i);
+    }
+    \node[font=\scriptsize\itshape, simGray, align=center, text width=40mm]
+      at (1.4,-1.25) {each output reads its own index only\\
+      $\Rightarrow$ collapses to $\vy'=a\vx+\vy$};
+  \end{scope}
+  % RIGHT: sequential — does not lift
+  \begin{scope}[shift={(6.1,0)}]
+    \node[font=\bfseries\small, simRust] at (0.4,2.1) {sequential --- does \emph{not} lift};
+    \foreach \i in {0,1,2,3}{
+      \node[draw=simRust, fill=simBgRust, circle, minimum size=6mm,
+            font=\scriptsize] (si\i) at (\i*0.95,0.35) {$s_{\i}$};
+    }
+    \foreach \i/\j in {0/1,1/2,2/3}{
+      \draw[-{Stealth[length=1.8mm]}, simRust, thick] (si\i) -- (si\j);}
+    \node[font=\scriptsize\itshape, simGray, align=center, text width=42mm]
+      at (1.4,-1.25) {$s_i$ needs $s_{i-1}$ --- a chain\\
+      $\Rightarrow$ order is load-bearing, no field equation};
+  \end{scope}
+\end{tikzpicture}
+\caption[When the lift fails]{The structural difference between a liftable and an
+unliftable loop. \emph{Left (blue):} an \code{axpy}-style update fans
+independently---each $y'_i$ reads only $x_i$ (and $y_i$), no arrow runs between
+output indices---so the loop collapses to the field equation $\vy'=a\vx+\vy$.
+\emph{Right (rust):} a running sum $s_i=s_{i-1}+x_i$ is a \emph{chain}---each
+node depends on the one before---so the order of evaluation is part of the answer
+and no single whole-field equation captures it. Sequential reductions of this
+kind (Gauss--Seidel, triangular solves) are \emph{obstructions} to the lift, and
+\cref{part:framework} records them as such rather than forcing a false collapse.}
+\label{fig:t-liftfail}
+\end{figure}
+
+When the lift fails, we do \emph{not} pretend it succeeded. The honest record is
+an \emph{obstruction}: a note that this loop carries a sequential dependency that
+no whole-field statement captures, with the specific recurrence cited. Part~IV's
+solver chapters meet several---the Gauss--Seidel and SSOR smoothers, the
+triangular solves inside a direct factorization---and each is logged as a
+sequential obstruction rather than lifted. (Forward reference: the iterative
+solvers of \cref{part:framework} and the smoothers behind the multigrid
+preconditioner are where these surface in force.) The lift is a powerful default,
+not a universal law; knowing \emph{when} it fails is as important as knowing how
+it works.
+
+\subsection{Worked example: lifting a per-DoF update, and one that won't lift}
+\label{sec:t-wex-lift}
+
+We make the lift, and its failure, fully concrete on a tiny $N=4$ field: write a
+per-DoF update first as an explicit loop, then as a single tensor-field equation,
+and argue they agree---then exhibit one update where the argument breaks down.
+
+\begin{workedexample}{The lift: a loop and a field equation that agree, and one that cannot}{t-lift}
+\textbf{Setup.} Take $N=4$ and the fields $\vx=(1,2,3,4)$, $\vy=(10,20,30,40)$
+as \lstinline[style=l4style]|Tensor[4]| over $\Real$, with scalar $a=3$.
+
+\tcblower
+\textbf{The update as an explicit loop.} The \code{axpy} update visits each index
+in turn:
+\begin{lstlisting}[style=l4style, language=]
+for i in 0..4:
+    yp[i] = a * x[i] + y[i]
+-- i=0: 3*1+10 = 13     i=1: 3*2+20 = 26
+-- i=2: 3*3+30 = 39     i=3: 3*4+40 = 52
+\end{lstlisting}
+producing $\vy'=(13,26,39,52)$. Four updates, the index $i$ named and ranged.
+
+\textbf{The same update as a field equation.} The lift collapses the loop to one
+statement on whole tensors,
+\[
+  \vy' \;=\; a\,\vx + \vy \;=\; 3\,(1,2,3,4) + (10,20,30,40) \;=\; (13,26,39,52),
+\]
+the very same four numbers. The index $i$ never appears.
+
+\textbf{Why they agree.} Entry $i$ of the loop reads $x_i$ and $y_i$ and writes
+$y'_i$---inputs and output \emph{all at the same index}, with no entry of $\vy'$
+read before it is written. The updates are mutually independent, so doing them
+``all at once'' as a vector equation reorders nothing that matters: this is the
+per-DoF-independence condition of \cref{sec:t-lift-valid}, and the lift is exact.
+
+\textbf{One that will not lift.} Now replace the body with a \emph{running sum}:
+\begin{lstlisting}[style=l4style, language=]
+s[0] = x[0]
+for i in 1..4:
+    s[i] = s[i-1] + x[i]      -- reads s[i-1]: this loop's own output
+-- s = (1, 3, 6, 10)
+\end{lstlisting}
+Each $s_i$ reads $s_{i-1}$, a value \emph{this same loop produced one step
+earlier}. There is no equation $\vs = a\vx + (\dots)$ that computes all four
+entries independently and respects the recurrence: index $i$ has nothing to read
+until index $i-1$ has finished. The order of evaluation is part of the answer, so
+the lift \emph{fails}, and the honest record is a sequential
+\emph{obstruction}---not a forced field equation
+(\cref{fig:t-liftfail}). The same obstruction is the Gauss--Seidel sweep of
+\cref{eq:t-gs}; \cref{part:framework} gives these their proper home in the fold
+(\cref{ch:fold}).
+\end{workedexample}
+
+\section{Scalars as rank-0 tensors, and the promotion question}
+\label{sec:t-scalars-rank0}
+
+One loose end ties the chapter off and sets up the next. A single
+scalar---the $a$ in \code{axpy}, the result of \code{dot}, a material
+coefficient---is a tensor too: a \emph{rank-0} tensor, a box with \emph{no} axes
+and exactly one entry. This is not a pedantic flourish. Treating a scalar as a
+rank-0 tensor is what lets \code{broadcast} (\cref{sec:t-primitives}) stretch it
+across a whole field uniformly: ``multiply the field by $a$'' is ``broadcast the
+rank-0 $a$ to the field's shape, then multiply pointwise.'' The scalar and the
+field meet through the same shape machinery as any two tensors.
+
+\subsection{The promotion question, set up}
+\label{sec:t-promotion}
+
+That leaves the question \cref{sec:t-scalars} flagged: when may a \emph{real}
+tensor be used where a \emph{complex} one is expected? The need is real and
+concrete. A driven analysis (\cref{ch:targets}) works over $\Complex$, but its
+mesh geometry, its material coefficients, and an initial real excitation are
+naturally real; somewhere they must be \emph{promoted} into the complex
+computation without a clumsy manual rewrite. Intuitively the promotion is the
+obvious embedding $r \mapsto r + 0i$, and it should compose silently---adding a
+real tensor to a complex one should ``just work,'' yielding a complex result.
+
+But ``just work'' hides real questions. \emph{Which} direction promotes (real
+into complex, never the reverse)? Does the result shape change (no---only the
+scalar type)? When two operands disagree on \emph{both} shape and scalar type, in
+which order are they reconciled? These are questions of \emph{shape and type
+algebra}, and answering them precisely---alongside broadcasting's exact matching
+rule and the named-shape-group notation for partial congruence---is the whole
+business of the next chapter.
+
+\begin{notationbox}
+We have now met every piece the shape algebra operates on: tensors of a rank and
+a scalar type, axes that are names or literals, the same-shape and contraction
+contracts, rank-0 scalars, and the promotion of real into complex. What we have
+\emph{not} done is give the rules by which shapes \emph{combine}---how broadcasting
+decides two shapes are compatible, how a named shape group asserts partial
+congruence, how scalar-type promotion composes with shape matching.
+\Cref{ch:shapes} is exactly that algebra. This chapter fixed the vocabulary; the
+next makes it compute.
+\end{notationbox}
+
+\summarysection
+A \emph{tensor} in our calculus is an immutable, typed, multi-axis array of
+scalars (real or complex); its \emph{rank} is its number of axes and its
+\emph{shape} is the bracketed list of axis sizes and meanings. Every quantity
+Part~II built is one: a discretized field is the rank-1 global DoF vector
+\lstinline[style=l4style]|Tensor[N]|, and an element-local quantity
+(\cref{ch:matrixfree}) is a small multi-axis tensor like
+\lstinline[style=l4style]|Tensor[E, P, C]|. A shape is a \emph{type}: it travels
+with the value and is checked at every function boundary, so a mismatch is caught
+before any arithmetic runs. The primitive operations carry \emph{shape
+contracts}---\code{axpy} and \code{dot} demand identical shapes, \code{matvec}
+($[m,n]\cdot[n]\to[m]$) and \code{outer} relate input and output axes,
+\code{reduce} and \code{broadcast} move between ranks. Because tensors are
+immutable, \emph{aliasing is harmless}: two names may share one tensor with no
+risk and no copy. The chapter's central move is the \emph{tensor-field lift}: a
+per-DoF loop $y_i \leftarrow a x_i + y_i$ becomes the single field equation
+$\vy'=a\vx+\vy$, the index left implicit. The lift is valid when each index is
+independent, or when the coupling \emph{is} the operator (\code{apply\_linop}); it
+\emph{fails} for a sequential reduction (a running sum, a Gauss--Seidel sweep),
+which we record as an obstruction rather than force. Scalars are rank-0 tensors,
+and the promotion of real into complex is set up here and made precise---with the
+full shape algebra---in \cref{ch:shapes}.
+
+\furtherreading
+The matrix--vector and inner-product contracts of \cref{sec:t-primitives} are the
+elementary operations of numerical linear algebra; Trefethen and
+Bau~\citep{trefethenbau1997} give the cleanest conceptual account of why the
+\emph{action} $\vv\mapsto\mat{A}\vv$, not the entries, is what algorithms consume
+(the thread we pick up in \cref{ch:matrixfree}), and Golub and Van
+Loan~\citep{golubvanloan2013} are the standard comprehensive reference for the
+shapes and costs of these operations. The named-axis, shape-as-type discipline
+sketched here is the same one modern tensor frameworks enforce at array
+boundaries; we develop its algebra from scratch in \cref{ch:shapes} and apply it
+to the calculus's verbs in \cref{ch:operators}, so no outside background is
+assumed. The tensor-field lift and its sequential-obstruction failure mode return
+throughout \cref{part:framework}, where the fold (\cref{ch:fold}) gives the
+unliftable chains a home of their own.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of \lstinline[style=l4style]|Tensor[N]|,
+  \lstinline[style=l4style]|Tensor[m, n]|, and
+  \lstinline[style=l4style]|Tensor[E, P, C]|, state the rank and say in one
+  phrase what each axis \emph{counts}. Why is naming the axes (rather than only
+  giving their lengths) load-bearing for the last one?
+  \item The contract for \code{matvec} is
+  \lstinline[style=l4style]|Tensor[m, n] -> Tensor[n] -> Tensor[m]|. A colleague
+  hands the function a matrix of shape \lstinline[style=l4style]|Tensor[m, n]| and
+  a vector of shape \lstinline[style=l4style]|Tensor[m]|. Exactly where does the
+  shape check fail, and why is failing \emph{at the boundary} better than
+  producing a wrong number?
+  \item Write the \code{scal} operation $\vx \mapsto a\vx$ as (a) an explicit
+  per-DoF loop and (b) a single field equation. Argue that the two compute the
+  same thing, naming the structural property of the loop that licenses the lift.
+  \item Give the shape contract (a signature
+  \lstinline[style=l4style]|Tensor[...] -> ... -> Tensor[...]|) for an
+  \emph{elementwise product} of two same-shape tensors, and for \code{outer}.
+  Which one raises the rank, which preserves it, and why?
+  \item Consider the prefix-sum recurrence $s_i = s_{i-1} + x_i$. Explain
+  precisely why it has no whole-field equation of the form $\vs = \mat{A}\vx$ that
+  honors it as a single independent statement. Contrast this with \code{matvec},
+  which \emph{does} couple every index yet still lifts---what is different about
+  the kind of coupling?
+  \item Two names \code{x} and \code{y} alias one immutable
+  \lstinline[style=l4style]|Tensor[N]|. A function returns a fresh tensor
+  ``modifying'' \code{x}. State what \code{y} sees afterward, and explain why an
+  implementation is nonetheless free to reuse \code{x}'s storage for the new
+  result. What condition must hold for that reuse to be safe?
+  \item A driven analysis (\cref{ch:targets}) computes over $\Complex$ but reads
+  a real material coefficient. Describe the promotion $r \mapsto r + 0i$ as a map
+  on scalar type, and say what it does (and does not) change about a tensor's
+  shape. Why must promotion run real-into-complex and never the reverse?
+  \item \emph{(Looking ahead.)} The weight stage $D$ of the matrix-free operator
+  (\cref{ch:matrixfree}) is a pointwise multiply on a
+  \lstinline[style=l4style]|Tensor[E, P, C]|. Argue that it lifts cleanly to a
+  whole-field equation, identifying which of the two validity conditions of
+  \cref{sec:t-lift-valid} it satisfies. Then explain why the \emph{scatter}
+  stage $G^{\mathsf T}$, which sums shared-DoF contributions, is a different
+  matter.
+\end{enumerate}

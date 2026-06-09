@@ -1,0 +1,1146 @@
+\chapter{The Matrix-Free Operator}
+\label{ch:matrixfree}
+
+\chapterorient{Assembly (\cref{ch:assembly}) built a matrix. This chapter
+un-builds it. We will see that a finite-element operator does not have to exist
+as a stored array of numbers at all: the only thing a solver ever asks of an
+operator is its \emph{action}, the map $\vv \mapsto \mat{A}\vv$, and that action
+can be computed on the fly as a short chain of element-local tensor
+contractions---gather, evaluate, weight, integrate, scatter---without ever
+forming or storing $\mat{A}$. This is the \emph{matrix-free} operator. It is the
+form that costs the least memory at high polynomial order, and---because every
+stage is a contraction over named tensor axes---it is exactly the form a GPU or
+other tensor accelerator wants to run. By the end you will be able to trace a
+vector through all five stages, recover the same answer the assembled matrix
+would have given, and see why the innermost kernel is the place the book's
+``implementation view'' finally touches the silicon.}
+
+\section{What a solver actually asks for}
+\label{sec:mf-whatask}
+
+Open any of the iterative solvers in \cref{part:framework}---conjugate
+gradients (\cref{ch:cg}), GMRES (\cref{ch:gmres}), the Lanczos and Arnoldi
+recurrences behind the eigensolver (\cref{ch:krylovschur})---and look at what
+they do with the operator $\mat{A}$. They form inner products, they orthogonalize,
+they take linear combinations of vectors. But the \emph{only} way any of them
+touches $\mat{A}$ is through one operation: given a vector $\vv$, produce the
+vector $\mat{A}\vv$. They never read an individual entry $A_{ij}$. They never ask
+for a row, a column, or the sparsity pattern. A Krylov method is, by
+construction, a procedure that explores the subspace
+$\{\vv,\,\mat{A}\vv,\,\mat{A}^2\vv,\dots\}$, and to walk that subspace it needs
+nothing but repeated application of the \emph{action}
+\[
+  \vv \;\longmapsto\; \mat{A}\vv .
+\]
+
+This is worth pausing on, because it inverts the picture most readers carry from
+a first linear-algebra course. There, a matrix \emph{is} its array of entries;
+``apply the matrix'' means ``do the row-times-column sums.'' But an
+iterative solver does not need the entries---it needs a black box that, fed
+$\vv$, returns $\mat{A}\vv$. How that box computes its answer is its own affair.
+Assembly (\cref{ch:assembly}) is one way to build such a box: store every entry,
+then multiply. This chapter is the other way.
+
+\begin{keyidea}
+A Krylov solver is a consumer of the operator's \emph{action}, $\vv\mapsto
+\mat{A}\vv$, and of nothing else. It never inspects the entries of $\mat{A}$. So
+any object that can answer ``given $\vv$, here is $\mat{A}\vv$'' is, to the
+solver, a perfectly good operator---whether or not a matrix was ever built. This
+single fact is the licence for everything in this chapter.
+\end{keyidea}
+
+\subsection{Why ``store the matrix'' gets expensive}
+\label{sec:mf-cost}
+
+If the action is all we need, why ever store the matrix? For low polynomial
+order, storing it is cheap and fast, and assembly (\cref{ch:assembly}) is the
+right tool. The trouble begins at \emph{high order}, which is exactly where
+finite-element accuracy is won most cheaply.
+
+Recall the element-local stiffness or mass matrix from \cref{ch:assembly}: on one
+element with $L$ local degrees of freedom, the element matrix $\mat{A}^e$ is
+$L\times L$, holding $L^2$ numbers. For a tensor-product element of polynomial
+degree $p$ in $d$ spatial dimensions, the number of local degrees of freedom
+grows as
+\[
+  L \;=\; (p+1)^d ,
+\]
+so the dense element matrix holds
+\[
+  L^2 \;=\; (p+1)^{2d}
+\]
+numbers. In three dimensions ($d=3$) that is $(p+1)^6$ entries \emph{per element}.
+At $p=1$ this is a tidy $2^6 = 64$; at $p=4$ it is $5^6 = \num{15625}$; at $p=8$
+it is $9^6 = \num{531441}$---half a million numbers for a single element. Storing
+the assembled operator means storing something on this order, multiplied across
+every element of the mesh. The memory cost of the \emph{stored} operator scales
+as $O(p^{2d})$ per element, and on modern accelerators memory---not
+arithmetic---is the scarce resource.
+
+\Cref{fig:mf-cost} plots the contrast. The assembled operator's storage climbs
+as $(p+1)^{2d}$; the matrix-free operator stores only the tabulated
+one-dimensional basis and the per-quadrature-point geometry factor, a cost that
+grows far more gently. Past a modest order---in 3-D, around $p=2$ to $4$
+depending on the architecture---the matrix-free form is not merely lighter, it is
+the only form that fits.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.86\linewidth, height=58mm,
+  xlabel={polynomial order $p$},
+  ylabel={numbers stored per element},
+  ymode=log,
+  xmin=1, xmax=8, ymin=1, ymax=1e6,
+  xtick={1,2,3,4,5,6,7,8},
+  ytick={1e0,1e2,1e4,1e6},
+  legend pos=north west,
+  legend cell align=left,
+  grid=both, grid style={simGray!18},
+  tick label style={font=\footnotesize},
+  label style={font=\small},
+  legend style={font=\footnotesize},
+]
+% assembled: (p+1)^6  (3-D, d=3, L^2)
+\addplot[simRust, very thick, mark=*, mark size=1.6pt]
+  coordinates {(1,64)(2,729)(3,4096)(4,15625)(5,46656)(6,117649)(7,262144)(8,531441)};
+\addlegendentry{assembled $\;(p{+}1)^{6}$}
+% matrix-free: tabulated 1-D basis + geom factor ~ O(p) +small const
+% store ~ (p+1)^2 (1-D basis) + a few geom comps per quad pt; use (p+1)^2 + 6(p+1)
+\addplot[simBlue, very thick, mark=square*, mark size=1.6pt]
+  coordinates {(1,16)(2,27)(3,40)(4,55)(5,72)(6,91)(7,112)(8,135)};
+\addlegendentry{matrix-free (1-D basis $+$ geom)}
+\end{axis}
+\end{tikzpicture}
+\caption[Memory: assembled versus matrix-free]{Numbers stored per element, in
+3-D, as polynomial order $p$ rises (log scale). The \emph{assembled} operator
+holds the dense element matrix, $(p+1)^{2d}=(p+1)^6$ entries, and climbs
+steeply. The \emph{matrix-free} operator stores only the tabulated
+one-dimensional basis tables and a handful of geometry components per quadrature
+point, growing roughly linearly. The two curves cross almost immediately;
+beyond low order, matrix-free is the only form that fits in accelerator memory.}
+\label{fig:mf-cost}
+\end{figure}
+
+\begin{physicsbox}
+The arithmetic the operator performs is the same in both forms---a weighted sum
+of basis-function interactions over each element, the discretization of the weak
+form $a(u,v)=\inner{Q\diffop u}{\diffop v}$ from \cref{ch:galerkin}. What
+differs is \emph{bookkeeping}: the assembled form pre-computes and stores all
+those interactions as a matrix; the matrix-free form recomputes them, cheaply,
+each time the action is needed. We are trading a little extra arithmetic
+(recompute on demand) for a large saving in memory (store nothing). On hardware
+where memory bandwidth is the bottleneck and arithmetic is nearly free---the
+defining shape of a modern GPU---this is overwhelmingly the right trade.
+\end{physicsbox}
+
+\section{The action as a chain of contractions}
+\label{sec:mf-chain}
+
+So we want to compute $\mat{A}\vv$ without $\mat{A}$. The route is to go back to
+where the matrix came from. In \cref{ch:assembly} we built $\mat{A}$ by
+\emph{assembling} element contributions: each element computed a local operator
+from (i) restricting the global vector to the element, (ii) evaluating the
+trial field and its derivatives at the element's quadrature points, (iii)
+weighting those values by the geometry and material at each point, and (iv)
+integrating back to the element's degrees of freedom; then (v) the element
+results were summed into the global vector. Assembly did this \emph{once}, for
+every basis vector, and stored the resulting matrix. Matrix-free does exactly the
+same five operations, but \emph{on the actual input vector $\vv$}, every time the
+action is requested---and stores nothing.
+
+Each of the five operations is a linear map, so the whole action is their
+composition. Reading right to left in the order they act on $\vv$:
+\begin{equation}
+  \mat{A}\,\vv
+   \;=\;
+   \underbrace{G^{\mathsf T}}_{\text{scatter}}\;
+   \underbrace{B_{\diffop}^{\mathsf T}}_{\text{integrate}}\;
+   \underbrace{D}_{\text{weight}}\;
+   \underbrace{B_{\diffop}}_{\text{evaluate}}\;
+   \underbrace{G}_{\text{gather}}\;
+   \vv .
+  \label{eq:mf-chain}
+\end{equation}
+This factorization is the heart of the chapter. It says the finite-element
+operator is a \emph{sandwich}: a gather $G$ and its transpose scatter
+$G^{\mathsf T}$ on the outside; a basis evaluation $B_{\diffop}$ and its transpose
+$B_{\diffop}^{\mathsf T}$ inside that; and at the very center a single pointwise
+multiply $D$. The symmetry is not a coincidence---it is the discrete shadow of
+the weak form's own symmetry, $a(u,v)=a(v,u)$ for the self-adjoint terms, with
+$G$ and $B$ carrying the trial side and their transposes carrying the test side
+(\cref{ch:galerkin}).
+
+\begin{notationbox}
+The subscript $\diffop$ on $B_{\diffop}$ records \emph{which} differential
+operator the weak-form term uses---value (identity), gradient, curl, or
+divergence---the four members of the de Rham family from \cref{ch:derham}. A
+mass term ($\diffop = \mathrm{Id}$) evaluates basis \emph{values}; a stiffness
+term ($\diffop=\Grad$) evaluates basis \emph{gradients}; a curl--curl term
+evaluates \emph{curls}. The choice of $\diffop$ is the only thing that changes
+between the operators of the six analyses (\cref{ch:targets}); the five-stage
+skeleton is identical for all of them.
+\end{notationbox}
+
+\subsection{The five stages and their tensor shapes}
+\label{sec:mf-stages}
+
+Each stage carries a tensor from one named shape to the next. The axes are the
+element-local family we will fix carefully in \cref{sec:mf-anatomy}; for now read
+$N$ as the global degree-of-freedom count, $E$ as the number of elements, $L$ as
+local degrees of freedom per element, $P$ as quadrature points per element, and
+$C$ as the number of value (or derivative) components carried at each quadrature
+point. \Cref{fig:mf-pipeline} is the hero diagram of the chapter; the prose
+below walks its five boxes left to right.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[node distance=8mm and 9mm]
+  % input
+  \node[data, text width=18mm] (in) {global vector\\\texttt{Tensor[N]}};
+  % G
+  \node[stage, right=of in, text width=20mm] (G) {$G$\\\footnotesize gather\\(element restrict)};
+  % B
+  \node[stage, right=of G, text width=20mm] (B) {$B_{\diffop}$\\\footnotesize evaluate\\(basis apply)};
+  % D  -- the extern kernel center
+  \node[extern, right=of B, text width=20mm] (D) {$D$\\\footnotesize weight\\\texttt{\#extern}};
+  % Bt
+  \node[stage, right=of D, text width=20mm] (Bt) {$B_{\diffop}^{\mathsf T}$\\\footnotesize integrate};
+  % Gt
+  \node[stage, right=of Bt, text width=20mm] (Gt) {$G^{\mathsf T}$\\\footnotesize scatter-add};
+  % output
+  \node[data, right=of Gt, text width=18mm] (out) {global vector\\\texttt{Tensor[N]}};
+
+  \draw[flow] (in) -- (G);
+  \draw[flow] (G) -- (B);
+  \draw[flow] (B) -- (D);
+  \draw[flow] (D) -- (Bt);
+  \draw[flow] (Bt) -- (Gt);
+  \draw[flow] (Gt) -- (out);
+
+  % shape annotations between stages (below the arrows)
+  \node[font=\scriptsize\ttfamily, simGray, below=2.5mm of G.south] {[E, L]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.5mm of B.south] {[E, P, C]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.5mm of D.south] {[E, P, C]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.5mm of Bt.south] {[E, L]};
+  \node[font=\scriptsize\ttfamily, simBlue, below=3mm of in.south, align=center] {action\\input};
+  \node[font=\scriptsize\ttfamily, simBlue, below=3mm of out.south, align=center] {action\\output};
+
+  % geom_data feeding D from below
+  \node[data, fill=simBgGold, draw=simGold, below=12mm of D, text width=26mm]
+    (geom) {\footnotesize\itshape geom\_data \texttt{[E, P, G]}\\(build-time factor)};
+  \draw[flow, simGold] (geom) -- (D);
+
+  % brackets: outer = gather/scatter sandwich, inner = eval/integrate
+  \draw[decorate, decoration={brace, amplitude=4pt}, simRust]
+    ([yshift=7mm]G.north west) -- ([yshift=7mm]Gt.north east)
+    node[midway, above=4pt, font=\scriptsize, simRust]
+    {element-local: independent, parallel over $E$};
+\end{tikzpicture}
+\caption[The five-stage matrix-free pipeline]{The matrix-free operator
+$\mat{A}\vv = G^{\mathsf T}B_{\diffop}^{\mathsf T}\,D\,B_{\diffop}\,G\,\vv$ as a
+dataflow pipeline, with the tensor shape annotated on each wire. A global vector
+\lstinline[style=l4style]|Tensor[N]| enters; $G$ \emph{gathers} it to per-element
+local tensors \lstinline[style=l4style]|[E, L]|; $B_{\diffop}$ \emph{evaluates}
+the field (or its gradient/curl) at the \lstinline[style=l4style]|[E, P, C]|
+quadrature points; the center stage $D$ \emph{weights} each point by the
+precomputed \texttt{geom\_data} (gold, fed from below; the
+\lstinline[style=l4style]|#extern| innermost kernel, \cref{sec:mf-impl-view});
+$B_{\diffop}^{\mathsf T}$ \emph{integrates} back to local dofs; and $G^{\mathsf T}$
+\emph{scatters} the element results into a fresh global vector. The whole middle
+of the pipeline (rust brace) is independent across elements---the source of all
+the parallelism.}
+\label{fig:mf-pipeline}
+\end{figure}
+
+\paragraph{Stage 1 --- $G$, the gather (element restriction).}
+The input is the global vector $\vv$, a \lstinline[style=l4style]|Tensor[N]| with
+one entry per global degree of freedom. The gather $G$ reads, for each element,
+the values of the degrees of freedom that element touches, copying them into a
+per-element block. The output is a \lstinline[style=l4style]|Tensor[E, L]|: $E$
+elements, each holding its $L$ local degrees of freedom. No arithmetic happens
+here---$G$ is pure copying, a Boolean selection that fans the shared global
+vector out into (generally overlapping) element-local pieces. A degree of freedom
+sitting on a shared element boundary is copied into \emph{every} element that
+touches it; that duplication is intentional and is undone, by summation, in the
+final stage.
+
+\paragraph{Stage 2 --- $B_{\diffop}$, the basis evaluation.}
+Now each element holds its local coefficients. To apply the weak form we need the
+\emph{field} those coefficients represent---and its derivative---sampled at the
+element's quadrature points. That is exactly what the tabulated basis gives us
+(\cref{ch:refelement}): a small dense matrix whose entries are the basis
+functions (or their derivatives) evaluated at the quadrature nodes. $B_{\diffop}$
+contracts each element's \lstinline[style=l4style]|[L]| coefficient vector against
+that matrix, producing \lstinline[style=l4style]|[P, C]| values---$C$ components
+($C=1$ for a scalar value, $C=d$ for a gradient) at each of $P$ quadrature points.
+Stacked over elements, the output is a \lstinline[style=l4style]|Tensor[E, P, C]|.
+The mode---values, gradient, curl, or divergence---is the $\diffop$ the term
+asked for.
+
+\paragraph{Stage 3 --- $D$, the pointwise quadrature weight.}
+This is the center of the sandwich, and it is the simplest stage of all: at each
+quadrature point, multiply the evaluated value by a single precomputed factor and
+move on. The factor bundles three things---the material coefficient $Q$ (the
+$\varepsilon$, $\mu^{-1}$, $\dots$ of the weak form), the geometry metric derived
+from the element's Jacobian, and the quadrature weight $w$---into one number (or,
+for vector terms, one small matrix) per point, stored in a tensor
+\texttt{geom\_data} of shape \lstinline[style=l4style]|Tensor[E, P, G]|. There is
+\emph{no coupling between points}: the output at point $(e,p)$ depends only on the
+input at $(e,p)$ and on \texttt{geom\_data}$[e,p]$. The shape is unchanged,
+\lstinline[style=l4style]|[E, P, C]| in and out (we write $C'$ for the output
+component count, usually equal to $C$). \Cref{fig:mf-diagonal} shows why this is
+the \emph{embarrassingly parallel} diagonal of the whole operator.
+
+\paragraph{Stage 4 --- $B_{\diffop}^{\mathsf T}$, integrate back to dofs.}
+The weighted quadrature-point values must now be turned back into element-local
+degree-of-freedom contributions---this is the discrete integral $\int (\cdot)\,
+\phi_i$ against each test basis function $\phi_i$. It is the exact transpose of
+stage 2: the same tabulated basis matrix, applied on the other side. The shape
+goes back from \lstinline[style=l4style]|[E, P, C]| to
+\lstinline[style=l4style]|[E, L]|.
+
+\paragraph{Stage 5 --- $G^{\mathsf T}$, the scatter-add (assembly).}
+Finally, the per-element \lstinline[style=l4style]|[E, L]| contributions must be
+returned to the single global vector. $G^{\mathsf T}$ is the transpose of the
+gather: where $G$ copied a shared dof out to several elements, $G^{\mathsf T}$
+\emph{sums} the several element contributions back into that one global slot.
+This summation is precisely the finite-element ``assembly'' step
+(\cref{ch:assembly})---here applied to a vector rather than a matrix. The output
+is a fresh \lstinline[style=l4style]|Tensor[N]|: the action $\mat{A}\vv$, complete.
+
+\begin{keyidea}
+The matrix-free operator is a chain of tensor contractions over named axes---no
+sparse-matrix data structure anywhere. \emph{Gather} ($N\!\to\!E,L$),
+\emph{evaluate} ($E,L\!\to\!E,P,C$), \emph{weight} (pointwise on $E,P,C$),
+\emph{integrate} ($E,P,C\!\to\!E,L$), \emph{scatter} ($E,L\!\to\!N$). The matrix
+$\mat{A}$ that assembly would have stored is recovered, on demand, as the
+composition $G^{\mathsf T}B_{\diffop}^{\mathsf T}DB_{\diffop}G$---and never
+materialized.
+\end{keyidea}
+
+\subsection{The chain in pseudocode}
+\label{sec:mf-pseudo}
+
+In the calculus of \cref{part:framework}, the action reads as a single
+composition of the five stage functions. Each stage is a pure tensor-to-tensor
+map; threading a vector through them is exactly the value-threading picture of
+\cref{ch:bigidea}.
+
+\begin{lstlisting}[style=l4style]
+-- the five element-local stages, as pure tensor maps
+gather    :: ElemRestriction -> Tensor[N]        -> Tensor[E, L]      -- G
+evaluate  :: BasisMode -> Basis -> Tensor[E, L]  -> Tensor[E, P, C]  -- B_D
+weight    :: GeomData -> Tensor[E, P, C]         -> Tensor[E, P, C]  -- D
+integrate :: BasisMode -> Basis -> Tensor[E, P, C] -> Tensor[E, L]   -- B_D^T
+scatter   :: ElemRestriction -> Tensor[E, L]     -> Tensor[N]        -- G^T
+
+-- the matrix-free action A v = G^T . B_D^T . D . B_D . G  v
+apply_matrixfree :: Operator -> Tensor[N] -> Tensor[N]
+apply_matrixfree op v =
+  scatter   op.restr           $   -- G^T  : [E, L] -> [N]
+  integrate op.mode op.basis   $   -- B_D^T: [E, P, C] -> [E, L]
+  weight    op.geom            $   -- D    : pointwise on [E, P, C]
+  evaluate  op.mode op.basis   $   -- B_D  : [E, L] -> [E, P, C]
+  gather    op.restr v             -- G    : [N] -> [E, L]
+\end{lstlisting}
+
+\noindent Read it bottom to top, the order the data flows: \texttt{gather} the
+global vector to element blocks, \texttt{evaluate} the basis, \texttt{weight}
+pointwise, \texttt{integrate} back, \texttt{scatter} to a fresh global vector.
+The operator value \texttt{op} carries the three \emph{build-time} pieces---the
+restriction index map \texttt{op.restr}, the tabulated \texttt{op.basis}, and the
+geometry factor \texttt{op.geom}---which we turn to next.
+
+\section{The element-local tensor and its axes}
+\label{sec:mf-anatomy}
+
+The five stages move data between three rank-structured tensors. Naming their
+axes precisely is what lets us reason about shapes the way \cref{ch:tensors}
+taught---and it is what makes the whole pipeline legible to a tensor backend.
+\Cref{fig:mf-anatomy} is the anatomy chart; \cref{tab:mf-axes} is the legend.
+
+The crucial conceptual move is that matrix-free FE assembly works over a
+\emph{richer} shape than the flat global vector. The solver sees a flat
+\lstinline[style=l4style]|Tensor[N]|---a rank-1 list of $N$ degrees of freedom.
+But the moment we gather to elements, we acquire an explicit \emph{element axis}
+$E$ and the per-element structure beneath it. The flat global vector and the
+element-local tensors are two different vocabularies, and the gather/scatter pair
+$G$, $G^{\mathsf T}$ is exactly the boundary between them.
+
+\begin{table}[t]
+\centering
+\caption[The element-local tensor axes]{The five named axes of the element-local
+tensor family. The \emph{stratum} column records whether an axis's extent is
+fixed once per $(\text{mesh},\text{order})$ in a setup pass (build-time) or
+indexes a value produced afresh on every operator application (run-time)---the
+distinction \cref{sec:mf-strata} makes load-bearing.}
+\label{tab:mf-axes}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}clll@{}}
+\toprule
+axis & name & meaning & stratum \\
+\midrule
+$E$ & element count & number of mesh elements assembled over & build-time \\
+$L$ & local dofs & dofs of the basis local to one element, $(p{+}1)^d$ & build-time \\
+$P$ & quad points & quadrature points per element & build-time \\
+$C$ & components & value/derivative components at a quad point & run-time \\
+$G$ & geom components & precomputed metric storage per quad point & build-time \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % three stacked tensors with axis labels
+  % --- [E, L] ---
+  \begin{scope}[shift={(-4.4,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgBlue, draw=simBlue] (-0.7,-0.5) rectangle (0.7,0.5);
+        \foreach \y in {-0.25,0,0.25}{\draw[simBlue!40] (-0.7,\y)--(0.7,\y);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.05,0.0) {$L$};
+    \node[font=\scriptsize, simRust] at (0.55,0.75) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.1,-1.0) {[E, L]};
+    \node[font=\scriptsize\itshape, simGray, text width=24mm, align=center]
+      at (0.1,-1.5) {per-element local dofs};
+  \end{scope}
+  \node[font=\large] at (-2.5,0) {$\xrightarrow{\,B_{\diffop}\,}$};
+  % --- [E, P, C] ---
+  \begin{scope}[shift={(-0.4,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgGreen, draw=simGreen] (-0.75,-0.5) rectangle (0.75,0.5);
+        \foreach \y in {-0.17,0.17}{\draw[simGreen!40] (-0.75,\y)--(0.75,\y);}
+        \foreach \x in {-0.25,0.25}{\draw[simGreen!40] (\x,-0.5)--(\x,0.5);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.1,0.0) {$P$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.85) {$C$};
+    \node[font=\scriptsize, simRust] at (0.6,0.75) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.05,-1.15) {[E, P, C]};
+    \node[font=\scriptsize\itshape, simGray, text width=26mm, align=center]
+      at (0.05,-1.65) {values at quad points};
+  \end{scope}
+  \node[font=\large] at (1.6,0) {$\odot$};
+  % --- [E, P, G]  geom_data ---
+  \begin{scope}[shift={(3.7,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgGold, draw=simGold] (-0.75,-0.5) rectangle (0.75,0.5);
+        \foreach \y in {-0.17,0.17}{\draw[simGold!50] (-0.75,\y)--(0.75,\y);}
+        \foreach \x in {-0.25,0.25}{\draw[simGold!50] (\x,-0.5)--(\x,0.5);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.1,0.0) {$P$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.85) {$G$};
+    \node[font=\scriptsize, simRust] at (0.6,0.75) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.05,-1.15) {[E, P, G]};
+    \node[font=\scriptsize\itshape, simGray, text width=26mm, align=center]
+      at (0.05,-1.65) {geom\_data (build-time)};
+  \end{scope}
+\end{tikzpicture}
+\caption[Anatomy of the element-local tensor]{The element-local tensor family.
+The gather produces \lstinline[style=l4style]|[E, L]| (blue): an element axis $E$
+over per-element local-dof blocks of length $L$. Basis evaluation
+$B_{\diffop}$ maps it to \lstinline[style=l4style]|[E, P, C]| (green): $C$
+components at each of $P$ quadrature points, per element. The pointwise weight
+$D$ multiplies it, point by point ($\odot$), against the precomputed geometry
+carrier \lstinline[style=l4style]|[E, P, G]| (gold). The element axis $E$ (rust)
+runs through all three---the operator is block-diagonal in $E$, which is to say
+embarrassingly parallel over elements.}
+\label{fig:mf-anatomy}
+\end{figure}
+
+\begin{notationbox}
+A naming hazard worth flagging once. In the underlying libCEED library the basis
+constructor's parameter named \texttt{P} counts \emph{nodes per element} (our
+$L$) and its \texttt{Q} counts \emph{quadrature points} (our $P$). This book uses
+$L$ for local dofs and $P$ for quadrature points consistently; if you read the
+library source, expect the letters to swap. The mapping is exact---only the
+labels differ.
+\end{notationbox}
+
+\subsection{Why every stage is block-diagonal in \texorpdfstring{$E$}{E}}
+\label{sec:mf-blockdiag}
+
+Look again at \cref{fig:mf-anatomy}: the element axis $E$ threads through all
+three tensors, and through stages 2, 3, and 4 of the pipeline. None of those
+stages couples one element to another. Basis evaluation applies the same small
+matrix \emph{independently} within each element; the pointwise weight touches one
+point at a time; integration is again per-element. In the language of
+\cref{ch:tensors}, stages 2--4 are \emph{block-diagonal} in $E$: a batched
+operation, the same computation broadcast across the $E$ slices.
+
+All the inter-element coupling---the only place where one element's data meets
+another's---lives in the gather $G$ and the scatter $G^{\mathsf T}$, at the two
+ends of the pipeline. This is a clean and consequential separation. The
+arithmetic-heavy middle is perfectly parallel; the communication-heavy ends are
+pure data movement with no arithmetic. It is exactly the structure a tensor
+accelerator is built to exploit: map a batched contraction over a large axis,
+with a gather in front and a scatter behind.
+
+\section{Build-time versus run-time: where the geometry lives}
+\label{sec:mf-strata}
+
+We have been quietly carrying a tensor we have not built: \texttt{geom\_data},
+the \lstinline[style=l4style]|Tensor[E, P, G]| that the weight stage $D$
+multiplies against. Where does it come from, and---more importantly---\emph{when}?
+The answer is a recurring theme of this book, large enough that it has its own
+chapter ahead (\cref{ch:strata}): the operator's data divides into two
+\emph{strata} by lifetime.
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+\item[Build-time (setup) stratum.] Data fixed once per
+$(\text{mesh},\text{FE order},\text{quadrature rule})$ and reused across every
+application of the operator. This is the restriction index map (which dof goes to
+which element), the tabulated basis matrices (basis functions sampled at
+quadrature nodes), and---the one with real arithmetic---\texttt{geom\_data}.
+\item[Run-time (apply) stratum.] Data produced afresh on every action
+$\vv\mapsto\mat{A}\vv$: the gathered \lstinline[style=l4style]|[E, L]| block, the
+evaluated \lstinline[style=l4style]|[E, P, C]| values, the weighted values, the
+integrated contributions. These are transient---born inside one application and
+discarded when it returns.
+\end{description}
+
+The geometry factor is the star of the build-time stratum. Computing it requires
+real work: at each quadrature point of each element, form the Jacobian $J$ of the
+map from the reference element to the physical element (\cref{ch:refelement}),
+combine it into the metric the weak-form term needs---$|J|$ for a mass term,
+$J^{-\mathsf T}J^{-1}|J|$ for a gradient term---multiply by the quadrature weight
+$w$, and fold in the material coefficient $Q$. The result is one small block per
+point, stored in \texttt{geom\_data}. \Cref{fig:mf-strata} draws the split: a
+setup pass runs the build once and produces \texttt{geom\_data}; thereafter every
+operator application, of which a Krylov solve performs hundreds, simply reads it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 12mm]
+  % --- build-time row (gold) ---
+  \node[data, fill=simBgGold, draw=simGold, text width=20mm] (mesh)
+    {mesh nodes\\$+$ quad rule};
+  \node[stage, fill=simBgGold, draw=simGold, right=of mesh, text width=26mm]
+    (build) {\textbf{setup pass}\\\footnotesize $J,\;|J|,\;Q,\;w$\\(\texttt{geom\_factor\_build})};
+  \node[data, fill=simBgGold, draw=simGold, right=of build, text width=22mm]
+    (gd) {\texttt{geom\_data}\\\texttt{[E, P, G]}};
+  \draw[flow, simGold] (mesh) -- (build);
+  \draw[flow, simGold] (build) -- (gd);
+  \node[font=\scriptsize\bfseries, simGold, left=1mm of mesh, rotate=90, anchor=south]
+    {build-time};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of build]
+    {runs \emph{once} per (mesh, order)};
+
+  % --- run-time row (blue): many applies reading geom_data ---
+  \node[stage, below=18mm of build, text width=30mm] (apply1)
+    {apply $\mat{A}\vv_1$\\\footnotesize $G^{\mathsf T}B^{\mathsf T}\,D\,B\,G$};
+  \node[stage, right=5mm of apply1, text width=14mm] (apply2)
+    {apply\\$\mat{A}\vv_2$};
+  \node[font=\large, right=2mm of apply2] (dots) {$\cdots$};
+  \node[stage, right=2mm of dots, text width=14mm] (applyk)
+    {apply\\$\mat{A}\vv_k$};
+  \node[font=\scriptsize\bfseries, simBlue, left=1mm of apply1, rotate=90, anchor=south]
+    {run-time};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of apply1, xshift=12mm]
+    {runs \emph{every} Krylov iteration --- reads \texttt{geom\_data}, never rebuilds it};
+  % geom_data feeds every apply
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (apply1.north);
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (apply2.north);
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (applyk.north);
+\end{tikzpicture}
+\caption[Build-time versus run-time stratification]{The geometry factor is
+computed \emph{once}. A setup pass (gold, top) consumes the mesh nodes and the
+quadrature rule and produces \texttt{geom\_data}, a
+\lstinline[style=l4style]|[E, P, G]| tensor holding the Jacobian metric,
+material coefficient, and quadrature weight at every point. Every subsequent
+operator application (blue, bottom)---and an iterative solve performs
+hundreds---simply \emph{reads} \texttt{geom\_data} in its weight stage $D$. The
+expensive geometry work is amortized across the whole solve. Only when the mesh
+changes (e.g.\ adaptive refinement, \cref{ch:amr}) is the setup pass rerun.}
+\label{fig:mf-strata}
+\end{figure}
+
+\begin{keyidea}
+The matrix-free operator carries two strata. The \emph{build-time} stratum---the
+restriction map, the tabulated basis, and the geometry factor
+\texttt{geom\_data}---is computed once per $(\text{mesh},\text{order})$ and
+reused. The \emph{run-time} stratum---the gathered, evaluated, weighted,
+integrated tensors---is rebuilt on every application. Folding the coefficient,
+Jacobian metric, and quadrature weight into one precomputed \texttt{geom\_data}
+factor is what makes the run-time weight stage $D$ a single pointwise multiply.
+The same stratification organizes the whole simulator (\cref{ch:strata}).
+\end{keyidea}
+
+\subsection{The diagonal $D$ is embarrassingly parallel}
+\label{sec:mf-diagonal}
+
+With \texttt{geom\_data} precomputed, the run-time weight stage $D$ is the
+simplest object in the entire finite-element machine: a pointwise multiply.
+\Cref{fig:mf-diagonal} makes the structure explicit. Lay the
+\lstinline[style=l4style]|[E, P, C]| evaluated field and the
+\lstinline[style=l4style]|[E, P, G]| geometry factor side by side; at each point
+$(e,p)$, multiply the field block by the geometry block, independently. No point
+talks to any other point. There is no reduction, no recurrence, no
+order-dependence: the output is a function of the input \emph{at the same index}
+and nothing else.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % grid of quad points (E x P flattened), each an independent multiply
+  \def\nx{5}\def\ny{3}
+  \foreach \i in {0,...,4}{
+    \foreach \j in {0,...,2}{
+      \node[draw=simGreen, fill=simBgGreen, rounded corners=1pt,
+            minimum size=6.5mm, font=\scriptsize] (c\i\j) at (\i*1.0, \j*0.85) {$u_{\i\j}$};
+    }
+  }
+  % geom blocks to the right, one per point (drawn as a thin gold strip overlay)
+  \foreach \i in {0,...,4}{
+    \foreach \j in {0,...,2}{
+      \node[font=\scriptsize, simGold] at (\i*1.0+0.34, \j*0.85+0.34) {$\odot g$};
+    }
+  }
+  % axis labels
+  \node[font=\scriptsize\itshape, simRust] at (-0.85, 0.85) {$(e,p)$ index};
+  \node[font=\scriptsize, simInk] at (2.0,-0.85) {$P$ points $\times$ $E$ elements (flattened)};
+  % big brace: all independent
+  \draw[decorate, decoration={brace, amplitude=5pt}, simBlue]
+    (-0.45, 2.05) -- (4.45, 2.05)
+    node[midway, above=5pt, font=\footnotesize, simBlue]
+    {every cell independent --- no coupling, any order, fully parallel};
+\end{tikzpicture}
+\caption[The quad-point weight as a parallel diagonal]{The weight stage
+$D$ visualized over the flattened $(e,p)$ index. Each cell is one quadrature
+point's evaluated value $u_{ep}$, multiplied ($\odot$) by its own precomputed
+geometry block $g_{ep}$ from \texttt{geom\_data}. No cell depends on any other:
+$D$ is \emph{diagonal} in the $(E,P)$ index, the embarrassingly parallel core of
+the operator. This is the per-point ``lift'' the implementation view consumes
+directly---one tensor, one elementwise multiply, mapped across the whole point
+set at once.}
+\label{fig:mf-diagonal}
+\end{figure}
+
+This is what we mean when we call $D$ the \emph{diagonal} of the operator. The
+basis stages $B_{\diffop}$ and $B_{\diffop}^{\mathsf T}$ couple the $L$ local dofs
+to the $P$ quadrature points (a dense small contraction); the gather and scatter
+couple elements through shared dofs. But sandwiched between them, $D$ couples
+nothing---it is a diagonal scaling in the quadrature-point basis. A diagonal map
+is the friendliest possible object for a parallel machine, and it is where the
+material physics ($Q$) and the geometry ($J$) actually enter the operator. Every
+bit of what makes this term a \emph{mass} term rather than a \emph{stiffness}
+term, this material rather than that one, this curved element rather than a
+straight one, is packed into the diagonal $D$.
+
+\section{Worked example: a 1-D mass operator, two elements}
+\label{sec:mf-wex1}
+
+Nothing convinces like tracing a real vector through the pipeline and recovering
+the answer the assembled matrix would have given. We take the smallest nontrivial
+case: the mass operator $\mat{M}$ ($\diffop=\mathrm{Id}$, weight $Q=1$) on a 1-D
+mesh of two linear elements, evaluated by a two-point quadrature exact for the
+quadratics that arise.
+
+\begin{workedexample}{Matrix-free $\mat{M}\vv$ on two 1-D elements}{mf-mass}
+\textbf{Setup.} The domain $[0,2]$ is split into two elements,
+$e_0=[0,1]$ and $e_1=[1,2]$, each of width $h=1$. We use linear ($p=1$)
+nodal basis functions, so there are $N=3$ global dofs at nodes
+$x_0=0,\,x_1=1,\,x_2=2$, and $L=2$ local dofs per element. The node $x_1$ is
+\emph{shared}: it is local dof $1$ of $e_0$ and local dof $0$ of $e_1$. Take
+$P=2$ Gauss points per element. We compute the action $\mat{M}\vv$ on
+\[
+  \vv \;=\; (v_0,v_1,v_2) \;=\; (1,\,2,\,3) .
+\]
+
+\textbf{Build-time pieces.} On the reference element $[0,1]$ the linear basis is
+$\phi_0(\xi)=1-\xi,\ \phi_1(\xi)=\xi$. The two Gauss points are
+$\xi_{0,1}=\tfrac12\mp\tfrac{1}{2\sqrt3}$ with weights $w=\tfrac12$ each (scaled
+for $[0,1]$). The basis-evaluation matrix $B$ (rows = quad points, cols = local
+dofs) and the geometry factor are
+\[
+  B=\begin{pmatrix}\phi_0(\xi_0)&\phi_1(\xi_0)\\[2pt]\phi_0(\xi_1)&\phi_1(\xi_1)\end{pmatrix}
+   =\begin{pmatrix}0.7887&0.2113\\[2pt]0.2113&0.7887\end{pmatrix},
+  \qquad
+  g_{ep}=\underbrace{|J|}_{=\,h=1}\cdot \underbrace{w}_{=\,1/2}\cdot \underbrace{Q}_{=1}
+        =\tfrac12 .
+\]
+Both elements are identical (uniform mesh), so $B$ and $g=\tfrac12$ are the same
+for $e_0$ and $e_1$. These are computed \emph{once}; the four stages below run on
+$\vv$.
+
+\tcblower
+\textbf{Stage 1 --- gather $G$.} Read each element's two dofs from $\vv=(1,2,3)$:
+\[
+  e_0:\ (v_0,v_1)=(1,2),\qquad e_1:\ (v_1,v_2)=(2,3)
+  \quad\Rightarrow\quad
+  \texttt{[E, L]}=\begin{pmatrix}1&2\\2&3\end{pmatrix}.
+\]
+Note $v_1=2$ is copied into \emph{both} rows---the shared dof.
+
+\textbf{Stage 2 --- evaluate $B$.} Contract each element's local dofs against
+$B$ to get values at the two quad points (here $C=1$, scalar values):
+\[
+  e_0:\ B\begin{pmatrix}1\\2\end{pmatrix}=\begin{pmatrix}1.211\\1.789\end{pmatrix},
+  \qquad
+  e_1:\ B\begin{pmatrix}2\\3\end{pmatrix}=\begin{pmatrix}2.211\\2.789\end{pmatrix}.
+\]
+Shape is now \lstinline[style=l4style]|[E, P, C]| $=[2,2,1]$.
+
+\textbf{Stage 3 --- weight $D$.} Multiply every quad-point value by $g=\tfrac12$:
+\[
+  e_0:\ (0.6057,\,0.8943),\qquad e_1:\ (1.1057,\,1.3943).
+\]
+
+\textbf{Stage 4 --- integrate $B^{\mathsf T}$.} Apply $B^{\mathsf T}$ (the
+transpose) to return to local dofs:
+\[
+  e_0:\ B^{\mathsf T}\!\begin{pmatrix}0.6057\\0.8943\end{pmatrix}
+       =\begin{pmatrix}0.6667\\0.8333\end{pmatrix},
+  \quad
+  e_1:\ B^{\mathsf T}\!\begin{pmatrix}1.1057\\1.3943\end{pmatrix}
+       =\begin{pmatrix}1.1667\\1.3333\end{pmatrix}.
+\]
+
+\textbf{Stage 5 --- scatter-add $G^{\mathsf T}$.} Sum the element-local
+contributions back into the $3$ global slots, \emph{adding} at the shared node
+$x_1$:
+\[
+  \mat{M}\vv=\Big(\,0.6667,\ \underbrace{0.8333+1.1667}_{\text{shared }x_1},\ 1.3333\,\Big)
+            =(0.6667,\ 2.0000,\ 1.3333).
+\]
+
+\textbf{Check against the assembled matrix.} The consistent linear mass matrix on
+this uniform two-element mesh is the classic
+\[
+  \mat{M}=\frac{h}{6}\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix}
+        =\frac16\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix},
+  \quad
+  \mat{M}\vv=\frac16\begin{pmatrix}2{\cdot}1+1{\cdot}2\\1{\cdot}1+4{\cdot}2+1{\cdot}3\\1{\cdot}2+2{\cdot}3\end{pmatrix}
+            =\frac16\begin{pmatrix}4\\12\\8\end{pmatrix}
+            =(0.6667,\,2.0000,\,1.3333).
+\]
+The two agree exactly. The matrix-free pipeline reproduced $\mat{M}\vv$ to the
+last digit---without ever forming the $3\times3$ matrix.
+\end{workedexample}
+
+\begin{remark}
+Trace what happened at the shared node $x_1$. The gather $G$ \emph{copied} $v_1$
+into both elements (stage 1); the scatter $G^{\mathsf T}$ \emph{summed} the two
+elements' contributions back (stage 5). That copy-out/sum-back pair is the entire
+content of finite-element assembly, and here it is, applied to a vector instead
+of stamped into a matrix. The middle three stages never knew the node was
+shared---they ran element by element, blissfully parallel.
+\end{remark}
+
+\section{Sum-factorization: the same answer, far cheaper}
+\label{sec:mf-sumfac}
+
+The worked example was 1-D, where the basis evaluation $B$ is already a small
+dense matrix and there is nothing to optimize. In higher dimensions on
+tensor-product elements, the basis stage hides a beautiful and important
+efficiency, \emph{sum-factorization}, which is what makes high-order
+matrix-free competitive. It is a \emph{transparent} performance trick in the
+sense of \cref{ch:bigidea}: it computes exactly the same result, just by
+reordering the contraction.
+
+Consider a 2-D tensor-product ($Q_p$) element of order $p$, with
+$L=(p+1)^2$ local dofs arranged on a $(p+1)\times(p+1)$ grid, and $P=(p+1)^2$
+quadrature points likewise on a grid. The naive basis evaluation treats $B$ as a
+dense $P\times L$ matrix: contracting one element's dofs against it costs
+\[
+  \text{naive cost} \;=\; P\cdot L \;=\; (p+1)^2\cdot(p+1)^2 \;=\; (p+1)^4
+\]
+multiply-adds per element. But the 2-D basis is a \emph{product} of
+one-dimensional bases: $\phi_{ij}(\xi,\eta)=\phi_i(\xi)\,\phi_j(\eta)$. That
+product structure lets us evaluate one dimension at a time. First contract the
+$\eta$-direction dofs against the 1-D basis (a $(p+1)\times(p+1)$ matrix applied
+along one axis), then contract the $\xi$-direction. Each of the two
+sweeps costs $(p+1)$ (the 1-D contraction) times $(p+1)^2$ (the other axis carried
+along), so
+\[
+  \text{sum-factored cost} \;=\; d\cdot(p+1)\cdot(p+1)^2 \;=\; d\,(p+1)^{d+1}
+  \;=\; 2\,(p+1)^3 \quad (d=2).
+\]
+The general $d$-dimensional statement is the move from $O(P\cdot L)=O\!\big((p+1)^{2d}\big)$
+to $O\!\big(d\,(p+1)^{d+1}\big)$---in the notation of the operator counts, a drop
+from $O(P\cdot L)$ to $O\!\big(d\cdot P^{1/d}\cdot L\big)$, since a single axis of
+the quad-point grid has length $P^{1/d}=(p+1)$.
+
+\Cref{fig:mf-sumfac} draws the reordering for $d=2$, and \cref{tab:mf-sumfac}
+tabulates the savings. The win grows with order: at $p=8$ in 3-D it is the
+difference between $(p+1)^6\approx\num{531441}$ and
+$3\cdot(p+1)^4\approx\num{19683}$ operations per element---a factor of nearly
+$30$, and it widens as $p$ climbs.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm and 14mm]
+  % naive: one big dense contraction L -> P
+  \node[data, text width=15mm] (din) {dofs\\$(p{+}1)^2$};
+  \node[opbox, fill=simBgRust, draw=simRust, right=of din, text width=24mm]
+    (naive) {dense $P\times L$\\\footnotesize $(p{+}1)^4$ ops};
+  \node[data, right=of naive, text width=16mm] (dpts) {pts\\$(p{+}1)^2$};
+  \draw[flow] (din) -- (naive);
+  \draw[flow] (naive) -- (dpts);
+  \node[font=\scriptsize\bfseries, simRust, left=1mm of din, rotate=90, anchor=south]
+    {naive};
+
+  % factored: two 1-D sweeps
+  \node[data, below=14mm of din, text width=15mm] (fin) {dofs\\$(p{+}1)^2$};
+  \node[opbox, right=of fin, text width=20mm] (s1)
+    {1-D sweep $\eta$\\\footnotesize $(p{+}1)^3$ ops};
+  \node[opbox, right=of s1, text width=20mm] (s2)
+    {1-D sweep $\xi$\\\footnotesize $(p{+}1)^3$ ops};
+  \node[data, right=of s2, text width=16mm] (fpts) {pts\\$(p{+}1)^2$};
+  \draw[flow] (fin) -- (s1);
+  \draw[flow] (s1) -- node[above, font=\scriptsize, simGray] {partial} (s2);
+  \draw[flow] (s2) -- (fpts);
+  \node[font=\scriptsize\bfseries, simBlue, left=1mm of fin, rotate=90, anchor=south]
+    {factored};
+\end{tikzpicture}
+\caption[Sum-factorization on a 2-D element]{Basis evaluation on a 2-D
+tensor-product element, two ways. \emph{Top (rust):} the naive contraction treats
+the basis as one dense $P\times L$ matrix, costing $(p+1)^4$ operations per
+element. \emph{Bottom (blue):} sum-factorization applies the one-dimensional
+basis along each axis in turn---a sweep in $\eta$, then a sweep in $\xi$---each
+costing $(p+1)^3$, for $2(p+1)^3$ total. The two produce \emph{identical}
+results; only the contraction order differs. The saving is the move from
+$O(P\cdot L)$ to $O(d\,P^{1/d}L)$, and it grows with order.}
+\label{fig:mf-sumfac}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption[Sum-factorization operation counts]{Multiply-adds per element for the
+basis-evaluation stage, naive versus sum-factored, on a tensor-product element of
+order $p$. ``Naive'' is the dense $P\times L$ contraction, $(p+1)^{2d}$;
+``factored'' is $d\,(p+1)^{d+1}$. The speedup is unbounded in $p$. (Values for
+$d=2$; the 3-D column at $p=8$ illustrates how steep the win becomes.)}
+\label{tab:mf-sumfac}
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+order $p$ & naive $(p{+}1)^4$ & factored $2(p{+}1)^3$ & speedup \\
+\midrule
+1 & 16     & 16    & $1.0\times$ \\
+2 & 81     & 54    & $1.5\times$ \\
+4 & 625    & 250   & $2.5\times$ \\
+8 & 6561   & 1458  & $4.5\times$ \\
+\midrule
+\multicolumn{4}{@{}l@{}}{\footnotesize 3-D at $p=8$: naive $9^6=\num{531441}$
+vs.\ factored $3\cdot 9^4=\num{19683}$ \quad($27\times$)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{workedexample}{Counting operations on a $Q_2$ element}{mf-sumfac}
+\textbf{Setup.} Take a 2-D second-order ($Q_2$, $p=2$) tensor-product element.
+The local dofs sit on a $3\times3$ node grid, so $L=(p+1)^2=9$; we use a $3\times3$
+Gauss grid, $P=9$. We count the multiply-adds to evaluate the field values at all
+quad points (the basis stage $B$, mode = interp).
+
+\tcblower
+\textbf{Naive (dense $P\times L$).} One element's $L=9$ dofs contract against the
+dense $9\times9$ basis matrix:
+\[
+  P\cdot L \;=\; 9\cdot 9 \;=\; 81 \ \text{multiply-adds}.
+\]
+
+\textbf{Factored (two 1-D sweeps).} The $Q_2$ basis is
+$\phi_{ij}(\xi,\eta)=\phi_i(\xi)\phi_j(\eta)$ with $\phi_i,\phi_j$ the three 1-D
+quadratic Lagrange functions.
+\emph{Sweep 1 (along $\eta$):} for each of the $3$ values of $\xi$-index, contract
+the $3$ dofs in $\eta$ against the $3\times3$ 1-D basis, producing partial values
+at the $3$ $\eta$-quad-points: $3\ (\xi\text{ cols})\times 3\times 3 = 27$.
+\emph{Sweep 2 (along $\xi$):} for each of the $3$ $\eta$-quad-points, contract the
+$3$ partials in $\xi$ against the $3\times3$ 1-D basis: $3\times 3\times3 = 27$.
+\[
+  \text{total} \;=\; 27 + 27 \;=\; 54 \ \text{multiply-adds}.
+\]
+
+\textbf{Comparison.} $81$ versus $54$: a $1.5\times$ saving at $p=2$, matching the
+$d(p+1)^{d+1}=2\cdot 27=54$ formula. The two compute \emph{bit-for-bit the same
+quad-point values}---sum-factorization only reorders the sums. The modest factor
+here grows fast: at $p=4$ it is $625$ vs.\ $250$ ($2.5\times$), and in 3-D the
+exponent gap ($2d$ vs.\ $d+1$) makes it decisive.
+\end{workedexample}
+
+\begin{pitfall}
+Sum-factorization is \emph{transparent}: same result, faster. Do not confuse it
+with a \emph{load-bearing} numerical trick (\cref{ch:bigidea})---it does not
+change the answer, the conditioning, or the rounding behavior in any way the
+algorithm depends on. In the spec we therefore record it as a one-line note on
+the basis stage, not as a separate algebraic claim. The reason to know about it
+anyway is that it is \emph{why} high-order matrix-free is fast enough to be the
+default: without it, the basis stage would reintroduce the very $O(p^{2d})$ cost
+the matrix-free form was trying to escape.
+\end{pitfall}
+
+\section{The implementation view: contractions all the way down}
+\label{sec:mf-impl-view}
+
+Step back from the details and look at what \cref{eq:mf-chain} \emph{is}. The
+finite-element operator $\mat{A}$---the discretization of Maxwell's weak form, the
+object every solver in the book applies---has turned out to be a composition of
+tensor contractions over named axes. Gather is an indexed copy. Evaluate and
+integrate are dense contractions of an $[E,L]$ tensor against a tabulated basis,
+yielding $[E,P,C]$. Weight is an elementwise multiply of $[E,P,C]$ against
+$[E,P,G]$. Scatter is an indexed sum. There is no sparse-matrix data structure
+anywhere in sight---no row pointers, no column indices, no stored entries. There
+are only tensors and contractions.
+
+This is the destination Part~I promised. \Cref{ch:bigidea} argued that a field
+\emph{is} a tensor and that a simulation is a chain of pure transformations of
+immutable tensors---and that this description is exactly the form a GPU or tensor
+accelerator wants: whole-tensor operations over named axes, no aliasing, no
+ordering hazards. The matrix-free operator is that thesis made fully concrete.
+Every stage of \cref{fig:mf-pipeline} is a pure function from tensors to tensors;
+the whole operator is their composition; and the shapes
+(\lstinline[style=l4style]|[E, L]|, \lstinline[style=l4style]|[E, P, C]|,
+\lstinline[style=l4style]|[E, P, G]|) are precisely what a backend schedules onto
+its parallel units. The assembled-matrix form, by contrast, is a CPU-era data
+structure---irregular, pointer-chasing, bandwidth-bound---that a tensor backend
+would have to be coaxed into. Matrix-free is the form the accelerator was built
+for.
+
+\begin{keyidea}
+The matrix-free operator \emph{is} the implementation view of \cref{ch:bigidea},
+realized for finite elements. A field is a tensor; the operator is a composition
+of contractions over named axes; the whole thing maps onto a tensor backend with
+no sparse data structure at all. When the book's final part renders the
+synthesized library, the matrix-free operator is what the
+``\,\lstinline[style=l4style]|apply A v|\,'' of every solver expands into.
+\end{keyidea}
+
+\subsection{The innermost kernel is a library boundary}
+\label{sec:mf-extern}
+
+There is one honest qualification. We have described the five stages as pure
+tensor contractions, and at the mathematical level they are. But the innermost
+pointwise kernel---the per-quadrature-point weight stage $D$, fused with the basis
+contractions for efficiency---is, in the real Palace implementation, handed to a
+specialized accelerator library (libCEED) that owns the device-level details:
+which loops to fuse, how to tile the quadrature points, how to map them onto warps
+or wavefronts. The book does not re-derive that kernel; it treats it as an
+\emph{opaque library boundary}. In the calculus, such a boundary is written with
+the marker \lstinline[style=l4style]|#extern|: a node whose \emph{contract} (its
+shape signature and semantics) we state precisely, but whose \emph{body} we
+delegate to the library.
+
+\begin{lstlisting}[style=l4style]
+-- the innermost element-quadrature kernel, as a library boundary:
+-- the contract is ours; the device implementation is libCEED's.
+quad_kernel :: GeomData -> Tensor[E, P, C] -> Tensor[E, P, C]
+#extern quad_kernel    -- shape + semantics specified; body delegated
+\end{lstlisting}
+
+\noindent This is the same \lstinline[style=l4style]|#extern| node that appears,
+violet and dashed, at the center of \cref{fig:mf-pipeline}. Two facts make the
+boundary clean. First, its contract is exactly the pointwise diagonal of
+\cref{sec:mf-diagonal}: a shape-preserving elementwise multiply against
+\texttt{geom\_data}, with semantics we have fully specified. Second, because the
+contract is so simple and so completely characterized, we can reason about the
+\emph{whole} operator---its symmetry, its action, the worked examples
+above---without opening the kernel at all. The library owns the machine; we own
+the mathematics, and the two meet at a narrow, well-typed interface.
+
+\begin{notationbox}
+The \lstinline[style=l4style]|#extern| marker recurs wherever the spec touches an
+opaque accelerator or solver library: the libCEED quadrature kernel here, the
+SLEPc eigensolve in \cref{ch:eigenvalues}, the sparse triangular solves inside a
+smoother in \cref{ch:smoothers}. In each case the pattern is the same---a
+precisely specified \emph{contract} (signature and semantics) standing in for a
+\emph{body} we delegate. The discipline is to make the boundary so well-typed that
+nothing above it needs to look inside.
+\end{notationbox}
+
+\section{When matrix-free is not the answer}
+\label{sec:mf-tradeoffs}
+
+Matrix-free is the right default at moderate-to-high order on accelerators, but it
+is a trade, not a free lunch, and it pays to name the other side of the ledger.
+\Cref{fig:mf-vs-assembled} sets the two representations side by side: the same
+linear map, stored two ways. The assembled form holds an explicit sparse data
+structure---rows, columns, stored entries---and applies in one multiply; the
+matrix-free form holds only the build-time tables and recomputes the action
+through the five-stage pipeline each time. The choice between them is the subject
+of this section.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm and 10mm]
+  % ---- LEFT: assembled (stored sparse matrix) ----
+  \begin{scope}
+    \node[font=\bfseries\small, simRust] at (0,2.1) {Assembled};
+    % a sparse matrix glyph
+    \draw[simRust, thick, fill=simBgRust, rounded corners=1pt] (-1.0,-1.1) rectangle (1.0,1.1);
+    \foreach \i/\j in {0/0,1/0,0/1,1/1,2/2,3/2,2/3,3/3,1/2,2/1,4/4,3/4,4/3,0/4,4/0}{
+      \fill[simRust] ({-0.9+0.38*\j},{0.9-0.38*\i}) rectangle ({-0.66+0.38*\j},{0.66-0.38*\i});}
+    \node[font=\scriptsize\itshape, simGray, below=1mm of {(0,-1.1)}] (la) at (0,-1.45)
+      {stored entries $A_{ij}$};
+    \node[data, fill=simBgRust, draw=simRust, below=2mm of la, text width=30mm]
+      (lapp) {apply: one sparse multiply\\\footnotesize cheap per-apply, $O(p^{2d})$ memory};
+  \end{scope}
+  % ---- RIGHT: matrix-free (pipeline, nothing stored) ----
+  \begin{scope}[shift={(6.4,0)}]
+    \node[font=\bfseries\small, simBlue] at (0,2.1) {Matrix-free};
+    % mini pipeline glyph
+    \foreach \k/\lab in {0/$G$,1/$B$,2/$D$,3/$B^{\mathsf T}$,4/$G^{\mathsf T}$}{
+      \node[draw=simBlue, fill=simBgBlue, rounded corners=1pt, minimum size=4.5mm,
+            font=\scriptsize] (p\k) at ({-1.4+0.7*\k},0.6) {\lab};}
+    \foreach \k in {0,1,2,3}{\pgfmathtruncatemacro{\next}{\k+1}\draw[flow] (p\k)--(p\next);}
+    \node[font=\scriptsize\itshape, simGray] at (0,-0.5) {nothing stored but build-time tables};
+    \node[data, fill=simBgBlue, draw=simBlue, text width=30mm] (rapp) at (0,-1.55)
+      {apply: rerun the pipeline\\\footnotesize more arithmetic, $O(p)$ memory};
+  \end{scope}
+  % ---- center: same operator ----
+  \node[font=\scriptsize\bfseries, simGreen] at (3.2,1.4) {same};
+  \node[font=\scriptsize\bfseries, simGreen] at (3.2,1.05) {$\mat{A}$};
+  \draw[{Stealth[length=2mm]}-{Stealth[length=2mm]}, simGreen, thick] (1.3,0.2) -- (4.5,0.2);
+\end{tikzpicture}
+\caption[Matrix-free versus assembled, side by side]{Two representations of the
+\emph{same} operator $\mat{A}$. \emph{Left (rust):} the assembled form stores an
+explicit sparse matrix of entries $A_{ij}$ and applies in a single sparse
+multiply---cheap per application but $O(p^{2d})$ memory per element.
+\emph{Right (blue):} the matrix-free form stores nothing but the build-time
+tables and recomputes the action through the five-stage pipeline on each apply---more
+arithmetic but only $O(p)$ memory. They compute the identical map (green); the
+choice is an implementation decision driven by order, hardware, and downstream use.}
+\label{fig:mf-vs-assembled}
+\end{figure}
+
+First, \emph{cost per application is higher}. The assembled matrix, once built,
+applies in a single sparse multiply; the matrix-free operator reruns all five
+stages every time. When the operator is applied only a handful of times, or when
+order is so low that the stored matrix is tiny, assembly wins. The crossover in
+\cref{fig:mf-cost} is a memory crossover; there is a separate, lower, arithmetic
+crossover.
+
+Second, \emph{preconditioning is harder}. Many classical preconditioners
+(incomplete factorizations, algebraic multigrid setup) want to inspect the
+operator's entries---exactly what the matrix-free form refuses to provide. This is
+not fatal: the geometric multigrid of \cref{ch:multigrid} and the smoothers of
+\cref{ch:smoothers} are designed to need only the action, and where an entry-level
+view is unavoidable, Palace can materialize a coarse or diagonal approximation on
+demand (apply the pipeline to the identity columns and read off the entries). But
+it is real friction, and it is why the matrix-free and assembled forms coexist in
+the same code rather than one simply replacing the other.
+
+\begin{remark}
+Both forms compute the \emph{same operator}---they are two evaluations of the same
+linear map, and the worked example confirmed they agree to the last digit. The
+choice between them is an implementation decision driven by order, hardware, and
+how the operator will be used downstream, not a change to the mathematics. This is
+the value-threading lesson of \cref{ch:bigidea} once more: the description is free
+to choose the representation the machine likes best, because the answer is
+invariant to the choice.
+\end{remark}
+
+\summarysection
+A Krylov or eigensolver asks an operator for one thing only: its action,
+$\vv\mapsto\mat{A}\vv$. The \emph{matrix-free} operator supplies that action
+without ever forming or storing $\mat{A}$, which matters because the stored
+operator costs $O(p^{2d})$ memory per element and becomes unaffordable at high
+order on accelerators. The action factors into five element-local stages,
+$\mat{A}\vv = G^{\mathsf T}B_{\diffop}^{\mathsf T}\,D\,B_{\diffop}\,G\,\vv$:
+\emph{gather} the global vector to per-element blocks
+(\lstinline[style=l4style]|[N]|$\to$\lstinline[style=l4style]|[E, L]|),
+\emph{evaluate} the basis at quadrature points
+(\lstinline[style=l4style]|[E, L]|$\to$\lstinline[style=l4style]|[E, P, C]|),
+\emph{weight} each point by a precomputed geometry/material factor (pointwise on
+\lstinline[style=l4style]|[E, P, C]|, the embarrassingly parallel diagonal),
+\emph{integrate} back to local dofs, and \emph{scatter-add} to a fresh global
+vector. The middle three stages are block-diagonal in the element axis $E$---fully
+parallel; all inter-element coupling lives in the gather/scatter ends. The
+geometry factor \texttt{geom\_data} is a \emph{build-time} quantity, computed once
+per $(\text{mesh},\text{order})$ and reused across the hundreds of applications a
+solve performs. On tensor-product elements, \emph{sum-factorization} evaluates the
+basis dimension by dimension, dropping the cost from $O(P\cdot L)$ to
+$O(d\,P^{1/d}L)$---a transparent reordering, same answer, decisive at high order.
+A worked example traced $\mat{M}\vv$ through all five stages on two 1-D elements
+and recovered the assembled matrix's answer exactly. Because every stage is a
+tensor contraction over named axes with no sparse-matrix structure, the
+matrix-free operator \emph{is} the implementation view of \cref{ch:bigidea}---the
+form a GPU consumes---with its innermost kernel sealed behind a precisely typed
+\lstinline[style=l4style]|#extern| library boundary.
+
+\furtherreading
+The matrix-free, sum-factorized, tensor-contraction view of high-order
+finite-element operators is the design philosophy of the CEED project; its
+co-design survey~\citep{ceed2021} is the entry point to the libraries (libCEED,
+MFEM) that realize the five-stage decomposition described here, and to the
+performance literature behind sum-factorization. For the underlying
+finite-element method---reference elements, tabulated bases, quadrature, and the
+element matrices the operator factors---Jin's text on the finite-element method in
+electromagnetics~\citep{jin2014} gives the field-theory grounding in the
+context of Maxwell's equations specifically. The classical operation-count
+argument for sum-factorization, and the spectral-element setting in which it was
+first decisive, are developed in any spectral/high-order finite-element reference;
+the build-time/run-time stratification it relies on is treated in its own right in
+\cref{ch:strata}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Memory at a glance.} For a 3-D hexahedral element of order $p=4$,
+  how many entries does the dense element matrix $\mat{A}^e$ hold? How many
+  numbers does the matrix-free form store for that element if it keeps a tabulated
+  1-D basis of size $(p+1)^2$ and a geometry block of $G=2+d^2$ components at each
+  of $(p+1)^3$ quadrature points? Which is larger, and by what factor?
+
+  \item \textbf{Shapes along the pipeline.} A driven-analysis curl--curl operator
+  ($\diffop=\Curl$) runs on a mesh with $E=\num{1000}$ hexahedral elements of
+  order $p=2$, with $P=27$ quadrature points per element and $C=3$ curl components.
+  Write the tensor shape on each of the five wires of \cref{fig:mf-pipeline},
+  from the input \lstinline[style=l4style]|[N]| to the output
+  \lstinline[style=l4style]|[N]|, filling in concrete extents for $E$, $L$, $P$,
+  $C$. (You will need $L=(p+1)^3$.)
+
+  \item \textbf{The shared-dof bookkeeping.} In
+  \cref{wex:mf-mass}, the node $x_1$ received contributions
+  $0.8333$ (from $e_0$) and $1.1667$ (from $e_1$), summing to $2.0000$. Explain,
+  in terms of $G$ and $G^{\mathsf T}$, why this \emph{sum} is the correct global
+  value and not, say, an average. What property of $G^{\mathsf T}$ as the
+  transpose of $G$ guarantees it?
+
+  \item \textbf{Counting sum-factorization.} Repeat the operation count of
+  \cref{wex:mf-sumfac} for a 3-D $Q_2$ element ($d=3$, $p=2$, so $L=P=27$).
+  Give the naive count $P\cdot L$ and the sum-factored count $d\,(p+1)^{d+1}$, and
+  report the speedup. Then redo it for $p=4$ and comment on how the speedup scales.
+
+  \item \textbf{The diagonal carries the physics.} Two terms---a mass term
+  ($\diffop=\mathrm{Id}$, $Q=\varepsilon$) and a stiffness term ($\diffop=\Grad$,
+  $Q=\varepsilon$)---are applied on the \emph{same} mesh. Which of the five stages
+  differ between them, and which are identical? In particular, what changes in the
+  contents (not the shape) of \texttt{geom\_data}, and what changes in the basis
+  mode? Relate your answer to why a single five-stage skeleton serves all six
+  analyses of \cref{ch:targets}.
+
+  \item \textbf{Build-time amortization.} A conjugate-gradient solve
+  (\cref{ch:cg}) converges in $200$ iterations, each requiring one operator
+  application. The build pass that produces \texttt{geom\_data} costs roughly as
+  much as $5$ operator applications. What fraction of the total operator-related
+  work is the one-time build? Now suppose adaptive refinement (\cref{ch:amr})
+  rebuilds \texttt{geom\_data} after every $50$ iterations. How does the fraction
+  change, and what does this say about when matrix-free's amortization advantage
+  is strongest?
+
+  \item \textbf{Why the solver never asks for an entry.} Conjugate gradients
+  (\cref{ch:cg}) forms, each iteration, the quantities $\mat{A}\vp$,
+  $\inner{\vp}{\mat{A}\vp}$, and vector updates $\vx\leftarrow\vx+\alpha\vp$.
+  Identify which of these touch the operator, and confirm that none of them
+  requires an individual entry $A_{ij}$. What would have to change about the
+  \emph{solver} for the matrix-free form to become unusable?
+
+  \item \textbf{The \texttt{\#extern} boundary.} The innermost kernel is sealed
+  behind \lstinline[style=l4style]|#extern quad_kernel| with the contract
+  \lstinline[style=l4style]|GeomData -> Tensor[E, P, C] -> Tensor[E, P, C]|.
+  State, in one sentence each, (a) the semantic property of this kernel that lets
+  us reason about the symmetry of $\mat{A}=G^{\mathsf T}B^{\mathsf T}DBG$ without
+  opening the kernel, and (b) one reason the implementation might want to
+  \emph{fuse} this kernel with the adjacent basis stages even though, on paper,
+  $D$ is a separate stage.
+\end{enumerate}

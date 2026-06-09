@@ -1,0 +1,945 @@
+\chapter{Assembling a Driver: A Complete Worked Trace}
+\label{ch:fulltrace}
+
+\chapterorient{Every chapter so far has built one machine and set it on the shelf:
+the mesh, the function spaces, the assembly fold, the weak forms, the Krylov
+solvers, the multigrid preconditioners, the matrix-free applies, the reduction
+verbs. This chapter takes the whole shelf down at once. We pick one concrete
+simulation---the driven analysis of a two-port filter---and trace it from the
+configuration file the engineer writes to the S-parameter curve the simulation
+draws, naming, at every stage, the exact machine from the exact earlier chapter
+that does the work. Nothing new is built here. Instead we watch \emph{all of it
+run together}, see the whole simulator as a single composition of perhaps fifteen
+named pieces, and---reading the same trace twice, once for the driven filter and
+once for the simpler electrostatic capacitor---confirm the book's central claim
+in motion: one simulation is one composition of the same handful of machines.
+This is the synthesis of Parts~I through~V, and the bridge into Part~VI, where
+that very composition is rendered as code.}
+
+\section{One simulation, named all the way down}
+
+We have spent five parts disassembling Palace. \Cref{part:modalities} took the
+six analyses apart one at a time; before it, Part~IV built the numerical engines,
+Part~III the calculus that names them, and Part~II the field theory they
+discretize. Each chapter handed us a part and a name: \code{fe\_assemble},
+\code{solve\_family}, \code{frequency\_sweep}, \code{ksp\_solve},
+\code{gram\_reduce}, \code{sparameter\_reduce}, the V-cycle, the Chebyshev
+smoother, the matrix-free apply. We have, by now, a complete vocabulary. What we
+have \emph{not} yet done is run one real simulation slowly enough to point at
+every part as it engages.
+
+That is this chapter's only job. We will not derive a new equation or define a new
+combinator. We will choose one problem, walk it through the lifecycle of
+\cref{ch:lifecycle} stage by stage, and at each stage say: \emph{this is the
+machine from that chapter, and here is what it does to the data right now}. The
+value of the chapter is in its cross-references---it is the index of the whole
+book's machinery caught in the act.
+
+\begin{keyidea}
+A complete Palace simulation is not a monolith. It is one \emph{composition} of a
+small, fixed set of named machines---a dozen-and-a-half pieces, each built in an
+earlier chapter, each with a precise type and a precise job. To ``understand a
+driver'' is exactly to know which pieces it composes and in what order. By the end
+of this chapter you will have seen the entire machine in a single expression, and
+every box in that expression will be a chapter you have already read.
+\end{keyidea}
+
+\subsection{The problem we will trace}
+
+We trace the analysis that exercises the most machinery: the \emph{driven
+frequency sweep} of a two-port microwave \emph{filter} (\cref{ch:driven}). It is
+the richest of the six because, end to end, it touches almost everything the book
+built: it meshes a three-dimensional geometry, lays a Nédélec $\Hcurl$ space over
+it, assembles three operators by the weak-form fold, forms a fresh complex
+operator at every frequency, solves each by preconditioned GMRES wrapped around a
+multigrid V-cycle whose smoother is Chebyshev/Hiptmair and whose every apply is
+matrix-free, and finally projects the solved fields onto port modes borrowed from
+a boundary-mode analysis. A single driven run is a guided tour of Parts~II--V.
+
+Where the driven path grows too dense to read, we run the \emph{electrostatic
+capacitance} extraction (\cref{ch:electrostatics}) beside it as the clean
+contrast. It walks the identical lifecycle but lands in the simplest cells---the
+fixed-operator map, the symmetric Gram---so it shows the same skeleton stripped to
+its bones. Two analyses, one machine: the comparison is the chapter's spine.
+
+\begin{physicsbox}
+\textbf{The device.} An engineer hands us a two-port bandpass filter: a small
+metal structure---coupled resonators on a substrate---with a coaxial or
+waveguide \emph{port} at each end (\cref{fig:trace-pipeline}, far left). The
+question is the network-analyzer question of \cref{ch:driven}: across a band of
+frequencies $f \in [f_{\min}, f_{\max}]$, how much of a wave injected at port~1
+is \emph{reflected} ($S_{11}$) and how much is \emph{transmitted} to port~2
+($S_{21}$)? The answer is the scattering matrix $S(\omega)$ as a function of
+frequency---the passband, the roll-off, the match. We will compute it by solving
+the time-harmonic Maxwell field inside the filter at each frequency and reading
+the scattered waves off the solved field.
+\end{physicsbox}
+
+\section{The lifecycle, walked once, naming every machine}
+\label{sec:trace-walk}
+
+Recall the lifecycle of \cref{ch:lifecycle}: parse, configure, dispatch, build the
+mesh, solve, (optionally refine), output. We now walk those stages \emph{for this
+one run}, and at each stage we name the component---and the chapter---doing the
+work. \Cref{fig:trace-pipeline} is the whole walk in one annotated picture; keep
+it in view, because the subsections below are simply its boxes, read left to right.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[node distance=6mm and 6mm, font=\footnotesize, >=Stealth]
+  % the spine, left to right
+  \node[data, align=center, text width=17mm] (cfg)
+    {config file\\[1pt]\scriptsize geometry,\\$\varepsilon,\mu$, ports,\\freq.\ band};
+  \node[stage, right=of cfg, align=center, text width=20mm] (io)
+    {\textbf{parse}\\[1pt]\scriptsize \code{IoData}\\record};
+  \node[stage, right=of io, align=center, text width=18mm] (mesh)
+    {\textbf{mesh}\\[1pt]\scriptsize \code{build\_mesh}};
+  \node[stage, right=of mesh, align=center, text width=18mm, fill=simBgViolet, draw=simViolet] (disp)
+    {\textbf{dispatch}\\[1pt]\scriptsize driven driver};
+  \node[stage, below=14mm of io, align=center, text width=21mm] (asm)
+    {\textbf{assemble}\\[1pt]\scriptsize \code{fe\_assemble}$^{\times3}$\\$\{\Kop,\Cop,\Mop\}$};
+  \node[stage, right=of asm, align=center, text width=24mm, fill=simBgRust, draw=simRust] (solve)
+    {\textbf{solve}\\[1pt]\scriptsize \code{frequency\_sweep}\\(per $\omega$: GMRES)};
+  \node[stage, right=of solve, align=center, text width=21mm, fill=simBgGold, draw=simGold] (red)
+    {\textbf{reduce}\\[1pt]\scriptsize \code{sparameter\_}\\\code{reduce}};
+  \node[product, right=of red, align=center, text width=15mm] (prod)
+    {$S(\omega)$\\[1pt]\scriptsize S-param\\plot};
+  % top-row forward flow
+  \draw[flow] (cfg) -- (io);
+  \draw[flow] (io) -- (mesh);
+  \draw[flow] (mesh) -- (disp);
+  % down into the solve band
+  \draw[flow] (disp.south) |- (asm.north west);
+  % the solve band, left to right
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{\code{fam}} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{$[\vE_k]$} (red);
+  \draw[flow] (red) -- (prod);
+  % chapter tags under each box
+  \node[cornertag, below=1mm of io]   {\cref{ch:records}};
+  \node[cornertag, below=1mm of mesh] {\cref{ch:functionspaces}};
+  \node[cornertag, below=1mm of disp] {\cref{ch:lifecycle}};
+  \node[cornertag, below=1mm of asm]  {\cref{ch:assembly}, \cref{ch:weak}};
+  \node[cornertag, below=1mm of solve]{\cref{ch:gmres}, \cref{ch:multigrid}};
+  \node[cornertag, below=1mm of red]  {\cref{ch:reductions}, \cref{ch:waveports}};
+  % the port modes feeding the reduction from the side
+  \node[extern, above=8mm of red, align=center, text width=20mm] (ports)
+    {port modes $\vs_i$\\[1pt]\scriptsize boundary-mode\\(\cref{ch:waveports})};
+  \draw[refedge] (ports.south) -- (red.north);
+\end{tikzpicture}
+\caption[The complete driven pipeline, annotated by chapter]{The capstone
+diagram: one complete driven simulation, from the configuration file to the
+S-parameter plot, with every stage tagged by the chapter that built it. The
+top row is the shared lifecycle set-up (parse the \code{IoData} record, build the
+mesh, dispatch on the problem type, \cref{ch:lifecycle}); the bottom band is the
+driver's \texttt{assemble--solve--reduce} body (\cref{ch:situating}). The
+\emph{assemble} box folds three weak-form term lists into the fixed basis
+$\{\Kop,\Cop,\Mop\}$ (\cref{ch:assembly}); the \emph{solve} box is the
+operator-varying frequency sweep, each frequency a preconditioned GMRES solve
+(\cref{ch:gmres}) over a multigrid V-cycle (\cref{ch:multigrid}); the
+\emph{reduce} box projects the solved fields onto the port modes that the
+boundary-mode analysis supplies from the side (\cref{ch:waveports}). Every box is
+a machine from an earlier part; this chapter watches them all run together.}
+\label{fig:trace-pipeline}
+\end{figure}
+
+\subsection{Parse the configuration: the \texorpdfstring{\code{IoData}}{IoData} record}
+\label{sec:trace-parse}
+
+The run begins with one file the engineer wrote: a configuration naming the mesh,
+the polynomial order, the materials ($\varepsilon$ and $\mu$ per region), the two
+ports and their excitations, the frequency band to sweep, and---the field that
+decides everything downstream---the problem type, \code{Driven}. Parsing it
+produces the single in-memory value the rest of the run consults: the
+\code{config}, which is the \code{IoData} record of \cref{ch:records}.
+
+The decisive property, established in \cref{ch:lifecycle} and \cref{ch:strata}, is
+that this record is \emph{read-only}. It is built once and never modified; every
+later stage reads it, none writes it. It is \emph{construction-stratum} data
+(\cref{ch:strata}): fixed the instant parsing finishes, so any computation that
+depends only on it is referentially stable for the whole run. That single fact is
+what licenses every hoist, reuse, and reorder we are about to watch.
+
+\begin{notationbox}
+We write \code{config} for the parsed \code{IoData} value. It is a record
+(\cref{ch:records})---a bundle of named fields read with a dot:
+\lstinline[style=l4style]|config.problem_type|, the materials
+\lstinline[style=l4style]|config.materials|, the swept band
+\lstinline[style=l4style]|config.frequencies|, the ports
+\lstinline[style=l4style]|config.ports|. The configuration's records get their
+definitional home in \cref{ch:records}; here we simply read fields off it. The
+two analyses we trace read the \emph{same} record type and differ only in which
+fields they consult---the electrostatic path reads \code{config.terminals} where
+the driven path reads \code{config.frequencies} and \code{config.ports}.
+\end{notationbox}
+
+\subsection{Configure the device, then dispatch}
+
+Two short stages follow, both from \cref{ch:lifecycle}. \emph{Configure the
+device} brings up the CPU or GPU backend the element kernels will run on---the
+choice read from \code{config}, the computation downstream expressed against an
+abstract device so the same description runs on either. Then \emph{dispatch}: the
+run reads \code{config.problem\_type}, finds \code{Driven}, and on the strength of
+that one value selects the \emph{driven driver}---the object that knows how to run
+this one analysis end to end. This is the \emph{specialization seam} of
+\cref{ch:lifecycle}: everything above it is shared by all six analyses; below it,
+the driven driver fills in the one stage that differs. Our electrostatic contrast
+takes the same seam to the \emph{electrostatic} driver instead---one field, one
+\code{switch}, the entire difference of \emph{which} analysis runs.
+
+\subsection{Build the mesh, and lay the \texorpdfstring{$\Hcurl$}{H(curl)} space}
+\label{sec:trace-mesh}
+
+With a driver chosen, the run builds the computational mesh: it loads the geometry
+named in \code{config}, applies any preprocessing, partitions it, and performs any
+a-priori refinement requested. The framework verb is \code{build\_mesh}, and the
+value it returns---the \code{Mesh}---is the first value the lifecycle
+\emph{produces} rather than reads (the config came from the user; the mesh is
+computed). Mesh construction is driver-agnostic in shape: both our analyses build
+the mesh identically.
+
+Over that mesh the driver lays its \emph{finite-element space} (\cref{ch:functionspaces}).
+Here the two analyses first diverge in physics. The driven analysis solves for a
+vector field $\vE$ that must support tangential continuity and a curl, so it lives
+in the Nédélec $\Hcurl$ space---the edge-element slot of the de Rham complex
+(\cref{ch:derham}). The electrostatic analysis solves for a scalar potential $V$,
+so it lives in the nodal $\Hone$ space---the vertex slot. The choice of space is
+\emph{one cell} of the grid of \cref{ch:situating}, and it is the first cell our
+two traces fill differently: $\Hcurl$ for driven, $\Hone$ for electrostatic.
+
+\begin{remark}[The adaptive loop, deferred]
+The lifecycle wraps the solve in the adaptive estimate--mark--refine loop of
+\cref{ch:amr}---the \emph{outer fold} whose threaded value is the mesh. For our
+trace we keep refinement off, so the fold runs its body exactly once and the
+lifecycle is the straight line of \cref{ch:lifecycle}. Everything below is
+\emph{one pass} of that fold. With refinement on, the entire
+assemble--solve--reduce body we are about to walk simply runs again on a finer
+mesh, each pass beginning from the mesh the last produced---the
+\code{fold\_solve} of \cref{ch:fold} wrapped around all of it.
+\end{remark}
+
+\subsection{Assemble the basis, once: the weak-form fold}
+\label{sec:trace-assemble}
+
+Now the driver's body begins, and the first stage is \emph{assemble}. The driven
+analysis needs three operators on $\Hcurl$, the same three characters from every
+chapter: the curl--curl stiffness $\Kop$ (built from the reluctivity $\nu=1/\mu$),
+the damping $\Cop$ (from surface impedance / conductivity), and the mass $\Mop$
+(from permittivity $\varepsilon$). Each is the result of the assembly fold
+\code{fe\_assemble} of \cref{ch:assembly}, summing one contribution per weak-form
+term (\cref{ch:weak}) over the mesh, with the essential boundary degrees of
+freedom eliminated (\cref{ch:bc}):
+\begin{lstlisting}[style=l4style]
+-- the fixed basis: three weak-form folds, run ONCE, before any sweep
+space = nd_space cfg                                     -- H(curl) Nedelec space
+fam   = { K  = fe_assemble space [ curl_curl (reluctivity cfg) ]   -- stiffness
+        , C  = fe_assemble space [ damping cfg ]                   -- damping
+        , M  = fe_assemble space [ mass (permittivity cfg) ] }     -- mass
+\end{lstlisting}
+Three structural facts, each a load-bearing reference. First, every
+\code{fe\_assemble} is the \emph{fold} of \cref{ch:assembly}---a loop over the term
+list that we do not write; the framework folds it. Second, each operator's matrix
+action, when the solver later applies it, is \emph{matrix-free}
+(\cref{ch:matrixfree}): the operator is never stored as an explicit sparse matrix
+but applied as a sequence of element-local tensor contractions, the libCEED-style
+quadrature kernel. Third---and this is the word from \cref{ch:electrostatics} that
+governs the whole solve---the basis is assembled \emph{once}, before the sweep, and
+held. The electrostatic contrast is the same fold run once over a \emph{single}
+term, the $\varepsilon$-weighted gradient, producing one operator $\Kop$.
+
+\begin{keyidea}
+The \emph{assemble} stage is the weak-form fold \code{fe\_assemble}
+(\cref{ch:assembly}), run once per operator before any solving. The driven
+analysis folds three term lists into a fixed basis $\{\Kop,\Cop,\Mop\}$; the
+electrostatic analysis folds one into $\Kop$. The operators' applies are
+matrix-free (\cref{ch:matrixfree}); the essential boundary data is eliminated
+(\cref{ch:bc}); the result is read-only and reused across the entire solve. ``Once''
+is the structural signature shared by both analyses---it is the upstream half of
+the hoist.
+\end{keyidea}
+
+\subsection{Solve: the operator-varying sweep, and its nested engine}
+\label{sec:trace-solve}
+
+The solve stage is where the driven analysis spends almost all of its time, and
+where the most machinery engages at once. Recall from \cref{ch:driven} that the
+system operator is \emph{not} fixed: at each frequency $\omega$ in the swept band
+we form a fresh complex operator from the fixed basis,
+\begin{equation}
+  \mat{A}(\omega) \;=\; \Kop \;+\; i\omega\,\Cop \;-\; \omega^2\Mop,
+  \label{eq:trace-Aomega}
+\end{equation}
+solve $\mat{A}(\omega)\,\vE = \vb(\omega)$ for the phasor field, and move on. The
+solves are \emph{independent}---the field at one frequency needs nothing from
+another---so the sweep is a \emph{map}, the operator-varying map (corner~2) of
+\cref{ch:situating}. The framework verb is \code{frequency\_sweep}, and forming
+\cref{eq:trace-Aomega} from the basis is the \code{linear\_combination} combinator
+of \cref{ch:combinators}, specialized to operator operands and complex scalars.
+
+What makes this stage worth a figure of its own is that each single
+\code{ksp\_solve} inside the sweep is itself a \emph{stack} of the machines from
+Part~IV, nested four deep (\cref{fig:trace-solverstack}):
+
+\begin{enumerate}[nosep]
+  \item \textbf{GMRES} (\cref{ch:gmres}) drives the outer iteration. The operator
+  $\mat{A}(\omega)$ is complex, non-Hermitian, and indefinite---the $i\omega\Cop$
+  term makes it complex, the $-\omega^2\Mop$ term makes it indefinite---so none of
+  CG's structure survives and GMRES is the right Krylov engine (\cref{ch:cg}
+  versus \cref{ch:gmres}).
+  \item \textbf{A multigrid V-cycle} (\cref{ch:multigrid}) is the
+  \emph{preconditioner} GMRES calls each iteration: restrict the residual down the
+  mesh hierarchy, solve cheaply on the coarsest level, prolong the correction back
+  up.
+  \item \textbf{A Chebyshev / Hiptmair smoother} (\cref{ch:smoothers}) runs at
+  each level of the V-cycle, damping the high-frequency error the coarse grid
+  cannot see---the Hiptmair variant handling the $\Hcurl$ null-space that an
+  ordinary smoother would miss.
+  \item \textbf{A matrix-free apply} (\cref{ch:matrixfree}) is the innermost
+  operation of all of them. Every GMRES Arnoldi step, every smoother sweep, every
+  residual evaluation ultimately \emph{applies $\mat{A}(\omega)$ to a vector}, and
+  that apply is the element-local tensor contraction of \cref{ch:matrixfree}---no
+  assembled sparse matrix ever materializes.
+\end{enumerate}
+
+Threaded through all four levels is the solver \emph{state}---the Krylov basis, the
+running residual, the iteration counters---carried by the solve monad of
+\cref{ch:monad} as the \code{SimState} record (\cref{ch:records}), so that the
+mutation the C++ performs in place is, in our reading, a pure state thread.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % nested boxes: GMRES > V-cycle > smoother > matrix-free apply
+  \node[stage, minimum width=72mm, minimum height=52mm, fill=simBgRust,
+        draw=simRust, align=center] (g) at (0,0) {};
+  \node[anchor=north, font=\small\bfseries, text=simRust] at (g.north)
+    {\ GMRES (\cref{ch:gmres})};
+  \node[font=\scriptsize\itshape, text=simRust, anchor=north]
+    at ($(g.north)+(0,-0.5)$) {outer Krylov: complex, non-Hermitian $\mat{A}(\omega)$};
+
+  \node[stage, minimum width=60mm, minimum height=36mm, fill=simBgBlue,
+        draw=simBlue, align=center] (v) at (0,-0.55) {};
+  \node[anchor=north, font=\footnotesize\bfseries, text=simBlue] at (v.north)
+    {\ multigrid V-cycle (\cref{ch:multigrid})};
+  \node[font=\scriptsize\itshape, text=simBlue, anchor=north]
+    at ($(v.north)+(0,-0.42)$) {preconditioner: restrict $\to$ coarse-solve $\to$ prolong};
+
+  \node[stage, minimum width=46mm, minimum height=20mm, fill=simBgGreen,
+        draw=simGreen, align=center] (s) at (0,-1.1) {};
+  \node[anchor=north, font=\footnotesize\bfseries, text=simGreen] at (s.north)
+    {\ Chebyshev / Hiptmair smoother};
+  \node[font=\scriptsize\itshape, text=simGreen, anchor=north]
+    at ($(s.north)+(0,-0.4)$) {(\cref{ch:smoothers}): damp high-freq.\ error};
+
+  \node[extern, minimum width=32mm, minimum height=7mm] (mf) at (0,-1.75)
+    {matrix-free apply (\cref{ch:matrixfree})};
+
+  % a side label: the threaded state
+  \node[opbox, anchor=west, align=center, text width=24mm, fill=white]
+    (state) at (4.6,1.4) {\code{SimState}\\\scriptsize threaded by the\\solve monad\\(\cref{ch:monad}, \cref{ch:records})};
+  \draw[refedge] (state.south) .. controls +(0,-1.4) and +(0,1.2) .. (g.east);
+  % apply call-down annotation
+  \node[font=\scriptsize\itshape, text=simViolet, anchor=west] at (2.7,-1.75)
+    {$\leftarrow$ every level};
+  \node[font=\scriptsize\itshape, text=simViolet, anchor=west] at (2.7,-2.15)
+    {\ \ bottoms out here};
+\end{tikzpicture}
+\caption[The solver stack for one frequency]{The solver stack engaged by a
+\emph{single} frequency of the sweep---four machines from Part~IV, nested. The
+outermost is preconditioned \textbf{GMRES} (\cref{ch:gmres}), the only Krylov
+method that handles the complex, non-Hermitian, indefinite $\mat{A}(\omega)$. Its
+preconditioner is a \textbf{multigrid V-cycle} (\cref{ch:multigrid}), which at each
+mesh level calls a \textbf{Chebyshev/Hiptmair smoother} (\cref{ch:smoothers}) to
+damp the error the coarse grid cannot resolve. Beneath all of them, every
+operator application---every Arnoldi step, every smoother sweep, every residual---is
+a \textbf{matrix-free apply} (\cref{ch:matrixfree}): an element-local tensor
+contraction, never an assembled sparse matrix. The whole stack's mutable state (the
+Krylov basis, residual, counters) is the \code{SimState} record threaded by the
+solve monad (\cref{ch:monad}). And this entire stack runs \emph{once per
+frequency}, fresh operator each time.}
+\label{fig:trace-solverstack}
+\end{figure}
+
+The electrostatic contrast collapses this stack dramatically, and the collapse is
+instructive. Its operator $\Kop$ is symmetric positive-definite and \emph{fixed},
+so the outer Krylov method is \emph{CG}, not GMRES (\cref{ch:cg}); the
+preconditioner is built \emph{once} and reused across the whole family (the hoist
+of \cref{ch:electrostatics}); and the sweep is the fixed-operator map
+\code{solve\_family} (corner~1) rather than \code{frequency\_sweep} (corner~2). The
+inner machines---a V-cycle, a smoother, a matrix-free apply---are the \emph{same
+machines}; only the outer Krylov method and the position of the operator capture
+change. \emph{One stack, two configurations.}
+
+\begin{pitfall}
+The single line whose position separates the two analyses is the operator capture
+inside \code{frequency\_sweep}. In electrostatics it is \emph{hoisted} above the
+loop (the operator never changes); in the driven sweep it lives \emph{inside} the
+loop (the operator changes every frequency). Moving it the wrong way in the driven
+sweep does not slow the code---it solves every frequency against
+$\mat{A}(\omega_0)$, the first frequency's operator, and returns a smooth,
+plausible, \emph{wrong} curve (\cref{ch:driven}). The loop position of one capture
+call is part of the algorithm, not a performance knob.
+\end{pitfall}
+
+\subsection{Reduce: the port-projection, with borrowed modes}
+\label{sec:trace-reduce}
+
+The sweep hands the reduction a family of complex fields $[\vE_k]$, one per swept
+frequency. The reduction collapses each into the scattering parameters. This is
+the rank-2 \emph{port-projection} of \cref{ch:reductions}---reduction shape~2 of
+\cref{ch:situating}, and emphatically \emph{not} a Gram. The verb is
+\code{sparameter\_reduce}, applied once per frequency:
+\begin{equation}
+  S_{ij}(\omega) \;=\; \sigma_{ij}\,\bigl(\inner{\vs_i}{\vE_j(\omega)} - \delta_{ij}\bigr),
+  \label{eq:trace-sparam}
+\end{equation}
+the projection of the drive-$j$ field onto receiver mode $i$, minus the Kronecker
+self-term on the diagonal (which converts ``total field at the driven port'' into
+``reflected field''), scaled by the port-kind factor $\sigma_{ij}$.
+
+The one component this stage \emph{consumes from elsewhere} is the set of port
+modes $\vs_i$. They do not come from the driven solve; they come from the
+\emph{boundary-mode analysis} of \cref{ch:waveports}, which solves a small
+two-dimensional eigenproblem on each port's cross-section to find the field
+pattern that propagates there. In the pipeline diagram
+(\cref{fig:trace-pipeline}) this is the arrow entering the reduce box from the
+side: the driven driver \emph{composes} the boundary-mode driver's product as one
+of its inputs. The electrostatic contrast instead reduces with the symmetric Gram
+\code{gram\_reduce} (\cref{ch:reductions}), $C_{ij}=V_j^{\!\top}\Kop V_i$, pairing
+the solved family \emph{with itself} through the energy operator---no borrowed
+basis, symmetric by construction.
+
+\subsection{Output}
+
+When the reduction finishes, the driver writes its product---the table of
+$S_{ij}(\omega)$ across the band---to disk, and the top-level lifecycle writes the
+run metadata around it (\cref{ch:lifecycle}). Plotted, $S(\omega)$ is the two
+familiar microwave curves: the return loss $\abs{S_{11}}$ in dB and the insertion
+loss $\abs{S_{21}}$ in dB (\cref{fig:trace-splot}). That plot is the answer the
+engineer ran the simulation to obtain.
+
+\section{The whole machine in one expression}
+\label{sec:trace-composition}
+
+We have walked the stages. Now collapse the walk into a single composition and
+\emph{expand it}, so the reader sees the entire machine---every nested engine---in
+one tree.
+
+\subsection{The three-stage composition}
+
+At the top level the driven driver is the three-stage composition of
+\cref{ch:driven}:
+\begin{lstlisting}[style=l4style]
+driven = sparameter_reduce . frequency_sweep . fe_assemble
+\end{lstlisting}
+read right to left: assemble the basis once, sweep the operator-varying map over
+the band, reduce by port-projection. Spelled out with its data, exactly the
+composition of \cref{ch:driven}:
+\begin{lstlisting}[style=l4style]
+-- inputs = config; output = the frequency response S(omega)
+driven :: DrivenConfig -> FrequencyResponse
+driven cfg =
+  let space  = nd_space cfg                                       -- H(curl) space
+      fam    = { K = fe_assemble space [ curl_curl (reluctivity cfg) ]  -- (1) assemble
+               , C = fe_assemble space [ damping cfg ]                  --     the basis
+               , M = fe_assemble space [ mass (permittivity cfg) ] }    --     ONCE
+      omegas = sample_frequencies cfg                             -- the swept band
+      es     = frequency_sweep fam omegas       -- (2) operator-VARYING map: A(w) rebuilt inside
+  in  sparameter_reduce (ports cfg) es          -- (3) port-projection -> S(omega)
+\end{lstlisting}
+
+\subsection{Expanded all the way down}
+
+The three boxes hide the whole of Part~IV. Expand each piece and the entire call
+tree appears---the assemble fold, the per-$\omega$ solve with its full
+preconditioner stack, the reduction over borrowed modes. This is the hero figure
+of the chapter: the whole simulator in one tree (\cref{fig:trace-tree}).
+
+\begin{lstlisting}[style=l4style]
+driven cfg
+|
++- (1) fe_assemble x3              -- the basis, folded ONCE   [ch:assembly, ch:weak]
+|     +- fold over weak-form terms                            -- [ch:assembly]
+|     +- element-local quadrature  -- matrix-free contraction  [ch:matrixfree]
+|     +- eliminate essential BC dofs                          -- [ch:bc]
+|
++- (2) frequency_sweep fam omegas  -- map over the band (corner 2) [ch:driven]
+|     +- FOR EACH omega:           -- independent: a map, not a fold
+|         +- A(w) = linear_combination [(1,K),(iw,C),(-w^2,M)]  -- [ch:combinators]
+|         +- b    = excitation fam omega                       -- per-omega RHS
+|         +- ksp_solve A(w) b      -- one GMRES solve           [ch:gmres]
+|             +- GMRES outer iteration                          -- [ch:gmres]
+|             |   +- precondition: multigrid V-cycle            -- [ch:multigrid]
+|             |   |   +- restrict / coarse-solve / prolong
+|             |   |   +- smoother (Chebyshev / Hiptmair)        -- [ch:smoothers]
+|             |   |       +- matrix-free apply of A(w)          -- [ch:matrixfree]
+|             |   +- Arnoldi step: matrix-free apply of A(w)    -- [ch:matrixfree]
+|             +- state threaded by the solve monad (SimState)  -- [ch:monad, ch:records]
+|
++- (3) sparameter_reduce ports es  -- port-projection (shape 2) [ch:reductions]
+      +- S_ij = scale * (project s_i E_j - selfterm i j)       -- [ch:reductions]
+      +- port modes s_i FROM boundary-mode analysis            -- [ch:waveports]
+\end{lstlisting}
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\scriptsize, >=Stealth,
+    grow=down, level distance=8mm,
+    edge from parent/.style={draw=simGray, semithick, -{Stealth[length=1.6mm]}},
+    every node/.style={align=center}]
+  \node[stage, fill=simBgViolet, draw=simViolet, text width=26mm]
+    {\code{driven cfg}\\\scriptsize the whole machine}
+    child {node[stage, text width=24mm] {\textbf{(1)} \code{fe\_assemble}$^{\times3}$\\\scriptsize basis, once}
+      child {node[opbox, text width=22mm] {fold over\\weak-form terms\\\scriptsize\cref{ch:assembly}}}
+      child {node[extern, text width=20mm] {matrix-free\\quadrature\\\scriptsize\cref{ch:matrixfree}}}
+    }
+    child {node[stage, fill=simBgRust, draw=simRust, text width=30mm] {\textbf{(2)} \code{frequency\_sweep}\\\scriptsize map over $\omega$ (corner 2)}
+      child {node[opbox, text width=26mm] {$\mat{A}(\omega)=$\code{lin\_comb}\\\scriptsize\cref{ch:combinators}}}
+      child {node[stage, fill=simBgRust, draw=simRust, text width=22mm] {\code{ksp\_solve}\\\scriptsize GMRES \cref{ch:gmres}}
+        child {node[stage, fill=simBgBlue, draw=simBlue, text width=22mm] {V-cycle\\precond.\\\scriptsize\cref{ch:multigrid}}
+          child {node[stage, fill=simBgGreen, draw=simGreen, text width=20mm] {smoother\\\scriptsize\cref{ch:smoothers}}
+            child {node[extern, text width=20mm] {matrix-free\\apply\\\scriptsize\cref{ch:matrixfree}}}
+          }
+        }
+      }
+    }
+    child {node[stage, fill=simBgGold, draw=simGold, text width=26mm] {\textbf{(3)} \code{sparameter\_reduce}\\\scriptsize projection (shape 2)}
+      child {node[opbox, text width=22mm] {$S_{ij}$ projection\\\scriptsize\cref{ch:reductions}}}
+      child {node[extern, text width=20mm] {port modes $\vs_i$\\\scriptsize\cref{ch:waveports}}}
+    };
+\end{tikzpicture}
+\caption[The driven driver, expanded to its leaves]{The hero figure: the entire
+driven driver expanded from the top-level composition down to its matrix-free
+leaves. The three top-level stages---\code{fe\_assemble} (assemble the basis once),
+\code{frequency\_sweep} (the operator-varying solve map), and
+\code{sparameter\_reduce} (the port-projection)---each unfold into the machines
+that implement them. The solve branch is the deepest: a GMRES outer iteration
+(\cref{ch:gmres}) preconditioned by a multigrid V-cycle (\cref{ch:multigrid})
+whose smoother (\cref{ch:smoothers}) bottoms out, like every operator application
+in the tree, in a matrix-free apply (\cref{ch:matrixfree}). Read the whole tree
+and you have read the whole book: every leaf is a chapter. This is exactly the
+``synthesized library'' view that Part~VI (\cref{ch:synthlib}, \cref{ch:composing})
+renders as code.}
+\label{fig:trace-tree}
+\end{figure}
+
+\begin{keyidea}
+The whole simulator is \emph{one expression}. \texttt{driven $=$
+sparameter\_reduce $\circ$ frequency\_sweep $\circ$ fe\_assemble}, and each of
+those three pieces expands into the machines of Parts~III--IV until every leaf is a
+named component from an earlier chapter. There is no hidden glue, no special-case
+plumbing: a driver \emph{is} its composition tree, and the tree is finite and
+shallow. You have now seen the entire machine in one figure---and you have read
+every box in it.
+\end{keyidea}
+
+\section{Two analyses, one machine}
+\label{sec:trace-twoanalyses}
+
+The driven trace is one path through the machinery. The chapter's claim is that the
+\emph{same} machinery, recomposed, is every other analysis too. We make that
+concrete by setting the electrostatic capacitance trace beside the driven filter
+trace and reading off what is \emph{shared} and what is \emph{swapped}
+(\cref{fig:trace-contrast}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=5mm and 7mm]
+  % ===== DRIVEN row =====
+  \node[font=\small\bfseries, text=simRust, anchor=west] at (-0.3,2.0) {Driven filter};
+  \node[stage, align=center, text width=15mm] (dasm) at (1.4,1.4) {assemble\\\scriptsize$\{\Kop,\Cop,\Mop\}$};
+  \node[stage, fill=simBgRust, draw=simRust, align=center, text width=18mm] (dsolve) at (4.0,1.4)
+    {\code{frequency\_}\\\code{sweep}\\\scriptsize GMRES, corner~2};
+  \node[stage, fill=simBgGold, draw=simGold, align=center, text width=17mm] (dred) at (6.7,1.4)
+    {\code{sparameter\_}\\\code{reduce}};
+  \node[product, align=center, text width=11mm] (dprod) at (8.9,1.4) {$S(\omega)$};
+  \draw[flow] (dasm) -- (dsolve); \draw[flow] (dsolve) -- (dred); \draw[flow] (dred) -- (dprod);
+  % ===== ELECTROSTATIC row =====
+  \node[font=\small\bfseries, text=simBlue, anchor=west] at (-0.3,-0.3) {Electrostatic capacitor};
+  \node[stage, align=center, text width=15mm] (easm) at (1.4,-0.9) {assemble\\\scriptsize$\Kop$ only};
+  \node[stage, fill=simBgBlue, draw=simBlue, align=center, text width=18mm] (esolve) at (4.0,-0.9)
+    {\code{solve\_family}\\\scriptsize CG, corner~1};
+  \node[stage, fill=simBgGold, draw=simGold, align=center, text width=17mm] (ered) at (6.7,-0.9)
+    {\code{gram\_reduce}\\\scriptsize $w{=}1$};
+  \node[product, align=center, text width=11mm] (eprod) at (8.9,-0.9) {$\mat{C}$};
+  \draw[flow] (easm) -- (esolve); \draw[flow] (esolve) -- (ered); \draw[flow] (ered) -- (eprod);
+  % ===== shared / swapped annotations =====
+  \node[font=\scriptsize\itshape, text=simGreen, align=center] at (1.4,0.25)
+    {\textbf{shared:}\\\code{fe\_assemble} fold\\(\cref{ch:assembly})};
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (4.0,0.25)
+    {\textbf{swapped:}\\corner~1 $\leftrightarrow$ 2\\CG $\leftrightarrow$ GMRES};
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (6.7,0.25)
+    {\textbf{swapped:}\\Gram $\leftrightarrow$ projection};
+  % shared inner-stack note
+  \node[font=\scriptsize\itshape, text=simGreen, align=center] at (4.0,-2.1)
+    {\textbf{shared inner stack:} V-cycle (\cref{ch:multigrid}) $\cdot$ smoother (\cref{ch:smoothers}) $\cdot$ matrix-free apply (\cref{ch:matrixfree})};
+\end{tikzpicture}
+\caption[Two analyses, one machine]{The driven filter and the electrostatic
+capacitor as two recompositions of one machine. \textbf{Shared} (green): both
+build their operators with the \emph{same} assembly fold \code{fe\_assemble}
+(\cref{ch:assembly}), and both solves bottom out in the \emph{same} inner
+stack---a multigrid V-cycle (\cref{ch:multigrid}) over a smoother
+(\cref{ch:smoothers}) over a matrix-free apply (\cref{ch:matrixfree}).
+\textbf{Swapped} (rust): the solve \emph{corner} (fixed-operator map, corner~1,
+versus operator-varying map, corner~2) and with it the outer Krylov method (CG
+versus GMRES); and the \emph{reduction} (symmetric Gram versus port-projection).
+Two boxes move; the skeleton, and most of the inner machinery, is identical. This
+is the claim of \cref{ch:situating} caught in a single picture.}
+\label{fig:trace-contrast}
+\end{figure}
+
+What is \emph{shared} is most of the machine. Both analyses parse the same
+\code{IoData} record, build the mesh the same way, dispatch through the same seam,
+assemble with the same fold \code{fe\_assemble}, and---this is the part worth
+dwelling on---bottom out in the \emph{same} inner solver stack: a multigrid
+V-cycle over a smoother over a matrix-free apply. The expensive numerical core is
+identical; the analyses do not each carry their own private solver.
+
+What is \emph{swapped} is small and well-localized: the function space ($\Hcurl$
+versus $\Hone$), the solve corner (operator-varying map versus fixed-operator map,
+and with it GMRES versus CG), and the reduction (port-projection versus symmetric
+Gram). This is precisely the ``one stage swapped'' punchline of
+\cref{ch:situating} and \cref{ch:electrostatics}, now visible as two real traces
+side by side rather than a table of dashes.
+
+\begin{keyidea}
+The driven filter and the electrostatic capacitor are the \emph{same machine} in
+two configurations. They share the lifecycle, the \code{IoData} record, the mesh
+build, the assembly fold, and---crucially---the entire inner solver stack
+(V-cycle, smoother, matrix-free apply). They differ in exactly three swapped
+cells: the function space, the solve corner (with its Krylov method), and the
+reduction. A different analysis again would swap a different few cells and reuse
+everything else. The simulator is not six programs; it is one composition with a
+handful of swappable parts.
+\end{keyidea}
+
+\section{Counting the corners and shapes this one run touched}
+\label{sec:trace-count}
+
+Step back to the taxonomy of \cref{ch:situating} and ask: of the four solve
+corners and three reduction shapes, how many did this \emph{single} driven run
+use? The answer makes the economy of the design tangible (\cref{fig:trace-grid}).
+
+The driven run touched \emph{one} solve corner---the operator-varying map
+(corner~2)---and \emph{one} reduction shape---the rank-2 port-projection (shape~2).
+It used, inside that one corner, a stack of Krylov and multigrid layers, and it
+\emph{borrowed} one product from another analysis (the port modes from the
+black-box boundary-mode corner, corner~4). That is the entire taxonomic footprint
+of a complete microwave simulation: one corner, one reduction, a shared inner
+stack, one borrowed input.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the 2x2 corners grid + the table, with THIS run's cells highlighted
+  \node[cornertag, anchor=south] at (0.9,2.5) {operator \emph{fixed}};
+  \node[cornertag, anchor=south] at (3.5,2.5) {operator \emph{varying}};
+  \node[cornertag, rotate=90, anchor=south] at (-1.4,1.8) {\textbf{map}};
+  \node[cornertag, rotate=90, anchor=south] at (-1.4,0.4) {\textbf{fold}};
+  % top-left: fixed map (electrostatic uses; driven does NOT)
+  \node[stage, minimum width=20mm, minimum height=12mm, fill=simBgGray, draw=simGray,
+        align=center] (c1) at (0.9,1.7) {\scriptsize fixed-op map\\\scriptsize(electrostatic)};
+  % top-right: operator-varying map -- THIS RUN
+  \node[stage, minimum width=20mm, minimum height=12mm, fill=simBgRust, draw=simRust,
+        very thick, align=center] (c2) at (3.5,1.7) {\scriptsize \textbf{op-varying map}\\\scriptsize\textbf{(driven: HERE)}};
+  % bottom-left: fold
+  \node[stage, minimum width=20mm, minimum height=12mm, fill=simBgGray, draw=simGray,
+        align=center] (c3) at (0.9,0.3) {\scriptsize state fold\\\scriptsize(transient/AMR)};
+  % bottom-right: black box
+  \node[extern, minimum width=20mm, minimum height=12mm, align=center]
+        (c4) at (3.5,0.3) {\scriptsize black-box\\\scriptsize(borrowed: ports)};
+  % the borrow arrow
+  \draw[refedge, simViolet] (c4.north) -- node[right, font=\scriptsize, text=simViolet]{modes} (c2.south);
+  % the reductions column, to the right
+  \node[font=\scriptsize\bfseries, anchor=south] at (7.2,2.5) {reduction shape};
+  \node[stage, minimum width=24mm, minimum height=7mm, fill=simBgGray, draw=simGray]
+        (r1) at (7.2,1.75) {\scriptsize Gram (electrostatic)};
+  \node[stage, minimum width=24mm, minimum height=7mm, fill=simBgGold, draw=simGold,
+        very thick] (r2) at (7.2,0.95) {\scriptsize \textbf{projection (driven)}};
+  \node[stage, minimum width=24mm, minimum height=7mm, fill=simBgGray, draw=simGray]
+        (r3) at (7.2,0.15) {\scriptsize table ($f,Q$/energy)};
+\end{tikzpicture}
+\caption[The taxonomic footprint of one run]{What one complete driven run touches
+on the grid of \cref{ch:situating}. Of the four solve corners (left $2\times2$),
+the driven filter occupies exactly \emph{one}: the operator-varying map (corner~2,
+rust). Of the three reduction shapes (right column), it uses exactly \emph{one}:
+the rank-2 port-projection (gold). It \emph{borrows} the port modes from the
+black-box corner's boundary-mode analysis (violet arrow). The electrostatic
+contrast (gray) occupies the fixed-operator map and the Gram instead. A complete
+microwave simulation is one corner, one reduction, a shared inner stack, and one
+borrowed input---and a different analysis swaps only which cells light up. The grid
+is small because the simulator is: a few corners $\times$ a few reductions $\times$
+the shared field theory and calculus.}
+\label{fig:trace-grid}
+\end{figure}
+
+This is the payoff of the whole taxonomy. A simulator that looked, from outside, like
+six elaborate programs is, from inside, a \emph{few corners} $\times$ a \emph{few
+reductions}, all resting on one shared field theory (Part~II) and one shared
+calculus (Part~III). The driven run lit up one cell of each axis. The electrostatic
+contrast lit up a different cell of each. Every Palace analysis is a choice of one
+cell per axis over the same substrate---which is exactly why
+\cref{ch:situating}'s grid has so few columns, and why this book could be written
+at all.
+
+\section{Two worked traces}
+\label{sec:trace-worked}
+
+We close the disassembly with two end-to-end traces small enough to follow by hand:
+the driven filter at one frequency, and the electrostatic capacitor, each rendered
+as a \emph{trace table} that names, at every stage, the component, the data shape,
+and the chapter of origin.
+
+\begin{workedexample}{The driven filter, one frequency, by data shape}{trace-driven}
+We follow the data through a \emph{single} frequency $\omega = \omega_k$ of the
+sweep---config to mesh to assemble to one GMRES solve to port projection to one
+S-matrix entry---tracking the \emph{shape} of the value at each stage rather than
+its numerical contents (the numerics are \cref{wex:opvary} and \cref{wex:sparam}
+of \cref{ch:driven}; here we trace the \emph{pipeline}). Write $N$ for the number
+of $\Hcurl$ degrees of freedom (millions, in practice) and $p=2$ for the number
+of ports.
+
+\medskip
+\begin{center}\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}ll>{\raggedright\arraybackslash}p{42mm}l@{}}
+\toprule
+Stage & Component & Data in $\to$ out & From \\
+\midrule
+parse    & \code{IoData} record      & file $\to$ \code{config}                  & \cref{ch:records} \\
+mesh     & \code{build\_mesh}         & \code{config} $\to$ \code{Mesh}            & \cref{ch:functionspaces} \\
+space    & \code{nd\_space}           & \code{Mesh} $\to$ $\Hcurl$ space (dim $N$) & \cref{ch:functionspaces} \\
+assemble & \code{fe\_assemble}$^{\times3}$ & space $\to$ basis $\{\Kop,\Cop,\Mop\}$, each $N{\times}N$ & \cref{ch:assembly} \\
+form     & \code{linear\_combination} & basis, $\omega_k$ $\to$ $\mat{A}(\omega_k)$ ($N{\times}N$, complex) & \cref{ch:combinators} \\
+excite   & \code{excitation}          & \code{config}, $\omega_k$ $\to$ $\vb \in \Complex^N$ & \cref{ch:driven} \\
+solve    & \code{ksp\_solve} (GMRES)  & $\mat{A}(\omega_k),\vb$ $\to$ $\vE_k \in \Complex^N$ & \cref{ch:gmres} \\
+ \ \ precond. & V-cycle              & residual $\to$ correction ($\Complex^N$)   & \cref{ch:multigrid} \\
+ \ \ smooth   & Chebyshev/Hiptmair    & per-level error $\to$ damped error         & \cref{ch:smoothers} \\
+ \ \ apply    & matrix-free           & $\vw \in \Complex^N$ $\to$ $\mat{A}\vw$    & \cref{ch:matrixfree} \\
+modes    & boundary-mode             & port faces $\to$ $\{\vs_1,\vs_2\}$         & \cref{ch:waveports} \\
+reduce   & \code{sparameter\_reduce}  & $\vE_k, \{\vs_i\}$ $\to$ $S(\omega_k)$ ($p{\times}p$, complex) & \cref{ch:reductions} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+Read the rightmost column top to bottom: it is a tour of the book. Read the
+\emph{shape} column and watch the data collapse---from a file, to an $N$-dimensional
+complex field, to a $2\times2$ complex matrix at this frequency. The big dimension
+$N$ (the field) lives only \emph{inside} the solve; it is born at \code{nd\_space}
+and dies at \code{sparameter\_reduce}, which projects it down to the handful of
+port numbers the engineer wanted. One S-matrix entry---say $S_{21}(\omega_k)$, the
+transmission---is a single complex number distilled from one $N$-dimensional GMRES
+solve by one inner product against a port mode. Sweep this whole table across the
+band and you have the plot of \cref{fig:trace-splot}; that sweep is the entire
+driven driver.
+\end{workedexample}
+
+\begin{workedexample}{The electrostatic capacitor: the same skeleton, different cells}{trace-es}
+Now run the identical lifecycle for the electrostatic capacitance extraction (the
+clean contrast), and lay its trace table beside the driven one. The problem is $n$
+conductors; write $N$ for the number of $\Hone$ degrees of freedom and $n$ for the
+number of conductors.
+
+\medskip
+\begin{center}\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}ll>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{32mm}@{}}
+\toprule
+Stage & Component & Data in $\to$ out & Same as driven? \\
+\midrule
+parse    & \code{IoData} record      & file $\to$ \code{config}                  & \textbf{same} (\cref{ch:records}) \\
+mesh     & \code{build\_mesh}         & \code{config} $\to$ \code{Mesh}            & \textbf{same} (\cref{ch:functionspaces}) \\
+space    & \code{h1\_space}           & \code{Mesh} $\to$ $\Hone$ (dim $N$)        & \emph{swapped}: $\Hone$ not $\Hcurl$ \\
+assemble & \code{fe\_assemble}         & space $\to$ $\Kop$ ($N{\times}N$, SPD)     & \textbf{same fold}, one term \\
+excite   & \code{excitation}          & \code{config}, $j$ $\to$ $\vb_j \in \Real^N$ & per terminal (real) \\
+solve    & \code{solve\_family} (CG)  & $\Kop, [\vb_j]$ $\to$ $[V_j] \in \Real^N$  & \emph{swapped}: corner~1, CG \\
+ \ \ precond. & V-cycle              & residual $\to$ correction                   & \textbf{same} (\cref{ch:multigrid}) \\
+ \ \ apply    & matrix-free           & $\vw$ $\to$ $\Kop\vw$                       & \textbf{same} (\cref{ch:matrixfree}) \\
+reduce   & \code{gram\_reduce}        & $[V_j], \Kop$ $\to$ $\mat{C}$ ($n{\times}n$, sym.) & \emph{swapped}: Gram not projection \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+Set the two tables side by side and the book's whole thesis is visible in one
+glance. The first two rows are \emph{identical}---same record, same mesh build. The
+inner solver rows (V-cycle, matrix-free apply) are \emph{identical}---the same
+numerical core. Exactly three rows differ: the space row ($\Hone$ for $\Hcurl$),
+the solve row (\code{solve\_family}/CG/corner~1 for \code{frequency\_sweep}/GMRES/
+corner~2), and the reduce row (\code{gram\_reduce} for \code{sparameter\_reduce}).
+And one stage \emph{drops out} entirely: electrostatics needs no operator-forming
+\code{linear\_combination} step, because its operator is fixed---which is precisely
+the hoist of \cref{ch:electrostatics}. The electrostatic operator is also real and
+SPD, so CG replaces GMRES and the V-cycle's smoother is a simpler real one; but the
+\emph{stack is the same stack}. Two analyses, one machine, three swapped cells: the
+trace tables prove it row by row.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.84\linewidth, height=5.6cm,
+  xlabel={frequency $f$ (GHz)}, ylabel={magnitude (dB)},
+  xmin=3, xmax=7, ymin=-45, ymax=4,
+  ytick={0,-10,-20,-30,-40}, xtick={3,4,5,6,7},
+  legend pos=south east, legend cell align=left,
+  grid=both, grid style={simGray!20},
+  tick label style={font=\footnotesize}, label style={font=\footnotesize},
+  legend style={font=\footnotesize},
+]
+% |S21| insertion loss: bandpass near 5 GHz
+\addplot[very thick, simGreen, smooth, samples=120, domain=3:7]
+  { -2 - 30*( (x-5)/1.0 )^2 / (1 + 0.55*((x-5))^2 ) - 0.5*(x-5)^2 };
+\addlegendentry{$|S_{21}|$ (insertion loss)}
+% |S11| return loss: deep dip at the match
+\addplot[very thick, simRust, smooth, samples=160, domain=3:7]
+  { -3 - 32*exp( -((x-5)^2)/0.06 ) + 2.0*((x-5))^2 };
+\addlegendentry{$|S_{11}|$ (return loss)}
+\draw[simBlue!50, densely dashed] (axis cs:4.4,4) -- (axis cs:4.4,-45);
+\draw[simBlue!50, densely dashed] (axis cs:5.6,4) -- (axis cs:5.6,-45);
+\node[font=\scriptsize, text=simBlue] at (axis cs:5.0,-43) {passband};
+% mark one swept frequency = one full solve
+\node[circle, fill=simInk, inner sep=1.1pt, label={[font=\scriptsize,text=simInk]above:{$\omega_k$}}]
+  at (axis cs:4.7,-1.3) {};
+\end{axis}
+\end{tikzpicture}
+\caption[The product: the swept S-parameter plot]{The output of the whole trace:
+the scattering parameters of the two-port filter across the band. The insertion
+loss $\abs{S_{21}}$ (green) sits near $0\,$dB in the passband around $5\,$GHz---signal
+passes through---and rolls off outside it; the return loss $\abs{S_{11}}$ (rust)
+dips sharply at the match. \emph{Every point on every curve is one complete pass of
+the trace} of \cref{wex:trace-driven}: one $\mat{A}(\omega)$ formed, one GMRES solve
+over the full multigrid stack, one port projection. The single marked point
+$\omega_k$ is the frequency whose trace table we walked. Reading these two curves is
+reading the device---and producing them is running the entire machine of
+\cref{fig:trace-tree} once per frequency.}
+\label{fig:trace-splot}
+\end{figure}
+
+\section{The bridge into Part~VI}
+\label{sec:trace-bridge}
+
+We have now done what Part~V set out to do. We met the six analyses, anchored them
+all on electrostatics, and---in this chapter---ran one of them, the driven filter,
+all the way through, naming every machine the book built and watching the whole
+simulator collapse into a single composition (\cref{fig:trace-tree}). We saw, in two
+trace tables, that a second analysis is the \emph{same} composition with three cells
+swapped. The disassembly is complete: we know every part, and we know how they
+compose into any driver.
+
+The natural next question is the one Part~VI answers. If every analysis is a
+composition of the same named pieces, then those pieces---taken together, with their
+types and their bodies written out---are a small \emph{library}, and each driver is a
+few lines of code over it. That is exactly the \emph{synthesized library} view. The
+composition tree of \cref{fig:trace-tree} is not a metaphor; it is, almost literally,
+the call graph of a real program, and Part~VI writes that program down. \Cref{ch:synthlib}
+lays out the library's architecture---the handful of modules (types, iteration,
+data-algebra, coordination, drivers) that hold the machines we have been naming---and
+\cref{ch:composing} composes a driver end to end in code, the rendered form of the
+very tree we just expanded.
+
+\begin{keyidea}
+\textbf{You have now seen the whole machine.} One simulation is one composition of
+the same handful of machines---a mesh build, an assembly fold, a solve corner with
+its nested Krylov/multigrid/matrix-free stack, and a reduction---and a different
+analysis swaps only a few of those boxes. Part~V disassembled the simulator into
+those boxes and showed they compose; Part~VI reassembles them into a single small
+library and renders the whole simulator as a few pages of code. The trace tree of
+this chapter \emph{is} that program, drawn rather than typed.
+\end{keyidea}
+
+\summarysection
+This capstone traces one complete simulation---the driven frequency sweep of a
+two-port filter---from the configuration file to the S-parameter plot, naming at
+every stage the exact machine, and chapter, that does the work. Walking the
+lifecycle of \cref{ch:lifecycle}: \emph{parse} produces the read-only \code{IoData}
+record (\cref{ch:records}, \cref{ch:strata}); \emph{build mesh} produces the
+\code{Mesh} (\cref{ch:functionspaces}); \emph{dispatch} selects the driven driver at
+the specialization seam (\cref{ch:lifecycle}); \emph{assemble} folds three weak-form
+term lists (\cref{ch:weak}) into the fixed basis $\{\Kop,\Cop,\Mop\}$ by
+\code{fe\_assemble} (\cref{ch:assembly}), with matrix-free applies
+(\cref{ch:matrixfree}) and eliminated boundary conditions (\cref{ch:bc});
+\emph{solve} is the operator-varying map \code{frequency\_sweep} (\cref{ch:driven}),
+each frequency a preconditioned GMRES (\cref{ch:gmres}) over a multigrid V-cycle
+(\cref{ch:multigrid}) whose smoother is Chebyshev/Hiptmair (\cref{ch:smoothers}) and
+whose every apply is matrix-free, the state threaded by the solve monad
+(\cref{ch:monad}); \emph{reduce} is the port-projection \code{sparameter\_reduce}
+(\cref{ch:reductions}) over port modes borrowed from the boundary-mode analysis
+(\cref{ch:waveports}). The whole driver is one composition, \texttt{driven $=$
+sparameter\_reduce $\circ$ frequency\_sweep $\circ$ fe\_assemble}, which expands into
+a single finite tree whose every leaf is an earlier chapter (\cref{fig:trace-tree}).
+Set beside it, the electrostatic capacitance trace is the \emph{same} machine---same
+record, mesh, assembly fold, inner solver stack---with exactly three cells swapped:
+the function space ($\Hone$/$\Hcurl$), the solve corner (fixed-operator map/CG versus
+operator-varying map/GMRES), and the reduction (symmetric Gram versus
+port-projection). One run touches one solve corner and one reduction shape on the
+grid of \cref{ch:situating}: the simulator is a few corners $\times$ a few reductions
+over one shared field theory and calculus. Part~VI (\cref{ch:synthlib},
+\cref{ch:composing}) renders that composition as code.
+
+\furtherreading
+The scattering-parameter physics this trace computes---ports, impedance
+normalization, return and insertion loss, the network-analyzer measurement---is the
+foundation of microwave engineering, and Pozar's text~\citep{pozar2011} is the
+standard treatment; the finite-element formulation of the time-harmonic curl--curl
+system on $\Hcurl$, the wave-port modes, and the modal projection are developed at
+length by Jin~\citep{jin2014}. The numerical engine the trace nests four
+deep---GMRES on the complex indefinite operator, the multigrid preconditioner with
+its smoother, and the reuse economics across the family---is the subject of Saad's
+account of iterative methods~\citep{saad2003}, on which \cref{ch:gmres},
+\cref{ch:multigrid}, and \cref{ch:smoothers} all draw. The individual machines named
+in this trace are each developed in their own chapters, cited inline; this chapter
+adds no new content, only the composition---which Part~VI (\cref{ch:synthlib},
+\cref{ch:composing}) then renders as a working library.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Name the machine at each stage.} Without looking back at
+  \cref{fig:trace-pipeline}, list the lifecycle stages of the driven trace in order
+  (parse, mesh, dispatch, assemble, solve, reduce, output) and name the framework
+  component and the chapter responsible for each. Which single stage consumes a
+  product computed by a \emph{different} analysis, and which analysis?
+  \item \textbf{Expand one branch.} Take the \code{frequency\_sweep} box of the
+  composition tree (\cref{fig:trace-tree}) and write out, as a nested list, every
+  machine that engages inside a single \code{ksp\_solve}---from the outer Krylov
+  method down to the innermost operation. At what operation does \emph{every} branch
+  of the tree bottom out, and why is that the same operation for GMRES, the V-cycle,
+  and the smoother alike?
+  \item \textbf{The one line that swaps the analysis.} The driven and electrostatic
+  traces share most of their stages. Identify the single operation whose
+  \emph{position} (inside the solve loop versus hoisted outside it) flips the run
+  from corner~1 to corner~2, and explain why electrostatics can hoist it while the
+  driven sweep cannot. (Cross-check against \cref{ch:driven}.)
+  \item \textbf{Trace the shape.} Following the trace table of
+  \cref{wex:trace-driven}, state the data shape carried out of each stage for the
+  driven filter, from the config file to one S-matrix entry. At which stage is the
+  large dimension $N$ (the field) born, and at which does it die? What is the shape
+  of the final product at one frequency, and how many ports does it have on a side?
+  \item \textbf{Two analyses, three swaps.} Using the two trace tables
+  (\cref{wex:trace-driven}, \cref{wex:trace-es}), list exactly which rows are
+  identical between the driven and electrostatic traces and which three are swapped.
+  Which stage present in the driven trace \emph{drops out} entirely for
+  electrostatics, and why? (Hint: what does a fixed operator not need to do each
+  iteration?)
+  \item \textbf{Count the footprint.} Of the four solve corners and three reduction
+  shapes of \cref{ch:situating}, how many of each did this one driven run use? Name
+  them. The run also \emph{borrowed} a product from a corner it did not itself
+  occupy---which corner, and what did it borrow? Repeat the count for the
+  electrostatic trace.
+  \item \textbf{A third analysis on the same machine.} Pick the \emph{transient}
+  analysis (\cref{ch:transient}). Predict, by analogy with the two traces of this
+  chapter, which cells of its trace table would be \emph{shared} with the driven
+  filter (record, mesh, assembly fold, inner stack) and which would be
+  \emph{swapped}. Which solve corner does it occupy, and why is its solve a
+  \emph{fold} rather than a \emph{map}?
+  \item \textbf{From tree to code.} The composition tree of \cref{fig:trace-tree} is
+  described in the bridge (\S\ref{sec:trace-bridge}) as ``almost literally the call
+  graph of a real program.'' In two or three sentences, explain what would have to
+  be written down to turn the tree into running code: which leaves are already-built
+  library functions, which boxes are the composition itself, and which single piece
+  (named in \cref{ch:waveports}) must be supplied as an input. (Part~VI,
+  \cref{ch:synthlib} and \cref{ch:composing}, does exactly this.)
+\end{enumerate}

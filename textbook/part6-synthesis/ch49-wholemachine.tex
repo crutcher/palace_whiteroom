@@ -1,0 +1,775 @@
+\chapter{The Whole Machine, and Where It Goes Next}
+\label{ch:wholemachine}
+
+\chapterorient{This is the last chapter of the main text, and its job is to stand
+back far enough to see everything at once. We have built, named, and composed every
+part: the field theory, the calculus, the numerical engines, the six analyses, and
+finally the synthesized library that renders them all as code. Here we tie the
+single thread that runs through them---the \code{lifecycle} root from which every
+other piece of the book is reachable---and draw the whole machine on one page. Then
+we close two loops. The first is the book's opening promise (\cref{ch:bigidea}):
+``fields as tensors, steps as pure functions'' was never an aesthetic preference; it
+was the form in which the algorithm could be handed, unchanged, to an accelerator.
+The second is the book's thesis itself, now that you have watched it proven component
+by component: a large physics simulator is the repeated composition of a small set of
+mathematical building blocks. We end honestly---naming the frontiers this book did
+\emph{not} cross---and warmly, with what you can now do that you could not before.}
+
+\section{One root, and everything below it}
+\label{sec:wm-root}
+
+Across five parts we disassembled a real electromagnetic simulator and, in Part~VI,
+reassembled it as a small library: a handful of modules---\code{types},
+\code{iteration}, \code{data-algebra}, \code{coordination}, and \code{drivers}---each
+holding a few of the named machines we built (\cref{ch:synthlib},
+\cref{ch:fivelibs}). \Cref{ch:composing} composed individual drivers from those
+modules. One question remains, and it is the question that turns a \emph{library}
+into a \emph{program}: what is the single entry point that ties all of it together?
+What is the \code{main} of the synthesized library?
+
+It has a name. It is \code{lifecycle}, the topmost composition in the \code{drivers}
+module, and it is short enough to state in one line:
+\begin{equation}
+  \code{lifecycle} \;=\; \code{fold\_solve}\,\bigl(\code{dispatch}\,(\code{problem\_type}\;\code{cfg})\bigr)
+                        \;\circ\; \code{build\_mesh}.
+  \label{eq:wm-lifecycle}
+\end{equation}
+Read right to left: build the mesh from the parsed configuration; dispatch on the
+configuration's \code{problem.type} to one of the six drivers; and wrap the chosen
+driver in the adaptive estimate--mark--refine fold of \cref{ch:amr}, which threads
+the mesh through repeated solves and---when adaptive refinement is switched
+off---degenerates to a single solve. That is the entire top of the machine. Every
+other piece of this book hangs beneath it.
+
+\begin{keyidea}
+The synthesized library has exactly one root: \code{lifecycle}. It is the \code{main}
+of the whole simulator, and \cref{eq:wm-lifecycle} is its body in full---build the
+mesh, dispatch on the problem type, fold the driver through the adaptive loop. From
+this single function, \emph{every} component the book built is reachable by following
+composition edges: the drivers, the solve corners, the assembly fold, the
+matrix-free applies, the records. To hold \code{lifecycle} in your head is to hold
+the whole machine.
+\end{keyidea}
+
+\subsection{The root, rendered as code}
+\label{sec:wm-root-code}
+
+\Cref{eq:wm-lifecycle} is the skeleton; here is the synthesized body, the way the
+\code{drivers} module actually writes it. It is worth reading slowly, because every
+identifier in it is a chapter.
+
+\begin{lstlisting}[style=l4style]
+-- The synthesized library's main. inputs = the parsed config; output = the
+-- driver-selected physical product (capacitance | inductance | S-params |
+-- (f,Q) | trajectory | fields | modes).
+lifecycle :: IoData -> Product
+lifecycle cfg =
+  let mesh0 = build_mesh cfg                    -- (1) load + partition + a-priori refine   [ch:functionspaces]
+      drv   = dispatch (problem_type cfg)       -- (2) select ONE driver: the specialization seam  [ch:lifecycle]
+      step  = \m -> estimate_mark_refine cfg (drv cfg m)  -- one adaptive iterate: solve, then refine
+  in  fold_solve step mesh0 (refinement cfg)    -- (3) adaptive estimate-mark-refine FOLD  [ch:amr]
+  where
+    -- the dispatch over the six driver defs, by problem type
+    dispatch Electrostatic = electrostatic      -- [ch:electrostatics]
+    dispatch Magnetostatic = magnetostatic      -- [ch:magnetostatics]
+    dispatch Driven        = driven             -- [ch:driven]
+    dispatch Transient     = transient          -- [ch:transient]
+    dispatch Eigenmode     = eigenmode          -- [ch:eigenmodes]
+    dispatch BoundaryMode  = boundary_mode      -- [ch:waveports]
+\end{lstlisting}
+
+\noindent Three lines of body and a six-way \code{dispatch}. Line~(1) is the mesh
+build of \cref{ch:functionspaces}---the only stage every analysis runs identically.
+Line~(2) is the \emph{specialization seam} of \cref{ch:lifecycle}: a single
+field, \code{problem\_type}, read off the configuration record, selects which of the
+six drivers fills in the one stage that differs. Line~(3) is the adaptive loop of
+\cref{ch:amr}, written as exactly the \code{fold\_solve} combinator of \cref{ch:fold}:
+its threaded value is the mesh, its body solves and then refines, and when no
+refinement is requested it runs that body once. Nothing else is at the top. The
+machine's entire control structure---which we spent Part~V tracing by hand---is these
+three lines.
+
+\begin{notationbox}
+\code{dispatch} is an ordinary function from a \code{ProblemType} tag to a driver. It
+is the synthesized form of the \texttt{switch} that \cref{ch:lifecycle} called the
+specialization seam: above it, everything is shared (parse, mesh, the fold); below
+it, the six drivers diverge. Because \code{dispatch} returns a \emph{function} (a
+driver), \cref{eq:wm-lifecycle}'s middle factor is higher-order---the closure-returning
+shape the calculus uses throughout (\cref{ch:language}). The whole of the
+simulator's variety is funneled through this one tag.
+\end{notationbox}
+
+\subsection{Reachability: the root sees the whole book}
+\label{sec:wm-reach}
+
+The claim that ``everything is reachable from \code{lifecycle}'' is not rhetorical.
+The synthesized library is a dependency graph: each function names the functions it
+composes, and those edges form a finite tree rooted at \code{lifecycle}. Follow the
+edges and you visit, in order, every machine the book built (\cref{fig:wm-root}).
+\code{lifecycle} composes \code{build\_mesh} and \code{dispatch}; \code{dispatch}
+reaches each of the six drivers; each driver composes an \emph{assemble} stage
+(\code{fe\_assemble}, \cref{ch:assembly}), a \emph{solve} stage (one of four
+coordination combinators, \cref{ch:situating}), and a \emph{reduce} stage (one of
+three reduction verbs, \cref{ch:reductions}); the solve stages reach the Krylov
+methods (\cref{ch:cg}, \cref{ch:gmres}), the multigrid preconditioner
+(\cref{ch:multigrid}), and the smoothers (\cref{ch:smoothers}); and \emph{every}
+operator application in any of them bottoms out in the same matrix-free apply
+(\cref{ch:matrixfree}). There is no part of the book that this tree does not touch,
+and no node in the tree that is not a chapter you have read.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=5mm and 4mm]
+  % --- the root ---
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, text width=30mm]
+    (root) {\code{lifecycle}\\[1pt]\scriptsize the library's \code{main}};
+  % parse / mesh feeding in
+  \node[data, left=10mm of root, text width=16mm] (cfg)
+    {\code{IoData}\\\scriptsize parsed config};
+  \draw[flow] (cfg) -- node[above,font=\scriptsize]{parse} (root);
+  % the AMR fold wrapping
+  \node[opbox, above=7mm of root, text width=30mm] (amr)
+    {\code{fold\_solve}: AMR loop\\\scriptsize estimate--mark--refine (\cref{ch:amr})};
+  \draw[refedge] (amr.south) -- (root.north);
+  \node[opbox, left=5mm of amr, text width=18mm] (mesh)
+    {\code{build\_mesh}\\\scriptsize\cref{ch:functionspaces}};
+  \draw[refedge] (mesh.south) to[out=-90,in=150] (root.north west);
+  % --- dispatch fan-out to six drivers ---
+  \node[stage, fill=simBgGray, draw=simGray, below=8mm of root, text width=24mm]
+    (disp) {\code{dispatch} (\code{problem\_type})\\\scriptsize the specialization seam};
+  \draw[flow] (root) -- (disp);
+  % six driver boxes in a row
+  \node[stage, below=8mm of disp, xshift=-44mm, text width=15mm] (d1)
+    {\code{electro-}\\\code{static}};
+  \node[stage, right=of d1, text width=15mm] (d2) {\code{magneto-}\\\code{static}};
+  \node[stage, fill=simBgRust, draw=simRust, right=of d2, text width=13mm] (d3) {\code{driven}};
+  \node[stage, right=of d3, text width=14mm] (d4) {\code{transient}};
+  \node[stage, right=of d4, text width=15mm] (d5) {\code{eigen-}\\\code{mode}};
+  \node[stage, right=of d5, text width=15mm] (d6) {\code{boundary-}\\\code{mode}};
+  \foreach \d in {d1,d2,d3,d4,d5,d6}{\draw[flow] (disp) -- (\d);}
+  % chapter tags under drivers
+  \node[cornertag, below=0.5mm of d1] {\cref{ch:electrostatics}};
+  \node[cornertag, below=0.5mm of d3] {\cref{ch:driven}};
+  \node[cornertag, below=0.5mm of d5] {\cref{ch:eigenmodes}};
+  % --- the shared body each driver composes ---
+  \node[stage, fill=simBgBlue, draw=simBlue, below=10mm of d3, xshift=-14mm, text width=20mm]
+    (asm) {\textbf{assemble}\\\code{fe\_assemble}\\\scriptsize\cref{ch:assembly}};
+  \node[stage, fill=simBgRust, draw=simRust, right=7mm of asm, text width=24mm]
+    (solve) {\textbf{solve}\\\scriptsize 4 corners (\cref{ch:situating})\\Krylov + multigrid};
+  \node[stage, fill=simBgGold, draw=simGold, right=7mm of solve, text width=22mm]
+    (red) {\textbf{reduce}\\\scriptsize 3 shapes (\cref{ch:reductions})};
+  \foreach \d in {d1,d2,d3,d4,d5,d6}{
+    \draw[refedge, simGray!60] (\d.south) to[out=-90,in=90] (asm.north);}
+  \draw[flow] (asm) -- (solve);
+  \draw[flow] (solve) -- (red);
+  % the solve stack reaching down
+  \node[opbox, below=6mm of solve, text width=26mm] (stack)
+    {Krylov (\cref{ch:cg},\,\cref{ch:gmres})\\$\cdot$ V-cycle (\cref{ch:multigrid})\\$\cdot$ smoother (\cref{ch:smoothers})};
+  \draw[refedge] (solve.south) -- (stack.north);
+  \node[extern, below=5mm of stack, text width=30mm] (mf)
+    {\textbf{matrix-free apply} (\cref{ch:matrixfree})\\\scriptsize every operator application bottoms out here};
+  \draw[refedge] (stack.south) -- (mf.north);
+  % records thread to the side
+  \node[opbox, fill=white, right=8mm of stack, text width=20mm] (rec)
+    {records: \code{SimState},\\\code{IoData}\\\scriptsize\cref{ch:records}, monad \cref{ch:monad}};
+  \draw[refedge] (rec.west) -- (stack.east);
+\end{tikzpicture}
+\caption[The \code{lifecycle} root and its reachable machine]{The synthesized
+library rooted at \code{lifecycle}, its \code{main}. The parsed \code{IoData} enters
+on the left; \code{lifecycle} builds the mesh (\cref{ch:functionspaces}), wraps
+everything in the adaptive \code{fold\_solve} loop (\cref{ch:amr}), and dispatches on
+\code{problem\_type} (the specialization seam, \cref{ch:lifecycle}) to one of the six
+drivers. Every driver composes the same three-stage body---\code{fe\_assemble}
+(\cref{ch:assembly}), one of four solve corners (\cref{ch:situating}), one of three
+reduction shapes (\cref{ch:reductions})---and every solve reaches the same nested
+Krylov/multigrid/smoother stack, which bottoms out, like everything else, in the
+matrix-free apply (\cref{ch:matrixfree}). The threaded state lives in the records
+(\cref{ch:records}) carried by the solve monad (\cref{ch:monad}). Follow any edge and
+you reach a chapter; this single tree \emph{is} the book.}
+\label{fig:wm-root}
+\end{figure}
+
+\section{The whole machine on one page}
+\label{sec:wm-onepage}
+
+\Cref{fig:wm-root} drew the root and its first few layers. We now draw the
+\emph{entire} machine---root to leaves, every driver, every combinator, every record,
+every external-kernel boundary---in a single capstone figure
+(\cref{fig:wm-hero}). It is dense by design: the point is not to read each box in
+isolation but to \emph{see that everything connects}, that the simulator which looked,
+from \cref{ch:targets}, like six elaborate and separate programs is in fact one finite
+tree with a handful of shared leaves.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\scriptsize, >=Stealth,
+    grow=down, level distance=11mm, sibling distance=0mm,
+    edge from parent/.style={draw=simGray, semithick, -{Stealth[length=1.4mm]}},
+    every node/.style={align=center},
+    level 1/.style={sibling distance=46mm},
+    level 2/.style={sibling distance=23mm},
+    level 3/.style={sibling distance=23mm}]
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, text width=34mm]
+    {\code{lifecycle}\\\scriptsize the whole machine (\S\ref{sec:wm-root})}
+    child {node[stage, text width=22mm] {\code{build\_mesh}\\\scriptsize\cref{ch:functionspaces}}}
+    child {node[opbox, text width=24mm] {\code{fold\_solve} (AMR)\\\scriptsize\cref{ch:amr}, \cref{ch:fold}}}
+    child {node[stage, fill=simBgGray, draw=simGray, text width=26mm] {\code{dispatch}\\\scriptsize 6 drivers (\cref{ch:situating})}
+      child {node[stage, text width=20mm] {\textbf{assemble}\\\code{fe\_assemble}\\\scriptsize\cref{ch:assembly}, \cref{ch:weak}}
+        child {node[extern, text width=20mm] {matrix-free\\quadrature\\\scriptsize\cref{ch:matrixfree}}}
+      }
+      child {node[stage, fill=simBgRust, draw=simRust, text width=22mm] {\textbf{solve}\\\scriptsize 4 corners\\\code{solve\_family} /\\\code{frequency\_sweep} /\\\code{fold\_solve} / \code{eigsolve}}
+        child {node[stage, fill=simBgBlue, draw=simBlue, text width=20mm] {Krylov + V-cycle\\\scriptsize\cref{ch:gmres}, \cref{ch:multigrid}}
+          child {node[stage, fill=simBgGreen, draw=simGreen, text width=18mm] {smoother\\\scriptsize\cref{ch:smoothers}}
+            child {node[extern, text width=18mm] {matrix-free\\apply\\\scriptsize\cref{ch:matrixfree}}}
+          }
+        }
+        child {node[extern, text width=18mm] {\code{eigsolve}\\\scriptsize SLEPc kernel\\\cref{ch:krylovschur}}}
+      }
+      child {node[stage, fill=simBgGold, draw=simGold, text width=22mm] {\textbf{reduce}\\\scriptsize 3 shapes\\\code{gram\_reduce} /\\projection / table\\\cref{ch:reductions}}}
+    };
+  % the threaded-records side note
+  \node[opbox, fill=white, text width=26mm, anchor=west] (rec) at (5.2,-1.1)
+    {\textbf{records} (\cref{ch:records})\\\scriptsize \code{IoData} (read-only),\\\code{SimState} (threaded by\\the solve monad, \cref{ch:monad})};
+\end{tikzpicture}
+\caption[The whole machine on one page]{The capstone hero figure: the entire
+synthesized simulator as a single finite tree, rooted at \code{lifecycle} and
+expanded down to its leaves. Reading top to bottom: \code{lifecycle}
+(\S\ref{sec:wm-root}) builds the mesh, wraps the run in the adaptive
+\code{fold\_solve} loop (\cref{ch:amr}), and dispatches to one of six drivers
+(\cref{ch:situating}). Each driver is the three-stage body
+\emph{assemble--solve--reduce}: the assembly fold \code{fe\_assemble}
+(\cref{ch:assembly}); one of the \emph{four} solve corners
+(\code{solve\_family}, \code{frequency\_sweep}, \code{fold\_solve},
+\code{eigsolve}), whose iterative cases nest a Krylov/multigrid/smoother stack
+(\cref{ch:gmres}--\cref{ch:smoothers}) and whose black-box case calls the
+\code{eigsolve} kernel (\cref{ch:krylovschur}); and one of the \emph{three} reduction
+shapes (\cref{ch:reductions}). Every operator application in the iterative branch
+bottoms out in the matrix-free apply (\cref{ch:matrixfree}, shown twice---it is the
+universal leaf). The run's mutable state is the records (\cref{ch:records}) threaded
+by the solve monad (\cref{ch:monad}). The figure is dense on purpose: it shows, in
+one view, that the whole book is one connected machine.}
+\label{fig:wm-hero}
+\end{figure}
+
+Two features of \cref{fig:wm-hero} deserve a word, because they are the whole point.
+First, the tree is \emph{shallow and finite}. There is no recursion of structure, no
+open-ended plumbing; from the root to the deepest leaf is six or seven composition
+steps, and the same leaves are shared across all six drivers. A simulator is a small
+tree, not a sprawl. Second, the leaves \emph{repeat}. The matrix-free apply appears
+under assembly and again under every level of the solve stack; the reduction verbs are
+shared across drivers that look physically unrelated; the records and the monad thread
+through everything. The economy is not an accident of this book's exposition---it is a
+property of the simulator, which is exactly why the book could be written at the length
+it was rather than six times over.
+
+\begin{keyidea}
+The whole simulator fits on one page because it \emph{is} one finite, shallow tree of
+shared parts. From \code{lifecycle} down to the matrix-free leaf is a handful of
+composition steps, and the deepest, most-reused leaves---the matrix-free apply, the
+reduction verbs, the records---are shared across all six drivers. The variety the
+reader met in \cref{ch:targets} lives almost entirely in \emph{which few boxes a
+driver swaps}, not in the structure of the tree.
+\end{keyidea}
+
+\section{Why this shape: the implementation view as a backend target}
+\label{sec:wm-backend}
+
+We can now close the book's oldest promise. Back in \cref{ch:bigidea} we made a
+choice that, at the time, looked like a matter of taste: describe a simulation not as
+in-place mutation of arrays but as pure functions over immutable tensors---``fields as
+tensors, steps as pure functions.'' We gave three reasons (an explicit dependency
+graph, clean composition, and a passing remark about accelerators) and promised the
+third was the destination. This is that destination.
+
+The synthesized library of \cref{fig:wm-hero} is written in a calculus whose semantics
+were chosen to \emph{match} an external tensor backend
+(\cref{ch:matrixfree}). Its values are immutable tensors. Its operations are pure
+functions: an operator apply takes an input tensor and returns an output tensor, with
+no aliasing, no hidden global, and no ordering hazard to police. Its combinators---the
+fold, the map, the solve corners---express coordination without ever naming a memory
+cell. This is precisely the form a GPU, or any massively parallel backend, wants to
+consume: ``here is an immutable input tensor; produce an output tensor,'' applied to
+all entries at once (\cref{fig:wm-backend}). The matrix-free apply at the bottom of
+the tree is a sequence of element-local tensor contractions
+(\cref{ch:matrixfree})---a pure, whole-tensor transformation that lowers onto an
+accelerator kernel without rewriting.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=8mm and 12mm]
+  % left: the synthesized library (pure tensor code)
+  \node[stage, fill=simBgViolet, draw=simViolet, text width=34mm, align=left] (lib)
+    {\textbf{synthesized library}\\[2pt]\scriptsize
+     \lstinline[style=l4style]|apply :: Tensor[N] -> Tensor[N]|\\
+     \scriptsize immutable tensors,\\pure functions, combinators\\(\cref{ch:bigidea}, \cref{fig:wm-hero})};
+  % middle: the lowering arrow
+  \node[opbox, right=of lib, text width=22mm] (lower)
+    {\textbf{lower}\\\scriptsize no rewrite:\\the form already matches};
+  % right: the accelerator
+  \node[extern, right=of lower, text width=30mm, minimum height=18mm] (gpu)
+    {\textbf{GPU / tensor backend}\\[2pt]\scriptsize whole-tensor ops,\\no aliasing,\\all entries at once\\(\cref{ch:matrixfree})};
+  \draw[flow] (lib) -- (lower);
+  \draw[flow] (lower) -- (gpu);
+  % the closed-loop callback to ch:bigidea
+  \node[font=\scriptsize\itshape, text=simGray, below=3mm of lower, text width=44mm, align=center]
+    {the promise of \cref{ch:bigidea}, kept:\\``fields as tensors, steps as pure functions''\\was always heading here};
+  % grid of cells on the GPU to suggest parallelism
+  \begin{scope}[shift={($(gpu.south)+(0,-1.0)$)}]
+    \foreach \i in {0,1,2,3,4,5}{
+      \fill[simBgViolet, draw=simViolet] (\i*0.42-1.25,0) rectangle (\i*0.42-0.9,0.32);}
+    \node[font=\scriptsize, text=simViolet] at (0,-0.32) {one kernel, all cells at once};
+  \end{scope}
+\end{tikzpicture}
+\caption[The implementation view as a backend-lowering target]{Why the pure picture
+was the right one. The synthesized library (left) is written in tensor-in,
+tensor-out pure functions---\lstinline[style=l4style]|apply :: Tensor[N] -> Tensor[N]|,
+no mutation, no aliasing. That is, almost word for word, the form a GPU or other
+tensor backend consumes (right): a whole-tensor operation applied to every entry at
+once. So lowering the library onto an accelerator is not a translation---the
+description \emph{already matches} the hardware's model. This closes the promise of
+\cref{ch:bigidea}: ``fields as tensors, steps as pure functions'' was never an
+aesthetic choice; it was the form in which the algorithm could be handed to an
+accelerator and run unchanged.}
+\label{fig:wm-backend}
+\end{figure}
+
+This is the deep reason the implementation view of Part~VI is worth having as a
+distinct rendering at all. It is not merely ``the same spec, written as code.'' It is
+the spec written in \emph{the form that runs on the hardware the whole effort
+targets}. The book never produces a port; it produces this layered description. But the
+top layer of that description---the synthesized library---is deliberately shaped so
+that the final step, lowering it onto burn's device backends or any equivalent
+tensor library, is the short one. The hard work of saying \emph{what the algorithm
+is}, free of any one machine's cost model, is what the five parts before this one did.
+
+\begin{keyidea}
+The functional rendering matters because it is the \emph{backend-lowering target}. The
+synthesized library's semantics---immutable tensors, pure functions, whole-tensor
+combinators---were chosen to match an external GPU/tensor backend, so the algorithm can
+be handed to an accelerator and run \emph{unchanged}. ``Fields as tensors, steps as
+pure functions'' (\cref{ch:bigidea}) was never decoration; it was a commitment to the
+one description from which the accelerator form is a short step rather than a rewrite.
+\end{keyidea}
+
+\subsection{A worked dispatch: the final \emph{everything-connects} trace}
+\label{sec:wm-worked}
+
+We have one worked example left, and it is the whole book in miniature: take the
+\code{lifecycle} root, feed it one real configuration, and trace the single dispatch
+all the way down until it bottoms out in the machinery of every part.
+
+\begin{workedexample}{One dispatch, root to leaf}{wm-dispatch}
+An engineer hands the simulator a configuration file for a capacitance extraction: a
+mesh of two conductors, the permittivity $\varepsilon$ of the dielectric between them,
+the terminals to drive, and the field \code{problem\_type:~Electrostatic}. We trace
+\code{lifecycle cfg} from the top.
+
+\medskip
+\textbf{(1) Build the mesh.} \code{lifecycle} calls \code{build\_mesh cfg}
+(\cref{ch:functionspaces}), which loads the geometry, partitions it, and returns the
+\code{Mesh}---the first value the run \emph{produces} rather than reads. This stage is
+identical for all six analyses.
+
+\textbf{(2) Dispatch.} \code{lifecycle} reads \code{problem\_type cfg}, finds
+\code{Electrostatic}, and \code{dispatch} returns the \code{electrostatic} driver
+(\cref{ch:electrostatics}). One field, one branch, the entire choice of \emph{which}
+analysis runs. Had the field read \code{Driven}, the same line would have returned the
+\code{driven} driver of \cref{wex:trace-driven}; the root does not change.
+
+\textbf{(3) The adaptive fold.} \code{lifecycle} wraps the chosen driver in
+\code{fold\_solve} (\cref{ch:amr}, \cref{ch:fold}). The configuration requests no
+refinement, so the fold runs its body \emph{once}---the straight-line lifecycle of
+\cref{ch:lifecycle}. Everything below is one pass.
+
+\textbf{(4) Inside the driver: assemble.} \code{electrostatic cfg} lays the nodal
+$\Hone$ space (\cref{ch:functionspaces}) and assembles the stiffness operator $\Kop$
+by the weak-form fold \code{fe\_assemble} (\cref{ch:assembly}, \cref{ch:weak})---one
+term, the $\varepsilon$-weighted gradient---with the essential boundary degrees of
+freedom eliminated (\cref{ch:bc}). $\Kop$ is symmetric positive-definite and built
+\emph{once}.
+
+\textbf{(5) Inside the driver: solve.} The driver maps the fixed-operator solve over
+the per-terminal right-hand sides: \code{solve\_family} (corner~1 of
+\cref{ch:situating}). Each solve is CG (\cref{ch:cg}, because $\Kop$ is SPD)
+preconditioned by a multigrid V-cycle (\cref{ch:multigrid}) over a smoother
+(\cref{ch:smoothers}), and \emph{every} operator application inside all of them is the
+matrix-free apply (\cref{ch:matrixfree})---the same element-local tensor contraction
+that the driven filter's GMRES bottomed out in. The solver's running state lives in the
+\code{SimState} record (\cref{ch:records}) threaded by the solve monad
+(\cref{ch:monad}).
+
+\textbf{(6) Inside the driver: reduce.} The driver reduces the solved family by the
+symmetric Gram \code{gram\_reduce} (\cref{ch:reductions}), $C_{ij}=V_j^{\!\top}\Kop
+V_i$, pairing the fields with themselves through the energy operator to produce the
+$n\times n$ capacitance matrix.
+
+\textbf{(7) Output.} \code{lifecycle} writes the product and the run metadata
+(\cref{ch:lifecycle}).
+
+\medskip
+Read the chapter tags down the trace: \cref{ch:functionspaces}, \cref{ch:lifecycle},
+\cref{ch:amr}, \cref{ch:assembly}, \cref{ch:bc}, \cref{ch:situating}, \cref{ch:cg},
+\cref{ch:multigrid}, \cref{ch:smoothers}, \cref{ch:matrixfree}, \cref{ch:records},
+\cref{ch:monad}, \cref{ch:reductions}. \emph{One dispatch touched every part of the
+book.} And the only lines that distinguish this run from the driven filter of
+\cref{wex:trace-driven} are the three swapped cells of \cref{ch:fulltrace}---the
+function space, the solve corner, and the reduction. The root is the same; the path
+down from it is the whole machine; and which machine you get is a single field in a
+file.
+\end{workedexample}
+
+\section{Where it goes next: the deferred frontiers}
+\label{sec:wm-frontiers}
+
+A closing chapter owes the reader an honest accounting of what the book did
+\emph{not} do. There are three frontiers the synthesized library stops at, and it is
+worth being precise about each---not as failures, but as the well-marked edges of a
+deliberately scoped effort, each with a known direction onward (\cref{fig:wm-next}).
+
+\paragraph{Distributed execution and sharding.}
+The entire book targets a \emph{single machine}: one CPU lifting onto one GPU through a
+device backend (\cref{ch:targets}). Real Palace runs across many machines, partitioning
+the mesh and the fields into shards and exchanging data between them by message passing.
+We deliberately read every distributed type as its single-rank equivalent and set the
+parallel machinery aside, because the sharding theory assumes a memory and lifetime
+structure that the pure, immutable-tensor spine of this book has rewritten---lifting it
+naively could destabilize the very abstractions that made the spec clean. The
+\emph{mathematics} of decomposition---splitting a tensor-field problem into coupled
+sub-problems on sub-domains---is a genuine and tractable next direction, and it composes
+with the pure picture rather than fighting it: a sharded solve is the same combinators
+over a tensor that happens to be distributed. But it is future work, gated behind a
+careful check that it does not disturb the single-machine spine, and we have marked it
+as such throughout.
+
+\paragraph{The opaque kernels, fully realized.}
+Three places in the synthesized library are \code{\#extern} boundaries: a named
+type signature standing in for an implementation we describe but do not fully render.
+Each is an opaque library kernel that the spine \emph{depends on}, and each has a
+known implementation in the vocabulary we built. The libCEED element-quadrature kernel
+inside \code{fe\_assemble} is matrix-free operator application as element-local tensor
+contractions (\cref{ch:matrixfree})---the implementation is understood; only its full
+rendering is deferred. The SLEPc eigenvalue loop behind \code{eigsolve} is a
+constructive Krylov--Schur iteration in our own \code{krylov\_step} and
+\code{lanczos\_step} vocabulary (\cref{ch:krylovschur}). The MFEM time-step behind the
+transient \code{fold\_solve} is one ODE-integrator step (\cref{ch:time}). For each, the
+book gives \emph{both} surfaces---the opaque contract the spine calls, and the
+in-our-vocabulary implementation it corresponds to---and leaves the final reconciliation
+of the two as marked, well-understood work.
+
+\paragraph{Deeper modularization.}
+The five-module partition of the synthesized library (\cref{ch:fivelibs}) is a sensible
+default, not a theorem. As the library is used---as components are reused across
+drivers, as new analyses are added---some boundaries will want to move: a type may
+migrate to cluster with the API that consumes it; a combinator family may earn its own
+module. This is the ordinary refinement-by-use of any growing library, and the book
+leaves the partition explicitly open to it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=6mm and 10mm]
+  % the firm core
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, text width=30mm, minimum height=16mm]
+    (core) {\textbf{this book}\\[1pt]\scriptsize the single-machine\\synthesized library\\(\cref{fig:wm-hero})};
+  % three frontiers radiating out
+  \node[extern, above right=4mm and 16mm of core, text width=34mm] (shard)
+    {\textbf{distributed / sharding}\\\scriptsize decomposition as math;\\gated on spine stability\\(\cref{ch:targets})};
+  \node[extern, right=22mm of core, text width=34mm] (kern)
+    {\textbf{opaque kernels, realized}\\\scriptsize libCEED quadrature (\cref{ch:matrixfree}),\\\code{eigsolve} (\cref{ch:krylovschur}),\\ODE step (\cref{ch:time})};
+  \node[extern, below right=4mm and 16mm of core, text width=34mm] (mod)
+    {\textbf{deeper modularization}\\\scriptsize refine the 5-module\\partition by use (\cref{ch:fivelibs})};
+  \draw[refedge] (core) -- (shard);
+  \draw[refedge] (core) -- (kern);
+  \draw[refedge] (core) -- (mod);
+  \node[font=\scriptsize\itshape, text=simGray, below=2mm of core] {where it goes next};
+\end{tikzpicture}
+\caption[The deferred frontiers]{Where the book goes next. The firm single-machine
+synthesized library (left) is bordered by three marked frontiers, each a direction
+onward rather than a gap. \emph{Distributed/sharding}: the mathematics of domain
+decomposition, composing with the pure picture, gated behind a check that it does not
+destabilize the single-machine spine. \emph{The opaque kernels realized}: the three
+\code{\#extern} boundaries---libCEED quadrature (\cref{ch:matrixfree}), the
+\code{eigsolve} loop (\cref{ch:krylovschur}), the ODE step (\cref{ch:time})---each with
+a known in-our-vocabulary implementation to be fully rendered. \emph{Deeper
+modularization}: the five-module partition refined by use. None is a failure; each is a
+well-understood next step from a deliberately scoped foundation.}
+\label{fig:wm-next}
+\end{figure}
+
+\begin{pitfall}
+It would be a misreading to take the \code{\#extern} boundaries as holes in the
+argument. They are the opposite: a \code{\#extern} is a place where the book knows
+\emph{exactly} what the implementation is---it has a type, a contract, and a
+described realization in the calculus---and has chosen to defer the full rendering, not
+the understanding. The frontier is one of \emph{effort remaining}, not of
+\emph{comprehension missing}. That distinction is the difference between an honest
+boundary and a gap.
+\end{pitfall}
+
+\section{The reflective close: three views, one machine}
+\label{sec:wm-reflect}
+
+Step all the way back. This book showed you the \emph{same} simulator three times.
+
+Part~V showed it \emph{top-down}: the six analyses as the engineer meets them, each a
+physical question with a physical product, walked through the lifecycle stage by stage
+until the whole thing collapsed into one composition (\cref{ch:fulltrace}). Parts~II--IV
+showed it \emph{bottom-up}: the vocabulary, built from the ground---the tensor and its
+shapes, the de Rham complex, the weak forms, the calculus of pure transformations, the
+Krylov and multigrid engines---each piece firm in itself before it was composed.
+Part~VI showed it as the \emph{synthesized library}: the same machines, written out
+with their types and bodies, rendered as the code an accelerator would run. Three
+views---top-down modalities, bottom-up vocabulary, the implementation
+library---and the central claim of the book is that they are \emph{one machine seen
+three ways} (\cref{fig:wm-triality}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % the central machine
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, circle, minimum size=22mm,
+        text width=18mm, align=center] (m) at (0,0) {\textbf{one}\\\textbf{machine}};
+  % three views around it
+  \node[stage, fill=simBgGold, draw=simGold, text width=30mm, align=center] (top) at (0,2.7)
+    {\textbf{top-down: modalities}\\\scriptsize 6 analyses, walked\\(Part~V, \cref{ch:fulltrace})};
+  \node[stage, fill=simBgBlue, draw=simBlue, text width=30mm, align=center] (bot) at (-4.4,-2.2)
+    {\textbf{bottom-up: vocabulary}\\\scriptsize tensors, de Rham, calculus,\\engines (Parts~II--IV)};
+  \node[stage, fill=simBgGreen, draw=simGreen, text width=30mm, align=center] (lib) at (4.4,-2.2)
+    {\textbf{the library: code}\\\scriptsize synthesized, accelerator-ready\\(Part~VI)};
+  \draw[depedge] (top) -- (m);
+  \draw[depedge] (bot) -- (m);
+  \draw[depedge] (lib) -- (m);
+  % the "they agree" annotations on the connecting edges
+  \node[font=\scriptsize\itshape, text=simGray] at (1.9,1.5) {same composition};
+  \node[font=\scriptsize\itshape, text=simGray] at (-2.9,-0.6) {same parts};
+  \node[font=\scriptsize\itshape, text=simGray] at (2.9,-0.6) {same algorithm};
+\end{tikzpicture}
+\caption[The three views as one machine]{The triality. The book renders one
+simulator three ways: \emph{top-down} as the six analyses walked through the lifecycle
+(Part~V); \emph{bottom-up} as the vocabulary built from tensors and the de Rham complex
+up through the calculus and the numerical engines (Parts~II--IV); and as the
+\emph{synthesized library}, the same machines written as accelerator-ready code
+(Part~VI). The book's central claim is that the three are not three descriptions of
+three things but three views of \emph{one machine}---they compose the same parts into the
+same algorithm, and \cref{ch:fulltrace} caught all three agreeing in a single trace.}
+\label{fig:wm-triality}
+\end{figure}
+
+And here is the deep claim those three views were built to establish, now that you have
+seen it proven component by component rather than asserted: \emph{a large physics
+simulator is the repeated composition of a small set of mathematical building blocks.}
+Not a sprawl of special cases. A small kit, composed (\cref{fig:wm-kit}). The kit is
+short enough to list:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Four solve corners} (\cref{ch:situating})---the fixed-operator map, the
+  operator-varying map, the state fold, and the black-box eigensolve. Every solve in
+  every analysis is one of these four ways of threading the step.
+  \item \textbf{Three reduction shapes} (\cref{ch:reductions})---the symmetric Gram, the
+  port-projection, and the per-mode table. Every physical product is one of these three
+  ways of collapsing a solution family to numbers.
+  \item \textbf{The de Rham complex} (\cref{ch:derham})---the four function spaces
+  ($\Hone$, $\Hcurl$, $\Hdiv$, $\Ltwo$) and the gradient, curl, and divergence that link
+  them, from which every operator in the book is assembled.
+  \item \textbf{The shared substrate}---the fold (\cref{ch:fold}), the state monad
+  (\cref{ch:monad}), and the matrix-free operator (\cref{ch:matrixfree}). These thread
+  through everything: the fold coordinates, the monad owns the state, the matrix-free
+  apply is the universal leaf.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=4mm and 6mm]
+  % four corners (2x2)
+  \node[font=\small\bfseries, text=simRust] at (-3.2,2.4) {4 solve corners};
+  \node[stage, fill=simBgRust, draw=simRust, minimum width=16mm, minimum height=8mm] (c1) at (-4.0,1.5) {\scriptsize fixed map};
+  \node[stage, fill=simBgRust, draw=simRust, minimum width=16mm, minimum height=8mm] (c2) at (-2.3,1.5) {\scriptsize op-vary map};
+  \node[stage, fill=simBgRust, draw=simRust, minimum width=16mm, minimum height=8mm] (c3) at (-4.0,0.6) {\scriptsize state fold};
+  \node[extern, minimum width=16mm, minimum height=8mm] (c4) at (-2.3,0.6) {\scriptsize black-box};
+  \node[cornertag] at (-3.15,0.0) {\cref{ch:situating}};
+  % three reductions
+  \node[font=\small\bfseries, text=simGold] at (0.9,2.4) {3 reductions};
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=20mm, minimum height=6mm] (r1) at (0.9,1.6) {\scriptsize Gram};
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=20mm, minimum height=6mm] (r2) at (0.9,0.9) {\scriptsize projection};
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=20mm, minimum height=6mm] (r3) at (0.9,0.2) {\scriptsize per-mode table};
+  \node[cornertag] at (0.9,-0.35) {\cref{ch:reductions}};
+  % shared substrate
+  \node[font=\small\bfseries, text=simBlue] at (4.4,2.4) {shared substrate};
+  \node[opbox, minimum width=24mm] (s1) at (4.4,1.6) {\scriptsize the fold (\cref{ch:fold})};
+  \node[opbox, minimum width=24mm] (s2) at (4.4,0.9) {\scriptsize the monad (\cref{ch:monad})};
+  \node[extern, minimum width=24mm] (s3) at (4.4,0.2) {\scriptsize matrix-free (\cref{ch:matrixfree})};
+  % de Rham underneath
+  \node[space, minimum width=86mm, minimum height=8mm] (dr) at (0.5,-1.3)
+    {\footnotesize \textbf{the de Rham complex}: $\Hone \xrightarrow{\Grad} \Hcurl \xrightarrow{\Curl} \Hdiv \xrightarrow{\Div} \Ltwo$ \quad(\cref{ch:derham})};
+  % composition arrows down to a product
+  \draw[flow] (c4.south) -- (dr.north);
+  \draw[flow] (r3.south) -- (dr.north);
+  \draw[flow] (s3.south) -- (dr.north);
+\end{tikzpicture}
+\caption[The small kit of building blocks]{The book's thesis in one figure: a large
+simulator is the repeated composition of a small kit. \emph{Four solve corners}
+(\cref{ch:situating}) $\times$ \emph{three reduction shapes} (\cref{ch:reductions}),
+resting on a \emph{shared substrate}---the fold (\cref{ch:fold}), the state monad
+(\cref{ch:monad}), and the matrix-free operator (\cref{ch:matrixfree})---all assembled
+over the \emph{de Rham complex} (\cref{ch:derham}). Six physically distinct analyses are
+choices of one corner and one reduction over this same kit. The kit is small; the
+simulator is its composition.}
+\label{fig:wm-kit}
+\end{figure}
+
+That is the entire kit. Four corners, three reductions, one de Rham complex, and a
+shared substrate of fold, monad, and matrix-free operator. Six physically distinct
+simulations---capacitance, inductance, resonances, S-parameters, time-domain fields,
+waveguide modes---are each a choice of \emph{one corner and one reduction} over this
+kit, assembled on \emph{one} function-space complex. The thesis we held only as a
+promise in \cref{ch:targets}---``six settings of one machine''---is now a fact you have
+watched assemble itself, block by block, across forty-eight chapters.
+
+\begin{keyidea}
+A large physics simulator is the repeated composition of a small set of mathematical
+building blocks---four solve corners, three reduction shapes, the de Rham complex, the
+fold, the monad, and the matrix-free operator. You have now seen the whole machine: one
+root, one finite tree, a handful of shared leaves. And you have seen \emph{why} it is
+shaped the way it is---pure functions over immutable tensors---because that is the form
+in which it will run on the accelerators it was always meant for. The variety is in the
+composition; the kit is small.
+\end{keyidea}
+
+\subsection{What you can now do}
+\label{sec:wm-cando}
+
+The point of building this understanding was never the disassembly of one simulator. It
+was a way of reading. With the kit in hand, you can do three things you could not before.
+
+You can \emph{read any simulator's algorithms this way}. Open an unfamiliar
+finite-element or finite-difference code and the questions are no longer ``what is all
+this?'' but the three of \cref{ch:bigidea}: what operations happen, who owns the state,
+how is the evolution coordinated? The in-place loops resolve into pure transformations;
+the tangle of arrays resolves into threaded values; the control flow resolves into folds
+and maps.
+
+You can \emph{recognize the corners}. Faced with a new analysis, you can ask which of
+the four solve corners its middle stage occupies---is the operator fixed or varying, is
+the solve a map or a fold or a black box?---and which of the three reduction shapes
+collapses its answer. Most of a new simulator is already familiar before you read a line
+of its solver, because most of it is the shared substrate.
+
+And you can \emph{compose a new analysis}. To add an analysis the book did not
+cover---a thermal solve, a coupled multiphysics problem---is to choose a function space
+from the de Rham complex, assemble its operators by the weak-form fold, pick the solve
+corner its physics demands, and reduce its solution to the product an engineer wants. The
+machine is a kit; you now know the pieces and how they snap together.
+
+\section{A pointer to the appendices}
+\label{sec:wm-appendix}
+
+The figures of this book are deliberately pictures---block diagrams, composition trees,
+trace tables---because pictures are how the \emph{shape} of the machine is best seen. A
+reader who wants the exact rules behind the pictures will find them in the appendices,
+which carry the deep computation semantics the main text kept at arm's length: the formal
+calculus and its grammar (the precise syntax of the language sketched in
+\cref{ch:language}), the shape algebra and its named-axis congruence rules, the algebraic
+laws each combinator obeys, the numerical conventions that distinguish a transparent
+performance trick from a load-bearing one, and the full matrix-free kernel detail behind
+the universal leaf of \cref{ch:matrixfree}. The main text is the machine drawn; the
+appendices are the machine specified to the last rule. Read them when a picture leaves you
+wanting the proof.
+
+\begin{keyidea}
+\textbf{You have now seen the whole machine}---and why it is shaped for the accelerators it
+will run on. A large simulator is not a monolith but the repeated composition of a small
+kit of mathematical building blocks, rooted in a single \code{lifecycle} function from which
+every part is reachable. The pure, immutable-tensor form was the right choice all along,
+because it is the form in which the algorithm becomes a backend-lowering target rather than
+a rewrite. That is the end of the disassembly, and the beginning of a way of reading every
+simulator you meet from here on.
+\end{keyidea}
+
+\medskip
+\noindent And that is the whole machine. We met it as six black boxes in
+\cref{ch:targets}; we leave it as one small, connected, accelerator-ready
+composition---understood, on one page, root to leaf. Thank you for building it with us.
+
+\summarysection
+This closing chapter views the whole simulator at once. The synthesized library has a
+single root, \code{lifecycle}---its \code{main}---whose body is
+\code{lifecycle $=$ fold\_solve (dispatch (problem\_type cfg)) $\circ$ build\_mesh}: build
+the mesh (\cref{ch:functionspaces}), dispatch on the problem type at the specialization
+seam (\cref{ch:lifecycle}) to one of six drivers, and fold the chosen driver through the
+adaptive estimate--mark--refine loop (\cref{ch:amr}, degenerating to a single solve when
+refinement is off). Every component of the book is reachable from this root by following
+composition edges, and the whole machine fits on one page as a finite, shallow tree whose
+deepest, most-reused leaf is the matrix-free apply (\cref{ch:matrixfree}). The functional
+rendering is the \emph{backend-lowering target}: its immutable-tensor, pure-function,
+whole-tensor-combinator form matches an external GPU/tensor backend, so the algorithm
+lowers onto an accelerator unchanged---closing the promise of \cref{ch:bigidea}. Three
+frontiers remain, marked as directions onward rather than failures: distributed/sharding
+(deferred, gated on spine stability); the three \code{\#extern} opaque kernels (libCEED
+quadrature, the \code{eigsolve} loop, the ODE step---each with a known in-vocabulary
+implementation); and deeper modularization. Reflectively, the book showed one simulator
+three ways---top-down modalities (Part~V), bottom-up vocabulary (Parts~II--IV), and the
+synthesized library (Part~VI)---and proved they are one machine. The deep thesis, now
+demonstrated component by component: a large physics simulator is the repeated composition
+of a small kit---four solve corners (\cref{ch:situating}), three reduction shapes
+(\cref{ch:reductions}), the de Rham complex (\cref{ch:derham}), and the shared substrate of
+the fold (\cref{ch:fold}), the monad (\cref{ch:monad}), and the matrix-free operator
+(\cref{ch:matrixfree}). With that kit, the reader can read any simulator's algorithms this
+way, recognize its solve corners, and compose a new analysis. The appendices carry the exact
+computation semantics behind the pictures.
+
+\furtherreading
+The simulator dissected throughout this book is AWS Labs' Palace~\citep{palace2023}, whose
+source is the ground truth every layer of the spec cites. The matrix-free, element-local
+operator-evaluation model that the synthesized library lowers onto an accelerator---the
+universal leaf of \cref{fig:wm-hero} and the libCEED \code{\#extern} of
+\S\ref{sec:wm-frontiers}---is developed by the CEED project~\citep{ceed2021}, the standard
+reference for high-order matrix-free finite-element kernels. The iterative-solver
+machinery the solve corners nest---the Krylov methods, the multigrid preconditioners, and
+the reuse economics across an operator family---is treated comprehensively by
+Saad~\citep{saad2003}, on which \cref{ch:gmres}, \cref{ch:multigrid}, and
+\cref{ch:krylovschur} all draw. For the frontier of distributed execution and domain
+decomposition (\S\ref{sec:wm-frontiers}), Saad's later chapters and the parallel-solver
+literature are the natural next reading; the mathematics composes with the pure picture
+this book built, and is the clearest single direction onward.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Read the root.} Write out the body of \code{lifecycle} from memory
+  (\cref{eq:wm-lifecycle}), then name the chapter responsible for each of its three stages
+  and for the six-way \code{dispatch}. Which single stage is identical for all six
+  analyses, and which single field selects among them?
+  \item \textbf{Trace a different dispatch.} Repeat the worked trace of
+  \cref{wex:wm-dispatch}, but for a configuration with \code{problem\_type:~Eigenmode}.
+  Which line of \code{lifecycle} changes its result, which driver does \code{dispatch}
+  return, and at what point does this trace \emph{differ} from the electrostatic one---the
+  solve corner, the reduction, or both? (Cross-check against \cref{ch:eigenmodes}.)
+  \item \textbf{The universal leaf.} \Cref{fig:wm-hero} shows the matrix-free apply
+  appearing in more than one place in the tree. List every distinct path from the root
+  \code{lifecycle} down to a matrix-free apply, and explain why \emph{every} operator
+  application in an iterative solve---the Krylov step, the smoother sweep, the residual---
+  bottoms out in the same leaf.
+  \item \textbf{Why pure, again.} In one paragraph, explain to a skeptic who has written
+  fast in-place C why the synthesized library is written in pure functions over immutable
+  tensors rather than mutating arrays. Your answer should connect the choice to the
+  accelerator-lowering claim of \S\ref{sec:wm-backend} and the dependency-graph and
+  composition payoffs of \cref{ch:bigidea}---and should address the objection that purity
+  ``copies the array on every step.'' (Hint: revisit the pitfall of \cref{ch:bigidea}.)
+  \item \textbf{The kit, counted.} \Cref{fig:wm-kit} lists the kit: four solve corners,
+  three reduction shapes, the de Rham complex, and a shared substrate. For each of the six
+  analyses of \cref{ch:targets}, state which solve corner and which reduction shape it uses.
+  How many of the twelve corner-$\times$-reduction combinations does Palace actually
+  occupy, and what does the answer say about the economy of the design?
+  \item \textbf{Where would sharding go?} (Open-ended.) Suppose you were to add distributed
+  execution to the synthesized library (\S\ref{sec:wm-frontiers}). Identify the \emph{one}
+  node in the tree of \cref{fig:wm-hero} where a domain decomposition would most naturally
+  enter, and argue whether it would change the \emph{structure} of the tree or only the
+  implementation of a leaf. Why does the book claim sharding ``composes with the pure
+  picture rather than fighting it''? What is the risk that gates it as future work?
+  \item \textbf{Compose a new analysis.} (Open-ended.) Sketch how you would add a
+  steady-state \emph{thermal} analysis (solve $-\Div(\kappa\Grad T)=q$ for a temperature
+  field $T$, reduce to a thermal-resistance matrix) to the synthesized library. Which
+  function space of the de Rham complex (\cref{ch:derham}) does $T$ live in? Which existing
+  solve corner (\cref{ch:situating}) does the steady linear solve occupy? Which reduction
+  shape (\cref{ch:reductions}) produces the resistance matrix, and which existing driver is
+  your new one most nearly a copy of? Which pieces of the kit would you reuse unchanged, and
+  what is the smallest set of new pieces you would have to write?
+\end{enumerate}

@@ -1,0 +1,858 @@
+\chapter{Monad and Algebraic Laws}
+\label{app:laws}
+
+\chapterorient{The combinators of \cref{ch:combinators} and the state monad of
+\cref{ch:monad} are only as trustworthy as the rewrites they license. This appendix
+is the reference catalogue of those rewrites: the monad laws that let you refactor a
+\code{do}-block without changing what it computes, the state-effect algebra of
+\code{get}/\code{put}/\code{modify}, and the equational laws of the tensor
+primitives. But the catalogue has a second half that is every bit as important as the
+first, and far easier to forget---the laws that do \emph{not} hold. A refactor that
+\emph{looks} valid because it resembles a law you half-remember can silently change
+the algorithm, or, more insidiously, change only its last bits. Those silent traps
+are pinned here, each with the reason it fails and the harm it does. Read the
+right-hand column as carefully as the left.}
+
+\section{How to read this appendix}
+\label{sec:cread}
+
+The chapters of Parts~III and~IV state laws in passing, as they need them. This
+appendix gathers them into one place and adds the precision a reference demands: each
+law is an \emph{equation} (in math mode) or a \emph{rewrite} (a pseudocode
+\code{==}), together with one sentence on what it \emph{guarantees}---what you are
+allowed to do because it holds. The companion appendix on the formal calculus
+(\cref{app:calculus}) gives the small-step reduction rules these laws sit on top of;
+where a law is just a reduction rule renamed, we say so and point there.
+
+Three kinds of statement appear, and the typography distinguishes them.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[A law.] An equation that holds and may be used as a rewrite in either
+  direction. Stated in a \code{theorem}, \code{lemma}, or a numbered list.
+  \item[A non-law.] An equation that \emph{looks} like a law but is \emph{false}, set
+  off explicitly. Each carries the reason it fails and the concrete damage assuming
+  it would do. These are collected in \cref{sec:nonlaws} and are the most valuable
+  content here.
+  \item[A floating-point caveat.] A law that holds over an idealized exact field but
+  only \emph{approximately} under IEEE-754 arithmetic. These are a special, sharp
+  class of non-law---the equation is mathematically true and numerically false---and
+  they are why \cref{app:numerics} exists. They are flagged inline and revisited in
+  \cref{sec:cfp}.
+\end{description}
+
+\begin{keyidea}
+The non-laws are as important as the laws. A law tells you a rewrite is \emph{safe};
+a non-law tells you a rewrite that \emph{looks} safe is not. The dangerous case is
+not the rewrite that obviously breaks---the types catch that---but the one that
+resembles a law you half-remember: hoisting a loop predicate, merging two folds,
+reordering a reduction. Such a rewrite can leave the program type-correct, still
+running, and computing the wrong thing---or, worse, computing a \emph{bit-different}
+thing that diverges only after thousands of iterations. \textbf{This is why a
+refactor that looks valid can silently change the last bits.} The right-hand column
+of this appendix---the laws that do \emph{not} hold---is the one you consult before
+touching working solver code.
+\end{keyidea}
+
+\section{The monad laws}
+\label{sec:cmonad}
+
+We begin with the three laws that govern \code{>>=} (``bind'') and \code{return}, the
+two operations underneath every \code{do}-block of \cref{ch:monad}. A \code{do}-block
+is sugar: each line is desugared into a \code{>>=} that threads the state from one
+line into the next (\cref{app:calculus} gives the desugaring in full). The three
+monad laws are what make that sugar \emph{sound}---they are the guarantee that
+rearranging the block in the ways the laws permit changes nothing about what it
+computes. They hold for the \code{Solve} monad of \cref{ch:monad} exactly as they
+hold for every monad.
+
+\begin{theorem}[The three monad laws]
+\label{thm:monad}
+For all values \code{a}, recipes \code{m}, and recipe-valued functions \code{f},
+\code{g}:
+\begin{align}
+  \textsf{return}\ a \,\texttt{>>=}\, f
+    &\;=\; f\ a
+    & \text{(left identity)} \label{eq:leftid}\\[2pt]
+  m \,\texttt{>>=}\, \textsf{return}
+    &\;=\; m
+    & \text{(right identity)} \label{eq:rightid}\\[2pt]
+  (m \,\texttt{>>=}\, f) \,\texttt{>>=}\, g
+    &\;=\; m \,\texttt{>>=}\, (\lambda x.\, f\ x \,\texttt{>>=}\, g)
+    & \text{(associativity)} \label{eq:assoc}
+\end{align}
+\end{theorem}
+
+\noindent Take them one at a time, each with the refactor it licenses.
+
+\paragraph{Left identity \eqref{eq:leftid}: \code{return} then bind is just
+substitution.} If you lift a pure value into a recipe with \code{return} and
+immediately feed it to \code{f}, you may as well have called \code{f} on the value
+directly. In \code{do}-notation: a line
+\lstinline[style=l4style]|x <- return a| followed by a use of \code{x} is identical
+to binding \code{x} with a plain \lstinline[style=l4style]|let x = a|. The guarantee:
+\emph{a \code{return} immediately consumed adds nothing}---you may always erase it and
+substitute. This is the law that lets the over-monadifying mistake of
+\cref{ch:monad}'s pitfall be \emph{undone}: a value needlessly wrapped in
+\code{return} and then bound back out collapses to the pure binding it should have
+been.
+
+\paragraph{Right identity \eqref{eq:rightid}: binding into \code{return} is a
+no-op.} If a recipe \code{m} runs and you immediately \code{return} whatever it
+yielded, changing nothing, the trailing \code{return} can be dropped: the result is
+just \code{m}. The guarantee: \emph{a recipe that ends by returning its own result is
+that recipe}. This is what lets a \code{do}-block's final
+\lstinline[style=l4style]|x <- step; return x| be shortened to \code{step}---the
+redundant last line is provably inert.
+
+\paragraph{Associativity \eqref{eq:assoc}: grouping of binds does not matter.} This
+is the load-bearing one. It says that when three recipes run in sequence, it makes no
+difference whether you parenthesize the sequencing as ``(first two) then third'' or
+``first then (last two).'' In \code{do}-notation this is exactly the statement that
+\emph{flattening and splitting \code{do}-blocks is safe}: a block
+
+\begin{lstlisting}[style=l4style]
+do { a <- m; do { b <- f a; g b } }   -- inner do-block nested
+\end{lstlisting}
+
+\noindent computes the same final state and value as the flattened
+
+\begin{lstlisting}[style=l4style]
+do { a <- m; b <- f a; g b }          -- flattened
+\end{lstlisting}
+
+\noindent because the two are \eqref{eq:assoc} read left-to-right and right-to-left.
+The guarantee: \emph{you may regroup, factor out, and inline sub-blocks freely}. When
+\cref{ch:monad} factors a Krylov step's body into a helper recipe and splices it back
+into the loop, associativity is the warrant that the splice changed nothing.
+\Cref{fig:monadlaw} draws this rewrite as a before/after.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: nested do-block =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (0,2.55) {before: nested};
+    \node[draw=simGray!55, fill=simBgGray, rounded corners=4pt, thick,
+          minimum width=42mm, minimum height=34mm] (outer) at (0,0.4) {};
+    \node[anchor=north west, font=\ttfamily\scriptsize] at ($(outer.north west)+(2mm,-2mm)$)
+      {do \{};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(outer.north west)+(4mm,-7mm)$)
+      {a <- m;};
+    \node[draw=simBlue!60, fill=simBgBlue, rounded corners=3pt, thick,
+          minimum width=30mm, minimum height=15mm] (inner) at (0.6,-0.55) {};
+    \node[anchor=north west, font=\ttfamily\scriptsize] at ($(inner.north west)+(1.5mm,-1.5mm)$)
+      {do \{};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(inner.north west)+(3.5mm,-6mm)$)
+      {b <- f a;};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(inner.north west)+(3.5mm,-10mm)$)
+      {g b \} \}};
+  \end{scope}
+  % ===== arrow =====
+  \node[font=\large, text=simRust] (arr) at (3.3,0.4) {$\equiv$};
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (3.3,-0.55)
+    {assoc.\\\eqref{eq:assoc}};
+  % ===== RIGHT: flattened =====
+  \begin{scope}[xshift=6.6cm]
+    \node[font=\small\bfseries, text=simGreen] at (0,2.55) {after: flattened};
+    \node[draw=simGreen!60, fill=simBgGreen, rounded corners=4pt, thick,
+          minimum width=42mm, minimum height=34mm] (flat) at (0,0.4) {};
+    \node[anchor=north west, font=\ttfamily\scriptsize] at ($(flat.north west)+(2mm,-2mm)$)
+      {do \{};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(flat.north west)+(4mm,-8mm)$)
+      {a <- m;};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(flat.north west)+(4mm,-14mm)$)
+      {b <- f a;};
+    \node[anchor=west, font=\ttfamily\scriptsize] at ($(flat.north west)+(4mm,-20mm)$)
+      {g b \}};
+  \end{scope}
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (3.3,-2.4)
+    {same threaded state, same yielded value};
+\end{tikzpicture}
+\caption[A monad law as a \texttt{do}-block rewrite]{Associativity \eqref{eq:assoc}
+read as a \code{do}-block refactor. The nested block on the left---an inner
+\code{do} spliced into an outer one---computes exactly the same final state and
+yielded value as the flattened block on the right. The two are the two
+parenthesizations of \eqref{eq:assoc}: \lstinline[style=l4style]|(m >>= f) >>= g|
+versus \lstinline[style=l4style]|m >>= (\x -> f x >>= g)|. Because the law holds, you
+may flatten, factor, and inline sub-blocks at will; the threading the
+\code{do}-notation hides is rearranged but its net effect is invariant. This is the
+formal license behind every ``pull this step out into a helper'' refactor in
+\cref{ch:monad}.}
+\label{fig:monadlaw}
+\end{figure}
+
+\begin{notationbox}
+The three laws are stated as \emph{equalities} here, but in \cref{app:calculus} they
+appear as left-to-right \emph{reduction rules} (the arrow $\to$). The direction
+matters for an evaluator---reduction always moves left to right---but for
+\emph{refactoring} both directions are sound, because the relation is an equality.
+When this appendix writes a law with \code{=} or $=$ you may rewrite either way; when
+\cref{app:calculus} writes the same fact with $\to$ it is fixing the evaluation
+direction. Same fact, two uses.
+\end{notationbox}
+
+\section{The state-effect laws}
+\label{sec:cstate}
+
+The monad laws of \cref{sec:cmonad} hold for \emph{every} monad; they know nothing of
+state. The \code{Solve} monad adds three state primitives---\code{get}, \code{put},
+\code{modify}---and these obey their own small algebra, the rules for how reads and
+writes of the threaded \code{SimState} interact. This algebra is what lets you
+simplify a chain of state operations into fewer, clearer ones, and it is the formal
+content behind \cref{ch:monad}'s claim that \code{modify} is the one honest verb for
+a state change.
+
+\begin{lemma}[The \texttt{get}/\texttt{put}/\texttt{modify} algebra]
+\label{lem:state}
+Writing \lstinline[style=l4style]|do {...}| for sequencing and $f, g$ for pure
+\code{SimState -> SimState} functions:
+\begin{align}
+  \textsf{modify}\ f
+    &\;=\; \textsf{do}\ \{\, s \leftarrow \textsf{get};\ \textsf{put}\ (f\ s) \,\}
+    & \text{(\code{modify} \emph{is} get-apply-put)} \label{eq:modifydef}\\[2pt]
+  \textsf{modify}\ (f \circ g)
+    &\;=\; \textsf{do}\ \{\, \textsf{modify}\ g;\ \textsf{modify}\ f \,\}
+    & \text{(\code{modify} fusion)} \label{eq:modifyfuse}\\[2pt]
+  \textsf{do}\ \{\, s \leftarrow \textsf{get};\ \textsf{put}\ s \,\}
+    &\;=\; \textsf{return}\ ()
+    & \text{(get-then-put is inert)} \label{eq:getput}\\[2pt]
+  \textsf{do}\ \{\, \textsf{put}\ s_1;\ \textsf{put}\ s_2 \,\}
+    &\;=\; \textsf{put}\ s_2
+    & \text{(a later \code{put} wins)} \label{eq:putput}\\[2pt]
+  \textsf{do}\ \{\, \textsf{put}\ s;\ \textsf{get} \,\}
+    &\;=\; \textsf{do}\ \{\, \textsf{put}\ s;\ \textsf{return}\ s \,\}
+    & \text{(get after put sees the put)} \label{eq:putget}
+\end{align}
+\end{lemma}
+
+\noindent These five are the complete working algebra; everything else follows by
+combining them with the monad laws. Read each as a rewrite you are permitted.
+
+\paragraph{\code{modify} is get-apply-put \eqref{eq:modifydef}.} This is the
+\emph{definition} of \code{modify}, promoted to a law because it justifies both
+expansions: any \code{modify} may be unfolded into an explicit get/apply/put, and---
+read backwards---any get/apply/put triple may be \emph{folded} into a single
+\code{modify}. The backward direction is the useful one: it is how three lines of
+state plumbing collapse into the one named verb that, per \cref{ch:monad}, makes the
+change stand out. \Cref{ch:monad}'s preference for \code{modify} over \code{put} is
+this law's left-hand side being more honest than its right.
+
+\paragraph{\code{modify} fusion \eqref{eq:modifyfuse}.} Two consecutive
+\code{modify}s are one \code{modify} by the composed function. The guarantee:
+\emph{adjacent state updates merge}. If a step bumps the counter and then, later in
+the same block, records a residual---two \code{modify}s---they may be fused into a
+single \code{modify} that does both, or, read the other way, one fat \code{modify}
+may be split into stages for clarity. Note the order: \eqref{eq:modifyfuse} fuses to
+$f \circ g$ with \code{g} applied \emph{first} (it ran first), so the composition
+reads right-to-left exactly as function composition does. Getting this order backward
+is a classic slip---which is why we write it out.
+
+\paragraph{Get-then-put is inert \eqref{eq:getput}.} Reading the state and writing
+back exactly what you read changes nothing: it equals \code{return ()}. The
+guarantee: \emph{a read followed by an identity write can be deleted}. This is the
+state-effect analog of the monad's right identity \eqref{eq:rightid}, and it is the
+law that catches a particular dead-code shape---a refactor that left behind a
+\lstinline[style=l4style]|s <- get; put s| with no change in between is doing nothing
+and may be removed.
+
+\paragraph{A later \code{put} wins \eqref{eq:putput}.} Two \code{put}s in a row: the
+first is overwritten wholesale, so only the second survives. The guarantee:
+\emph{a write with no intervening read is dead}. If two \code{put}s sit adjacent with
+nothing reading the state between them, the first is pure overhead. (Contrast
+\code{modify}: two \code{modify}s do \emph{not} collapse to the last one---each reads
+the state the previous wrote, so they compose \eqref{eq:modifyfuse} rather than
+overwrite. The difference is exactly that \code{modify} reads and \code{put} does
+not, which is the algebra's whole texture.)
+
+\paragraph{Get after put sees the put \eqref{eq:putget}.} If you \code{put} a state
+and then \code{get}, the \code{get} yields exactly what you just \code{put}---reads
+observe the most recent write. The guarantee: \emph{state is consistent within a
+block}; there is no stale-read hazard once the monad threads for you. This is the law
+that formalizes the line-by-line trace of \cref{ch:monad}'s walked \code{do}-block,
+where the second \code{get} saw the \code{modify}'d state, not the original.
+
+\Cref{fig:state} draws the four interaction laws \eqref{eq:modifyfuse}--\eqref{eq:putget}
+as a small interaction table: what each adjacent pair of primitives simplifies to.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % header row
+  \node[font=\scriptsize\bfseries, text=simGray] at (0,0) {\emph{then} $\downarrow$ / \emph{first} $\rightarrow$};
+  \node[opbox, minimum width=16mm] (hg) at (2.2,0) {\code{get}};
+  \node[opbox, minimum width=16mm] (hp) at (4.4,0) {\code{put s'}};
+  \node[opbox, minimum width=16mm] (hm) at (6.6,0) {\code{modify g}};
+  % row 1: get
+  \node[opbox, minimum width=16mm] (rg) at (0,-1.0) {\code{get}};
+  \node[font=\scriptsize, align=center] at (2.2,-1.0) {(idempotent\\read)};
+  \node[font=\scriptsize, text=simRust, align=center] at (4.4,-1.0) {yields \code{s'}\\\eqref{eq:putget}};
+  \node[font=\scriptsize, align=center] at (6.6,-1.0) {yields \code{g s}};
+  % row 2: put s
+  \node[opbox, minimum width=16mm] (rp) at (0,-2.2) {\code{put s}};
+  \node[font=\scriptsize, align=center] at (2.2,-2.2) {read then\\overwrite};
+  \node[font=\scriptsize, text=simRust, align=center] at (4.4,-2.2) {\code{put s}\\\eqref{eq:putput}};
+  \node[font=\scriptsize, align=center] at (6.6,-2.2) {\code{put (g s)}};
+  % row 3: modify f
+  \node[opbox, minimum width=16mm] (rm) at (0,-3.4) {\code{modify f}};
+  \node[font=\scriptsize, align=center] at (2.2,-3.4) {read then\\\code{f}};
+  \node[font=\scriptsize, align=center] at (4.4,-3.4) {ignores \code{s'}};
+  \node[font=\scriptsize, text=simRust, align=center] at (6.6,-3.4) {\code{modify}\\$(f\!\circ\! g)$ \eqref{eq:modifyfuse}};
+  % separators
+  \draw[simGray!40] (-1.4,-0.5) -- (7.6,-0.5);
+  \draw[simGray!40] (1.1,0.4) -- (1.1,-4.0);
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (3,-4.4)
+    {rust cells are the simplification laws of \cref{lem:state};
+     \emph{first} primitive runs, \emph{then} the second};
+\end{tikzpicture}
+\caption[The state-effect algebra]{The \code{get}/\code{put}/\code{modify}
+interaction table. Each cell shows what the pair ``run the column primitive, then the
+row primitive'' simplifies to. The rust cells are the named laws of
+\cref{lem:state}: a \code{get} after a \code{put} yields the put value
+\eqref{eq:putget}; a \code{put} after a \code{put} discards the first \eqref{eq:putput};
+a \code{modify} after a \code{modify} fuses to the composed function
+\eqref{eq:modifyfuse}. The asymmetry between \code{put} (overwrites, so an earlier
+one dies) and \code{modify} (reads first, so they compose) is the whole point of the
+algebra---and the reason \cref{ch:monad} prefers \code{modify}, the verb that names
+its change.}
+\label{fig:state}
+\end{figure}
+
+\begin{pitfall}
+The \code{put}/\code{put} law \eqref{eq:putput} and the \code{modify}/\code{modify}
+law \eqref{eq:modifyfuse} look symmetric and are not. Two \code{put}s collapse to the
+\emph{last} one---the first is dead. Two \code{modify}s collapse to a
+\emph{composition}---neither is dead, because the second \code{modify} reads the state
+the first produced. Mistaking one for the other is a real bug: ``simplifying'' two
+adjacent \code{modify}s by keeping only the second \emph{drops the first's effect
+entirely}. Before collapsing adjacent state writes, ask whether the second
+\emph{reads} the state---if it is a \code{modify}, it does, and you must compose, not
+discard.
+\end{pitfall}
+
+\section{The algebraic operator laws}
+\label{sec:coplaws}
+
+We turn from the monad to the tensor primitives it threads. These are the equational
+laws of the data-algebra verbs of \cref{ch:combinators}---the BLAS-style operations a
+solver step calls---and of the matrix-vector apply. They are the rewrites the
+synthesis surface appeals to when arguing that one form of a step computes the same
+tensor as another. Unlike the monad laws, several of these carry a floating-point
+caveat; those are flagged here and indicted fully in \cref{sec:nonlaws}.
+
+\subsection{The scaling and saxpy laws}
+
+\begin{lemma}[\texttt{axpy} corner laws]
+\label{lem:axpy}
+For \lstinline[style=l4style]|axpy a x y = a*x + y| (the two-term
+\code{linear\_combination} of \cref{ch:combinators}):
+\begin{align}
+  \textsf{axpy}\ \alpha\ \vv\ \mathbf{0} &\;=\; \alpha \cdot \vv
+    & \text{(zero accumulator $\Rightarrow$ scale)} \label{eq:axpyzeroacc}\\
+  \textsf{axpy}\ 0\ \vv\ \vy &\;=\; \vy
+    & \text{(zero coefficient $\Rightarrow$ identity)} \label{eq:axpyzerocoeff}
+\end{align}
+\end{lemma}
+
+\noindent These are the two boundary cases of the saxpy. With a zero accumulator the
+add drops away and \code{axpy} is a pure scale \eqref{eq:axpyzeroacc}; with a zero
+coefficient the scaled term drops away and \code{axpy} returns its accumulator
+untouched \eqref{eq:axpyzerocoeff}. The second is the algebraic content of the
+implementation's ``skip the term if its coefficient is zero'' branch, lifted to
+\code{linear\_combination}'s zero-coefficient term-drop. They license the obvious
+peephole simplifications and nothing more.
+
+\subsection{Inner-product laws}
+
+\begin{lemma}[\texttt{dot} and \texttt{inner\_product} laws]
+\label{lem:dot}
+For the Euclidean inner product \lstinline[style=l4style]|dot v w| and its
+operator-weighted generalization
+$\inner{\vx}{\vy}_M = \vx^{\!\top} M \vy$:
+\begin{align}
+  \textsf{dot}\ \vv\ \vw &\;=\; \textsf{dot}\ \vw\ \vv
+    & \text{(symmetry, real case)} \label{eq:dotsym}\\
+  \textsf{dot}\ (\textsf{axpy}\ \alpha\ \vv\ \vw)\ \vx
+    &\;=\; \alpha \cdot \textsf{dot}\ \vv\ \vx + \textsf{dot}\ \vw\ \vx
+    & \text{(bilinearity)} \label{eq:dotbilin}\\
+  \inner{\vx}{\vx}_M &\;\ge\; 0,\quad
+    \inner{\vx}{\vx}_M = 0 \iff \vx = \mathbf{0}
+    & \text{(positive-definiteness, SPD $M$)} \label{eq:dotpd}\\
+  \inner{\vx}{\vy} &\;=\; \overline{\inner{\vy}{\vx}}
+    & \text{(Hermitian symmetry, complex)} \label{eq:dotherm}
+\end{align}
+\end{lemma}
+
+\noindent Symmetry \eqref{eq:dotsym} lets a solver write \code{dot p Ap} or
+\code{dot Ap p} interchangeably. Bilinearity \eqref{eq:dotbilin} is the law that lets
+a step-length computation distribute the inner product over a scaled sum---the
+workhorse of every Krylov derivation. Positive-definiteness \eqref{eq:dotpd} on an
+SPD weight $M$ is the law the norm \code{nrm2} rests its square root on, and the law
+that makes the conjugate-gradient energy norm well-defined (\cref{ch:cg}). In the
+complex case symmetry weakens to Hermitian symmetry \eqref{eq:dotherm}---the inner
+product equals the conjugate of its swap---and the unconjugated bilinear variant
+\code{tdot} loses positive-definiteness entirely (it is \emph{not} PSD; see
+\cref{sec:nonlaws}).
+
+\begin{pitfall}
+Symmetry \eqref{eq:dotsym} is exact in \emph{exact} arithmetic. In floating point,
+\code{dot v w} and \code{dot w v} may differ in the last bit if the two
+accumulations visit operands in a different order---the multiply is commutative but
+the running sum's rounding is order-sensitive. For the symmetric Euclidean dot the
+two orders usually coincide, but do not \emph{rely} on bit-identity across a swap;
+the safe statement is mathematical equality, not bit-equality. This is the
+floating-point caveat of \cref{sec:cfp} in miniature.
+\end{pitfall}
+
+\subsection{Matrix-vector apply laws}
+
+\begin{lemma}[\texttt{matvec} laws]
+\label{lem:matvec}
+For \lstinline[style=l4style]|matvec A v|, the application of a linear operator $A$:
+\begin{align}
+  \textsf{matvec}\ A\ (\alpha\,\vv)
+    &\;=\; \alpha \cdot \textsf{matvec}\ A\ \vv
+    & \text{(homogeneity in the vector)} \label{eq:mvhom}\\
+  \textsf{matvec}\ (A + B)\ \vv
+    &\;=\; \textsf{matvec}\ A\ \vv + \textsf{matvec}\ B\ \vv
+    & \text{(additivity in the operator)} \label{eq:mvadd}\\
+  (\textsf{matvec}\ A) \circ (\textsf{matvec}\ B)
+    &\;=\; \textsf{matvec}\ (A \circ B)
+    & \text{(composition)} \label{eq:mvcomp}\\
+  \textsf{matvec}\ A\ (\alpha\vv + \beta\vw)
+    &\;=\; \alpha\,\textsf{matvec}\ A\ \vv + \beta\,\textsf{matvec}\ A\ \vw
+    & \text{(linearity)} \label{eq:mvlin}
+\end{align}
+\end{lemma}
+
+\noindent Homogeneity \eqref{eq:mvhom} and additivity-in-the-operator \eqref{eq:mvadd}
+combine into full linearity \eqref{eq:mvlin}: a \code{matvec} distributes over a
+linear combination of its vector argument and pulls scalars out. The
+composition law \eqref{eq:mvcomp} is the one with teeth in this book---it says that
+applying $B$ then $A$ equals applying the single fused operator $A \circ B$, which is
+exactly the algebraic license for the assembled-operator-product forms of the driven
+analysis (\cref{ch:combinators} writes the frequency operator
+$\mathsf{A}(\omega) = \mathsf{K} + i\omega\,\mathsf{C} - \omega^2\mathsf{M}$ as one
+\code{linear\_combination} of operators, justified by \eqref{eq:mvadd}). Additivity
+in the operator is also what lets the driven operator be \emph{assembled} as a sum
+rather than applied term by term.
+
+\subsection{The combinator structural laws}
+
+The data-algebra combinators of \cref{ch:combinators} carry structural laws that
+organize their whole family. These are restated here as the reference catalogue; the
+chapter derives them.
+
+\begin{theorem}[\texttt{linear\_combination} is a monoid homomorphism]
+\label{thm:lincomb}
+\code{linear\_combination} carries the monoid of term-lists under concatenation to
+the monoid of tensors under addition:
+\begin{align}
+  \textsf{linear\_combination}\ [\,] &\;=\; \mathbf{0}
+    & \text{(empty list $\mapsto$ unit)} \label{eq:lcempty}\\
+  \textsf{linear\_combination}\ (a \mathbin{+\!\!+} b)
+    &\;=\; \textsf{linear\_combination}\ a + \textsf{linear\_combination}\ b
+    & \text{(concatenation-homomorphism)} \label{eq:lcconcat}\\
+  \textsf{linear\_combination}\ ((\kappa a, t):\mathit{rest})
+    &\;=\; \textsf{linear\_combination}\ ((a, \kappa t):\mathit{rest})
+    & \text{(scalar absorption)} \label{eq:lcabsorb}\\
+  \textsf{linear\_combination}\ ((0, t):\mathit{rest})
+    &\;=\; \textsf{linear\_combination}\ \mathit{rest}
+    & \text{(zero-term drop)} \label{eq:lcdrop}
+\end{align}
+\end{theorem}
+
+\noindent The concatenation-homomorphism \eqref{eq:lcconcat} is the structural fact
+of \cref{ch:combinators}: it is what makes the four fixed-arity BLAS routines
+(\code{scal}, \code{axpy}, \code{axpby}, \code{axpbypcz}) \emph{one} combinator,
+since a longer term-list is the concatenation of shorter ones. The empty list maps to
+the zero tensor \eqref{eq:lcempty}; a scalar slides freely between coefficient and
+tensor \eqref{eq:lcabsorb}; a zero-coefficient term drops out \eqref{eq:lcdrop}. Over
+an \emph{exact} field the sum is also permutation-invariant---but that last one is a
+floating-point caveat, deferred to \cref{sec:nonlaws} as the load-bearing non-law it
+becomes under IEEE-754.
+
+\begin{theorem}[\texttt{inner\_product} structural laws]
+\label{thm:ip}
+\code{inner\_product} is the scalar-producing dual: a monoid homomorphism from
+shape-concatenated tensors to scalar addition, bilinear in its arguments.
+\begin{align}
+  \textsf{inner\_product}\ (\vx_1 \mathbin{+\!\!+} \vx_2)\ (\vy_1 \mathbin{+\!\!+} \vy_2)
+    &\;=\; \textsf{inner\_product}\ \vx_1\ \vy_1 + \textsf{inner\_product}\ \vx_2\ \vy_2
+    \label{eq:ipsplit}\\
+  \textsf{inner\_product}\ \mathbf{0}\ \vy
+    &\;=\; \textsf{inner\_product}\ \vx\ \mathbf{0} \;=\; 0
+    \label{eq:ipzero}
+\end{align}
+\end{theorem}
+
+\noindent The split-additivity \eqref{eq:ipsplit} is the law that licenses blocked
+and parallel evaluation of an inner product: split the operands, reduce the pieces
+independently, add the partial sums. It is the formal twin of
+\code{linear\_combination}'s concatenation law, only collapsing to a scalar rather
+than a tensor. \Cref{fig:catalogue} gathers all of \cref{sec:coplaws} into a single
+reference table.
+
+\begin{figure}[t]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}p{0.26\textwidth} p{0.40\textwidth} p{0.24\textwidth}@{}}
+\toprule
+\textbf{Operator} & \textbf{Law} & \textbf{Guarantees} \\
+\midrule
+\code{axpy} &
+  $\textsf{axpy}\ \alpha\ \vv\ \mathbf{0} = \alpha\vv$;\ \
+  $\textsf{axpy}\ 0\ \vv\ \vy = \vy$ &
+  peephole drop of a dead scale/add \\
+\code{dot} &
+  $\textsf{dot}\ \vv\ \vw = \textsf{dot}\ \vw\ \vv$ (symmetry) &
+  operand order free (math, not bits) \\
+\code{dot} &
+  $\textsf{dot}\,(\textsf{axpy}\,\alpha\,\vv\,\vw)\,\vx
+   = \alpha\,\textsf{dot}\,\vv\,\vx + \textsf{dot}\,\vw\,\vx$ &
+  distribute over scaled sums \\
+\code{matvec} &
+  $\textsf{matvec}\,A\,(\alpha\vv) = \alpha\,\textsf{matvec}\,A\,\vv$ &
+  pull scalars through apply \\
+\code{matvec} &
+  $\textsf{matvec}\,(A{+}B)\,\vv = \textsf{matvec}\,A\,\vv + \textsf{matvec}\,B\,\vv$ &
+  assemble operator as a sum \\
+\code{matvec} &
+  $(\textsf{matvec}\,A)\!\circ\!(\textsf{matvec}\,B) = \textsf{matvec}\,(A\!\circ\! B)$ &
+  fuse two applies into one \\
+\code{linear\_combination} &
+  $\textsf{lc}\,(a {+}\mkern-3mu{+}\, b) = \textsf{lc}\,a + \textsf{lc}\,b$ &
+  split / chunk / reorder the sum (exact) \\
+\code{inner\_product} &
+  $\textsf{ip}\,(\vx_1{+}\mkern-3mu{+}\vx_2)\,(\vy_1{+}\mkern-3mu{+}\vy_2)
+   = \textsf{ip}\,\vx_1\,\vy_1 + \textsf{ip}\,\vx_2\,\vy_2$ &
+  blocked / parallel reduction (exact) \\
+\bottomrule
+\end{tabular}
+\caption[The operator-law catalogue]{The algebraic operator laws of
+\cref{sec:coplaws} as a reference table. Each row gives an operator, an equational
+law, and the rewrite it permits. The two combinator homomorphism laws
+(\code{linear\_combination}, \code{inner\_product}) are marked ``exact''---they hold
+over an idealized field but become floating-point caveats once the reduction order
+is fixed, the subject of \cref{sec:nonlaws} and \cref{app:numerics}. The
+\code{matvec} composition law is the one with the most downstream leverage: it is the
+algebraic license for assembling and fusing operators in the driven analysis.}
+\label{fig:catalogue}
+\end{figure}
+
+\section{The laws that do \emph{not} hold}
+\label{sec:nonlaws}
+
+We arrive at the appendix's most valuable content. The laws above tell you which
+rewrites are safe. This section tells you which \emph{plausible} rewrites are
+\emph{unsafe}---the ones that resemble a law closely enough to tempt a refactor, but
+fail, and fail silently. Each is stated as the false equation it is, with the reason
+it fails and the concrete damage assuming it would do. They are grouped by the
+operator they tempt you to mishandle.
+
+\subsection{Non-laws of \texttt{iterate\_while}}
+\label{sec:nlloop}
+
+The loop combinator of \cref{ch:fold} carries four traps, all variations on ``treat
+the loop as if it were an ordinary algebraic object.''
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[Predicate hoisting is invalid.] One might hope to hoist the loop predicate
+  out of the iteration---test it once, then run the body unconditionally:
+  \begin{lstlisting}[style=l4style]
+iterate_while a p f  =/=  if p a then (repeat f forever) else stop   -- WRONG
+  \end{lstlisting}
+  This is false. The predicate is re-evaluated on \emph{every} iteration, not once at
+  entry. Hoisting it converts a bounded loop into an unbounded one driven by the
+  \emph{initial} predicate value---if \code{p a} is true at entry, the hoisted form
+  runs forever, because nothing re-tests it. \textbf{What breaks:} a solver that was
+  converging in fifty steps now never terminates; the bug is a hang, not a wrong
+  number, and it surfaces only on inputs where the predicate was initially true.
+  \item[Loop fusion across iterations is invalid.] Two \code{iterate\_while}s in
+  sequence are \emph{not} one \code{iterate\_while} with a merged predicate:
+  \begin{lstlisting}[style=l4style]
+(iterate_while a p1 f) then (iterate_while _ p2 f)  =/=  iterate_while a (p1 || p2) f
+  \end{lstlisting}
+  except in the special case where the two predicates agree at the handoff state.
+  The two-phase fold's trajectory is the concatenation \code{traj1 ++ traj2} with the
+  second phase \emph{restarting} from the first phase's final state; the flattened
+  single fold is one continuous trajectory under one predicate. \textbf{What breaks:}
+  this is precisely why GMRES is written as an \emph{outer} restart loop wrapped
+  around an \emph{inner} \code{iterate\_while} (\cref{ch:gmres}), not as one flat
+  loop---the restart \emph{is} the phase boundary, and fusing it away discards the
+  restart's basis reset. Merging the two loops silently changes the algorithm from
+  restarted GMRES to a single un-restarted Krylov method with a different convergence
+  and memory profile.
+  \item[\code{while} and \code{do-while} are not interchangeable.] The book's
+  \code{iterate\_while} tests the predicate \emph{before} the body (a \code{while});
+  the variant that tests \emph{after} (a \code{do-while}, which always runs the body
+  at least once) is a \emph{different combinator}:
+  \begin{lstlisting}[style=l4style]
+iterate_while a p f  =/=  iterate_while_post a p f   -- differ when p a is false at entry
+  \end{lstlisting}
+  They disagree exactly when the predicate is false at entry: the \code{while} runs
+  zero steps and returns \code{a}; the \code{do-while} runs one step anyway.
+  \textbf{What breaks:} swapping one for the other off-by-ones the iteration count and,
+  for a loop entered already-converged, performs one spurious step on a state that
+  should have been returned untouched.
+  \item[No identity element.] There is no carry \code{a\_id} for which
+  \code{iterate\_while a\_id p f} is a unit for all \code{p}, \code{f}. The loop is a
+  \emph{fold}, not a monoid operation; folds do not have a unit in the carry.
+  \textbf{What breaks:} any refactor that tries to ``initialize the loop with a
+  neutral state'' and expects it to be inert is resting on a structure that is not
+  there.
+\end{description}
+
+\subsection{Non-laws of \texttt{krylov\_step}}
+\label{sec:nlkrylov}
+
+The Krylov step is the richest source of non-laws, because it \emph{looks} like a
+composition of well-behaved linear primitives and is not---its scalar updates involve
+divisions and its convergence flag a comparison, and those destroy the linearity and
+composability the primitives individually enjoy. Each non-law below is a property the
+\emph{primitives} have that the \emph{step} does not.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The primitive sequence does not commute.] The five primitive groups of a
+  step---operator apply, auxiliary, iterate-update, scalar-update, output-readout---
+  cannot be reordered. The dataflow is rigid: \code{apply} produces $\vw$, the
+  \code{axpy} reads it, the \code{dot} reads it. \textbf{What breaks:} reorder the
+  apply past the \code{dot} that consumes its output and you read uninitialized or
+  stale data; the result is not a different valid ordering, it is wrong.
+  \cref{fig:noncommute} traces two orderings of a reduction to bit-different results.
+  \item[No fold-merge / associativity.] Folding a Krylov step over predicate $p_1$
+  and then over $p_2$ is \emph{not} folding over a merged predicate
+  \lstinline[style=l4style]|p1 || p2|. The inner fold's per-step outputs are invisible
+  to the outer fold, and convergence predicates that depend on monotonic-loss
+  properties do not compose. \textbf{What breaks:} the same restart-flattening hazard
+  as the loop's, now at the step level---it is why restart logic is an outer loop
+  (\cref{ch:gmres}), not a flattened single fold.
+  \item[No identity element.] There is no Krylov state \code{K\_id} with
+  \lstinline[style=l4style]|krylov_step op K_id = pure { krylov: K_id, ... }|. The
+  tempting candidate---a zero step length $\alpha = 0$---is not identity but
+  \emph{breakdown}: in CG, $\alpha = 0$ is a division-by-zero-adjacent degeneracy, not
+  a no-op. \textbf{What breaks:} treating a stalled step as an identity hides a
+  breakdown the solver must detect and report.
+  \item[No linearity in any argument.] The step is \emph{not} linear in its state:
+  \[
+    \textsf{krylov\_step}\ op\ (\alpha K_1 + \beta K_2)
+      \;\neq\; \alpha\,\textsf{krylov\_step}\ op\ K_1
+             + \beta\,\textsf{krylov\_step}\ op\ K_2.
+  \]
+  It is built from linear primitives, but their composition with \code{dot} and the
+  scalar \emph{divisions} of the coefficient updates ($\alpha = r\!\cdot\! r / p\!\cdot\! Ap$)
+  is non-linear, and the convergence comparison is not even continuous.
+  \textbf{What breaks:} any attempt to ``superpose'' two solves into one by linearity
+  computes nonsense; the step is an affine-ish iteration, not a linear map.
+  \item[Bit-non-determinism across orthogonalization variants.] Switching the
+  orthogonalization scheme---modified Gram--Schmidt (MGS), classical (CGS), or
+  twice-iterated (CGS2)---produces \emph{mathematically equivalent} but
+  \emph{bit-distinct} trajectories. \textbf{What breaks:} a regression test that pins
+  exact bits will fail across a variant switch even though the math is unchanged; this
+  is a load-bearing numerical choice (\cref{ch:bigidea}'s transparent-versus-load-bearing
+  distinction), not a free refactor.
+  \item[Form-A / Form-B equivalence is \emph{not} a monad-law rewrite.] The
+  first-iteration-unrolled Form B of a Krylov step produces
+  iteration-for-iteration-identical trajectories to the rolled Form A---but the two
+  are \emph{not} related by the monad laws of \cref{sec:cmonad}. The rotation between
+  them is a \emph{structural} rewrite (it drops a state field and threads a closure
+  argument), not a $\beta$-reduction or a \code{>>=}-associativity step.
+  \textbf{What breaks:} citing ``the monad laws'' to justify the unrolling is a
+  category error; the equivalence holds, but it must be argued structurally, and a
+  tool that only knows the monad laws cannot verify it.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== ordering A =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (0,2.45) {ordering A};
+    \node[data, minimum width=11mm] (a0) at (-1.4,1.5) {$c_1$};
+    \node[opbox, minimum width=9mm] (aA) at (0.2,1.5) {$+$};
+    \node[data, minimum width=11mm] (a1) at (1.8,1.5) {$c_2$};
+    \draw[flow] (a0)--(aA); \draw[flow] (a1)--(aA);
+    \node[opbox, minimum width=9mm] (aB) at (0.2,0.4) {$+$};
+    \node[data, minimum width=11mm] (a2) at (1.8,0.4) {$c_3$};
+    \draw[flow] (aA)--(aB); \draw[flow] (a2)--(aB);
+    \node[product, minimum width=22mm] (ar) at (0.2,-0.7)
+      {$(c_1\!\oplus\! c_2)\!\oplus\! c_3$};
+    \draw[flow] (aB)--(ar);
+    \node[font=\scriptsize\ttfamily, text=simRust] at (0.2,-1.5) {= 1.0000003};
+  \end{scope}
+  \draw[simGray!50, thick] (3.3,-1.8) -- (3.3,2.6);
+  % ===== ordering B =====
+  \begin{scope}[xshift=6.6cm]
+    \node[font=\small\bfseries, text=simGreen] at (0,2.45) {ordering B};
+    \node[data, minimum width=11mm] (b0) at (-1.4,1.5) {$c_2$};
+    \node[opbox, minimum width=9mm] (bA) at (0.2,1.5) {$+$};
+    \node[data, minimum width=11mm] (b1) at (1.8,1.5) {$c_3$};
+    \draw[flow] (b0)--(bA); \draw[flow] (b1)--(bA);
+    \node[opbox, minimum width=9mm] (bB) at (0.2,0.4) {$+$};
+    \node[data, minimum width=11mm] (b2) at (1.8,0.4) {$c_1$};
+    \draw[flow] (bA)--(bB); \draw[flow] (b2)--(bB);
+    \node[product, minimum width=22mm] (br) at (0.2,-0.7)
+      {$c_1\!\oplus\!(c_2\!\oplus\! c_3)$};
+    \draw[flow] (bB)--(br);
+    \node[font=\scriptsize\ttfamily, text=simRust] at (0.2,-1.5) {= 1.0000002};
+  \end{scope}
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (3.3,-2.3)
+    {same operands, same exact sum --- different rounding, different last bit};
+\end{tikzpicture}
+\caption[Non-commutativity of a reduction: two orderings, different last bits]{Two
+reduction orderings of the same three floating-point operands $c_1, c_2, c_3$, with
+$\oplus$ the rounding floating-point add. Ordering A accumulates
+$(c_1 \oplus c_2) \oplus c_3$; ordering B accumulates $c_1 \oplus (c_2 \oplus c_3)$.
+The \emph{exact} sum is identical and order-independent---real addition is
+associative---but each rounding step discards low bits differently, so the two orders
+return results that differ in their last bit (the schematic values
+\code{1.0000003} versus \code{1.0000002}). This is why \code{dot}, \code{nrm2}, and
+\code{linear\_combination} are \emph{not} bit-associative: the reduction tree is part
+of the algorithm, not a free choice (\cref{sec:cfp}, \cref{app:numerics}).}
+\label{fig:noncommute}
+\end{figure}
+
+\subsection{Floating-point non-laws of the reductions}
+\label{sec:cfp}
+
+The most consequential non-laws in the entire book are the ones that hold in
+mathematics and fail in floating point. The reduction verbs---\code{dot},
+\code{nrm2}, \code{inner\_product}, and the summation inside
+\code{linear\_combination}---are over an \emph{exact} field associative and
+commutative, so the catalogue of \cref{sec:coplaws} stated their split and
+permutation laws as exact. Under IEEE-754 those laws become \emph{caveats}.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[Reductions are not bit-associative.] Floating-point $\oplus$ is not
+  associative: $(a \oplus b) \oplus c \neq a \oplus (b \oplus c)$ in general, because
+  each step rounds. So the value of \code{dot v w} or
+  \lstinline[style=l4style]|linear_combination pairs| \emph{depends on the order in
+  which the partial sums are accumulated}---the reduction tree. The mathematical value
+  is order-agnostic; the computed value is not. \cref{fig:noncommute} is this fact in
+  three operands.
+  \item[Permutation-invariance of \code{linear\_combination} \eqref{eq:lcconcat} is
+  exact-only.] Reordering the term list leaves the \emph{exact} sum unchanged but
+  perturbs the rounding. The framework therefore pins the left-to-right
+  \code{foldl} order as \emph{canonical} and treats any reordering as a load-bearing
+  numerical change, not a free rewrite.
+  \item[Split-additivity of \code{inner\_product} \eqref{eq:ipsplit} licenses blocked
+  evaluation only up to rounding.] Splitting the operands and adding the partial
+  inner products gives the \emph{exact} answer but a \emph{bit-different} one from the
+  unsplit reduction, because the partial-sum tree differs.
+  \item[Cauchy--Schwarz can fail by ULPs.] $\abs{\inner{\vx}{\vy}} \le \norm{\vx}\norm{\vy}$
+  holds mathematically but can be violated by unit-in-last-place amounts in floating
+  point, because the two sides are reduced by different trees.
+\end{description}
+
+\textbf{What breaks if you assume these are exact laws:} bit-reproducibility. A
+solver refactored to ``reorder the reduction for cache locality'' or ``split the dot
+product across two threads and add the halves'' computes a \emph{mathematically
+equal} but \emph{bit-different} residual. For a single step that is invisible; over
+thousands of iterations the bit-difference compounds through the convergence
+trajectory, and two builds that should be identical now disagree on iteration counts
+and final digits. This is the precise mechanism by which \emph{a refactor that looks
+valid silently changes the last bits}, and it is the reason the book classifies
+reduction order as a load-bearing numerical trick (\cref{ch:bigidea}) rather than a
+transparent one. The full treatment---error bounds, compensated summation, the cost
+of pinning a tree---is \cref{app:numerics}.
+
+\begin{keyidea}
+The floating-point non-laws are the sharpest edge in this appendix. An exact-field
+law (associativity of $+$, permutation-invariance of a sum, Cauchy--Schwarz) is
+\emph{true in mathematics and false in the machine}. Assuming the exact law when
+refactoring a reduction does not produce a wrong answer you can see---it produces a
+\emph{bit-different} answer that is mathematically correct and reproducibly wrong, and
+the divergence only becomes visible after it has compounded through a long iteration.
+Reduction order is part of the algorithm. Treat \code{dot}, \code{nrm2}, and the
+\code{linear\_combination} sum as having a \emph{pinned tree}, not a free one, whenever
+bit-reproducibility matters (\cref{app:numerics}).
+\end{keyidea}
+
+\section{Law versus non-law: the reference card}
+\label{sec:ccard}
+
+\Cref{fig:lawcard} is the two-column summary the rest of this appendix exists to
+support: on the left, the rewrites you \emph{can} apply; on the right, the
+look-alikes you \emph{cannot}. Consult it before any refactor of solver code.
+
+\begin{figure}[t]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}p{0.46\textwidth} p{0.46\textwidth}@{}}
+\toprule
+\textbf{You CAN rewrite\ \ (laws)} & \textbf{You CANNOT rewrite\ \ (non-laws)} \\
+\midrule
+flatten / split / inline \code{do}-blocks \eqref{eq:assoc} &
+  hoist a loop predicate out of \code{iterate\_while} \\
+drop a \code{return} immediately consumed \eqref{eq:leftid} &
+  fuse two sequential loops into one merged-predicate loop \\
+fold get-apply-put into one \code{modify} \eqref{eq:modifydef} &
+  swap \code{while} for \code{do-while} \\
+fuse two adjacent \code{modify}s to $f\!\circ\! g$ \eqref{eq:modifyfuse} &
+  collapse two \code{modify}s to the last one (that is a \code{put} law) \\
+delete an inert get-then-put \eqref{eq:getput} &
+  reorder the primitive sequence inside a \code{krylov\_step} \\
+distribute \code{dot} over a scaled sum \eqref{eq:dotbilin} &
+  treat $\alpha=0$ as a step identity (it is breakdown) \\
+fuse two \code{matvec}s into one \eqref{eq:mvcomp} &
+  superpose two Krylov solves by ``linearity'' \\
+split a \code{linear\_combination} / \code{inner\_product} \emph{exactly} &
+  reorder a reduction and expect \emph{bit}-identity \\
+\bottomrule
+\end{tabular}
+\caption[Law versus non-law reference card]{The two-column reference card. The
+left column lists the safe rewrites of \cref{sec:cmonad}--\cref{sec:coplaws}, each
+keyed to its law; the right column lists the look-alike rewrites of
+\cref{sec:nonlaws} that are \emph{not} laws. The pairing is deliberate: each
+right-column entry resembles a left-column one closely enough to tempt the
+substitution. The distinction between fusing two \code{modify}s (a law,
+left) and collapsing two writes to the last (a \code{put} law misapplied to
+\code{modify}, right) is the kind of near-miss this card exists to catch. When a
+refactor is not on the left, assume it is on the right until proven otherwise.}
+\label{fig:lawcard}
+\end{figure}
+
+\summarysection
+This appendix is the reference catalogue of the rewrites the calculus licenses, in
+two halves. The \emph{monad laws}---left identity \eqref{eq:leftid}, right identity
+\eqref{eq:rightid}, associativity \eqref{eq:assoc}---govern \code{>>=} and
+\code{return} and make \code{do}-block refactoring sound: you may erase a consumed
+\code{return}, drop a trailing one, and flatten, split, or inline sub-blocks freely
+(\cref{sec:cmonad}). The \emph{state-effect laws} \eqref{eq:modifydef}--\eqref{eq:putget}
+are the algebra of \code{get}/\code{put}/\code{modify}: \code{modify} is get-apply-put,
+adjacent \code{modify}s fuse to a composition, a get-then-put is inert, a later
+\code{put} wins, and a get after a put sees the put---with the load-bearing asymmetry
+that \code{put}s overwrite (so an earlier one dies) while \code{modify}s read first
+(so they compose, not collapse) (\cref{sec:cstate}). The \emph{operator laws}
+(\cref{sec:coplaws}) are the equational reference for the tensor primitives:
+\code{axpy} corner cases, \code{dot} symmetry and bilinearity, \code{matvec}
+linearity and composition, and the combinator homomorphisms that make
+\code{linear\_combination} and \code{inner\_product} their families' entries. The
+second half---the \emph{non-laws} (\cref{sec:nonlaws})---is the load-bearing content:
+predicate hoisting and loop fusion are invalid; \code{while} and \code{do-while}
+differ; a Krylov step does not commute, merge, have an identity, or stay linear, and
+its Form-A/Form-B equivalence is structural, not a monad-law rewrite; and---sharpest
+of all---the reductions are \emph{not} bit-associative, so reordering a \code{dot} or
+a \code{linear\_combination} sum is a load-bearing numerical change, not a free one
+(\cref{sec:cfp}). The reference card of \cref{sec:ccard} pairs each safe rewrite with
+its dangerous look-alike. The governing lesson is the one the \cref{sec:cread} key
+idea states and \cref{sec:cfp} sharpens: \textbf{the non-laws are as important as the
+laws, because they are why a refactor that looks valid can silently change the last
+bits.}
+
+\furtherreading
+The monad laws and the \code{get}/\code{put}/\code{modify} algebra are standard
+functional-programming material; Wadler's tutorial derives them from first principles
+and is the readable canonical source for why they make stateful-looking pure code
+sound to refactor~\citep{wadler1995monads}, while the precise desugaring of
+\code{do}-notation into \code{>>=}---on which the associativity law's
+\code{do}-block reading rests---is documented in the language report Peyton Jones
+edits~\citep{peytonjones2003}. The floating-point non-laws of \cref{sec:cfp}---the
+non-associativity of summation and its consequences for iterative solvers---are
+treated at length in Saad's standard reference on iterative methods, which is also
+the home of the Krylov convergence theory the step's non-linearity and
+non-composability (\cref{sec:nlkrylov}) ultimately rest on~\citep{saad2003}. The
+reduction-order error analysis those non-laws demand is the subject of the companion
+\cref{app:numerics}; the formal reduction rules these equational laws sit atop are in
+\cref{app:calculus}.

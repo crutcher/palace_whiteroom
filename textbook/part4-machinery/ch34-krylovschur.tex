@@ -1,0 +1,1091 @@
+\chapter{Lanczos, Arnoldi, and Krylov--Schur}
+\label{ch:krylovschur}
+
+\chapterorient{The previous chapter posed the eigenproblem and handed its solve to
+an opaque library: ``assemble the operators once and call \code{EPSSolve}.'' This
+chapter opens that box. Inside is one of the most elegant constructions in numerical
+linear algebra---a way to find a handful of a giant matrix's eigenvalues without ever
+forming, or even looking at, the whole of it. The idea has three moving parts, and we
+take them in order. First, \emph{Rayleigh--Ritz}: project the operator onto a small
+Krylov subspace and read approximate eigenvalues off the tiny projected matrix; the
+extreme eigenvalues come out first and best. Second, the \emph{restart problem}: the
+subspace must stay small, but a naive restart throws away the good approximations you
+worked to find. Third, \emph{thick-restart Krylov--Schur}: the elegant fix that keeps
+the directions worth keeping and discards the rest, compressing the basis while
+preserving its Krylov structure. We assemble these on top of the Arnoldi and Lanczos
+recurrences of \cref{ch:orthog}, fit the inner shift-invert solve of
+\cref{ch:eigenvalues} inside each step, and arrive at the full eigen-solve
+stack---the exact loop that SLEPc and ARPACK run on Palace's behalf. The black box of
+\cref{ch:eigenvalues} turns out to be code we could have written ourselves.}
+
+% local helper: a Ritz value symbol used throughout (theta), already covered by
+% standard math; no new macros needed. The basis matrix V_m uses \mat{V}.
+
+\section{The setting: too big to factor, too many to want}
+\label{sec:kssetting}
+
+The eigenproblem of \cref{ch:eigenvalues} is the generalized system
+\[
+  \mat{K}\vx \;=\; \lambda\,\mat{M}\vx,
+\]
+with $\mat{K}$ and $\mat{M}$ the stiffness and mass operators assembled from the mesh.
+Two facts about this problem shape everything that follows, and both are facts of
+\emph{scale}. First, $\mat{K}$ and $\mat{M}$ are enormous---a fine mesh produces
+millions of unknowns---and sparse, so we will never form a dense factorization of
+either, let alone of the pair. We are allowed only to \emph{apply} the operators to
+vectors (\cref{ch:matrixfree}) and to solve linear systems with them
+(\cref{ch:multigrid}). Second, we do not \emph{want} all the eigenvalues. A cavity has
+millions of resonant modes, but the engineer cares about the lowest dozen---the
+fundamental and its first few overtones. We want a handful of eigenvalues near a target,
+not the whole spectrum.
+
+These two facts rule out the textbook eigenvalue algorithms. The QR
+algorithm---the workhorse for small dense matrices---computes \emph{all} the
+eigenvalues and needs the matrix in dense form; it is hopeless here on both counts. What
+we need is a method that touches $\mat{K}$ and $\mat{M}$ only through matrix-vector
+products and inner linear solves, and that spends its effort on the few eigenvalues we
+asked for. That method is \emph{Krylov subspace projection}, and its practical form is
+the subject of this chapter.
+
+\begin{keyidea}
+The eigenproblems of this book are large, sparse, and selective: millions of unknowns,
+access only by operator-apply and linear-solve, but only a handful of wanted
+eigenvalues near a target. This rules out dense methods that compute the whole spectrum.
+The remedy is \emph{Rayleigh--Ritz projection onto a small Krylov subspace}: a small
+projected eigenproblem yields the extremal eigenpairs, and \emph{thick-restart} keeps
+the good ones while holding the subspace small. The entire algorithm uses $\mat{K}$ and
+$\mat{M}$ only through the operator-apply and linear-solve we already have.
+\end{keyidea}
+
+The plan of attack inverts the difficulty exactly. We cannot work with the big operator,
+so we project it onto a small subspace where we \emph{can} work with it---small enough
+to hand to the dense QR algorithm. We cannot afford a huge subspace, so we keep it small
+by restarting. And we want the eigenvalues near a target, not the extremes, so we feed
+the iteration the shift-inverted operator of \cref{ch:eigenvalues}, which turns ``near
+the target'' into ``extreme.'' Three subspace tricks, layered: projection, restart,
+spectral transform. We build them in that order.
+
+\section{Rayleigh--Ritz: a small projected eigenproblem}
+\label{sec:rayleighritz}
+
+Start with the first trick and the simplest version of it: no restart, no spectral
+transform, just projection. Suppose we have built---by Arnoldi or Lanczos
+(\cref{ch:orthog})---an orthonormal basis $\vq_1, \dots, \vq_m$ for the Krylov subspace
+$\mathcal{K}_m(\mat{A}, \vv)$, stacked into the tall thin matrix
+$\mat{V}_m = [\,\vq_1 \mid \cdots \mid \vq_m\,]$ with $\mat{V}_m^{\!\top}\mat{V}_m =
+\mat{I}_m$. (For now read $\mat{A}$ as the operator whose eigenvalues we want; in the
+eigenmode driver it will be the shift-inverted operator of \cref{sec:shiftinvert}.) The
+question Rayleigh--Ritz answers is: \emph{what is the best approximation to $\mat{A}$'s
+eigenpairs that we can extract from this subspace alone}?
+
+\subsection{The projected operator}
+
+We cannot diagonalize $\mat{A}$---it is too big. But we \emph{can} ask how $\mat{A}$
+acts \emph{within} the subspace $\mathcal{K}_m$, by projecting its action down onto the
+basis. The projected operator is the $m \times m$ matrix
+\[
+  \mat{T}_m \;=\; \mat{V}_m^{\!\top}\,\mat{A}\,\mat{V}_m,
+\]
+the restriction of $\mat{A}$ to the subspace, expressed in the orthonormal basis. Its
+entries are $(\mat{T}_m)_{ij} = \inner{\mat{A}\vq_j}{\vq_i}$---exactly the
+orthogonalization coefficients the Arnoldi recurrence already computed and stored
+(\cref{ch:orthog}). So $\mat{T}_m$ \emph{is the Hessenberg matrix} $\bar{\mat{H}}_m$
+(its leading $m\times m$ block), produced as a free by-product of building the basis. For
+symmetric $\mat{A}$ it is the \emph{tridiagonal} matrix of Lanczos. Either way, $\mat{T}_m$
+is small---$m$ is a few dozen, not a few million---and dense, so we hand it to the QR
+algorithm and get \emph{all} of its eigenpairs cheaply.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % ===== big operator A =====
+  \draw[thick, fill=simBgGray] (-0.2,-1.6) rectangle (2.0,1.6);
+  \node[font=\small\bfseries, text=simInk] at (0.9,1.95) {$\mat{A}$};
+  \node[font=\scriptsize, text=simGray] at (0.9,0.2) {$N\times N$};
+  \node[font=\scriptsize, text=simGray] at (0.9,-0.2) {sparse, huge};
+  % sparse dots
+  \foreach \p in {(0.1,1.2),(0.6,0.9),(1.3,1.4),(1.7,0.5),(0.3,-0.5),(1.0,-1.1),(1.6,-0.8),(0.5,-1.3),(1.4,-0.1)}{
+    \fill[simBlue!55] \p circle (1.2pt);}
+  % projection arrow
+  \draw[flow, simViolet, very thick] (2.3,0) -- (3.6,0)
+    node[midway, above, font=\scriptsize, text=simViolet, align=center]
+      {$\mat{V}_m^{\!\top}(\cdot)\mat{V}_m$\\project onto $\mathcal{K}_m$};
+  % ===== small projected T_m =====
+  \draw[thick, fill=simBgBlue] (3.9,-0.7) rectangle (5.3,0.7);
+  \node[font=\small\bfseries, text=simBlue] at (4.6,1.0) {$\mat{T}_m$};
+  \node[font=\scriptsize, text=simGray] at (4.6,-1.05) {$m\times m$, dense};
+  % tridiagonal hint
+  \foreach \r in {0,1,2}{\foreach \c in {0,1,2}{
+    \pgfmathtruncatemacro\d{abs(\r-\c)}
+    \ifnum\d<2 \fill[simBlue!60] (4.0+\c*0.42,0.5-\r*0.42) circle (1.6pt)\fi;}}
+  % QR arrow
+  \draw[flow, simRust, very thick] (5.6,0) -- (6.9,0)
+    node[midway, above, font=\scriptsize, text=simRust, align=center]
+      {dense QR\\(cheap)};
+  % ===== Ritz pairs =====
+  \node[product, align=left, text width=30mm] at (8.5,0)
+    {Ritz values\\ $\theta_1,\dots,\theta_m$\\[2pt] Ritz vectors\\ $\mat{V}_m\vs_i$};
+  \node[font=\scriptsize\itshape, text=simGreen, align=center, text width=42mm]
+    at (5.0,-2.25)
+    {the extreme $\theta_i$ approximate $\mat{A}$'s extreme eigenvalues---first and best};
+\end{tikzpicture}
+\caption[Rayleigh--Ritz projection]{The Rayleigh--Ritz idea in one picture. The huge
+sparse operator $\mat{A}$ (left) is projected onto the small Krylov subspace
+$\mathcal{K}_m$ spanned by the orthonormal basis $\mat{V}_m$, producing the tiny
+\emph{projected operator} $\mat{T}_m = \mat{V}_m^{\!\top}\mat{A}\mat{V}_m$
+(centre)---which is exactly the Hessenberg/tridiagonal matrix the Arnoldi/Lanczos
+recurrence already filled (\cref{ch:orthog}). Because $\mat{T}_m$ is small and dense, the
+classical dense QR algorithm extracts \emph{all} its eigenpairs $(\theta_i, \vs_i)$
+cheaply. The \emph{Ritz values} $\theta_i$ and \emph{Ritz vectors} $\mat{V}_m\vs_i$
+(right) are the subspace's best approximations to $\mat{A}$'s eigenpairs---and crucially,
+the \emph{extreme} ones converge first and most accurately. We never diagonalize
+$\mat{A}$; we diagonalize its shadow on a cleverly chosen small subspace.}
+\label{fig:rayleighritz}
+\end{figure}
+
+\subsection{Ritz values and Ritz vectors}
+
+Let $(\theta_i, \vs_i)$ be an eigenpair of the small matrix $\mat{T}_m$, so
+$\mat{T}_m\vs_i = \theta_i\vs_i$ with $\vs_i \in \Real^m$. The scalar $\theta_i$ is a
+\emph{Ritz value}, and the vector $\mat{V}_m\vs_i \in \Real^N$---the small eigenvector
+$\vs_i$ lifted back into the full space through the basis---is the corresponding
+\emph{Ritz vector}. \Cref{fig:rayleighritz} traces the whole pipeline.
+
+\begin{definition}[Ritz pairs]
+\label{def:ritz}
+Given an orthonormal basis $\mat{V}_m$ of a subspace and the projected operator
+$\mat{T}_m = \mat{V}_m^{\!\top}\mat{A}\mat{V}_m$, let $\mat{T}_m\vs_i = \theta_i\vs_i$.
+The pair $(\theta_i,\, \mat{V}_m\vs_i)$ is a \emph{Ritz pair}: $\theta_i$ is the
+\emph{Ritz value} and $\vx_i := \mat{V}_m\vs_i$ the \emph{Ritz vector}. Ritz pairs are
+the subspace's approximations to the eigenpairs of $\mat{A}$; in exact arithmetic, when
+$\mathcal{K}_m$ contains a true eigenvector, the corresponding Ritz pair is that
+eigenpair exactly.
+\end{definition}
+
+The claim that earns the construction its keep is this: the Ritz values approximate the
+eigenvalues of $\mat{A}$, and they approximate the \emph{extremal} ones---the largest
+and smallest---first and best. Why the extremes? The reason is the same effect that made
+the power basis collapse toward the dominant eigenvector (\cref{ch:orthog}), now turned
+to advantage. The Krylov subspace $\mathcal{K}_m(\mat{A}, \vv) =
+\operatorname{span}\{\vv, \mat{A}\vv, \dots, \mat{A}^{m-1}\vv\}$ is exactly the set of
+vectors $p(\mat{A})\vv$ for polynomials $p$ of degree $< m$. Expand the starting vector
+in $\mat{A}$'s eigenbasis, $\vv = \sum_k c_k\vu_k$; then $p(\mat{A})\vv = \sum_k
+c_k\,p(\lambda_k)\vu_k$. The subspace can therefore reach any combination of eigenvectors
+that some degree-$(m{-}1)$ polynomial, evaluated at the eigenvalues, can produce. And a
+polynomial of modest degree can take a large value at one extreme eigenvalue while
+staying small at all the interior ones---the interior eigenvalues are crowded together,
+the extremes stick out. So the subspace captures the extreme eigenvectors with a
+low-degree polynomial (small $m$), while the interior ones need a high-degree polynomial
+that separates neighbours (large $m$). This is the polynomial-approximation view, and it
+is why the extremes come first.
+
+\begin{keyidea}
+The Krylov subspace $\mathcal{K}_m(\mat{A},\vv)$ is the span of $\{p(\mat{A})\vv : \deg
+p < m\}$. A low-degree polynomial can pick out an \emph{extreme} eigenvalue---one that
+sticks out from the rest---while a high-degree one is needed to resolve \emph{interior}
+eigenvalues that are crowded together. So Rayleigh--Ritz on a small Krylov subspace
+captures the extremal eigenpairs first and most accurately, and reaches the interior
+ones only slowly. This is precisely why the eigenmode driver uses the \emph{shift-invert}
+spectral transform of \cref{ch:eigenvalues}: it remaps the wanted interior eigenvalues
+to the extremes, where Krylov projection is fast (\cref{sec:shiftinvert}).
+\end{keyidea}
+
+There is a cleaner way to see ``best approximation'' that the polynomial picture only
+gestures at. Among all scalars $\theta$ and all unit vectors $\vx$ drawn from the
+subspace, the Ritz values are the stationary values of the \emph{Rayleigh quotient}
+$\rho(\vx) = \inner{\mat{A}\vx}{\vx} / \inner{\vx}{\vx}$ restricted to $\mathcal{K}_m$.
+For symmetric $\mat{A}$ the Rayleigh quotient's global maximum and minimum over \emph{all
+of $\Real^N$} are the largest and smallest eigenvalues (the Courant--Fischer min-max
+theorem); restricting the search to the subspace $\mathcal{K}_m$ gives the best bound the
+subspace can offer, and the extreme Ritz values are exactly that best bound. The largest
+Ritz value is a \emph{lower} bound on the largest eigenvalue, the smallest Ritz value an
+\emph{upper} bound on the smallest---the Ritz values bracket the spectrum from inside and
+tighten as the subspace grows.
+
+\subsection{The cheap convergence test}
+
+A Ritz pair is an \emph{approximate} eigenpair. We need to know how good it is---and the
+beautiful fact, the one that makes the whole method practical, is that we can measure its
+quality \emph{without ever forming the Ritz vector or applying $\mat{A}$ to it}. The cost
+of the convergence test is essentially zero.
+
+The natural quality measure is the eigen-residual: if $(\theta_i, \vx_i)$ with
+$\vx_i = \mat{V}_m\vs_i$ were a true eigenpair, then $\mat{A}\vx_i - \theta_i\vx_i$ would
+vanish. So the residual norm $\norm{\mat{A}\vx_i - \theta_i\vx_i}$ measures how far off it
+is. Forming this directly would cost a matrix-vector product with $\mat{A}$ on the full
+vector $\vx_i$---not free. But the Arnoldi relation $\mat{A}\mat{V}_m = \mat{V}_{m+1}
+\bar{\mat{H}}_m$ of \cref{ch:orthog} collapses it to something we can read off the small
+data we already have. Substitute $\vx_i = \mat{V}_m\vs_i$ and use the relation:
+\[
+  \mat{A}\vx_i - \theta_i\vx_i
+    = \mat{A}\mat{V}_m\vs_i - \theta_i\mat{V}_m\vs_i
+    = \mat{V}_{m+1}\bar{\mat{H}}_m\vs_i - \theta_i\mat{V}_m\vs_i.
+\]
+Split $\bar{\mat{H}}_m$ into its top $m\times m$ block $\mat{T}_m$ and its single
+sub-diagonal spill-over row, whose only nonzero is $h_{m+1,m}$ in the last column. Since
+$\mat{T}_m\vs_i = \theta_i\vs_i$, the $\mat{T}_m$ part cancels the $\theta_i\mat{V}_m\vs_i$
+term exactly, leaving only the spill-over:
+\[
+  \mat{A}\vx_i - \theta_i\vx_i \;=\; h_{m+1,m}\,(\ve_m^{\!\top}\vs_i)\,\vq_{m+1},
+\]
+where $\ve_m^{\!\top}\vs_i$ is the \emph{last component} of the small eigenvector $\vs_i$
+and $\vq_{m+1}$ is the next (unit) basis vector. Taking norms, and using
+$\norm{\vq_{m+1}} = 1$:
+\[
+  \boxed{\;\norm{\mat{A}\vx_i - \theta_i\vx_i}
+    \;=\; \abs{h_{m+1,m}}\;\abs{\ve_m^{\!\top}\vs_i}\;}
+\]
+The residual norm of a full-size Ritz pair is the product of \emph{two scalars}: the
+sub-diagonal entry $h_{m+1,m}$ (a single number, already computed when the basis was
+extended) and the last component of the tiny eigenvector $\vs_i$ (read directly from the
+QR solve of $\mat{T}_m$). No full-vector operation, no application of $\mat{A}$. The test
+costs nothing.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % H-bar block: T_m on top, spill-over row at bottom
+  \draw[thick, fill=simBgBlue] (0,0) rectangle (2.4,2.4);
+  \node[font=\scriptsize, text=simBlue] at (1.2,1.5) {$\mat{T}_m$};
+  \node[font=\scriptsize, text=simGray] at (1.2,2.05) {(top $m\times m$ block)};
+  % spill-over row
+  \draw[thick, fill=simBgRust] (0,-0.5) rectangle (2.4,0.0);
+  \node[font=\scriptsize, text=simRust] at (1.95,-0.25) {$h_{m+1,m}$};
+  \node[font=\scriptsize, text=simGray] at (0.7,-0.25) {$0\;\cdots\;0$};
+  \node[font=\small, text=simInk] at (1.2,-0.95) {$\bar{\mat{H}}_m$};
+  % eigenvector s_i
+  \draw[thick, fill=simBgGreen] (3.1,0) rectangle (3.55,2.4);
+  \node[font=\scriptsize, text=simGreen] at (3.32,1.5) {$\vs_i$};
+  \draw[thick, fill=simGreen!40] (3.1,0) rectangle (3.55,0.4);
+  \node[font=\scriptsize, text=simGreen, anchor=west] at (3.7,0.2)
+    {last component $\ve_m^{\!\top}\vs_i$};
+  % product = residual
+  \node[opbox, align=center, anchor=west] at (5.6,1.7)
+    {$\norm{\mat{A}\vx_i - \theta_i\vx_i}$\\$=\;\abs{h_{m+1,m}}\,\abs{\ve_m^{\!\top}\vs_i}$};
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (5.6,0.4)
+    {a product of \emph{two scalars}:\\both already computed.\\no full-vector work,\\
+     no apply of $\mat{A}$.};
+  \draw[refedge, simRust] (2.4,-0.25) .. controls (4.0,-0.25) and (5.0,1.0) .. (5.55,1.55);
+  \draw[refedge, simGreen] (3.55,0.2) .. controls (4.6,0.2) and (5.0,1.2) .. (5.55,1.45);
+\end{tikzpicture}
+\caption[The cheap Ritz residual test]{Why the convergence test is free. The eigen-residual
+of a Ritz pair $(\theta_i, \mat{V}_m\vs_i)$ would seem to need a full matrix-vector product
+with $\mat{A}$, but the Arnoldi relation collapses it to a product of two already-computed
+scalars. The Hessenberg matrix $\bar{\mat{H}}_m$ splits into its top block $\mat{T}_m$
+(blue, whose eigenpair is $(\theta_i,\vs_i)$) and a single spill-over row whose only
+nonzero is the sub-diagonal entry $h_{m+1,m}$ (rust). Because $\mat{T}_m\vs_i =
+\theta_i\vs_i$ cancels the projected part exactly, the residual reduces to $h_{m+1,m}$
+times the \emph{last component} $\ve_m^{\!\top}\vs_i$ of the small eigenvector (green)---two
+numbers we already hold. The test $\abs{h_{m+1,m}}\abs{\ve_m^{\!\top}\vs_i} < \texttt{tol}$
+is what the eigensolver checks every step to decide which Ritz pairs have converged.}
+\label{fig:ritzresidual}
+\end{figure}
+
+\begin{notationbox}
+A Ritz pair has \emph{converged} when its cheap residual falls below the requested
+tolerance:
+\[
+  \abs{h_{m+1,m}}\;\abs{\ve_m^{\!\top}\vs_i} \;<\; \texttt{tol}\cdot\abs{\theta_i}
+  \quad\text{(relative)}.
+\]
+Two readings of this formula are worth keeping. First, a Ritz pair converges when the
+\emph{last component} $\ve_m^{\!\top}\vs_i$ of its small eigenvector is tiny---that is,
+when the eigenvector lives almost entirely in the earlier basis vectors and barely
+touches the newest one. Second, the shared factor $h_{m+1,m}$ multiplies \emph{every}
+pair's residual: when the sub-diagonal $h_{m+1,m}$ shrinks toward zero, the basis is
+approaching an \emph{invariant subspace} and \emph{all} the Ritz pairs converge at once.
+A small $h_{m+1,m}$ is the eigensolver's signal that the subspace has locked onto a true
+invariant subspace of $\mat{A}$.
+\end{notationbox}
+
+\subsection{A worked Rayleigh--Ritz}
+
+The whole construction fits on one page of arithmetic. We run Rayleigh--Ritz on a small
+symmetric matrix, watch the Ritz values bracket the spectrum, and apply the cheap test.
+
+\begin{workedexample}{Rayleigh--Ritz on a $4\times4$ symmetric matrix}{rrritz}
+Take the symmetric matrix and unit starting vector
+\[
+  \mat{A} = \begin{psmallmatrix}
+    2 & 1 & 0 & 0\\ 1 & 2 & 1 & 0\\ 0 & 1 & 2 & 1\\ 0 & 0 & 1 & 2
+  \end{psmallmatrix},
+  \qquad
+  \vq_1 = \begin{psmallmatrix} 1\\0\\0\\0 \end{psmallmatrix}.
+\]
+The true eigenvalues of $\mat{A}$ are $2 + 2\cos(k\pi/5)$ for $k=1,2,3,4$, namely
+\[
+  \lambda \;\approx\; \{\,0.382,\; 1.382,\; 2.618,\; 3.618\,\},
+\]
+with extremes $0.382$ and $3.618$. We will build a $3$-dimensional Krylov basis by
+Lanczos, form $\mat{T}_3$, and read its Ritz values---then check how well they bracket the
+extremes.
+
+\smallskip
+\emph{Build the basis (Lanczos, \cref{ch:orthog}).} Step~1:
+$\mat{A}\vq_1 = (2,1,0,0)^{\!\top}$, so $\alpha_1 = \inner{\mat{A}\vq_1}{\vq_1} = 2$ and the
+residual is $\mat{A}\vq_1 - 2\vq_1 = (0,1,0,0)^{\!\top}$, giving $\beta_1 = 1$ and
+$\vq_2 = (0,1,0,0)^{\!\top}$. Step~2: $\mat{A}\vq_2 = (1,2,1,0)^{\!\top}$, so $\alpha_2 = 2$
+and the three-term residual is $\mat{A}\vq_2 - 2\vq_2 - 1\cdot\vq_1 = (0,0,1,0)^{\!\top}$,
+giving $\beta_2 = 1$ and $\vq_3 = (0,0,1,0)^{\!\top}$. The projected operator is the
+tridiagonal
+\[
+  \mat{T}_3 \;=\; \begin{psmallmatrix}
+    \alpha_1 & \beta_1 & 0\\ \beta_1 & \alpha_2 & \beta_2\\ 0 & \beta_2 & \alpha_3
+  \end{psmallmatrix}
+  \;=\; \begin{psmallmatrix} 2 & 1 & 0\\ 1 & 2 & 1\\ 0 & 1 & 2 \end{psmallmatrix},
+\]
+where $\alpha_3 = \inner{\mat{A}\vq_3}{\vq_3} = 2$ completes the diagonal. (We also pick up
+$\beta_3 = \norm{\mat{A}\vq_3 - 2\vq_3 - \vq_2}$; one computes $\mat{A}\vq_3 = (0,1,2,1)^{\!\top}$
+and the residual $(0,0,0,1)^{\!\top}$, so $h_{4,3} = \beta_3 = 1$---the spill-over entry we
+need for the residual test.)
+
+\smallskip
+\emph{Compute the Ritz values.} The eigenvalues of the $3\times3$ $\mat{T}_3$ are
+$2$ and $2 \pm \sqrt2$, i.e.
+\[
+  \theta \;=\; \{\,0.586,\; 2.000,\; 3.414\,\}.
+\]
+Compare to the true spectrum. The extreme Ritz values $0.586$ and $3.414$ bracket the
+true extremes $0.382$ and $3.618$ \emph{from inside}: $0.586 > 0.382$ and $3.414 < 3.618$,
+exactly as the min-max bound promises (the smallest Ritz value over-estimates the smallest
+eigenvalue; the largest under-estimates the largest). With only a $3$-dimensional subspace
+of a $4$-dimensional space, the extremes are already approximated to within about $0.2$,
+while the interior pair is represented by the single middling Ritz value $2.000$.
+
+\smallskip
+\emph{Apply the cheap test.} Take the largest Ritz value $\theta = 3.414$ with eigenvector
+$\vs = \tfrac12(1, \sqrt2, 1)^{\!\top}$ of $\mat{T}_3$ (the standard eigenvector of
+$\mathrm{tridiag}(1;2;1)$). Its last component is $\ve_3^{\!\top}\vs = \tfrac12$. The
+residual of the corresponding full Ritz pair is then, with no further matrix work,
+\[
+  \norm{\mat{A}\vx - \theta\vx} \;=\; \abs{h_{4,3}}\,\abs{\ve_3^{\!\top}\vs}
+    \;=\; 1 \cdot \tfrac12 \;=\; 0.5.
+\]
+This is not yet converged---a residual of $0.5$ is large---which is consistent with the
+Ritz value still being off by $0.2$ from the true eigenvalue. One more Lanczos step (here
+filling the subspace to all of $\Real^4$) would drive $h_{m+1,m}$ to zero and the residual
+with it: at $m = 4 = N$ the subspace is invariant, $h_{5,4} = 0$, and the Ritz values
+\emph{equal} the eigenvalues exactly. The cheap test tracked the convergence the whole way
+without one extra application of $\mat{A}$.
+\end{workedexample}
+
+\Cref{fig:ritzconverge} shows the same story for a larger matrix, where the subspace is
+genuinely smaller than the space: the extreme Ritz values march toward the true extremes as
+the basis grows, fast at the ends and slow in the middle.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12cm, height=7cm,
+  xlabel={basis size $m$},
+  ylabel={Ritz values $\theta_i$ \ (vs.\ true eigenvalues, dashed)},
+  xmin=1, xmax=12, ymin=-0.3, ymax=8.3,
+  grid=both, grid style={simGray!18},
+  legend pos=south east, legend cell align=left,
+  legend style={font=\scriptsize, fill=white, draw=simGray!40},
+  label style={font=\footnotesize}, tick label style={font=\scriptsize},
+]
+% true extreme eigenvalues (dashed reference lines)
+\addplot[simGray, densely dashed, thick, domain=1:12, samples=2] {7.7};
+\addplot[simGray, densely dashed, thick, domain=1:12, samples=2] {0.15};
+\node[font=\scriptsize, text=simGray, anchor=west] at (axis cs:9.2,7.95) {$\lambda_{\max}$};
+\node[font=\scriptsize, text=simGray, anchor=west] at (axis cs:9.2,0.5) {$\lambda_{\min}$};
+% largest Ritz value: converges UP to lambda_max quickly
+\addplot[simRust, very thick, mark=*, mark size=1.3pt] coordinates {
+  (1,4.0)(2,5.6)(3,6.6)(4,7.15)(5,7.45)(6,7.6)(7,7.66)(8,7.69)(9,7.70)(10,7.70)(11,7.70)(12,7.70)};
+\addlegendentry{largest Ritz value $\theta_{\max}$}
+% smallest Ritz value: converges DOWN to lambda_min quickly
+\addplot[simBlue, very thick, mark=square*, mark size=1.3pt] coordinates {
+  (1,4.0)(2,2.3)(3,1.3)(4,0.75)(5,0.45)(6,0.30)(7,0.22)(8,0.18)(9,0.16)(10,0.15)(11,0.15)(12,0.15)};
+\addlegendentry{smallest Ritz value $\theta_{\min}$}
+% an interior Ritz value: converges slowly, wobbles
+\addplot[simGreen, very thick, mark=triangle*, mark size=1.5pt] coordinates {
+  (3,3.1)(4,3.6)(5,3.9)(6,4.0)(7,3.95)(8,3.92)(9,3.9)(10,3.9)(11,3.9)(12,3.9)};
+\addlegendentry{an interior Ritz value (slow)}
+\addplot[simGray, densely dotted, thick, domain=1:12, samples=2] {3.9};
+\end{axis}
+\end{tikzpicture}
+\caption[Ritz values converging to the extremes]{How the Ritz values approach the true
+eigenvalues as the Krylov basis grows---a schematic of the universal behaviour. The
+\emph{extreme} eigenvalues are captured fast: the largest Ritz value (rust) climbs to
+$\lambda_{\max}$ and the smallest (blue) descends to $\lambda_{\min}$ within a handful of
+steps, each approaching its target monotonically from inside the spectrum (the min-max
+bracketing of \cref{sec:rayleighritz}). An \emph{interior} eigenvalue (green) is resolved
+only slowly and non-monotonically, because the subspace must build up a high-degree
+polynomial to separate it from its crowded neighbours. This asymmetry---extremes fast,
+interior slow---is the whole reason the eigenmode driver applies the shift-invert
+transform of \cref{ch:eigenvalues} before iterating: it moves the wanted interior modes to
+the extremes, where this convergence is fast.}
+\label{fig:ritzconverge}
+\end{figure}
+
+\section{The restart problem}
+\label{sec:restart}
+
+Rayleigh--Ritz says: build the basis, project, read the Ritz values. The hidden assumption
+is that we can afford to let the basis grow until the wanted Ritz values converge. For the
+extremes on a well-behaved operator that may take only a few dozen steps---but for a
+clustered spectrum, or many wanted modes, the basis $\mat{V}_m$ can grow to hundreds or
+thousands of columns before convergence. And a growing basis is expensive in two distinct
+ways, plus a third that is worse than expensive.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12cm, height=6.3cm,
+  xlabel={basis size $m$},
+  ylabel={relative cost / loss},
+  ymode=log, ymin=1e-15, ymax=3e3,
+  xmin=0, xmax=200,
+  grid=both, grid style={simGray!18},
+  legend pos=outer north east, legend cell align=left,
+  legend style={font=\scriptsize, fill=white, draw=simGray!40},
+  label style={font=\footnotesize}, tick label style={font=\scriptsize},
+]
+% storage: linear in m
+\addplot[simBlue, very thick, domain=1:200, samples=40] {x};
+\addlegendentry{storage $\sim m$ (vectors held)}
+% orthogonalization cost per step: linear in m; cumulative quadratic. show per-step ~ m
+\addplot[simRust, very thick, domain=1:200, samples=40] {0.5*x};
+\addlegendentry{orthog.\ cost/step $\sim m$}
+% loss of orthogonality (Lanczos): grows, eventually O(1)
+\addplot[simViolet, very thick, domain=1:200, samples=60] {2e-15*exp(0.13*x)};
+\addlegendentry{Lanczos loss-of-orthog.\ $\eta_m$}
+% the O(1) danger line
+\addplot[simGray, densely dashed, thick, domain=0:200, samples=2] {1};
+\node[font=\scriptsize, text=simGray, anchor=west] at (axis cs:2,2.3) {orthogonality lost};
+% the restart cap
+\draw[simGreen, very thick, densely dashed] (axis cs:40,1e-15) -- (axis cs:40,3e3);
+\node[font=\scriptsize\bfseries, text=simGreen, rotate=90, anchor=south]
+  at (axis cs:40,3e-7) {restart here ($m=k_{\max}$)};
+\end{axis}
+\end{tikzpicture}
+\caption[The restart problem]{Why the basis cannot be allowed to grow without bound. As the
+basis size $m$ increases, three costs climb. \emph{Storage} (blue) grows linearly---every
+basis vector is a full field, and a thousand of them may not fit in memory. \emph{Orthogonalization
+cost} (rust): each new Arnoldi column must be orthogonalized against all $m$ previous ones, so
+the per-step cost grows linearly in $m$ and the cumulative cost \emph{quadratically}. Worst of
+all, for Lanczos the \emph{loss of orthogonality} (violet, \cref{ch:orthog}) grows until the
+basis is no longer orthogonal at all (dashed line at $\eta_m \sim 1$), at which point the
+projected $\mat{T}_m$ reports \emph{ghost eigenvalues}---spurious copies of converged
+eigenvalues that are artifacts, not real. The cure is to cap the basis at some $k_{\max}$
+(green) and \emph{restart}---but a naive restart throws away the converged Ritz vectors. The
+art of \cref{sec:thickrestart} is to restart \emph{without} discarding the good directions.}
+\label{fig:restartproblem}
+\end{figure}
+
+\Cref{fig:restartproblem} tabulates the three pressures. The first is \emph{storage}: each
+basis vector $\vq_j$ is a full field of $N$ entries, and $m$ of them occupy $mN$ numbers. At a
+million unknowns, a thousand basis vectors is a billion numbers---gigabytes, possibly more than
+fits in memory. The second is \emph{orthogonalization cost}: Arnoldi orthogonalizes each new
+column against all $m$ previous columns (\cref{ch:orthog}), so step $m$ costs $O(m)$ inner
+products and the whole build costs $O(m^2)$. The basis that took $O(m)$ to store takes $O(m^2)$
+to build. The third pressure is the dangerous one, and it is specific to Lanczos: \emph{loss of
+orthogonality}. The three-term recurrence trusts that its projections against the old basis
+vectors are zero and never re-checks them; in finite precision they are not zero, the error
+compounds, and the basis silently develops near-duplicate directions
+(\cref{ch:orthog}). The projected $\mat{T}_m$ then reports \emph{ghost eigenvalues}---the same
+eigenvalue several times over, spurious copies that a naive solver mistakes for a genuine
+high-multiplicity mode.
+
+So the basis must be capped. Pick a maximum size $k_{\max}$, build up to it, and then---do what,
+exactly? This is the restart problem, and the naive answer is bad.
+
+\begin{pitfall}
+The naive restart \emph{discards the basis and starts over} from a single new vector---chosen,
+say, as the best converged Ritz vector so far, in the hope of steering the next subspace toward
+the wanted modes. This throws away almost everything you computed. The basis $\mat{V}_{k_{\max}}$
+encoded \emph{several} nearly-converged Ritz directions, each the fruit of dozens of operator
+applications and inner solves; collapsing it to one vector keeps at most one of them and forces
+the others to be rediscovered from scratch. Worse, the restart is repeated every cycle, so the
+waste compounds: the method spends most of its operator-applies re-converging directions it had
+already converged and then threw away. A naive-restart eigensolver can be an order of magnitude
+slower than one that restarts intelligently. The fix is to keep \emph{all} the good directions,
+not just one---which is exactly what thick-restart does.
+\end{pitfall}
+
+The tension is now sharp. We must keep the basis small (storage, cost, orthogonality all demand
+it), but we must not throw away the converged and nearly-converged Ritz directions (they are the
+expensive part of the answer). A restart that resolves both---small basis, good directions
+retained---is what we need, and it exists.
+
+\section{Thick-restart and Krylov--Schur}
+\label{sec:thickrestart}
+
+The resolution is due to Stewart, building on the earlier thick-restart Lanczos of Wu and
+Simon: restart from a \emph{small} basis that still spans all the Ritz directions worth keeping.
+Instead of collapsing $\mat{V}_{k_{\max}}$ to a single vector, we compress it to a basis of
+size $k$ (a few more than the number of wanted modes) that retains the $k$ best Ritz directions
+and discards the other $k_{\max} - k$. The trick is to do this compression in a way that
+\emph{preserves the Krylov structure}---so that the next expansion phase is a legitimate Arnoldi
+continuation, not a fresh start.
+
+\subsection{The partial Schur form}
+
+The key is a change of representation. The Arnoldi relation $\mat{A}\mat{V}_m =
+\mat{V}_{m+1}\bar{\mat{H}}_m$ stores the projected operator as a Hessenberg matrix $\mat{T}_m$.
+Krylov--Schur stores it instead as a \emph{partial Schur form}: it computes the Schur
+decomposition $\mat{T}_m = \mat{S}\,\mat{R}\,\mat{S}^{\!\top}$ (with $\mat{R}$ quasi-triangular,
+$\mat{S}$ orthogonal) and \emph{reorders} it so that the wanted Ritz values---the converged and
+promising ones---sit in the leading $k \times k$ block. Transforming the basis by $\mat{S}$,
+$\tilde{\mat{V}}_m = \mat{V}_m\mat{S}$, rotates the orthonormal basis so that its first $k$
+columns span exactly the wanted Ritz directions and the projected operator on them is the clean
+triangular block $\mat{R}_{1:k,1:k}$.
+
+The structural fact that makes this a \emph{restart} rather than just a reordering is that the
+Arnoldi relation survives the transformation in a slightly generalized form. After reordering,
+\[
+  \mat{A}\,\tilde{\mat{V}}_k
+    \;=\; \tilde{\mat{V}}_k\,\mat{R}_{1:k,1:k}
+       \;+\; \vq_{m+1}\,\vb_k^{\!\top},
+\]
+where $\tilde{\mat{V}}_k$ is the first $k$ transformed columns, $\mat{R}_{1:k,1:k}$ the leading
+triangular block, and $\vb_k^{\!\top}$ a short row vector (the transformed spill-over). This is a
+\emph{Krylov--Schur relation}: like the Arnoldi relation it expresses $\mat{A}$'s action on a
+$k$-column basis in terms of that basis plus a single extra direction $\vq_{m+1}$---which means
+we can \emph{continue} the Arnoldi expansion from here, appending new columns by the ordinary
+recurrence, exactly as if $k$ steps had just been taken. The compressed basis is a valid
+launching point for more Arnoldi steps. That is the whole game: compress to size $k$, keeping the
+good directions, in a form from which expansion can resume.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.92]
+  % ===== before: full basis of size k_max =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simInk] at (1.4,3.1) {before restart: size $k_{\max}$};
+    % a row of basis columns, some "good" (green), some "junk" (gray)
+    \foreach \i/\col/\lab in {0/simGreen/g,1/simGreen/g,2/simGreen/g,3/simGray/j,4/simGray/j,5/simGray/j,6/simGray/j}{
+      \draw[thick, fill=\col!25, draw=\col] (\i*0.42,0) rectangle (\i*0.42+0.36,2.4);
+    }
+    \node[font=\scriptsize, text=simGreen] at (0.55,-0.4) {$k$ good Ritz dirs};
+    \node[font=\scriptsize, text=simGray] at (2.3,-0.4) {$k_{\max}-k$ junk};
+    \draw[decorate, decoration={brace, amplitude=4pt}, simGreen] (-0.05,2.55) -- (1.3,2.55);
+    \draw[decorate, decoration={brace, amplitude=4pt}, simGray] (1.32,2.55) -- (2.94,2.55);
+  \end{scope}
+  % ===== arrow: thick-restart compression =====
+  \draw[flow, simViolet, very thick] (3.3,1.2) -- (4.7,1.2)
+    node[midway, above, font=\scriptsize, text=simViolet, align=center]
+      {Schur reorder\\+ truncate};
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (4.0,0.3)
+    {discard junk,\\keep good};
+  % ===== after: compressed basis of size k + 1 spill =====
+  \begin{scope}[xshift=5.2cm]
+    \node[font=\small\bfseries, text=simInk] at (1.0,3.1) {after restart: size $k$};
+    \foreach \i in {0,1,2}{
+      \draw[thick, fill=simGreen!25, draw=simGreen] (\i*0.42,0) rectangle (\i*0.42+0.36,2.4);}
+    % the carried spill-over vector q_{m+1}
+    \draw[thick, fill=simBgRust, draw=simRust] (1.55,0) rectangle (1.91,2.4);
+    \node[font=\scriptsize, text=simRust, rotate=90] at (1.73,1.2) {$\vq_{m+1}$};
+    \node[font=\scriptsize, text=simGreen] at (0.55,-0.4) {$k$ kept dirs};
+    \node[font=\scriptsize, text=simRust] at (1.73,-0.75) {carry};
+    % expansion resumes
+    \draw[flow, simBlue, thick] (2.3,1.2) -- (3.3,1.2)
+      node[midway, above, font=\scriptsize, text=simBlue]{expand};
+    \foreach \i in {0,1}{
+      \draw[thick, fill=simBgBlue, draw=simBlue, densely dashed] (3.5+\i*0.42,0) rectangle (3.5+\i*0.42+0.36,2.4);}
+    \node[font=\scriptsize, text=simBlue] at (3.9,-0.4) {new Arnoldi cols};
+  \end{scope}
+\end{tikzpicture}
+\caption[Thick-restart / Krylov--Schur]{One thick-restart cycle. \emph{Left:} the basis has
+grown to its cap $k_{\max}$; some columns span converged or promising Ritz directions (green,
+the $k$ we want to keep), the rest are exhausted Krylov directions of no further use (grey).
+A naive restart would keep only one green column; thick-restart keeps \emph{all $k$}.
+\emph{Centre:} the compression reorders the Schur form of the projected operator so the wanted
+Ritz values lead, then truncates to the leading $k$ columns---discarding the grey junk while
+retaining every good direction. \emph{Right:} the compressed size-$k$ basis, together with the
+single carried spill-over vector $\vq_{m+1}$ (rust) from the Krylov--Schur relation, is a valid
+Arnoldi launching point: ordinary expansion (blue, dashed) resumes from it, rebuilding toward
+$k_{\max}$ before the next compression. The cycle---expand, extract, lock, compress---repeats
+until the wanted modes converge.}
+\label{fig:thickrestart}
+\end{figure}
+
+\subsection{The restart cycle}
+
+With the partial Schur form in hand, the Krylov--Schur eigensolver is a loop of four stages,
+shown in \cref{fig:thickrestart} and \cref{fig:ksloop}.
+
+\begin{enumerate}
+  \item \textbf{Expand.} From the current basis of size $k$, take Arnoldi (or Lanczos) steps
+  until the basis reaches the cap $k_{\max}$, filling the projected operator's new columns. Each
+  step is one \code{arnoldi\_step} or \code{lanczos\_step} of \cref{ch:orthog}---and, in the
+  eigenmode driver, each contains one inner shift-invert solve (\cref{sec:shiftinvert}).
+  \item \textbf{Extract.} Form the projected operator $\mat{T}_{k_{\max}}$, compute its Schur
+  form, and read the Ritz values and the cheap residuals $\abs{h_{m+1,m}}\abs{\ve_m^{\!\top}\vs_i}$
+  of \cref{sec:rayleighritz}.
+  \item \textbf{Lock.} Mark the Ritz pairs whose residual is below tolerance as
+  \emph{converged}: they are part of the answer and are frozen, no longer to be touched by the
+  iteration. When the locked count reaches the number of requested modes, the loop terminates.
+  \item \textbf{Compress (thick-restart).} Reorder the Schur form so the converged and most
+  promising Ritz values lead, truncate the basis to the leading $k$ columns, carry the single
+  spill-over vector, and return to the Expand stage.
+\end{enumerate}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=9mm]
+  \node[stage, minimum width=22mm] (expand) {\textbf{Expand}\\[1pt]\scriptsize Arnoldi/Lanczos\\\scriptsize to $k_{\max}$};
+  \node[stage, minimum width=22mm, right=18mm of expand] (extract) {\textbf{Extract}\\[1pt]\scriptsize Rayleigh--Ritz\\\scriptsize + cheap residual};
+  \node[stage, minimum width=22mm, right=18mm of extract] (lock) {\textbf{Lock}\\[1pt]\scriptsize freeze converged\\\scriptsize Ritz pairs};
+  \node[stage, minimum width=22mm, below=14mm of extract] (compress) {\textbf{Compress}\\[1pt]\scriptsize Schur reorder\\\scriptsize truncate to $k$};
+  \node[product, right=16mm of lock] (done) {converged\\modes};
+  \draw[flow] (expand) -- (extract);
+  \draw[flow] (extract) -- (lock);
+  \draw[flow] (lock) -- node[above,font=\scriptsize]{all wanted?} (done);
+  \draw[flow] (lock.south) |- node[pos=0.25,right,font=\scriptsize]{not yet} (compress.east);
+  \draw[flow] (compress) -| (expand.south);
+  % inner-solve callout on Expand
+  \node[extern, below=10mm of expand, align=center] (inner)
+    {\scriptsize each step:\\\scriptsize inner shift-invert\\\scriptsize \code{ksp\_solve} (\cref{ch:eigenvalues})};
+  \draw[refedge] (inner.north) -- (expand.south);
+\end{tikzpicture}
+\caption[The Krylov--Schur restart loop]{The four-stage Krylov--Schur cycle, the algorithm
+inside the opaque eigensolver call. \textbf{Expand} the basis by Arnoldi/Lanczos steps up to the
+cap $k_{\max}$; \textbf{extract} the Ritz pairs and their cheap residuals by Rayleigh--Ritz;
+\textbf{lock} the converged pairs (freezing them out of further iteration), and if all requested
+modes are locked, return them as the answer; otherwise \textbf{compress} by thick-restart---reorder
+the Schur form to put the good Ritz directions first, truncate to size $k$, and loop back to
+expand. The dashed callout records the stack: in the eigenmode driver every Expand step contains
+an inner shift-invert linear solve (\cref{sec:shiftinvert}), so the outer loop you see here sits
+atop the inner Krylov solver of \cref{ch:multigrid}. This loop is exactly what SLEPc's
+\code{EPSKRYLOVSCHUR} runs.}
+\label{fig:ksloop}
+\end{figure}
+
+This is the constructive driver that the source spec reconstructs from the firm
+\code{arnoldi\_step} and \code{lanczos\_step} kernels: an outer thick-restart loop over restart
+cycles, wrapping an inner basis-extension loop over basis columns, with a Rayleigh--Ritz
+extraction and a lock-and-compress between cycles. In the calculus of \cref{ch:fold} it is two
+nested \code{iterate\_while} folds---the outer over restart cycles, the inner over basis
+columns---and the body of the inner fold is one Arnoldi/Lanczos step.
+
+\begin{lstlisting}[style=l4style]
+-- the Krylov-Schur driver: outer thick-restart fold over an inner basis-extension fold
+eigsolve_ks :: LinOp -> EigControl -> EigResult
+eigsolve_ks A control =
+  let st0 = seed_basis A control                       -- BV <- [v0 / ||v0||]
+      loop st = let ext      = extend_basis A st        -- INNER: Arnoldi/Lanczos to k_max
+                    (theta, Y) = rayleigh_ritz A ext    -- project + dense QR -> Ritz pairs
+                    locked   = lock_converged ext theta Y control  -- cheap residual test
+                in thick_restart locked theta Y control  -- reorder Schur, truncate to k
+      st_final = iterate_while loop (\st -> not (enough_converged st control)) st0
+  in extract_eigpairs A st_final                        -- lift Ritz vecs, un-transform lambda
+  where
+    -- INNER basis-extension: ncv steps, each ONE arnoldi/lanczos step
+    extend_basis A st =
+      iterate_while (\s -> append_column s (one_step A s)) (\s -> s.j < control.k_max) st
+    one_step A s = if A.hermitian then lanczos_step A s   -- symmetric three-term recurrence
+                                  else arnoldi_step A s    -- full Arnoldi
+\end{lstlisting}
+
+\begin{workedexample}{One thick-restart step, with small numbers}{thickrestart}
+We make the compression concrete on a schematic example. Suppose we have expanded to a basis of
+size $k_{\max} = 6$ and want $2$ eigenvalues, restarting to size $k = 3$ (one extra beyond the
+wanted count, for headroom). The Rayleigh--Ritz extraction on $\mat{T}_6$ returns six Ritz values,
+which we sort by how close they are to the wanted target (here, the largest two), and tag with
+their cheap residuals $r_i = \abs{h_{7,6}}\abs{\ve_6^{\!\top}\vs_i}$:
+\[
+  \begin{array}{c|cccccc}
+    \text{Ritz value } \theta_i & 7.91 & 7.40 & 6.2 & 5.1 & 3.8 & 1.2 \\\hline
+    \text{residual } r_i & 4\!\times\!10^{-9} & 3\!\times\!10^{-4} & 0.2 & 0.5 & 0.7 & 0.9 \\
+    \text{status} & \text{\textbf{locked}} & \text{promising} & \text{keep} & \text{junk} & \text{junk} & \text{junk}
+  \end{array}
+\]
+\emph{Lock.} The first Ritz value $\theta_1 = 7.91$ has residual $4\times10^{-9}$, below the
+tolerance $10^{-8}$: it is \emph{converged} and locked---one of the two wanted modes, now frozen.
+The second, $\theta_2 = 7.40$ at residual $3\times10^{-4}$, is not yet converged but is the next
+wanted mode and converging well: \emph{promising}.
+
+\smallskip
+\emph{Choose what to keep.} We keep $k = 3$ directions: the locked $\theta_1$, the promising
+$\theta_2$, and the next-best $\theta_3 = 6.2$ for headroom (a converging interior direction worth
+continuing). The bottom three Ritz values $\{5.1, 3.8, 1.2\}$---large residuals, far from the
+target---are \emph{junk}: exhausted Krylov directions with nothing left to give. They are discarded.
+
+\smallskip
+\emph{Compress.} Reorder the Schur form of $\mat{T}_6$ so the kept Ritz values
+$\{7.91, 7.40, 6.2\}$ occupy its leading $3\times3$ block, transform the basis
+$\tilde{\mat{V}}_6 = \mat{V}_6\mat{S}$, and truncate to the first $3$ columns
+$\tilde{\mat{V}}_3$. Together with the carried spill-over vector $\vq_7$, these satisfy the
+Krylov--Schur relation $\mat{A}\tilde{\mat{V}}_3 = \tilde{\mat{V}}_3\mat{R}_{1:3} +
+\vq_7\vb_3^{\!\top}$, so the next cycle resumes Arnoldi from a \emph{size-$3$} basis that already
+spans the converged mode, the next mode, and a promising third---none of which had to be
+rediscovered. The basis shrank from $6$ back to $3$, storage and orthogonalization cost reset to
+the floor, and \emph{not one} of the good directions was lost. Contrast the naive restart, which
+would have kept only $\theta_1$ and forced $\theta_2$ and $\theta_3$ to be rebuilt from a single
+vector. That saved rediscovery, multiplied over many cycles, is the entire value of
+thick-restart.
+\end{workedexample}
+
+\section{Lanczos specifics: the symmetric three-term recurrence}
+\label{sec:lanczosspecific}
+
+The eigenmode and boundary-mode analyses pose \emph{symmetric} (or Hermitian) eigenproblems---the
+operators $\mat{K}$ and $\mat{M}$ are symmetric positive definite. For these, the Arnoldi basis
+extension of the previous sections specializes to the \emph{Lanczos} three-term recurrence of
+\cref{ch:orthog}, and the specialization is worth dwelling on because it is both a major economy
+and a major hazard.
+
+\subsection{Why symmetric is cheaper}
+
+Recall from \cref{ch:orthog} the symmetry miracle: when $\mat{A} = \mat{A}^{\!\top}$, the projected
+Hessenberg matrix $\mat{T}_m = \mat{V}_m^{\!\top}\mat{A}\mat{V}_m$ is itself symmetric, and a
+symmetric Hessenberg matrix is \emph{tridiagonal}. So orthogonalizing the new vector
+$\mat{A}\vq_j$ against the basis---which for general Arnoldi means projecting against \emph{all}
+$j$ previous columns---collapses to projecting against just the \emph{two} most recent,
+$\vq_j$ and $\vq_{j-1}$. The projections against $\vq_1, \dots, \vq_{j-2}$ are all exactly zero.
+The step is
+\[
+  \vw \;=\; \mat{A}\vq_j - \alpha_j\vq_j - \beta_{j-1}\vq_{j-1},
+  \qquad
+  \alpha_j = \inner{\mat{A}\vq_j}{\vq_j},
+  \qquad
+  \beta_j = \norm{\vw},
+  \qquad
+  \vq_{j+1} = \frac{\vw}{\beta_j},
+\]
+storing only $\vq_j, \vq_{j-1}$ and producing the tridiagonal entries $(\alpha_j, \beta_j)$
+directly. This is the \code{lanczos\_step} kernel from which the symmetric arm of the eigensolver
+is built:
+
+\begin{lstlisting}[style=l4style]
+-- the symmetric three-term recurrence: O(1) memory per step, only TWO stored vectors
+lanczos_step :: LinOp -> Tensor[$S] -> Tensor[$S] -> Scalar -> (Tensor[$S], Scalar, Scalar)
+lanczos_step A q_j q_prev beta_prev =
+  let u      = apply A q_j                  -- A q_j
+      alpha  = dot u q_j                     -- diagonal coeff alpha_j = <A q_j, q_j>
+      w      = axpby (-alpha) q_j 1 u        -- subtract the q_j component
+      w'     = axpy (-beta_prev) q_prev w    -- subtract the q_{j-1} component (only TWO!)
+      beta   = nrm2 w'                       -- new off-diagonal / normalization beta_j
+      q_next = scal (1/beta) w'
+  in (q_next, alpha, beta)
+\end{lstlisting}
+
+The economy is dramatic. General Arnoldi stores the whole growing basis ($O(m)$ vectors) and
+spends $O(m)$ inner products per step; Lanczos stores \emph{two} vectors and spends a constant
+number of inner products per step, regardless of $m$. For a symmetric problem the per-step cost
+does not grow at all. This is the same short-recurrence economy that gives conjugate gradients its
+efficiency (\cref{ch:cg}): symmetry makes a quantity that would otherwise depend on the entire
+history depend only on the last two steps.
+
+\subsection{The hazard and the reorthogonalization policy}
+
+The economy is bought on credit, and \cref{ch:orthog} showed the bill: the short recurrence is
+short \emph{because} it trusts that the skipped projections are zero, and in finite precision they
+are not. Lanczos never looks at the old basis vectors, so it cannot notice---let alone
+repair---the orthogonality it loses against them. The orthogonality decays (the violet curve of
+\cref{fig:restartproblem}), and the symptom is the \emph{ghost eigenvalue}: the tridiagonal
+$\mat{T}_m$ reports a converged eigenvalue several times over, spurious copies of a real eigenvalue
+that the lost orthogonality manufactured. A naive Lanczos solver returns a multiplicity-three
+eigenvalue that truly has multiplicity one.
+
+The practical eigensolver therefore augments the bare recurrence with a \emph{reorthogonalization
+policy}---a decision about when, and against what, to do the extra orthogonalization the short
+recurrence omits. \Cref{tab:reorthog} lays out the three standard policies and the cost/robustness
+trade each strikes.
+
+\begin{table}[t]
+\centering
+\caption[Lanczos reorthogonalization policies]{The reorthogonalization policies that buy back the
+orthogonality the three-term recurrence loses. \emph{Full} reorthogonalization is the safest and
+most expensive---it re-projects every new vector against the entire stored basis, sacrificing the
+$O(1)$-memory advantage that motivated Lanczos in the first place. \emph{Selective} and
+\emph{partial} reorthogonalization monitor a cheap estimate of the orthogonality loss and
+reorthogonalize only when it crosses a threshold, recovering most of the safety at a fraction of
+the cost. Which policy the solver runs is a central configuration decision; in a thick-restart
+method the restart itself caps the basis size, which bounds the orthogonality loss between restarts
+and makes full reorthogonalization affordable.}
+\label{tab:reorthog}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Policy & When to reorthogonalize & Against & Cost \\
+\midrule
+None (bare) & never & --- & cheapest; ghost eigenvalues \\
+Full & every step & whole stored basis & most robust; $O(m)$/step, $O(m)$ storage \\
+Selective & monitored loss high & converged Ritz vectors only & moderate \\
+Partial & monitored loss $>\sqrt{u}$ & recent basis window & moderate; near-full safety \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{pitfall}
+It is tempting to read ``Lanczos is the cheap symmetric method'' and reach for the bare three-term
+recurrence whenever the operator is symmetric. Do not, for an eigensolver. Without a
+reorthogonalization policy the bare recurrence \emph{will} produce ghost eigenvalues on any
+problem run long enough, and the failure is silent: the solver returns confident, wrong
+multiplicities with no error flag. The three-term recurrence is the right \emph{kernel}, but it is
+not a self-sufficient eigensolver---it must be wrapped in a reorthogonalization policy (and, in
+practice, a restart that caps how far orthogonality can decay between restarts). The source spec
+records exactly this: a firm Lanczos eigensolver ``must pin a reorthogonalization policy; the
+band-3 recurrence alone is not numerically self-sufficient for a converged eigensolve.''
+\end{pitfall}
+
+Thick-restart and reorthogonalization are complementary cures for the same disease. The restart
+caps the basis at $k_{\max}$, which bounds how far orthogonality can decay before the basis is
+compressed and effectively refreshed; reorthogonalization repairs the decay within a single
+expansion phase. Together they make symmetric Krylov--Schur both cheap (short recurrence, small
+basis) and trustworthy (no ghosts)---the combination the eigenmode driver actually runs.
+
+\section{Putting it together: the shift-invert stack}
+\label{sec:shiftinvert}
+
+We have built the eigensolver in the abstract, with $\mat{A}$ standing for ``the operator we
+iterate against.'' In the eigenmode driver, $\mat{A}$ is not the original operator. Recall from
+\cref{sec:rayleighritz} that Krylov projection captures the \emph{extreme} eigenvalues fast and
+the interior ones slowly---but the wanted resonant modes are interior, clustered near a target
+frequency, not at the extremes of the spectrum. Running Krylov--Schur on $\mat{K}\vx = \lambda
+\mat{M}\vx$ directly would converge agonizingly slowly to exactly the eigenvalues we care about.
+
+The remedy is the \emph{shift-invert} spectral transform of \cref{ch:eigenvalues}. Instead of
+iterating against the original pencil, we iterate against
+\[
+  \mat{A} \;=\; (\mat{K} - \sigma\mat{M})^{-1}\mat{M},
+\]
+whose eigenvalues are $1/(\lambda - \sigma)$. This transform turns the eigenvalues $\lambda$ near
+the shift $\sigma$ into the eigenvalues $1/(\lambda - \sigma)$ of \emph{largest magnitude}---the
+extremes. The wanted interior modes become the dominant modes of the transformed operator, and
+Krylov--Schur converges to them fast. After the iteration, each converged Ritz value $\theta$ is
+un-transformed back to an original-problem eigenvalue $\lambda = \sigma + 1/\theta$.
+
+The crucial structural consequence is that \emph{applying the transformed operator $\mat{A}$
+requires an inner linear solve}. There is no matrix $(\mat{K} - \sigma\mat{M})^{-1}$; there is only
+the \emph{action} of solving a linear system with $\mat{K} - \sigma\mat{M}$. So one application of
+$\mat{A}$ to a vector $\vv$ is two stages: first apply $\mat{M}$ (a matrix-vector product), then
+solve $(\mat{K} - \sigma\mat{M})\vy = \mat{M}\vv$ (a full linear solve). That inner solve is the
+\code{ksp\_solve} of \cref{ch:krylov}---a Krylov solver in its own right, preconditioned by the
+multigrid of \cref{ch:multigrid}, applying the matrix-free operator of \cref{ch:matrixfree}. The
+eigensolver's every basis-extension step contains, buried inside its single ``apply $\mat{A}$,'' a
+complete inner Krylov solve.
+
+\begin{lstlisting}[style=l4style]
+-- one application of the shift-inverted operator: an INNER linear solve inside every Arnoldi step
+apply_shift_invert :: EigOp -> Tensor[$S] -> Tensor[$S]
+apply_shift_invert op v =
+  let w = apply_linop op.operand v     -- stage 1: apply M (or K for no transform)
+      y = ksp_solve   op.inv     w     -- stage 2: solve (K - sigma M) y = w  -- INNER Krylov solve!
+  in scale_untransform op y            -- per-backend Higham gamma/delta un-scale
+\end{lstlisting}
+
+This is the full stack, and it is worth seeing all at once. \Cref{fig:eigenstack} draws it: the
+outer Krylov--Schur eigen-iteration owns the basis and the restart; each of its steps applies the
+shift-inverted operator; that application contains an inner Krylov linear solve; the inner solve is
+accelerated by a preconditioner; and the preconditioner, like the operator, is applied
+matrix-free. Five layers, each a chapter of this Part, nested one inside the next.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % nested boxes, outer to inner
+  \draw[thick, fill=simBgGold, rounded corners=3pt] (-0.2,-0.2) rectangle (10.6,5.4);
+  \node[anchor=north west, font=\small\bfseries, text=simGold!60!black] at (0.0,5.3)
+    {\,1.\ Krylov--Schur eigen-iteration\quad\scriptsize(this chapter: basis, restart, Ritz)};
+  \draw[thick, fill=simBgViolet, rounded corners=3pt] (0.3,0.2) rectangle (10.1,4.5);
+  \node[anchor=north west, font=\small\bfseries, text=simViolet] at (0.5,4.4)
+    {\,2.\ shift-invert apply $\;\mat{A}=(\mat{K}-\sigma\mat{M})^{-1}\mat{M}$\quad\scriptsize(\cref{ch:eigenvalues})};
+  \draw[thick, fill=simBgBlue, rounded corners=3pt] (0.8,0.6) rectangle (9.6,3.6);
+  \node[anchor=north west, font=\small\bfseries, text=simBlue] at (1.0,3.5)
+    {\,3.\ inner Krylov solve $\;(\mat{K}-\sigma\mat{M})\vy=\vw$\quad\scriptsize\code{ksp\_solve} (\cref{ch:krylov})};
+  \draw[thick, fill=simBgGreen, rounded corners=3pt] (1.3,1.0) rectangle (9.1,2.7);
+  \node[anchor=north west, font=\small\bfseries, text=simGreen] at (1.5,2.6)
+    {\,4.\ preconditioner $\;\mat{P}^{-1}$\quad\scriptsize geometric multigrid (\cref{ch:multigrid})};
+  \draw[thick, fill=simBgRust, rounded corners=3pt] (1.8,1.4) rectangle (8.6,2.1);
+  \node[anchor=west, font=\small\bfseries, text=simRust] at (2.0,1.75)
+    {\,5.\ matrix-free operator apply $\;\mat{K}\vv,\ \mat{M}\vv$\quad\scriptsize(\cref{ch:matrixfree})};
+\end{tikzpicture}
+\caption[The full eigen-solve stack]{The five nested layers of an eigenmode solve, each a chapter
+of this Part. \textbf{(1)} The outer Krylov--Schur eigen-iteration of this chapter owns the basis,
+the Rayleigh--Ritz extraction, and the thick-restart---the loop SLEPc calls \code{EPSKRYLOVSCHUR}.
+\textbf{(2)} Each basis-extension step applies the shift-inverted operator $\mat{A} = (\mat{K} -
+\sigma\mat{M})^{-1}\mat{M}$ of \cref{ch:eigenvalues}, which remaps the wanted interior modes to the
+fast-converging extremes. \textbf{(3)} Applying that operator requires an inner Krylov linear solve
+$(\mat{K} - \sigma\mat{M})\vy = \vw$---the \code{ksp\_solve} of \cref{ch:krylov}, a solver nested
+inside the eigensolver. \textbf{(4)} That inner solve is accelerated by a preconditioner, the
+geometric multigrid of \cref{ch:multigrid}. \textbf{(5)} And the operator and preconditioner are
+both applied matrix-free (\cref{ch:matrixfree}), never assembled as explicit matrices. The opaque
+``eigenvalue solve'' of \cref{ch:eigenvalues} is this entire tower, and every layer is something we
+have built.}
+\label{fig:eigenstack}
+\end{figure}
+
+\begin{keyidea}
+The eigenmode solve is a five-layer stack: \emph{Krylov--Schur eigen-iteration} (this chapter)
+$\triangleright$ \emph{shift-invert apply} (\cref{ch:eigenvalues}) $\triangleright$ \emph{inner
+Krylov solve} (\cref{ch:krylov}) $\triangleright$ \emph{preconditioner} (\cref{ch:multigrid})
+$\triangleright$ \emph{matrix-free operator apply} (\cref{ch:matrixfree}). The outer eigen-loop is
+what the library owns; the inner linear solve is the \code{ksp\_solve} the rest of this Part built.
+Every basis-extension step of the eigensolver contains one full inner Krylov solve, so the cost of
+an eigenmode analysis is dominated by the inner solves---which is why the preconditioner of
+\cref{ch:multigrid} matters as much to the eigensolver as to any linear solve.
+\end{keyidea}
+
+\section{The library boundary, demystified}
+\label{sec:libraryboundary}
+
+We can now return to the promise of \cref{ch:eigenvalues}: that the eigenmode driver's
+``solve''---the one stage of the whole simulator that was a single call into an opaque library
+rather than a loop we wrote---would turn out to be a loop we could have written ourselves. We have
+now written it. The four-stage cycle of \cref{fig:ksloop}, with the Lanczos or Arnoldi kernel of
+\cref{ch:orthog} at its heart and the shift-invert stack of \cref{fig:eigenstack} inside each step,
+\emph{is} the algorithm that SLEPc's \code{EPSSolve} with the \code{EPSKRYLOVSCHUR} type runs, and
+that ARPACK runs through its reverse-communication \code{naupd}.
+
+The phrase ``reverse communication'' names the only genuinely unusual thing about the library
+boundary, and it is a packaging detail, not an algorithmic one. ARPACK does not call Palace's
+operator; it cannot, because it was compiled with no knowledge of Palace's data structures.
+Instead, the control inverts: Palace calls into ARPACK's \code{naupd} driver, which runs a little
+of the Krylov--Schur loop and then \emph{returns}, setting a flag that says ``I need
+$\mat{A}\vv$ for this vector $\vv$---compute it and call me again.'' Palace computes the matrix-vector
+product (running the entire shift-invert stack of \cref{sec:shiftinvert} to do so) and calls
+\code{naupd} again; the driver resumes where it left off, takes the next step, and returns with the
+next request. The eigen-iteration logic lives entirely inside the library; Palace's loop is a
+dispatcher that services the library's requests for operator applications.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=10mm]
+  % Palace side
+  \node[stage, minimum width=30mm, align=center] (palace)
+    {\textbf{Palace}\\[1pt]\scriptsize dispatcher loop\\\scriptsize + operator applies};
+  % library side
+  \node[extern, minimum width=34mm, minimum height=20mm, right=34mm of palace, align=center] (lib)
+    {\textbf{SLEPc / ARPACK}\\[2pt]\scriptsize \emph{the Krylov--Schur loop}\\\scriptsize basis $\cdot$ restart $\cdot$ Ritz\\[3pt]
+     \scriptsize\itshape (this chapter's\\\scriptsize\itshape algorithm, inside)};
+  % the two reverse-communication arrows
+  \draw[flow, simViolet] (palace.north east) .. controls +(1.0,0.8) and +(-1.0,0.8) .. (lib.north west)
+    node[midway, above, font=\scriptsize, text=simViolet, align=center]{call \code{naupd};\\``take a step''};
+  \draw[backflow] (lib.south west) .. controls +(-1.0,-0.8) and +(1.0,-0.8) .. (palace.south east)
+    node[midway, below, font=\scriptsize, text=simRust, align=center]{return: ``I need\\$\mat{A}\vv$ for this $\vv$''};
+  % the operator-apply that Palace runs to service the request
+  \node[stage, below=12mm of palace, minimum width=30mm, align=center] (apply)
+    {\scriptsize apply $\mat{A}=(\mat{K}{-}\sigma\mat{M})^{-1}\mat{M}$\\\scriptsize (the inner stack)};
+  \draw[flow] (palace.south) -- (apply.north);
+  \draw[flow] (apply.east) -| ([xshift=-3mm]lib.south) node[pos=0.25,below,font=\scriptsize]{$\mat{A}\vv$ back};
+  \node[font=\scriptsize\itshape, text=simGray, align=center, anchor=north] at (lib.south|-apply.south)
+    {the boundary is a\\\emph{packaging} detail,\\not an algorithm};
+\end{tikzpicture}
+\caption[The reverse-communication library boundary]{What the ``opaque library call'' of
+\cref{ch:eigenvalues} actually is. The Krylov--Schur algorithm of this chapter lives inside the
+library (SLEPc or ARPACK, violet box on the right)---but the library cannot call Palace's operator
+directly, because it knows nothing of Palace's data structures. So control inverts by
+\emph{reverse communication}: Palace calls the library driver \code{naupd} to ``take a step''; the
+library advances the eigen-iteration and \emph{returns}, requesting a specific matrix-vector product
+$\mat{A}\vv$; Palace runs the entire inner shift-invert stack (\cref{fig:eigenstack}) to compute it
+and calls back; the library resumes. The algorithm is the loop of \cref{fig:ksloop}; the only thing
+the library boundary adds is this request-and-resume packaging. Open the box and the
+``opaque'' eigensolver is exactly the construction of this chapter.}
+\label{fig:reversecomm}
+\end{figure}
+
+\Cref{fig:reversecomm} draws the dance. The lesson is the one this book returns to again and again:
+a black box is opaque only until you build its contents. The eigensolver looked, in
+\cref{ch:eigenvalues}, like the one stage of the simulator that was irreducibly someone else's
+code---a single library call with no loop of our own. It is not. It is the Rayleigh--Ritz
+projection of \cref{sec:rayleighritz}, restarted by the thick-restart of \cref{sec:thickrestart},
+built on the Arnoldi and Lanczos recurrences of \cref{ch:orthog}, with the shift-invert linear
+solve of \cref{ch:krylov} inside each step. We could write it ourselves; Palace calls the library
+because the library is well-tested and tuned, not because the algorithm is beyond us. The box is
+demystified.
+
+\begin{notationbox}
+\textbf{Why call the library at all, then?} If the algorithm is just this chapter's loop, why not
+write it? Three reasons, none algorithmic. First, \emph{robustness}: SLEPc and ARPACK encode
+decades of hard-won handling of edge cases---breakdowns, clustered eigenvalues, the
+reorthogonalization policies of \cref{sec:lanczosspecific}---that a from-scratch implementation
+would rediscover the hard way. Second, \emph{the spectral-transform plumbing}: the library manages
+the un-transformation $\lambda = \sigma + 1/\theta$, the Higham scaling, and the convergence
+bookkeeping across multiple backends behind one interface. Third, \emph{focus}: Palace's value is in
+the physics and the assembly, not in re-implementing a numerical eigensolver. Calling the library is
+the right engineering choice precisely \emph{because} we understand what it does---we can configure
+it, diagnose it, and trust it, having seen its insides.
+\end{notationbox}
+
+\summarysection
+The opaque eigenvalue solve of \cref{ch:eigenvalues} is the Krylov--Schur algorithm, and this
+chapter built it. \emph{Rayleigh--Ritz projection} takes an orthonormal Krylov basis $\mat{V}_m$
+(from the Arnoldi or Lanczos recurrence of \cref{ch:orthog}), forms the small projected operator
+$\mat{T}_m = \mat{V}_m^{\!\top}\mat{A}\mat{V}_m$---which is exactly the Hessenberg/tridiagonal matrix
+the recurrence already filled---and reads its eigenpairs as \emph{Ritz pairs} $(\theta_i,
+\mat{V}_m\vs_i)$ approximating $\mat{A}$'s eigenpairs, the extremal ones first and best (the
+polynomial / min-max view). The Ritz residual is the cheap product $\abs{h_{m+1,m}}
+\abs{\ve_m^{\!\top}\vs_i}$, a convergence test costing two already-computed scalars. But the basis
+cannot grow without bound---storage and orthogonalization cost climb, and Lanczos loses
+orthogonality and spawns ghost eigenvalues---so the method must \emph{restart}, and a naive restart
+throws away the converged Ritz directions. \emph{Thick-restart Krylov--Schur} (Stewart) is the
+elegant fix: reorder the partial Schur form to put the wanted Ritz values first, truncate the basis
+to a small size $k$ that retains all the good directions, carry one spill-over vector, and resume
+Arnoldi from there---expand, extract, lock, compress, repeat. For symmetric problems the basis
+extension is the Lanczos three-term recurrence ($O(1)$ memory, two stored vectors), economical but
+demanding a reorthogonalization policy to suppress ghosts. In the eigenmode driver the operator
+iterated against is the shift-inverted $(\mat{K} - \sigma\mat{M})^{-1}\mat{M}$ of
+\cref{ch:eigenvalues}, so every basis-extension step contains an inner Krylov solve---the full stack
+is eigen-iteration $\triangleright$ shift-invert apply $\triangleright$ inner \code{ksp\_solve}
+$\triangleright$ preconditioner $\triangleright$ matrix-free operator. SLEPc's \code{EPSKRYLOVSCHUR}
+and ARPACK's reverse-communication \code{naupd} run exactly this loop; the ``opaque library call''
+is a packaging detail around an algorithm we can---and now do---understand fully.
+
+\furtherreading
+The thick-restart Krylov--Schur method is due to Stewart, whose paper~\citep{stewart2001krylovschur}
+introduces the Krylov--Schur relation and the reordering-and-truncation restart that
+\cref{sec:thickrestart} develops; it is the cleanest single source for the algorithm at the heart of
+this chapter, and is the reconstruction the source specification follows. For the broader theory of
+Krylov eigensolvers---Rayleigh--Ritz projection, the convergence of Ritz values, the Lanczos and
+Arnoldi recurrences, reorthogonalization policies, and the ghost-eigenvalue phenomenon---Saad's
+\emph{Numerical Methods for Large Eigenvalue Problems}~\citep{saad2011eig} is the standard graduate
+reference and the natural next step after this chapter. The dense QR algorithm that diagonalizes the
+small projected $\mat{T}_m$, together with the Schur decomposition and its reordering that
+thick-restart relies on, are developed definitively in Golub and Van Loan's \emph{Matrix
+Computations}~\citep{golubvanloan2013}, which also treats the symmetric Lanczos process and its
+finite-precision behaviour in full. Read Stewart for the restart, Saad for the eigensolver theory,
+and Golub and Van Loan for the dense kernels underneath---and keep \cref{ch:eigenvalues}'s
+shift-invert transform in view throughout, since it is what makes Krylov projection converge to the
+interior modes the simulator actually wants.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \emph{(Rayleigh--Ritz by hand.)} Repeat \cref{wex:rrritz} on
+  $\mat{A} = \begin{psmallmatrix} 3 & 1 & 0 & 0\\ 1 & 3 & 1 & 0\\ 0 & 1 & 3 & 1\\ 0 & 0 & 1 & 3
+  \end{psmallmatrix}$ with $\vq_1 = (1,0,0,0)^{\!\top}$. Build $\mat{T}_3$ by Lanczos, compute its
+  three Ritz values, and verify that the extreme Ritz values bracket the true extreme eigenvalues
+  $3 + 2\cos(k\pi/5)$ from inside.
+  \item \emph{(The cheap residual.)} For the largest Ritz pair of \cref{wex:rrritz}, the residual
+  was $\abs{h_{4,3}}\abs{\ve_3^{\!\top}\vs} = 1\cdot\tfrac12$. Derive the formula
+  $\norm{\mat{A}\vx_i - \theta_i\vx_i} = \abs{h_{m+1,m}}\abs{\ve_m^{\!\top}\vs_i}$ from the Arnoldi
+  relation $\mat{A}\mat{V}_m = \mat{V}_{m+1}\bar{\mat{H}}_m$, explaining at each step why the
+  projected part cancels. Why does a small $h_{m+1,m}$ make \emph{every} Ritz pair converge at once?
+  \item \emph{(Why the extremes.)} Using the polynomial picture $\mathcal{K}_m = \{p(\mat{A})\vv :
+  \deg p < m\}$, explain why a degree-$(m{-}1)$ polynomial can isolate an extreme eigenvalue with
+  small $m$ but needs large $m$ to isolate an interior one. What does this predict about the relative
+  convergence speed of the extreme versus interior Ritz values in \cref{fig:ritzconverge}?
+  \item \emph{(The cost of not restarting.)} A basis of size $m$ costs $O(mN)$ storage and
+  $O(m^2 N)$ total orthogonalization work for general Arnoldi. If an eigenproblem needs $m = 500$
+  steps to converge $10$ modes without restart, but thick-restart caps the basis at $k_{\max} = 50$,
+  estimate the ratio of storage and of orthogonalization cost between the two. Which of the three
+  pressures of \cref{fig:restartproblem} does restart relieve, and which does reorthogonalization
+  relieve?
+  \item \emph{(One thick-restart step.)} In \cref{wex:thickrestart} we kept $k = 3$ of $k_{\max} = 6$
+  Ritz directions. Suppose instead we want $4$ modes and restart to $k = 5$. Given Ritz values
+  $\{7.9, 7.4, 6.8, 6.1, 5.0, 1.2\}$ with residuals $\{10^{-9}, 10^{-7}, 10^{-3}, 10^{-2}, 0.4,
+  0.9\}$ and tolerance $10^{-8}$, identify which are locked, which are kept, and which are discarded,
+  and explain why keeping one extra direction beyond the wanted count is worthwhile.
+  \item \emph{(Lanczos ghosts.)} Explain, in terms of the three-term recurrence's skipped
+  projections (\cref{sec:lanczosspecific}), why bare Lanczos produces ghost eigenvalues but bare
+  Arnoldi does not. Which reorthogonalization policy of \cref{tab:reorthog} restores safety at the
+  least cost, and why does thick-restart partially substitute for reorthogonalization?
+  \item \emph{(The shift-invert stack.)} Trace one application of $\mat{A} = (\mat{K} -
+  \sigma\mat{M})^{-1}\mat{M}$ to a vector $\vv$ through all five layers of \cref{fig:eigenstack},
+  naming the chapter that owns each layer. Why is an eigenmode analysis's runtime dominated by the
+  inner \code{ksp\_solve} rather than by the outer eigen-iteration? What does this imply about the
+  payoff of a better preconditioner (\cref{ch:multigrid}) for the eigenmode driver specifically?
+  \item \emph{(Reverse communication.)} Explain why ARPACK uses a reverse-communication interface
+  rather than calling Palace's operator directly, and describe the request-and-resume cycle of
+  \cref{fig:reversecomm}. In what sense is the library boundary a ``packaging detail, not an
+  algorithm''? Give one concrete advantage of calling the library over writing the Krylov--Schur loop
+  from scratch, and one concrete advantage of \emph{understanding} the loop even though you call the
+  library.
+\end{enumerate}

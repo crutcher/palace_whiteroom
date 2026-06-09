@@ -1,0 +1,887 @@
+\chapter{Smoothers: Jacobi, Chebyshev, and Hiptmair}
+\label{ch:smoothers}
+
+% local math macro: eigenvector (not in simbook.sty)
+\providecommand{\vphi}{\boldsymbol{\varphi}}
+
+\chapterorient{The previous chapter argued that a good preconditioner is an
+approximate inverse cheap enough to apply at every iteration. This chapter builds
+the cheapest useful one. A \emph{smoother} is a relaxation so simple it makes a
+laughable standalone solver---left to run on its own it crawls---yet it has a
+hidden talent the eigenvalue picture brings out at once: it annihilates the
+\emph{oscillatory} part of the error in a sweep or two while barely touching the
+\emph{smooth} part. That lopsidedness is not a defect. It is exactly the division
+of labor a multigrid method needs, and the smoother is the workhorse bolted into
+every level of the V-cycle we build in \cref{ch:multigrid}. We meet three: damped
+Jacobi (a diagonal scaling), Chebyshev (a fixed-degree polynomial tuned to a
+spectral window), and Hiptmair's distributive relaxation (the one fix that makes
+edge-element curl--curl problems tractable at all). Each is, in the end, an
+apply-function of the kind \cref{ch:precond} taught us to plug in.}
+
+\section{Error in the eigenvector basis}
+
+Everything in this chapter follows from one change of coordinates. Suppose we are
+solving a symmetric positive-definite system
+\begin{equation}
+  \mat{A}\vx = \vb,
+  \label{eq:smoo-system}
+\end{equation}
+the kind that comes out of every weak form in \cref{part:fieldtheory}. Let
+$\hat\vx$ be the exact solution, and let an iterative method produce a running
+guess $\vx^{(m)}$ after $m$ steps. The object that actually matters is not the
+guess but its \emph{error},
+\begin{equation}
+  \ve^{(m)} = \vx^{(m)} - \hat\vx.
+  \label{eq:smoo-error}
+\end{equation}
+A solver is good exactly when it drives $\ve^{(m)}$ to zero quickly. To see
+\emph{how} an iteration acts on the error, we write the error in the natural
+coordinate system of $\mat{A}$: its eigenvectors.
+
+Because $\mat{A}$ is symmetric positive-definite, it has a full set of orthonormal
+eigenvectors $\vphi_1,\dots,\vphi_n$ with positive eigenvalues
+\begin{equation}
+  \mat{A}\vphi_k = \lambda_k\,\vphi_k,
+  \qquad 0 < \lambda_1 \le \lambda_2 \le \dots \le \lambda_n,
+  \label{eq:smoo-eig}
+\end{equation}
+and we order them from smallest to largest. Any error vector expands uniquely in
+this basis,
+\begin{equation}
+  \ve^{(m)} = \sum_{k=1}^{n} c_k^{(m)}\,\vphi_k,
+  \qquad c_k^{(m)} = \inner{\ve^{(m)}}{\vphi_k}.
+  \label{eq:smoo-expand}
+\end{equation}
+The coefficients $c_k^{(m)}$ are the error's \emph{spectral content}: $c_k^{(m)}$
+measures how much of the current error lies along the $k$th eigenvector. Driving
+the error to zero \emph{means} driving every $c_k$ to zero.
+
+\begin{notationbox}
+We use ``frequency'' as a shorthand for ``eigenvalue index $k$.'' For the model
+problems in this chapter the eigenvectors $\vphi_k$ really are sinusoids, and the
+index $k$ is a genuine spatial frequency: small $k$ is a slowly-varying, smooth
+mode; large $k$ is a rapidly-oscillating one. For a general $\mat{A}$ the
+eigenvectors are not sinusoids, but the intuition survives---\emph{low frequency}
+means the smooth, near-null-space end of the spectrum (small $\lambda_k$), and
+\emph{high frequency} the oscillatory, large-$\lambda_k$ end. The whole subject of
+smoothing is the story of what an iteration does, eigenvalue by eigenvalue, to the
+coefficients $c_k$.
+\end{notationbox}
+
+The reason this coordinate change is so powerful is that the simplest iterations
+act on each coefficient \emph{independently}. A relaxation built from $\mat{A}$ and
+a multiple of the identity (or of the diagonal) commutes with $\mat{A}$'s
+eigenvectors, so in the eigenvector basis it is \emph{diagonal}: it multiplies each
+$c_k$ by a number that depends only on $\lambda_k$. Call that number the
+iteration's \emph{damping factor} at frequency $k$,
+\begin{equation}
+  c_k^{(m+1)} = g(\lambda_k)\, c_k^{(m)},
+  \qquad\text{so}\qquad
+  c_k^{(m)} = \bigl[g(\lambda_k)\bigr]^{m}\, c_k^{(0)}.
+  \label{eq:smoo-damping}
+\end{equation}
+The function $g$ is the \emph{amplification factor} or \emph{smoothing symbol} of
+the iteration. A component shrinks fast where $\abs{g(\lambda_k)}$ is small and
+slowly where $\abs{g(\lambda_k)}$ is near $1$. The entire behavior of a smoother is
+encoded in the single curve $g$ plotted against $\lambda$. \Cref{fig:smoo-errorfreq}
+shows what this looks like on an actual error: a sum of a smooth mode and an
+oscillatory mode, with the oscillatory part visibly gone after a couple of sweeps
+and the smooth part stubbornly intact.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12.6cm, height=5.4cm,
+  xlabel={position along the domain},
+  ylabel={error},
+  xmin=0, xmax=1, ymin=-1.35, ymax=1.6,
+  xtick=\empty, ytick={-1,0,1},
+  legend style={font=\scriptsize, at={(0.5,1.02)}, anchor=south,
+    legend columns=3, draw=none, /tikz/every even column/.append style={column sep=8pt}},
+  axis lines=left, tick style={simGray}, every axis label/.style={font=\small},
+  samples=200, domain=0:1,
+]
+  % smooth + oscillatory error (initial)
+  \addplot[simRust, very thick] {0.85*sin(180*x) + 0.55*sin(180*9*x)};
+  % after a few sweeps: oscillatory damped, smooth survives
+  \addplot[simBlue, thick, densely dashed] {0.80*sin(180*x) + 0.06*sin(180*9*x)};
+  % the smooth part alone (target the smoother leaves behind)
+  \addplot[simGray, thin, dotted] {0.80*sin(180*x)};
+  \legend{initial error, after 3 sweeps, smooth part}
+\end{axis}
+\end{tikzpicture}
+\caption[Smoothing removes the oscillatory error]{An error built from a smooth
+mode ($k=1$) and an oscillatory mode ($k=9$). After three damped-Jacobi sweeps
+(dashed) the oscillatory ripples are essentially gone, but the smooth underlying
+shape (dotted) is almost untouched. A smoother is precisely the iteration that
+does this: it is a high-pass error filter. The smooth remainder is the part the
+coarse grid of \cref{ch:multigrid} will handle.}
+\label{fig:smoo-errorfreq}
+\end{figure}
+
+\begin{keyidea}
+A smoother is an iteration whose damping factor $g(\lambda)$ is small at the
+\emph{high-frequency} (large-$\lambda$) end of the spectrum and near $1$ at the
+\emph{low-frequency} (small-$\lambda$) end. It therefore kills oscillatory error
+in a handful of cheap sweeps but barely moves smooth error---a \emph{terrible}
+standalone solver and the \emph{essential} ingredient of multigrid, which delegates
+the leftover smooth error to a coarse grid. ``Smoother,'' not ``solver,'' is the
+right word: its job is to make the error smooth, not small.
+\end{keyidea}
+
+\section{Damped Jacobi: diagonal smoothing}
+\label{sec:smoo-jacobi}
+
+The simplest relaxation imaginable takes a step proportional to the residual,
+preconditioned by nothing more than the diagonal of $\mat{A}$. Write
+$\mat{D} = \operatorname{diag}(\mat{A})$ for the matrix holding $\mat{A}$'s
+diagonal entries and zeros elsewhere. \emph{Damped Jacobi} is the update
+\begin{equation}
+  \vx \;\leftarrow\; \vx + \omega\,\mat{D}^{-1}\bigl(\vb - \mat{A}\vx\bigr),
+  \label{eq:smoo-jac-update}
+\end{equation}
+where $\vr = \vb - \mat{A}\vx$ is the residual and $\omega>0$ is a \emph{damping
+factor} we are free to choose. Each step costs exactly one operator apply
+$\mat{A}\vx$ (\cref{ch:precond}'s matrix-free matvec) plus an elementwise scaling
+by $\mat{D}^{-1}$---no inner products, no triangular solves, nothing global. It is
+the cheapest nontrivial iteration in the book.
+
+\subsection{The diagonal inverse as a constructed operator}
+
+In the synthesis surface the operator $\omega\mat{D}^{-1}$ is not a matrix; it is a
+vector applied elementwise. Building it is a two-step pipeline: \emph{extract} the
+diagonal of $\mat{A}$ into a vector, then take its reciprocal entry by entry.
+Palace constructs the smoother once, at setup, and stores only the result.
+
+\begin{lstlisting}[style=l4style]
+-- setup: build the damped inverse-diagonal smoother once
+jacobi_setup :: (A: LinOp[N,N], omega: Float) -> JacobiSmoother[N]
+jacobi_setup A omega =
+  let d    = assemble_diagonal A      -- extract diag(A) as a vector
+      dinv = reciprocal d             -- elementwise 1 / diag(A)
+  in  JacobiSmoother { dinv = scale omega dinv }   -- absorb omega into dinv
+
+-- apply: a single elementwise product. no loop, no reduction.
+jacobi_smoother :: (op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]
+jacobi_smoother op x = op.dinv `hadamard` x
+\end{lstlisting}
+
+Two things are worth pausing on. First, the damping factor $\omega$ is
+\emph{absorbed} into the stored vector \lstinline[style=l4style]|dinv| at setup
+time, so the per-call action is a bare elementwise product---``the thinnest
+constructed-operator gate'' in the whole framework. Second, the apply is
+\emph{inner-product-free}: it touches each entry once and never forms a global sum.
+On a parallel machine it requires no communication at all, a property it shares
+with Chebyshev and that will matter enormously when we distribute the work.
+
+\begin{notationbox}
+\lstinline[style=l4style]|assemble_diagonal| reads the operator's main diagonal;
+for a matrix-free high-order operator it returns an \emph{approximate} diagonal,
+and the smoother tolerates that---an approximate $\mat{D}^{-1}$ is still a valid
+linear map, only a slightly weaker preconditioner. The diagonal extraction, the
+reciprocal, and the elementwise product are three firm primitives; the Jacobi
+smoother is their composition and nothing more.
+\end{notationbox}
+
+\subsection{The damping factor per frequency}
+
+Now run \cref{eq:smoo-jac-update} on the error. Subtract the exact solution
+$\hat\vx$ (which satisfies $\mat{A}\hat\vx=\vb$) from both sides. Using
+$\vb = \mat{A}\hat\vx$, the residual becomes $\vr = -\mat{A}\ve$, and the update on
+the error is
+\begin{equation}
+  \ve \;\leftarrow\; \ve - \omega\,\mat{D}^{-1}\mat{A}\,\ve
+       \;=\; \bigl(\mat{I} - \omega\,\mat{D}^{-1}\mat{A}\bigr)\ve.
+  \label{eq:smoo-jac-iter}
+\end{equation}
+The error is multiplied by the \emph{iteration matrix}
+$\mat{G} = \mat{I} - \omega\mat{D}^{-1}\mat{A}$. To read off the per-frequency
+damping we diagonalize. For a model problem the diagonal is a constant multiple of
+the identity, $\mat{D} = \delta\mat{I}$, so $\mat{D}^{-1}\mat{A}$ shares $\mat{A}$'s
+eigenvectors with eigenvalues $\lambda_k/\delta$. Writing $\mu_k = \lambda_k/\delta$
+for the scaled eigenvalues---which run over an interval $[\mu_{\min},\mu_{\max}]$
+---the damping factor at frequency $k$ is
+\begin{equation}
+  \boxed{\;
+  g(\mu_k) = 1 - \omega\,\mu_k.
+  \;}
+  \label{eq:smoo-jac-symbol}
+\end{equation}
+This single affine function is the entire content of damped Jacobi. It is large
+(near $1$) when $\mu_k$ is small and decreases as $\mu_k$ grows. \emph{High
+frequencies are damped harder than low frequencies}---which is the smoothing
+property we wanted---but only if $\omega$ is chosen well.
+
+\begin{pitfall}
+Undamped Jacobi ($\omega = 1$) can \emph{fail to smooth at all}, and can even
+diverge. With $\omega=1$ the symbol is $g(\mu)=1-\mu$. If the largest scaled
+eigenvalue exceeds $2$, then $g(\mu_{\max}) < -1$ and the highest-frequency error
+\emph{grows}. Even when it does not diverge, the symbol at the top of the spectrum
+($\mu \approx \mu_{\max}$) can sit near $g=-1$, so the most oscillatory modes are
+barely damped---the opposite of what a smoother must do. Damping is not a tuning
+nicety; without it Jacobi is not a smoother.
+\end{pitfall}
+
+\subsection{Choosing the damping factor}
+
+We want $\omega$ to make $\abs{g}$ as small as possible across the
+\emph{high-frequency half} of the spectrum, the band a multigrid coarse grid cannot
+resolve. The classical balance equalizes the symbol at the two ends of the target
+band $[\mu_{\mathrm{lo}}, \mu_{\max}]$:
+\begin{equation}
+  g(\mu_{\mathrm{lo}}) = -\,g(\mu_{\max})
+  \quad\Longrightarrow\quad
+  1 - \omega\mu_{\mathrm{lo}} = -(1-\omega\mu_{\max})
+  \quad\Longrightarrow\quad
+  \omega^\star = \frac{2}{\mu_{\mathrm{lo}} + \mu_{\max}}.
+  \label{eq:smoo-jac-optomega}
+\end{equation}
+This is exactly the formula Palace uses on its estimated-damping path: it estimates
+the top eigenvalue $\mu_{\max}$ of $\mat{D}^{-1}\mat{A}$ by a few power-iteration
+steps and sets $\omega^\star = 2/(\mu_{\min} + \mu_{\max})$. The spectral interval
+$[\mu_{\min},\mu_{\max}]$ comes from the estimate; no exact eigenvalues are ever
+formed. The optimal-$\omega$ formula is the standard Jacobi convergence
+result~\citep[\S4.1]{saad2003}.
+
+\begin{workedexample}{Damped Jacobi on a 1-D model problem}{smoo-jacobi}
+Take the canonical test: the 1-D Laplacian on $n$ interior points with unit
+spacing, the tridiagonal matrix $\mat{A}=\operatorname{tridiag}(-1,2,-1)$. Its
+eigenvectors are the discrete sinusoids $\vphi_k$ with
+$(\vphi_k)_j = \sin\!\bigl(\tfrac{k j\pi}{n+1}\bigr)$ and eigenvalues
+\[
+  \lambda_k = 2 - 2\cos\!\Bigl(\frac{k\pi}{n+1}\Bigr)
+            = 4\sin^2\!\Bigl(\frac{k\pi}{2(n+1)}\Bigr),
+  \qquad k = 1,\dots,n.
+\]
+The diagonal is $\mat{D}=2\mat{I}$, so $\mu_k = \lambda_k/2$ ranges over roughly
+$(0,2)$: the lowest mode $k=1$ has $\mu_1\approx 0$ and the highest mode $k=n$ has
+$\mu_n\approx 2$. The half-spectrum we want to damp is $[\,1,\,2\,]$ (the modes the
+coarse grid misses). Balancing the ends with \cref{eq:smoo-jac-optomega} gives
+\[
+  \omega^\star = \frac{2}{1 + 2} = \frac{2}{3}.
+\]
+Now compare the damping at a representative low frequency and a representative high
+frequency. At $\mu \approx 0.05$ (a smooth mode) the symbol is
+$g = 1 - \tfrac{2}{3}(0.05) \approx 0.967$: after one sweep that mode retains
+$96.7\%$ of its amplitude. At $\mu = 2$ (the most oscillatory mode)
+$g = 1 - \tfrac{2}{3}(2) = -\tfrac{1}{3}$: that mode retains only $33\%$, a sign
+flip and a two-thirds reduction. After $3$ sweeps the high mode is down to
+$\abs{g}^3 = (1/3)^3 \approx 0.037$---a $27\times$ reduction---while the smooth mode
+is still at $0.967^3 \approx 0.90$. The smoother has cut the oscillatory error by a
+factor of about $25$ relative to the smooth error in three cheap sweeps. That ratio
+is the whole point.
+\end{workedexample}
+
+\Cref{fig:smoo-jacsymbol} plots the symbol $\abs{g}$ for three choices of $\omega$
+and shows graphically what the worked example computed: with $\omega^\star=2/3$ the
+curve is pinned small across the entire high-frequency half, while undamped
+$\omega=1$ leaves the top of the spectrum essentially undamped.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12.6cm, height=6.0cm,
+  xlabel={scaled eigenvalue $\mu = \lambda/\delta$ \ (low freq.\ $\to$ high freq.)},
+  ylabel={damping factor $|g(\mu)|$},
+  xmin=0, xmax=2, ymin=0, ymax=1.05,
+  xtick={0,0.5,1,1.5,2}, ytick={0,0.25,0.5,0.75,1},
+  legend style={font=\scriptsize, at={(0.02,0.04)}, anchor=south west, draw=simGray!50},
+  axis lines=left, tick style={simGray},
+  samples=200, domain=0:2,
+]
+  % shaded high-frequency target band [1,2]
+  \addplot[draw=none, fill=simBlue!10, forget plot] coordinates {(1,0)(2,0)(2,1.05)(1,1.05)} \closedcycle;
+  \node[font=\scriptsize, simBlue, anchor=north] at (axis cs:1.5,1.02) {high-freq.\ band};
+  % undamped omega = 1: |1 - mu|
+  \addplot[simRust, very thick] {abs(1 - x)};
+  % omega = 2/3 (optimal for [1,2])
+  \addplot[simBlue, very thick] {abs(1 - 0.6667*x)};
+  % omega = 1/2 (over-damped)
+  \addplot[simGray, thick, densely dashed] {abs(1 - 0.5*x)};
+  \legend{$\omega=1$ (undamped), $\omega=2/3$ (optimal), $\omega=1/2$}
+\end{axis}
+\end{tikzpicture}
+\caption[The Jacobi damping factor versus frequency]{The damping factor
+$\abs{g(\mu)}=\abs{1-\omega\mu}$ for damped Jacobi. Undamped Jacobi ($\omega=1$,
+rust) returns to $1$ at the top of the spectrum---it does not smooth the highest
+modes. The optimal $\omega=2/3$ (blue) holds $\abs{g}$ below $1/3$ across the entire
+high-frequency band $[1,2]$, exactly where the multigrid coarse grid needs it small.
+No choice of $\omega$ makes $\abs{g}$ small at low frequency ($\mu\to0$, where
+$g\to1$); that is structural, and it is why a smoother alone cannot solve.}
+\label{fig:smoo-jacsymbol}
+\end{figure}
+
+The figure makes the structural limitation visible: \emph{every} curve returns to
+$g=1$ as $\mu\to0$. No diagonal relaxation can damp the smooth modes, because at
+$\mu=0$ the update \cref{eq:smoo-jac-update} does nothing. This is not a failure of
+tuning. It is the reason smoothers are paired with coarse grids, and it motivates
+the next two sections, which sharpen the high-frequency damping without ever trying
+to fix the low.
+
+\section{Chebyshev smoothing: a polynomial tuned to the spectrum}
+\label{sec:smoo-cheby}
+
+Damped Jacobi takes one step of the affine symbol $1-\omega\mu$. We can do far
+better by taking, in effect, several coordinated steps---applying a
+\emph{polynomial} in $\mat{D}^{-1}\mat{A}$ whose graph is engineered to be small
+across the whole high-frequency band at once. After $k$ such coordinated steps the
+error is
+\begin{equation}
+  \ve \;\leftarrow\; p_k\!\bigl(\mat{D}^{-1}\mat{A}\bigr)\,\ve,
+  \label{eq:smoo-cheby-action}
+\end{equation}
+where $p_k$ is a polynomial of degree $k$ with $p_k(0)=1$ (a unit constant term, so
+that the iteration does nothing to the zero-residual fixed point). The symbol is now
+$g(\mu)=p_k(\mu)$, and we are free to \emph{choose the polynomial}. The natural
+demand is the minimax one: among all degree-$k$ polynomials with $p_k(0)=1$, make
+the maximum of $\abs{p_k(\mu)}$ over the target window $[\lambda_{\min},
+\lambda_{\max}]$ as small as possible.
+
+\subsection{Why Chebyshev}
+
+The minimax problem has a classical closed-form answer, and it is the reason these
+polynomials are named after Chebyshev. The Chebyshev polynomials $T_k$ oscillate
+between $-1$ and $+1$ on $[-1,1]$ and then climb away steeply outside that interval.
+Affinely mapping the target window $[\lambda_{\min},\lambda_{\max}]$ onto $[-1,1]$
+and normalizing so that $p_k(0)=1$ produces the unique polynomial that
+\emph{equioscillates}---attains its small maximum amplitude many times---across the
+window. No other degree-$k$ polynomial with a unit constant term is smaller across
+the band. \Cref{fig:smoo-chebpoly} shows a degree-$4$ example: it is pinned small
+over the target interval and rises sharply only at $\mu=0$, the smooth end we are
+deliberately leaving to the coarse grid.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12.6cm, height=6.0cm,
+  xlabel={eigenvalue $\lambda$},
+  ylabel={polynomial symbol $|p_k(\lambda)|$},
+  xmin=0, xmax=1.05, ymin=0, ymax=1.05,
+  xtick={0,0.2,0.4,0.6,0.8,1.0},
+  extra x ticks={0.2,1.0}, extra x tick labels={$\lambda_{\min}$,$\lambda_{\max}$},
+  extra x tick style={grid=major, grid style={simBlue!40, densely dotted},
+    tick label style={text=simBlue, font=\scriptsize}},
+  ytick={0,0.25,0.5,0.75,1},
+  legend style={font=\scriptsize, at={(0.98,0.96)}, anchor=north east, draw=simGray!50},
+  axis lines=left, tick style={simGray},
+  samples=300, domain=0:1.05,
+]
+  % shaded target window [0.2, 1.0]
+  \addplot[draw=none, fill=simBlue!10, forget plot] coordinates {(0.2,0)(1.0,0)(1.0,1.05)(0.2,1.05)} \closedcycle;
+  \node[font=\scriptsize, simBlue, anchor=south] at (axis cs:0.6,0.86) {target window};
+  % degree-1 (damped Jacobi-like affine) for contrast
+  \addplot[simGray, thick, densely dashed] {abs(1 - 1.667*x)};
+  % degree-4 chebyshev symbol: |T4((2 lam - lmin - lmax)/(lmax-lmin)) / T4(arg at 0)|
+  % lmin=0.2 lmax=1.0 -> map m(lam) = (2 lam - 1.2)/0.8 ; T4(t)=8t^4-8t^2+1
+  % normalize by T4 at lam=0: m(0) = -1.5, T4(-1.5)=8*5.0625-8*2.25+1=40.5-18+1=23.5
+  \addplot[simBlue, very thick, samples=400] {abs((8*((2*x-1.2)/0.8)^4 - 8*((2*x-1.2)/0.8)^2 + 1)/23.5)};
+  \legend{degree 1 (affine), degree 4 (Chebyshev)}
+\end{axis}
+\end{tikzpicture}
+\caption[A Chebyshev polynomial shaped to the spectral window]{The degree-$4$
+Chebyshev symbol $\abs{p_4(\lambda)}$ (blue) equioscillates across the target window
+$[\lambda_{\min},\lambda_{\max}]$, holding the high-frequency error reduction below a
+small uniform bound the whole way. A single affine step (gray dashed, the
+damped-Jacobi symbol of \cref{sec:smoo-jacobi}) cannot stay small across the band.
+Both rise toward $1$ only at $\lambda=0$, the smooth end left to the coarse grid.
+Higher degree buys a smaller uniform bound across the window---at the cost of more
+operator applies per sweep.}
+\label{fig:smoo-chebpoly}
+\end{figure}
+
+The Chebyshev smoother has two further virtues that make it the multigrid smoother
+of choice in Palace. It is \emph{matrix-free}: it applies $p_k(\mat{D}^{-1}\mat{A})$
+by repeated operator applies, never forming the polynomial as a matrix. And, like
+Jacobi, it is \emph{inner-product-free}: its coefficients are fixed closed forms of
+the step index and the spectral bounds $[\lambda_{\min},\lambda_{\max}]$, computed
+in advance without ever inspecting the iterate. No global reduction appears anywhere
+in the sweep---a decisive advantage on a parallel or GPU machine, where inner
+products force a synchronization that polynomial smoothing simply avoids. The only
+global information it needs is an \emph{estimate} of $\lambda_{\max}$, computed once
+at setup by a handful of power-iteration steps.
+
+\begin{physicsbox}
+The contrast with the conjugate-gradient method of \cref{ch:precond} is sharp and
+deliberate. CG \emph{adapts} to the spectrum: it forms inner products at every
+iteration and discovers the optimal polynomial as it goes. Chebyshev \emph{commits}
+to a fixed polynomial in advance, paying for that with a spectral estimate but
+buying back the inner products entirely. As a standalone solver CG wins. As a
+multigrid smoother---applied thousands of times, on a machine where every inner
+product is a synchronization---committing in advance is exactly the right trade.
+\end{physicsbox}
+
+\subsection{The three-term recurrence}
+
+The polynomial is never written down or expanded. It is applied by a short
+recurrence that threads three vectors: the current iterate \lstinline[style=l4style]|y|,
+the residual \lstinline[style=l4style]|r|, and a search direction
+\lstinline[style=l4style]|d|. One Chebyshev sweep of degree
+\lstinline[style=l4style]|order| is:
+
+\begin{lstlisting}[style=l4style]
+-- one Chebyshev sweep: apply p_order(Dinv A) to the residual, accumulate into y.
+-- coefficients sigma_d, sigma_r are closed forms of (k, lambda_max); no reductions.
+chebyshev_sweep :: ChebOp[N] -> Tensor[N] -> Tensor[N] -> Tensor[N]
+chebyshev_sweep op x y =
+  let r0 = x `sub` (op.A `apply` y)        -- initial residual  r = x - A y
+      d0 = scale (alpha0 op) (op.dinv `hadamard` r0)   -- first direction
+  in  go 1 (y `add` d0) r0 d0              -- accumulate, then recur
+  where
+    go k y r d
+      | k > op.order = y
+      | otherwise =
+          let r' = r `sub` (op.A `apply` d)            -- r -= A d
+              d' = scale (sigma_d op k) d
+                     `add` scale (sigma_r op k) (op.dinv `hadamard` r')
+          in  go (k+1) (y `add` d') r' d'              -- y += d
+\end{lstlisting}
+
+Read the loop body as the three updates the chapter brief names: accumulate the
+direction into the answer ($y \mathrel{+}= d$); update the residual by the
+direction's operator image ($r \mathrel{-}= \mat{A}d$); and form the next direction
+as a blend of the old direction and the diagonally-scaled residual
+($d = \sigma_d\,d + \sigma_r\,(\mat{D}^{-1}r)$). Each iteration costs exactly one
+operator apply ($\mat{A}d$) and a few elementwise vector operations. The
+coefficients $\sigma_d, \sigma_r$ are pure functions of the step index $k$ and
+$\lambda_{\max}$---for the fourth-kind variant Palace uses by default,
+$\sigma_d = \tfrac{2k-1}{2k+3}$ and $\sigma_r = \tfrac{8k+4}{(2k+3)\lambda_{\max}}$.
+\Cref{fig:smoo-chebdataflow} traces the dataflow of one step and marks the absence
+of any reduction node.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=11mm and 16mm]
+  \node[data] (r) {residual $\vr$};
+  \node[opbox, right=of r] (Ad) {$\mat{A}\vd$ \\ \scriptsize(one apply)};
+  \node[opbox, right=of Ad] (rup) {$\vr \mathrel{-}= \mat{A}\vd$};
+  \node[opbox, below=10mm of Ad] (dscale) {$\mat{D}^{-1}\vr$ \\ \scriptsize(elementwise)};
+  \node[opbox, right=of dscale] (dup) {$\vd = \sigma_d\vd + \sigma_r(\mat{D}^{-1}\vr)$};
+  \node[product, right=18mm of rup] (yup) {$\vy \mathrel{+}= \vd$};
+  \node[data, below=10mm of dup] (next) {next step};
+
+  \draw[flow] (r) -- (Ad);
+  \draw[flow] (Ad) -- (rup);
+  \draw[flow] (rup) |- (dscale);
+  \draw[flow] (dscale) -- (dup);
+  \draw[flow] (dup) -- (yup);
+  \draw[flow] (dup) -- (next);
+  \draw[backflow] (rup.south) -- ++(0,-0.5) -| (next.north);
+
+  % annotation: no reduction
+  \node[cornertag, anchor=west, text=simGreen] at ($(yup.south east)+(0.1,-0.4)$)
+    {\scriptsize no inner product};
+  \node[cornertag, anchor=west, text=simGreen] at ($(yup.south east)+(0.1,-0.75)$)
+    {\scriptsize no global sum};
+\end{tikzpicture}
+\caption[The Chebyshev recurrence is inner-product-free]{One step of the Chebyshev
+three-term recurrence. The only global operation is the single operator apply
+$\mat{A}\vd$; everything else is elementwise. Crucially there is \emph{no} inner
+product and \emph{no} global reduction anywhere in the loop---the coefficients
+$\sigma_d,\sigma_r$ are precomputed from the step index and $\lambda_{\max}$. This is
+what makes Chebyshev the communication-light smoother of choice inside a
+distributed multigrid V-cycle.}
+\label{fig:smoo-chebdataflow}
+\end{figure}
+
+\begin{pitfall}
+The recurrence is not a convenience; it is \emph{load-bearing numerics}. One could,
+in principle, expand the polynomial into its monomial form
+$p_k(\mat{D}^{-1}\mat{A})\vr = \sum_j c_j (\mat{D}^{-1}\mat{A})^{j}\vr$ and sum the
+powers directly. \emph{Do not.} For the polynomial degrees in use the monomial sum
+is numerically unstable---the high powers $(\mat{D}^{-1}\mat{A})^j$ overwhelm
+floating-point precision and the coefficients $c_j$ alternate in sign and grow
+enormous, so catastrophic cancellation destroys the result. The three-term
+recurrence (a Clenshaw/Horner-style evaluation) computes the \emph{same} polynomial
+in exact arithmetic but is stable in floating point. The recurrence form and the
+monomial form are mathematically equal and computationally not interchangeable; the
+sequentiality of the recurrence is part of the algorithm~\citep[\S2]{phillipsfischer2022}.
+\end{pitfall}
+
+\subsection{First-kind and fourth-kind variants}
+
+Two flavors of Chebyshev smoother appear in practice, differing only in which
+spectral window the minimax polynomial targets and hence in their coefficient
+formulas. The \emph{first-kind} smoother targets a two-sided window
+$[\lambda_{\min},\lambda_{\max}]$ and threads one extra scalar through its
+recurrence; it needs an estimate of \emph{both} ends of the band. The
+\emph{fourth-kind} smoother (the modern default, the one in the pseudocode above)
+targets the one-sided window $[0,\lambda_{\max}]$ and needs only the top of the
+spectrum---a single estimate, no lower bound to guess. Both produce a degree-$k$
+polynomial small across the high-frequency band; the fourth-kind's one-sided design
+makes it more robust when the spectral estimate is rough, which is why Palace adopts
+it~\citep{phillipsfischer2022}. At the level of the synthesis surface the two are a
+single operator whose coefficient generator is swapped---the variant is absorbed into
+the closure, exactly as the damping mode was absorbed into Jacobi's
+\lstinline[style=l4style]|dinv|.
+
+\begin{workedexample}{A two-step Chebyshev smoother}{smoo-cheby}
+Take a tiny system with $\mat{D}^{-1}\mat{A}$ already diagonal in the eigenvector
+basis, with scaled eigenvalues spread across $[\lambda_{\min},\lambda_{\max}]=[0.2,1.0]$.
+Build the degree-$2$ minimax polynomial $p_2$ with $p_2(0)=1$ that is smallest on
+$[0.2,1.0]$. Map the window to $[-1,1]$ by $t(\lambda)=(2\lambda-1.2)/0.8$ and use
+$T_2(t)=2t^2-1$. The normalized symbol is
+\[
+  p_2(\lambda) = \frac{T_2\bigl(t(\lambda)\bigr)}{T_2\bigl(t(0)\bigr)},
+  \qquad t(0) = \frac{-1.2}{0.8} = -1.5,
+  \qquad T_2(-1.5) = 2(2.25)-1 = 3.5,
+\]
+so $p_2(\lambda) = \bigl(2\,t(\lambda)^2 - 1\bigr)/3.5$. Evaluate the damping at three
+frequencies:
+\begin{center}
+\setlength{\tabcolsep}{10pt}\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}llll@{}}
+\toprule
+mode & $\lambda$ & $t(\lambda)$ & $\abs{p_2(\lambda)}$ \\
+\midrule
+smooth (left of window)   & $0.05$ & $-1.375$ & $0.795$ \\
+mid-band                  & $0.6$  & $0$      & $0.286$ \\
+high (top of window)      & $1.0$  & $1.0$    & $0.286$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The polynomial reduces every mode \emph{inside} the band $[0.2,1.0]$ to at most
+$\approx 0.29$ of its amplitude in a single two-step sweep---compare damped Jacobi
+from \cref{wex:smoo-jacobi}, which needed three sweeps to reach $0.33$ at the top
+mode alone. The smooth mode at $\lambda=0.05$, outside the targeted band, is left at
+$0.795$, untouched by design. Two operator applies have damped the entire
+high-frequency half of the spectrum below $0.29$, uniformly. That uniformity across
+the band---not just at one mode---is what the Chebyshev construction buys over a
+single Jacobi step.
+\end{workedexample}
+
+\section{Hiptmair relaxation: smoothing in \texorpdfstring{$\Hcurl$}{H(curl)}}
+\label{sec:smoo-hiptmair}
+
+The smoothers so far assume one thing the eigenvector picture made explicit: that
+the operator has \emph{no} large null space at the smooth end, so that ``high
+frequency'' and ``oscillatory'' coincide and a diagonal relaxation can reach the
+modes a coarse grid misses. For the scalar problems of electrostatics this holds.
+For the vector curl--curl operator of magnetostatics, eigenmode, and driven
+analyses, it fails---and the failure is not subtle.
+
+\subsection{The gradient null space a plain smoother cannot see}
+
+Recall from \cref{ch:bc} and the de Rham complex of \cref{ch:derham} that the
+curl--curl operator $\Curl(\nu\Curl\,\cdot)$, discretized on Nédélec edge elements,
+has an \emph{enormous null space}: every gradient field $\Grad\psi$ has zero curl,
+so $\mat{A}\,\mat{G}\psi = 0$ for the discrete gradient $\mat{G}$ that maps scalar
+potentials (nodal $\Hone$) into edge fields ($\Hcurl$). This is not a handful of
+modes; it is an entire subspace, the discrete gradient range, with dimension on the
+order of the number of mesh vertices.
+
+A diagonal smoother is helpless against error living in that null space. Run the
+damping analysis again: error along a null-space mode $\vphi$ has $\mat{A}\vphi=0$,
+so the residual $\vr=-\mat{A}\ve$ has \emph{no component} along it, and the Jacobi
+update \cref{eq:smoo-jac-update} does nothing---the damping factor is $g=1$ exactly,
+for the entire gradient subspace. These are not high-frequency modes the smoother
+merely damps weakly; they are modes it cannot touch \emph{at all}, and there are
+vast numbers of them. \Cref{fig:smoo-nullspace} pictures the situation: the smoother
+operates happily in the part of the space the curl ``sees,'' and is blind to the
+gradient subspace beside it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % the full H(curl) space as a big rounded rectangle
+  \draw[thick, simInk, rounded corners=4pt, fill=simBgGray] (-4.4,-1.5) rectangle (4.4,1.7);
+  \node[font=\small\bfseries, simInk, anchor=north west] at (-4.3,1.6) {$\Hcurl$ (edge dofs)};
+  % the gradient null space subspace
+  \draw[thick, simGreen, rounded corners=4pt, fill=simBgGreen] (-4.1,-1.25) rectangle (-0.4,1.0);
+  \node[font=\footnotesize, simGreen, align=center] at (-2.25,0.55)
+    {gradient null space\\$\operatorname{range}\mat{G}=\{\Grad\psi\}$\\\scriptsize($\mat{A}\,\Grad\psi = 0$)};
+  % the rest: curl sees it
+  \node[font=\footnotesize, simBlue, align=center] at (2.3,0.3)
+    {curl-active part\\\scriptsize(smoother damps these)};
+  % a "smoother" reaching only the right part
+  \node[opbox, anchor=south] at (2.3,-1.35) {diagonal smoother};
+  \draw[flow, simBlue] (2.3,-1.0) -- (2.3,-0.1);
+  % blocked arrow into the null space
+  \draw[->, simRust, thick] (-2.25,-1.0) -- (-2.25,-0.2);
+  \node[font=\scriptsize, simRust] at (-2.25,-1.35) {$g=1$: no effect};
+  \node[draw, cross out, simRust, thick, minimum size=4mm] at (-2.25,-0.55) {};
+\end{tikzpicture}
+\caption[The gradient null space a plain smoother misses]{The edge-dof space
+$\Hcurl$ splits into the curl-active part, where a diagonal smoother damps error
+normally, and the \emph{gradient null space} $\operatorname{range}\mat{G}$, where
+$\mat{A}\,\Grad\psi=0$. On the null space the residual vanishes, the smoother's
+damping factor is exactly $1$, and error simply persists. For an edge-element
+problem this blind spot is a whole subspace---the smoother on its own cannot
+converge. The cure is to relax in that subspace separately.}
+\label{fig:smoo-nullspace}
+\end{figure}
+
+\begin{pitfall}
+This is the specific reason edge-element ($\Hcurl$) problems need more than a
+diagonal or even a Chebyshev smoother. The polynomial smoother of
+\cref{sec:smoo-cheby} sharpens damping in the curl-active part but is just as blind
+to the gradient null space as Jacobi---$p_k(0)=1$, and the entire null space sits at
+$\lambda=0$. A multigrid built on a plain smoother will stall, its error trapped in
+the gradient modes the coarse grid cannot drain because the smoother never made
+them smooth. Magnetostatics, eigenmode, and driven analyses all hit this wall.
+\end{pitfall}
+
+\subsection{Relax in two spaces: the auxiliary-space idea}
+
+The fix is due to Hiptmair, and in the de Rham setting of \cref{ch:derham} it is
+beautifully natural: if the smoother cannot reach error in the gradient subspace
+$\operatorname{range}\mat{G}$, then \emph{relax in that subspace too}, using the
+discrete gradient $\mat{G}$ as the bridge. The discrete gradient maps the scalar
+potential space (nodal $\Hone$) into the edge space ($\Hcurl$); its transpose
+$\mat{G}^{\mathsf T}$ maps back. The combination
+$\mat{A}_G = \mat{G}^{\mathsf T}\mat{A}\,\mat{G}$ is the curl--curl operator
+\emph{seen from the scalar potential space}---a small, well-behaved scalar operator
+with no null-space pathology of its own, on which an ordinary point smoother $B_G$
+works perfectly.
+
+One sweep of \emph{Hiptmair distributive relaxation} does two relaxations in
+sequence (\cref{fig:smoo-hiptmair}):
+\begin{align}
+  \vy &\;\leftarrow\; \vy + B\,(\vx - \mat{A}\vy)
+      && \text{primary (edge) relaxation,} \label{eq:smoo-hipt-prim}\\
+  \vy &\;\leftarrow\; \vy + \mat{G}\,B_G\,\mat{G}^{\mathsf T}(\vx - \mat{A}\vy)
+      && \text{auxiliary (gradient) correction.} \label{eq:smoo-hipt-aux}
+\end{align}
+The primary step \cref{eq:smoo-hipt-prim} is an ordinary smoother (Jacobi or
+Chebyshev) on the edge operator $\mat{A}$---it handles the curl-active error. The
+auxiliary step \cref{eq:smoo-hipt-aux} forms the residual, \emph{restricts} it to
+the scalar space with $\mat{G}^{\mathsf T}$, relaxes there with $B_G$ on the
+well-conditioned $\mat{A}_G$, and \emph{prolongs} the correction back into the edge
+space with $\mat{G}$. Because $\mat{G}$ maps onto exactly the subspace the primary
+smoother was blind to, the auxiliary step reaches precisely the error the first step
+could not. Together they smooth the whole space. This is the discrete realization of
+the de Rham auxiliary-space idea (Hiptmair--Xu) underlying the AMS
+preconditioner~\citep{hiptmairxu2007}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm and 20mm]
+  % primary (edge) space row
+  \node[space, fill=simBgBlue, draw=simBlue] (Hcurl) {$\Hcurl$ \\ \scriptsize edge dofs};
+  \node[opbox, right=of Hcurl, draw=simBlue] (B) {primary relax \\ $B$ on $\mat{A}$};
+  \node[product, right=of B] (yout) {relaxed $\vy$};
+  % auxiliary (scalar) space row, below
+  \node[space, below=16mm of Hcurl] (H1) {$\Hone$ \\ \scriptsize nodal dofs};
+  \node[opbox, right=of H1, draw=simGreen] (BG) {auxiliary relax \\ $B_G$ on $\mat{A}_G$};
+
+  % residual into auxiliary space
+  \draw[flow] (Hcurl) -- node[above,font=\scriptsize]{$\vx-\mat{A}\vy$} (B);
+  \draw[flow] (B) -- (yout);
+  % restrict G^T down
+  \draw[flow, simGreen] (B.south) -- ++(0,-0.4) -| node[pos=0.25,above,font=\scriptsize]{restrict $\mat{G}^{\mathsf T}$} (H1.north);
+  \draw[flow, simGreen] (H1) -- (BG);
+  % prolong G up
+  \draw[flow, simGreen] (BG.north) -- ++(0,0.4) -| node[pos=0.25,below,font=\scriptsize]{prolong $\mat{G}$} (yout.south);
+
+  % labels
+  \node[cornertag, anchor=west] at ($(Hcurl.north west)+(0,0.5)$) {\scriptsize primary space};
+  \node[cornertag, anchor=west] at ($(H1.south west)+(0,-0.5)$) {\scriptsize auxiliary (gradient) space};
+\end{tikzpicture}
+\caption[Hiptmair primary + auxiliary relaxation]{One Hiptmair distributive
+relaxation sweep. The primary smoother $B$ relaxes the edge operator $\mat{A}$ in
+$\Hcurl$, damping the curl-active error. The residual is then restricted by the
+discrete gradient transpose $\mat{G}^{\mathsf T}$ into the scalar space $\Hone$,
+relaxed there by $B_G$ on the well-conditioned $\mat{A}_G=\mat{G}^{\mathsf T}\mat{A}\mat{G}$,
+and the correction prolonged back by $\mat{G}$. The auxiliary leg reaches exactly the
+gradient null space the primary leg could not. The two legs run in sequence: the
+auxiliary residual is formed \emph{after} the primary update.}
+\label{fig:smoo-hiptmair}
+\end{figure}
+
+In the synthesis surface the whole sweep is one constructed operator. It captures
+the two operators $\mat{A}$ and $\mat{A}_G$, the discrete gradient $\mat{G}$, two
+point smoothers $B$ and $B_G$ (each a Chebyshev closure), and a sweep count; its
+apply is the two legs above, repeated:
+
+\begin{lstlisting}[style=l4style]
+-- Hiptmair distributive relaxation: relax in the primary edge space, then
+-- correct through the discrete gradient G in the auxiliary scalar space.
+hiptmair_smoother :: HiptmairOp[N,M] -> Tensor[N] -> Tensor[N] -> Tensor[N]
+hiptmair_smoother op x y = iterate op.pc_it sweep y
+  where
+    sweep y =
+      let y1 = y `add` (op.B `apply2` (x, y))          -- primary leg (edge)
+          r  = x `sub` (op.A `apply` y1)               -- residual after primary
+          xG = pin_ess op.ess_G (op.G `applyT` r)      -- restrict G^T r, pin Dirichlet dofs
+          yG = op.B_G `apply` xG                        -- relax in scalar space
+      in  y1 `add` (op.G `apply` yG)                    -- prolong G yG, accumulate
+\end{lstlisting}
+
+Two implementation points the brief calls out. The auxiliary residual is formed
+\emph{after} the primary leg updates \lstinline[style=l4style]|y|, so the two legs
+do not commute---the sweep is a \emph{multiplicative} (Gauss-Seidel-between-spaces)
+composition, not an additive one; conflating them changes the operator. And the
+restricted auxiliary residual \lstinline[style=l4style]|xG| has its essential
+(Dirichlet) degrees of freedom pinned to zero before the auxiliary relaxation, the
+same boundary-condition surgery \cref{ch:bc} performed on the primary system.
+
+\begin{notationbox}
+Palace's distributive smoother chooses Chebyshev for \emph{both} point smoothers
+$B$ and $B_G$, never a Gauss--Seidel sweep. That is deliberate. A true distributive
+relaxation would call for a triangular Gauss--Seidel solve in each space, but
+Gauss--Seidel is a sequential forward/back substitution that does not parallelize
+and runs poorly on a GPU. Replacing it with two inner-product-free Chebyshev sweeps
+keeps the entire smoother communication-light, at the cost of an inexact---but
+perfectly adequate---auxiliary relaxation in place of an exact auxiliary solve.
+\end{notationbox}
+
+\section{Smoothers as preconditioners and as multigrid components}
+\label{sec:smoo-ascomponents}
+
+Every smoother in this chapter is, structurally, an apply-function of the kind
+\cref{ch:precond} defined: it consumes a vector and returns a vector, it is built
+once at setup and applied many times, and---for the zero-initial-guess, single-sweep
+case---it is \emph{linear} in its input, the exact shape a Krylov method wants in its
+preconditioner slot. Indeed Palace installs the Jacobi smoother directly as a Krylov
+preconditioner where a cheap diagonal scaling is all the problem needs.
+
+But used as a standalone preconditioner a smoother is weak, and the eigenvector
+picture says exactly why: it leaves the smooth, low-frequency error nearly
+untouched. The damping factor returns to $1$ as $\lambda\to0$ for Jacobi
+(\cref{fig:smoo-jacsymbol}), for Chebyshev (\cref{fig:smoo-chebpoly}, since
+$p_k(0)=1$), and the gradient null space defeats both. A smoother makes the error
+\emph{smooth}; it does not make it \emph{small}.
+
+That leftover smooth error is precisely what a coarse grid is good at. \emph{Multigrid}
+pairs the smoother with a coarse-grid correction: smooth on the fine grid to kill the
+oscillatory error, project the smooth remainder down to a coarse grid where it looks
+oscillatory and is cheap to resolve, solve there, and prolong the correction back.
+\Cref{fig:smoo-vcycle} previews the structure---a V-cycle with a smoother bolted into
+every level, descending and ascending. The smoother is the component this chapter
+built; the recursion that surrounds it is the subject of \cref{ch:multigrid}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % levels as horizontal bands at descending y, V shape
+  \def\lw{1.6}
+  % fine -> coarse going down-right, then back up
+  \coordinate (f0) at (0,0);
+  \coordinate (f1) at (1.3,-1.0);
+  \coordinate (f2) at (2.6,-2.0);
+  \coordinate (cc) at (3.9,-2.8);
+  \coordinate (b2) at (5.2,-2.0);
+  \coordinate (b1) at (6.5,-1.0);
+  \coordinate (b0) at (7.8,0);
+  % connecting V path
+  \draw[flow, simGray] (f0)--(f1)--(f2)--(cc)--(b2)--(b1)--(b0);
+  % smoother nodes on the way down
+  \node[opbox, fill=simBgBlue, draw=simBlue] at (f0) {smooth};
+  \node[opbox, fill=simBgBlue, draw=simBlue] at (f1) {smooth};
+  \node[opbox, fill=simBgBlue, draw=simBlue] at (f2) {smooth};
+  % coarse solve at the bottom
+  \node[product, fill=simBgRust, draw=simRust] at (cc) {coarse \\ solve};
+  % smoother nodes on the way up
+  \node[opbox, fill=simBgBlue, draw=simBlue] at (b2) {smooth};
+  \node[opbox, fill=simBgBlue, draw=simBlue] at (b1) {smooth};
+  \node[product, fill=simBgGreen, draw=simGreen] at (b0) {result};
+  % side labels
+  \node[anchor=east, simGray] at ($(f0)+(-0.6,0)$) {finest grid};
+  \node[anchor=north, simGray] at ($(cc)+(0,-0.55)$) {coarsest grid};
+  \node[anchor=west, simGray, align=left] at ($(b0)+(0.5,0)$) {smooth = this\\chapter's\\smoother};
+\end{tikzpicture}
+\caption[Smoothers inside a multigrid V-cycle (preview)]{The multigrid V-cycle of
+\cref{ch:multigrid}, previewed. Descending from the finest grid, a smoother runs at
+each level to remove the oscillatory error; the smooth remainder is carried to the
+coarsest grid where it is solved cheaply; ascending, the correction is prolonged
+back with a smoother at each level again. Every blue node is a smoother of the kind
+this chapter built---Jacobi, Chebyshev, or Hiptmair. The smoother is a poor solver
+in isolation and the indispensable component here.}
+\label{fig:smoo-vcycle}
+\end{figure}
+
+\begin{keyidea}
+A smoother is built to be a multigrid \emph{component}, not a solver. Standalone it
+stalls on smooth error; inside a V-cycle, paired with coarse-grid correction, that
+weakness is exactly covered---the smoother handles the high frequencies the coarse
+grid cannot resolve, the coarse grid handles the low frequencies the smoother cannot
+damp. The division of labor is the design. This is why we measured smoothers by
+their per-frequency damping factor rather than by how fast they solve: as a
+component, damping the high band cheaply is the whole job.
+\end{keyidea}
+
+\summarysection
+Writing the error in the eigenvector basis of $\mat{A}$ reduces a smoother to a
+single curve: its per-frequency damping factor $g(\lambda)$. A \emph{smoother} is an
+iteration whose $g$ is small at high frequency and near $1$ at low frequency, so it
+cheaply removes oscillatory error while leaving smooth error---a deliberately
+lopsided ``high-pass error filter'' that is a bad standalone solver but the heart of
+multigrid. \emph{Damped Jacobi} scales the residual by $\omega\mat{D}^{-1}$; its
+symbol is the affine $1-\omega\mu$, optimally damped at
+$\omega^\star=2/(\mu_{\min}+\mu_{\max})$, and undamped Jacobi can fail to smooth at
+all. \emph{Chebyshev} applies a fixed-degree minimax polynomial $p_k(\mat{D}^{-1}\mat{A})$
+shaped to be uniformly small across a target spectral window; it is matrix-free,
+inner-product-free, needs only a $\lambda_{\max}$ estimate, and must be evaluated by
+its stable three-term recurrence rather than its unstable monomial expansion.
+\emph{Hiptmair distributive relaxation} cures the gradient null space that defeats a
+plain smoother on edge-element curl--curl problems, by relaxing in the primary edge
+space and in the auxiliary scalar space bridged by the discrete gradient $\mat{G}$.
+All three are apply-functions; standalone they are weak, but as the smoothing step of
+the V-cycle in \cref{ch:multigrid} they are essential.
+
+\furtherreading
+The optimal damping analysis and the eigenvector view of stationary iterations are
+standard; Saad~\citep[Ch.~4]{saad2003} is the canonical reference. The fourth-kind
+Chebyshev smoother, its coefficient formulas, and the load-bearing stability of the
+recurrence over the monomial form are developed by Phillips and
+Fischer~\citep{phillipsfischer2022}, whose analysis Palace follows directly. The
+auxiliary-space (AMS) framework for $\Hcurl$ and $\Hdiv$ problems, of which Hiptmair
+distributive relaxation is the smoother realization, is laid out by Hiptmair and
+Xu~\citep{hiptmairxu2007}; the de Rham structure it exploits is \cref{ch:derham},
+and the V-cycle it slots into is \cref{ch:multigrid}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Damping symbol.} For damped Jacobi on a model problem with scaled
+  spectrum $\mu\in[0,2]$, write the symbol $g(\mu)=1-\omega\mu$. (a) For which
+  $\omega$ does $\abs{g(\mu_{\max})}=\abs{g(2)}$ first exceed $1$? (b) Show that any
+  $\omega>1$ leaves at least one mode amplified. (c) Conclude that
+  $\omega\le1$ is necessary for convergence on this spectrum.
+
+  \item \textbf{Optimal $\omega$ for the half-band.} Repeat the balance of
+  \cref{eq:smoo-jac-optomega} for the target band $[\mu_{\mathrm{lo}},\mu_{\max}]
+  =[1,2]$ and verify $\omega^\star=2/3$. Then compute the worst-case damping
+  $\max_{\mu\in[1,2]}\abs{g(\mu)}$ at this $\omega^\star$. How many sweeps to drive
+  the worst high-frequency mode below $10^{-3}$?
+
+  \item \textbf{Why undamped fails.} Using the 1-D Laplacian eigenvalues
+  $\lambda_k=4\sin^2(k\pi/2(n+1))$ from \cref{wex:smoo-jacobi}, compute the
+  undamped ($\omega=1$) damping factor at the top mode $k=n$ as $n\to\infty$.
+  What does it approach, and why does that make undamped Jacobi useless as a
+  smoother even when it does not diverge?
+
+  \item \textbf{Chebyshev versus Jacobi cost.} A degree-$k$ Chebyshev sweep costs
+  $k$ operator applies; a damped-Jacobi sweep costs $1$. \Cref{wex:smoo-cheby}
+  reached worst-case band damping $0.29$ in one degree-$2$ sweep ($2$ applies). How
+  many damped-Jacobi sweeps (\cref{wex:smoo-jacobi}, worst-case $1/3$ per sweep)
+  match that damping, and how many applies is that? Which wins on this band?
+
+  \item \textbf{The monomial trap.} Explain in one paragraph why expanding
+  $p_k(\mat{D}^{-1}\mat{A})$ into $\sum_j c_j(\mat{D}^{-1}\mat{A})^j$ and summing the
+  powers is numerically unstable for moderate $k$, while the three-term recurrence of
+  \cref{fig:smoo-chebdataflow} computing the same polynomial is stable. (Hint:
+  consider the size of $\norm{(\mat{D}^{-1}\mat{A})^j}$ and the signs of the $c_j$.)
+
+  \item \textbf{The gradient blind spot.} Let $\vphi=\mat{G}\psi$ be a gradient
+  field, so $\mat{A}\vphi=0$. Show directly that a damped-Jacobi sweep
+  \cref{eq:smoo-jac-update} starting from error $\ve=\vphi$ leaves $\ve$ unchanged.
+  Then show that the auxiliary leg \cref{eq:smoo-hipt-aux} of the Hiptmair sweep
+  \emph{does} reduce it, provided $B_G$ is a contraction on $\mat{A}_G$. (You may
+  assume $\mat{G}^{\mathsf T}\mat{G}$ is invertible on the relevant subspace.)
+
+  \item \textbf{Multiplicative, not additive.} The two Hiptmair legs
+  \cref{eq:smoo-hipt-prim}--\cref{eq:smoo-hipt-aux} form the auxiliary residual from
+  the \emph{updated} $\vy$. Write the single-sweep error-propagation operator for
+  the multiplicative composition, and compare it to the (incorrect) additive version
+  that uses the \emph{same} residual for both legs. On a mode in the gradient null
+  space, which one converges and which one stalls? Why does the order matter?
+
+  \item \textbf{Smoother as preconditioner.} Argue that for zero initial guess and a
+  single sweep, the Chebyshev smoother $\vx\mapsto p_k(\mat{D}^{-1}\mat{A})\vx$ is a
+  \emph{linear} operator (hence a valid Krylov preconditioner), while a Hiptmair
+  sweep with nonzero initial guess is \emph{affine}, not linear. Which property does
+  a multigrid V-cycle's smoothing step rely on, and which does an outer Krylov
+  preconditioner slot require?
+\end{enumerate}

@@ -1,0 +1,1097 @@
+\chapter{Composing a Driver, End to End}
+\label{ch:composing}
+
+\chapterorient{Part~V disassembled the simulator into named machines and showed,
+in a drawn trace (\cref{ch:fulltrace}), that one analysis is one composition of
+them. Part~VI takes that picture seriously: if every analysis is a composition of
+the same library functions, then the compositions are \emph{code}, and we can
+write them down. This chapter does exactly that. We open the \code{drivers}
+library---the topmost shelf of the synthesized library (\cref{ch:fivelibs})---and
+read its six driver definitions, each a handful of lines over the four calculus
+libraries beneath it. We render one driver, electrostatics, in full and walk it
+line by line, naming the library every call comes from. Then we descend into the
+single most important step in the book, the conjugate-gradient \code{krylov\_step},
+and watch the abstract calculus of Part~III produce real, runnable-looking
+algorithm code. The payoff is the chapter's thesis: every driver is a few lines of
+\emph{map}, \emph{fold}, or \emph{single call} over \texttt{assemble}$\to$%
+\texttt{reduce}, and the calculus we built really does synthesize working
+algorithms.}
+
+\section{The \texttt{drivers} library: six compositions over four}
+
+We have, by now, the whole library. \Cref{ch:synthlib} laid out its
+architecture---five modules---and \cref{ch:fivelibs} toured the four that hold the
+\emph{vocabulary}: \code{types} (the records every solve threads), \code{iteration}
+(the loop combinators of \cref{ch:fold} and the step kernels), \code{data-algebra}
+(the assembly fold \code{fe\_assemble} and the reduction verbs \code{gram\_reduce},
+\code{sparameter\_reduce}, and their siblings), and \code{coordination} (the
+outer-driver shapes \code{solve\_family}, \code{frequency\_sweep},
+\code{fold\_solve}, and the opaque \code{eigsolve} cap). This chapter is about the
+\emph{fifth} module, the one that sits on top of all of them:
+
+\begin{quote}\itshape
+The \code{drivers} library holds the six entry-point analyses---electrostatic,
+magnetostatic, driven, transient, eigenmode, boundary-mode---each written as a short
+composition of the four libraries below it. It composes the vocabulary; it does not
+add to it.
+\end{quote}
+
+\noindent That is the whole nature of the module, and it is worth stating sharply
+before we read any code. A driver definition introduces no new operator, no new
+combinator, no new record. Every name in its body has already been built and named
+in an earlier chapter; the driver's only job is to \emph{wire those names together}
+in the right shape. Reading the \code{drivers} library is therefore reading the
+book's table of contents executed: each line points down at a machine you already
+own (\cref{fig:lib-stack}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % top: the drivers module
+  \node[stage, fill=simBgViolet, draw=simViolet, minimum width=92mm,
+        minimum height=11mm, align=center] (drv) at (0,3.2)
+    {\textbf{\code{drivers}}\ \scriptsize --- the 6 entry-point compositions
+     (this chapter)};
+  % the four calculus libraries below
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=20mm,
+        minimum height=15mm, align=center] (da) at (-3.45,1.1)
+    {\code{data-}\\\code{algebra}\\[1pt]\scriptsize assemble\\+ reduce};
+  \node[stage, fill=simBgRust, draw=simRust, minimum width=20mm,
+        minimum height=15mm, align=center] (co) at (-1.15,1.1)
+    {\code{coord-}\\\code{ination}\\[1pt]\scriptsize the solve\\shapes};
+  \node[stage, fill=simBgBlue, draw=simBlue, minimum width=20mm,
+        minimum height=15mm, align=center] (it) at (1.15,1.1)
+    {\code{iter-}\\\code{ation}\\[1pt]\scriptsize loop +\\step};
+  \node[stage, fill=simBgGray, draw=simGray, minimum width=20mm,
+        minimum height=15mm, align=center] (ty) at (3.45,1.1)
+    {\code{types}\\[1pt]\scriptsize the\\records};
+  % composition edges
+  \foreach \n in {da,co,it,ty}{ \draw[depedge] (drv.south) -- (\n.north); }
+  \node[font=\scriptsize\itshape, text=simGray] at (0,0.05)
+    {(each library composes the ones to its right)};
+\end{tikzpicture}
+\caption[The library stack]{The synthesized library as a stack. The
+\code{drivers} module (violet, this chapter) sits on top and \emph{composes} the
+four calculus libraries of \cref{ch:fivelibs}: \code{data-algebra} (the assembly
+fold and the reduction verbs), \code{coordination} (the four solve shapes plus the
+opaque eigensolver cap), \code{iteration} (the loop combinators and step kernels),
+and \code{types} (the records). A driver definition adds no new vocabulary; every
+name in its body is built below it. Reading a driver is reading those four
+libraries wired into the shape one analysis needs.}
+\label{fig:lib-stack}
+\end{figure}
+
+\subsection{The unifying algebra, in one line each}
+
+Here are all six drivers, each collapsed to the composition that defines it. Read
+each right to left, the way function composition reads---\emph{assemble} on the
+right, \emph{reduce} on the left, the solve shape in the middle:
+
+\begin{lstlisting}[style=l4style]
+electrostatic = gram_reduce(w=1)          . solve_family    . fe_assemble
+magnetostatic = gram_reduce(w=1/(Ii*Ij))  . solve_family    . fe_assemble
+driven        = sparameter_reduce         . frequency_sweep . fe_assemble x3
+transient     = fold_solve                                  . fe_assemble x3
+eigenmode     = map readout . eigsolve    . eig_pencil      . fe_assemble x3
+boundary_mode = map readout . eigsolve    . eig_pencil      . fe_assemble . extract_2d
+\end{lstlisting}
+
+\noindent Six analyses, six one-liners, and one shape. Every driver is
+\texttt{assemble} on the right, a \emph{solve shape} in the middle, and a
+\texttt{reduce} on the left. What differs from row to row is small and named: how
+many operators get assembled, which of the four \emph{coordination shapes} runs the
+solve, and which reduction verb caps it. \Cref{ch:situating} taught us to read those
+middle terms as a small grid of \emph{solve corners}; the \code{drivers} library is
+that grid made executable. \Cref{fig:six-trees} draws the six as composition trees,
+grouped by the corner each occupies.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\scriptsize, >=Stealth,
+    every node/.style={align=center}]
+% ===================== GROUP 1: the maps =====================
+\node[cornertag, anchor=west, font=\footnotesize\bfseries] at (-0.3,7.7)
+  {\textsc{the maps} --- a family of independent solves (\cref{ch:situating}, corners 1--2)};
+
+% electrostatic
+\node[stage, fill=simBgGold, draw=simGold, text width=20mm] (e0) at (1.4,6.4)
+  {\code{electrostatic}};
+\node[opbox, text width=15mm] (e1) at (-0.4,5.2) {\code{fe\_assemble}\\\scriptsize K once};
+\node[stage, fill=simBgBlue, draw=simBlue, text width=15mm] (e2) at (1.4,5.2)
+  {\code{solve\_family}\\\scriptsize fixed-op map};
+\node[opbox, text width=15mm] (e3) at (3.2,5.2) {\code{gram\_reduce}\\\scriptsize $w{=}1$};
+\draw[depedge] (e0)--(e1); \draw[depedge] (e0)--(e2); \draw[depedge] (e0)--(e3);
+
+% magnetostatic
+\node[stage, fill=simBgGold, draw=simGold, text width=20mm] (m0) at (6.6,6.4)
+  {\code{magnetostatic}};
+\node[opbox, text width=15mm] (m1) at (4.8,5.2) {\code{fe\_assemble}\\\scriptsize K once};
+\node[stage, fill=simBgBlue, draw=simBlue, text width=15mm] (m2) at (6.6,5.2)
+  {\code{solve\_family}\\\scriptsize fixed-op map};
+\node[opbox, text width=16mm] (m3) at (8.5,5.2) {\code{gram\_reduce}\\\scriptsize $w{=}\frac{1}{I_iI_j}$};
+\draw[depedge] (m0)--(m1); \draw[depedge] (m0)--(m2); \draw[depedge] (m0)--(m3);
+
+% driven
+\node[stage, fill=simBgGold, draw=simGold, text width=18mm] (d0) at (11.4,6.4)
+  {\code{driven}};
+\node[opbox, text width=15mm] (d1) at (9.7,5.2) {\code{fe\_assemble}\\\scriptsize $\times3$ basis};
+\node[stage, fill=simBgRust, draw=simRust, text width=16mm] (d2) at (11.4,5.2)
+  {\code{frequency\_}\\\code{sweep}\\\scriptsize op-varying map};
+\node[opbox, text width=16mm] (d3) at (13.3,5.2) {\code{sparameter\_}\\\code{reduce}};
+\draw[depedge] (d0)--(d1); \draw[depedge] (d0)--(d2); \draw[depedge] (d0)--(d3);
+
+% ===================== GROUP 2: the fold =====================
+\node[cornertag, anchor=west, font=\footnotesize\bfseries] at (-0.3,3.9)
+  {\textsc{the fold} --- a state-threaded chain (\cref{ch:situating}, corner 3)};
+\node[stage, fill=simBgGold, draw=simGold, text width=18mm] (t0) at (2.0,2.7)
+  {\code{transient}};
+\node[opbox, text width=16mm] (t1) at (0.0,1.5) {\code{fe\_assemble}\\\scriptsize $\times3$ K,C,M};
+\node[stage, fill=simBgGreen, draw=simGreen, text width=18mm] (t2) at (2.6,1.5)
+  {\code{fold\_solve}\\\scriptsize state-threaded\\time march};
+\draw[depedge] (t0)--(t1); \draw[depedge] (t0)--(t2);
+
+% ===================== GROUP 3: the black box =====================
+\node[cornertag, anchor=west, font=\footnotesize\bfseries] at (6.2,3.9)
+  {\textsc{the black box} --- one opaque call (\cref{ch:situating}, corner 4)};
+
+% eigenmode
+\node[stage, fill=simBgGold, draw=simGold, text width=16mm] (g0) at (8.0,2.7)
+  {\code{eigenmode}};
+\node[opbox, text width=14mm] (g1) at (6.6,1.5) {\code{fe\_assemble}\\\scriptsize $\times3$ pencil};
+\node[extern, text width=12mm] (g2) at (8.1,1.5) {\code{eigsolve}\\\scriptsize 1 call};
+\node[opbox, text width=12mm] (g3) at (9.5,1.5) {\code{map}\\\code{readout}};
+\draw[depedge] (g0)--(g1); \draw[depedge] (g0)--(g2); \draw[depedge] (g0)--(g3);
+
+% boundary mode
+\node[stage, fill=simBgGold, draw=simGold, text width=18mm] (b0) at (12.4,2.7)
+  {\code{boundary\_mode}};
+\node[opbox, text width=14mm] (b1) at (10.7,1.5) {\code{extract\_2d}\\\scriptsize submesh};
+\node[opbox, text width=13mm] (b2) at (12.1,1.5) {\code{fe\_assemble}\\\scriptsize $+$ pencil};
+\node[extern, text width=11mm] (b3) at (13.5,1.5) {\code{eigsolve}\\\scriptsize 1 call};
+\draw[depedge] (b0)--(b1); \draw[depedge] (b0)--(b2); \draw[depedge] (b0)--(b3);
+
+\end{tikzpicture}
+\caption[The six drivers as composition trees]{The hero figure: all six drivers as
+composition trees, grouped by the solve corner each occupies (\cref{ch:situating}).
+\textsc{The maps} (top): electrostatic and magnetostatic run \code{solve\_family},
+a fixed-operator map (corner~1); the driven sweep runs \code{frequency\_sweep}, an
+operator-varying map (corner~2). \textsc{The fold} (lower left): transient threads
+its state through \code{fold\_solve}, a sequential chain (corner~3). \textsc{The
+black box} (lower right): eigenmode and boundary-mode hand the assembled pencil to a
+single opaque \code{eigsolve} call (corner~4), boundary-mode prefacing it with a
+2-D submesh extraction. Every tree has the same skeleton---an assemble on one side,
+a reduce/readout on the other, a solve shape between---and differs only in which
+shape and which reduction it picks. This grid \emph{is} the \code{drivers} library.}
+\label{fig:six-trees}
+\end{figure}
+
+\subsection{The three coordination shapes are the deep unifier}
+
+Look again at the middle column of the six one-liners and a smaller pattern
+emerges---smaller even than the four corners of \cref{ch:situating}. Underneath the
+corners there are really only \emph{three coordination shapes}, the three ways a
+driver can run its solves (\cref{ch:combinators}):
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[map] a family of \emph{independent} solves, run in any order---no carry.
+  Electrostatics and magnetostatics map over a fixed operator (\code{solve\_family});
+  the driven sweep maps over a per-frequency operator (\code{frequency\_sweep}). The
+  shape is the same \texttt{map}; the corners differ only in whether the operator is
+  reused or rebuilt.
+  \item[fold] a \emph{sequential} chain, each step consuming the state the last
+  produced. Transient time-stepping is the canonical fold (\code{fold\_solve}); so is
+  the adaptive mesh loop that the lifecycle wraps around all of it.
+  \item[single call] no loop \emph{we} write at all---the assembled pencil goes to an
+  opaque library routine (\code{eigsolve}) and the modes come back. Eigenmode and
+  boundary-mode are the two black-box drivers.
+\end{description}
+
+\noindent Map, fold, single call. That is the entire vocabulary of \emph{how a
+driver coordinates its solves}, and every analysis Palace runs is one of the three
+wrapped around \texttt{assemble} and capped by a \texttt{reduce}. \Cref{fig:three-shapes}
+sets them side by side; the rest of the chapter is, in effect, three readings of
+this one figure---one map (electrostatics, in full), one fold (the CG step that
+drives every solve inside any of them), and a tour of the single call.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % ---- MAP ----
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, text=simBlue] at (1.3,2.2) {\code{map}};
+    \node[opbox, minimum width=10mm] (mk) at (1.3,1.55) {op (fixed)};
+    \foreach \j/\y in {1/0.7,2/0.0,3/-0.7}{
+      \node[data, minimum width=7mm] (mb\j) at (0.3,\y) {$\vb_{\j}$};
+      \node[product, minimum width=8mm] (mv\j) at (2.3,\y) {$\vx_{\j}$};
+      \draw[flow, shorten >=1pt] (mb\j) -- (mv\j);
+    }
+    \node[font=\scriptsize\itshape, text=simBlue, align=center] at (1.3,-1.4)
+      {independent;\\reorderable, parallel};
+  \end{scope}
+  \draw[simGray!45, thick] (3.6,-1.7) -- (3.6,2.4);
+  % ---- FOLD ----
+  \begin{scope}[shift={(4.6,0)}]
+    \node[font=\small\bfseries, text=simGreen] at (1.6,2.2) {\code{fold}};
+    \node[data, minimum width=8mm] (s0) at (-0.1,0.7) {$\vs_0$};
+    \node[opbox, minimum width=7mm] (st1) at (0.9,0.7) {step};
+    \node[data, minimum width=8mm] (s1) at (1.85,0.7) {$\vs_1$};
+    \node[opbox, minimum width=7mm] (st2) at (2.8,0.7) {step};
+    \node[data, minimum width=8mm] (s2) at (3.75,0.7) {$\vs_2$};
+    \draw[flow] (s0)--(st1); \draw[flow] (st1)--(s1);
+    \draw[flow] (s1)--(st2); \draw[flow] (st2)--(s2);
+    \node[font=\scriptsize\itshape, text=simGreen, align=center] at (1.8,-1.4)
+      {sequential;\\each step needs the last};
+  \end{scope}
+  \draw[simGray!45, thick] (9.0,-1.7) -- (9.0,2.4);
+  % ---- SINGLE CALL ----
+  \begin{scope}[shift={(9.9,0)}]
+    \node[font=\small\bfseries, text=simViolet] at (1.5,2.2) {single call};
+    \node[data, minimum width=12mm] (pen) at (0.2,0.7) {pencil};
+    \node[extern, minimum width=15mm] (eig) at (2.2,0.7) {\code{eigsolve}};
+    \node[product, minimum width=12mm] (modes) at (2.2,-0.4) {modes};
+    \draw[flow] (pen) -- (eig);
+    \draw[flow] (eig) -- (modes);
+    \node[font=\scriptsize\itshape, text=simViolet, align=center] at (1.5,-1.4)
+      {opaque; no loop\\we write};
+  \end{scope}
+\end{tikzpicture}
+\caption[The three coordination shapes]{The three ways a driver coordinates its
+solves---the deep unifier beneath the six drivers. A \code{map} (blue) runs a family
+of independent solves over an operator; nothing is carried, so the solves are
+reorderable and parallel (electrostatic, magnetostatic, driven). A \code{fold}
+(green) threads a state through a sequential chain, each step consuming the last
+(transient, and the adaptive mesh loop). A \code{single call} (violet) hands the
+assembled pencil to an opaque library routine and reads the modes back (eigenmode,
+boundary-mode). Every driver in the library is one of these three, wrapped around
+\code{fe\_assemble} and capped by a reduction.}
+\label{fig:three-shapes}
+\end{figure}
+
+\begin{keyidea}
+Every driver is a few lines: a \texttt{map}, a \texttt{fold}, or a single opaque
+call, wrapped around \texttt{assemble} and capped by \texttt{reduce}. The six
+analyses differ only in \emph{which} of the three coordination shapes runs the solve
+and \emph{which} reduction verb caps it---and the calculus of Part~III produces real
+algorithm code that fills those shapes in. The \code{drivers} library is the grid of
+\cref{ch:situating} written out as composition; reading it is reading the book's
+machinery wired together.
+\end{keyidea}
+
+\subsection{Per-driver config records are projections, not new shapes}
+\label{sec:config-projections}
+
+Before we render a driver in full, one piece of plumbing deserves naming, because it
+recurs in every signature. Each driver's body opens by reading fields off a
+configuration value typed \code{ElectrostaticConfig}, \code{DrivenConfig}, and so on.
+These look like six different record types. They are not. There is exactly
+\emph{one} configuration record---the \code{IoData} parsed from the user's file
+(\cref{ch:records}, \cref{ch:fulltrace})---and the per-driver config types are
+\emph{projection-views} of it: type aliases that name which sub-records a given
+driver reads.
+
+\begin{lstlisting}[style=l4style]
+-- the per-driver config records are VIEWS of the one IoData, not new shapes
+type ElectrostaticConfig = IoData   -- reads: model, domains.epsilon, terminals, linear solver
+type DrivenConfig        = IoData   -- reads: model, domains.{nu,sigma,eps}, ports, omega-sweep
+type EigenmodeConfig     = IoData   -- reads: model, domains.{nu,sigma,eps}, n-modes + target
+-- ... and likewise for magnetostatic, transient, boundary_mode
+\end{lstlisting}
+
+\noindent Writing \code{ElectrostaticConfig} rather than the bare \code{IoData} in a
+driver's type is documentation, not a new data shape: it says ``this driver consults
+\emph{this} slice of the one config.'' The accessors a driver uses---%
+\lstinline[style=l4style]|permittivity cfg|, \lstinline[style=l4style]|terminal_sources cfg|,
+\lstinline[style=l4style]|ports cfg|---are the projection's utility API, trivial
+field selectors into \code{IoData}. Keeping these as views and not as separate
+records is the record-definition discipline of \cref{ch:records} applied at the top
+of the stack: the data shape is defined once, in \code{types}, and the drivers
+\emph{view} it rather than redefining it.
+
+\begin{notationbox}
+The shared \code{IoData} is why the lifecycle (\cref{ch:fulltrace}) can parse one
+file and dispatch to any of the six drivers: the parse produces a single
+\code{IoData}, and \emph{dispatch} reads one field of it---%
+\lstinline[style=l4style]|problemType cfg|---to choose which driver to run. The
+chosen driver then projects the slice it needs. One parse, one record, six views, a
+one-field switch: that is the entire shared front end, and it is why
+\S\ref{sec:lifecycle} can write the spine root as a dispatch over the six driver
+defs.
+\end{notationbox}
+
+\section{One driver, rendered and walked: \texttt{electrostatic}}
+\label{sec:es-rendered}
+
+We now render a complete driver as synthesized code and read every line of it. We
+choose \code{electrostatic}---the cleanest of the six, the anchor of all of Part~V
+(\cref{ch:electrostatics})---because its shape is the bare skeleton: assemble one
+operator, map a family of solves over it, Gram-reduce the family to the answer. Once
+we have walked this one, the other five are short variations, and we contrast the
+richest of them, \code{driven}, in \S\ref{sec:driven-contrast}.
+
+\subsection{The whole driver}
+
+Here is the synthesized \code{electrostatic} definition in full---the rendered form
+of the composition $\code{gram\_reduce}\circ\code{solve\_family}\circ
+\code{fe\_assemble}$ that \cref{ch:electrostatics} anchored Part~V on:
+
+\begin{lstlisting}[style=l4style]
+-- # Arguments
+--   cfg : ElectrostaticConfig   -- the IoData electrostatic view: H1 space, epsilon,
+--                                  terminal sources, linear solver config
+-- # Returns
+--   CapacitanceMatrix           -- the n x n Maxwell capacitance matrix (the product)
+electrostatic :: ElectrostaticConfig -> CapacitanceMatrix
+electrostatic cfg =
+  let space = h1_space cfg                                  -- (0) the H1 FE space
+      k     = fe_assemble space [ diffusion (permittivity cfg) ]   -- (1) assemble K ONCE
+      rhss  = [ excitation cfg idx | idx <- terminal_sources cfg ] -- (2) per-terminal RHS family
+      vs    = solve_family k rhss                           -- (3) fixed-operator solve map
+  in  gram_reduce k vs (\i j -> 1)                          -- (4) C_ij = V_j^T K V_i, w = 1
+\end{lstlisting}
+
+\noindent Five lines of body. That is a complete electromagnetic analysis---the same
+one that, on a real mesh, fills a capacitance matrix for a chip interconnect. The
+brevity is the point: the driver is \emph{nothing but} the composition. All the
+weight lives in the four library calls, each built in an earlier chapter. We walk
+them in order, naming the library each comes from (\cref{fig:es-dataflow}).
+
+\subsection{Line by line, naming the library}
+\label{sec:es-linewalk}
+
+\paragraph{(0) \code{space = h1\_space cfg}---from \code{types}/\code{data-algebra}.}
+The first line builds the finite-element space the analysis lives in: the scalar
+nodal $\Hone$ space (\cref{ch:electrostatics}), read off the mesh and polynomial
+order in \code{cfg}. It is construction-stratum data (\cref{ch:strata})---fixed the
+instant the mesh is built, read-only thereafter. Everything downstream is expressed
+against this space.
+
+\paragraph{(1) \code{k = fe\_assemble space [\,diffusion (permittivity cfg)\,]}---from
+\code{data-algebra}.} The second line assembles the operator, and it is the
+load-bearing line of the whole fixed-operator corner. \code{fe\_assemble} is the
+assembly fold of \cref{ch:assembly}: it walks a list of weak-form terms and sums one
+contribution per term into a sparse operator. For electrostatics the list has
+\emph{exactly one} term---the $\varepsilon$-weighted gradient,
+\code{diffusion (permittivity cfg)}, the discrete form of
+$\int_\dom\varepsilon\Grad u\cdot\Grad v\dV$ (\cref{ch:electrostatics},
+eq.~\eqref{eq:es-bilinear-ch39})---so the fold runs once and returns the stiffness
+operator $\Kop$. The word that matters is the one the type makes invisible:
+\emph{once}. This line sits \emph{outside} the solve map below it, so $\Kop$ is built
+a single time and reused for every terminal. Hoisting it here, structurally, is the
+fixed-operator corner (\cref{ch:electrostatics}, and the pitfall it warned of).
+
+\paragraph{(2) \code{rhss = [\,excitation cfg idx | idx <- terminal\_sources cfg\,]}---from
+the config view.} The third line builds the family of right-hand sides, one per
+terminal. The list comprehension ranges over \code{terminal\_sources cfg}---the
+conductors named in the config---and for each builds the vector
+\code{excitation cfg idx} that encodes ``conductor \code{idx} at one volt, the rest
+grounded'' (the eliminated boundary data, \cref{ch:electrostatics}). This is the
+\emph{method of unit excitations} (\cref{ch:electrostatics}) rendered as a
+comprehension: $n$ conductors, $n$ right-hand sides, no solving yet.
+
+\paragraph{(3) \code{vs = solve\_family k rhss}---from \code{coordination}.} The
+fourth line runs the solves, and it is the coordination shape of the driver. The
+\code{solve\_family} combinator (\cref{ch:combinators}) is the \emph{fixed-operator
+map}: it captures the operator \code{k} once and maps a solver over the RHS family,
+\lstinline[style=l4style]|map (ksp_solve k) rhss|. Because \code{k} is a free
+variable of the mapped function, the \texttt{map} closes over it once and reuses it
+for every element---the hoist made structural by the type, so no implementation can
+rebuild the operator inside the loop. Each element solve \code{ksp\_solve k b\_j} is
+one preconditioned conjugate-gradient solve of the SPD system $\Kop V_j=\vb_j$, and
+\code{ksp\_solve} itself bottoms out in the \code{krylov\_step} of
+\S\ref{sec:cg-flagship}---the step we render in full next. The result \code{vs} is
+the solution family $[V_1,\dots,V_n]$.
+
+\paragraph{(4) \code{gram\_reduce k vs (\textbackslash i j -> 1)}---from
+\code{data-algebra}.} The final line reduces the family to the answer.
+\code{gram\_reduce} (\cref{ch:reductions}) is the symmetric Gram verb: it pairs the
+family with itself through the operator \code{k}, computing
+$C_{ij}=V_j^{\!\top}\Kop V_i$ over the upper triangle and mirroring the lower (since
+$\Kop$ is symmetric). The weight closure \lstinline[style=l4style]|\i j -> 1| is the
+unit-voltage specialization that makes this reduction \emph{capacitance}
+specifically; magnetostatics will pass a different weight to the same verb
+(\S\ref{sec:driven-contrast}). Notice that \code{k} appears \emph{twice}---in the
+solve (line 3) and again in the reduce (line 4): the same operator that drives the
+solves also weights the Gram. That double use is the back-edge of the anchor diagram
+(\cref{ch:electrostatics}, \cref{fig:es-pipeline}), now visible in the code as a
+shared \code{let}-binding.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 11mm, font=\footnotesize, >=Stealth]
+  \node[data, align=center, text width=17mm] (cfg)
+    {\code{cfg}\\[1pt]\scriptsize \code{IoData} view};
+  \node[stage, right=of cfg, align=center, text width=20mm, fill=simBgGold, draw=simGold]
+    (asm) {\code{fe\_assemble}\\[1pt]\scriptsize (1) $\Kop$ once};
+  \node[stage, right=of asm, align=center, text width=22mm, fill=simBgBlue, draw=simBlue]
+    (solve) {\code{solve\_family}\\[1pt]\scriptsize (3) fixed-op map};
+  \node[stage, right=of solve, align=center, text width=20mm, fill=simBgGold, draw=simGold]
+    (red) {\code{gram\_reduce}\\[1pt]\scriptsize (4) $w{=}1$};
+  \node[product, right=of red, align=center, text width=15mm] (prod)
+    {$\mat{C}$\\[1pt]\scriptsize capacitance};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{$\Kop$} (solve);
+  % the RHS family entering the solve from below
+  \node[data, below=8mm of solve, align=center, text width=20mm] (rhs)
+    {\code{rhss} $=[\vb_j]$\\[1pt]\scriptsize (2) per terminal};
+  \draw[flow] (rhs.north) -- (solve.south);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{$\{V_j\}$} (red);
+  \draw[flow] (red) -- (prod);
+  % the shared K back-edge
+  \draw[depedge, shorten >=1pt] (asm.south) ++(0,-1mm)
+    .. controls +(0,-12mm) and +(0,-12mm) .. (red.south)
+    node[midway, below, font=\scriptsize, text=simBlue]
+      {the \emph{same} $\Kop$ weights the Gram (\code{k} used twice)};
+  % library tags
+  \node[cornertag, above=0.5mm of asm]   {\code{data-algebra}};
+  \node[cornertag, above=0.5mm of solve] {\code{coordination}};
+  \node[cornertag, above=0.5mm of red]   {\code{data-algebra}};
+\end{tikzpicture}
+\caption[The \texttt{electrostatic} driver's data flow]{The data flow of the
+rendered \code{electrostatic} driver (\S\ref{sec:es-rendered}), each stage tagged by
+the library its call comes from. The config view \code{cfg} feeds
+\code{fe\_assemble} (\code{data-algebra}), which builds the stiffness $\Kop$
+\emph{once}; the per-terminal RHS family \code{rhss} enters from below;
+\code{solve\_family} (\code{coordination}) maps the fixed-operator solve over the
+family, yielding $\{V_j\}$; and \code{gram\_reduce} (\code{data-algebra}) pairs that
+family against $\Kop$ into the capacitance matrix $\mat{C}$. The blue back-edge is
+the same operator $\Kop$ consumed twice---by the solve and again by the reduce---which
+is the \code{k} that appears in both line~(3) and line~(4) of the code.}
+\label{fig:es-dataflow}
+\end{figure}
+
+\subsection{What the rendering shows that the diagram could not}
+
+The trace of \cref{ch:fulltrace} \emph{drew} this pipeline; the rendering
+\emph{types} it. Three things become concrete only in the code. First, the operators
+flow as ordinary \code{let}-bound values---$\Kop$ is a value named \code{k}, passed
+to two later lines---so ``the same operator weights the Gram'' is not a diagram
+annotation but a variable used twice. Second, the per-terminal family is a list
+comprehension, so ``$n$ solves'' is a structural consequence of
+\code{terminal\_sources cfg} having $n$ elements, not a loop bound written by hand.
+Third, the whole driver has the type \code{ElectrostaticConfig -> CapacitanceMatrix}:
+config in, product out, no monad, no mutation, no mention of the iteration machinery
+that the solve hides. The driver is pure all the way across; the only place the
+state monad of \cref{ch:monad} appears is buried four levels down, inside
+\code{ksp\_solve}'s \code{krylov\_step}---which is exactly where we go next.
+
+\subsection{The richest contrast: \texttt{driven} and its per-\texorpdfstring{$\omega$}{omega} rebuild}
+\label{sec:driven-contrast}
+
+Set \code{driven} beside \code{electrostatic} and the family resemblance is total
+except for one move. We render it more briefly, to surface the single difference:
+
+\begin{lstlisting}[style=l4style]
+driven :: DrivenConfig -> FrequencyResponse
+driven cfg =
+  let space  = nd_space cfg                                       -- H(curl) space
+      fam    = { K  = fe_assemble space [ curl_curl (reluctivity cfg) ]  -- (1) assemble
+               , C  = fe_assemble space [ damping cfg ]                  --     the basis
+               , M  = fe_assemble space [ mass (permittivity cfg) ] }    --     ONCE (x3)
+      omegas = sample_frequencies cfg                             -- the swept band
+      es     = frequency_sweep fam omegas    -- (2) operator-VARYING map: A(w) rebuilt INSIDE
+  in  sparameter_reduce (ports cfg) es       -- (3) port-projection -> S(omega)
+\end{lstlisting}
+
+\noindent The skeleton is identical: assemble, map, reduce. But three cells have
+moved, exactly as \cref{ch:driven} promised. The \emph{assemble} now folds
+\emph{three} term lists into a fixed \emph{basis} $\{\Kop,\Cop,\Mop\}$ rather than
+one operator. The \emph{reduce} swaps \code{gram\_reduce} for
+\code{sparameter\_reduce}, the port-projection (not a Gram). And the load-bearing
+swap is the middle: \code{solve\_family} becomes \code{frequency\_sweep}. Both are
+\texttt{map}s---independent solves, reorderable and parallel---but \code{solve\_family}
+captures \emph{one fixed operator} outside the loop, while \code{frequency\_sweep}
+rebuilds a \emph{fresh} operator $\mat{A}(\omega)=\Kop+i\omega\Cop-\omega^2\Mop$
+\emph{inside} the loop, once per frequency, from the fixed basis. The rebuild lives in
+\code{frequency\_sweep}'s body (\code{coordination}); the driver only composes it.
+\Cref{fig:driven-dataflow} draws the per-$\omega$ rebuild loop.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=7mm and 10mm]
+  \node[data, align=center, text width=15mm] (cfg) {\code{cfg}};
+  \node[stage, right=of cfg, align=center, text width=22mm, fill=simBgGold, draw=simGold]
+    (asm) {\code{fe\_assemble}$^{\times3}$\\[1pt]\scriptsize basis $\{\Kop,\Cop,\Mop\}$ once};
+  \node[stage, right=of asm, align=center, text width=24mm, fill=simBgRust, draw=simRust]
+    (sweep) {\code{frequency\_sweep}\\[1pt]\scriptsize per $\omega$:};
+  \node[stage, right=of sweep, align=center, text width=20mm, fill=simBgGold, draw=simGold]
+    (red) {\code{sparameter\_}\\\code{reduce}};
+  \node[product, right=of red, text width=14mm, align=center] (S) {$S(\omega)$};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{\code{fam}} (sweep);
+  \draw[flow] (sweep) -- node[above,font=\scriptsize]{$[\vE_k]$} (red);
+  \draw[flow] (red) -- (S);
+  % the per-omega inner loop body
+  \node[opbox, below=12mm of sweep, fill=white, align=center, text width=44mm] (inner)
+    {\textbf{for each $\omega_k$:}\ form $\mat{A}(\omega_k)=\Kop{+}i\omega_k\Cop{-}\omega_k^2\Mop$\\
+     $\to$ \code{ksp\_solve} (GMRES) $\to \vE_k$};
+  \draw[refedge] (sweep.south) -- (inner.north);
+  % the rebuild loop arrow
+  \draw[backflow] (inner.east) .. controls +(1.4,0) and +(1.4,0) ..
+    (inner.north east) node[midway, right=1mm, font=\scriptsize, text=simRust, align=center]
+    {operator\\rebuilt\\\emph{inside}};
+  \node[cornertag, above=0.5mm of asm]   {\code{data-algebra}};
+  \node[cornertag, above=0.5mm of sweep] {\code{coordination}};
+\end{tikzpicture}
+\caption[The \texttt{driven} driver's per-\texorpdfstring{$\omega$}{omega} rebuild]{%
+The \code{driven} driver's data flow, contrasting \code{electrostatic}
+(\cref{fig:es-dataflow}). The \emph{basis} $\{\Kop,\Cop,\Mop\}$ is assembled once
+(three \code{fe\_assemble} folds). But the system operator is \emph{not} fixed:
+\code{frequency\_sweep} (the rust box) maps over the swept band, and its per-$\omega$
+body (drawn below) \emph{rebuilds} $\mat{A}(\omega_k)$ from the basis and solves it
+by GMRES---the operator is re-formed and re-captured \emph{inside} the loop (the rust
+back-edge), the exact negation of the electrostatic hoist. The solved fields
+$[\vE_k]$ feed \code{sparameter\_reduce}, the port-projection that yields $S(\omega)$.
+One coordination shape (\code{solve\_family}) swapped for another
+(\code{frequency\_sweep}); the rest of the skeleton is unchanged.}
+\label{fig:driven-dataflow}
+\end{figure}
+
+\begin{notationbox}
+\textbf{Magnetostatics: the same verb, a different weight.} The closest sibling of
+all is \code{magnetostatic}. Its rendered body is \code{electrostatic} with the
+$\Hone$ space changed to $\Hcurl$, the diffusion term changed to curl--curl, and
+\emph{one closure changed}: the Gram weight becomes
+\lstinline[style=l4style]|\i j -> 1 / (is!!i * is!!j)|, the current normalization
+$1/(I_iI_j)$, where \code{is = currents cfg}. The solve corner is identical
+(\code{solve\_family}, fixed-operator map); the reduction verb is identical
+(\code{gram\_reduce}); only the weight closure differs. ``One verb, two products''
+(\cref{ch:electrostatics}) is, in the rendering, one function \code{gram\_reduce}
+called with two different weight lambdas.
+\end{notationbox}
+
+\section{The flagship: \texttt{krylov\_step} and CG as code}
+\label{sec:cg-flagship}
+
+We have seen a driver compose its solves; now we open one solve and watch the
+abstract calculus produce a real algorithm. The \code{ksp\_solve} that
+\code{solve\_family} maps---and that lives, in some form, inside \emph{every} driver
+above---is at bottom a single step kernel, \code{krylov\_step}, folded by the
+iteration combinator of \cref{ch:fold}. This is the showcase of the book: the place
+where high-order combinators (\cref{ch:fold}), the state monad (\cref{ch:monad}),
+and the strata of \cref{ch:strata} converge to synthesize the conjugate-gradient
+method (\cref{ch:cg}) as runnable-looking code.
+
+\subsection{Form A: the branch-in-body step}
+
+The first rendering of \code{krylov\_step} is the direct one---a single step body
+that does everything, with the first-iteration special case handled by a branch
+inside it. It is the cleanest illustration of the monadic discipline of
+\cref{ch:monad}: a sea of pure \code{let}s and exactly one \code{modify}.
+
+\begin{lstlisting}[style=l4style]
+-- Form A: branch-in-body. One step of CG, embedded in the Solve monad.
+krylov_step :: OpParams -> Krylov -> (SimState -> Solve { krylov: Krylov, outputs: StepOutputs })
+krylov_step op K = \s -> do
+  -- ===== OUTSIDE the monad: pure let-bindings, the actual numerical work =====
+  let Ap     = apply_linop op.A K.p     in   -- operator apply        (pure)
+  let alpha  = K.beta / dot K.p Ap      in   -- step length           (pure dot)
+  let x'     = axpy alpha K.p s.x       in   -- new iterate           (pure axpy)
+  let r'     = axpy (negate alpha) Ap K.r in -- new residual          (pure axpy)
+  let rdot'  = dot r' r'                in   -- residual energy       (pure dot)
+  let beta'  = rdot' / K.beta           in   -- direction coefficient (pure)
+  let p'     = axpy beta' K.p r'        in   -- new search direction   (pure axpy)
+  let K'     = { ...K, r: r', p: p', beta: rdot' }  -- fresh workspace (plain value)
+  let outputs = { residual_norm: sqrt (abs rdot') } -- demand-prunable readout
+  -- ===== INSIDE the monad: the ONE state write =====
+  modify (\s -> s { it: s.it + 1, x: x', converged: rdot' < op.tol })
+  pure { krylov: K', outputs }
+\end{lstlisting}
+
+\noindent Count the monadic operations: there is exactly \emph{one}, the closing
+\code{modify}. Everything above it---the operator apply \code{Ap}, the dot products
+\code{alpha} and \code{rdot'}, the new iterate \code{x'}, residual \code{r'}, and
+direction \code{p'}---is a pure \code{let}-binding, the algorithm's actual arithmetic
+(\cref{ch:monad}). The three strata of \cref{ch:strata} are visible by eye:
+\code{op} is read-only construction-stratum config (the operator, the tolerance);
+\code{K} is the ephemeral per-restart workspace, threaded as a \emph{plain value} and
+returned fresh; and the \code{SimState} \code{s} is the persistent run-time state,
+touched only by the lone \code{modify}. The step \emph{returns} its readout in
+\code{outputs} as a value, never logging it---so when no consumer reads the residual
+history, the \code{residual\_norm} computation is pruned away (\cref{ch:fold}).
+
+\subsection{Form B: first-iteration unrolling into bootstrap and steady}
+
+Form~A carries a hidden cost. The conjugate-gradient recurrence builds each search
+direction from the current residual \emph{and} a coefficient $\beta$ computed from
+the \emph{previous} residual (\cref{ch:cg}). On the very first iteration there is no
+previous residual, so the search direction is just $\vp\gets\vr$. Form~A would
+handle that with an \lstinline[style=l4style]|if it == 0| branch inside the step---a
+conditional that runs (and is mispredicted) on every iteration but is meaningful on
+only the first.
+
+The framework removes the branch by the \emph{first-iteration unrolling} rotation of
+\cref{ch:fold}: split the step into a one-time \code{cg\_first\_step} that
+manufactures the first $\beta$, followed by a branch-free \code{cg\_steady\_step}
+that always has a real previous $\beta$ to work with, threaded by the combinator as a
+\emph{closure argument} rather than a state field. This is
+\code{iterate\_while\_with\_prev} (\cref{ch:fold}) in its defining use.
+\Cref{fig:formAB} draws the rotation.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % ===== LEFT: Form A, branch in body =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simRust] at (1.6,2.7) {Form A: branch in body};
+    \node[stage, minimum width=34mm, minimum height=20mm, fill=simBgRust, draw=simRust,
+          align=center] (stepA) at (1.6,1.0) {};
+    \node[font=\scriptsize, anchor=north] at ($(stepA.north)+(0,-1mm)$) {\code{krylov\_step}};
+    \node[diamond, draw=simRust, aspect=1.7, inner sep=1pt, font=\scriptsize,
+          fill=white] (br) at (1.6,1.05) {\code{if it==0}};
+    \node[font=\scriptsize\itshape, text=simRust, below=0.5mm of br] {tested every pass};
+    \draw[backflow] (stepA.east) .. controls +(0.8,0) and +(0.8,0) .. (stepA.north east)
+      node[midway, right=1mm, font=\scriptsize, text=simRust] {loop};
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (1.6,-0.55)
+      {one step, one\\extra slot \code{beta\_prev}};
+  \end{scope}
+  % rotation arrow
+  \draw[depedge, line width=1pt] (3.7,1.0) -- node[above, font=\scriptsize, text=simBlue]
+    {unroll} node[below, font=\scriptsize, text=simBlue] {iter.~1} (5.1,1.0);
+  % ===== RIGHT: Form B, bootstrap + steady =====
+  \begin{scope}[shift={(5.6,0)}]
+    \node[font=\small\bfseries, text=simGreen] at (2.4,2.7) {Form B: bootstrap then steady};
+    \node[opbox, minimum width=24mm, fill=simBgBlue, draw=simBlue, align=center]
+      (boot) at (1.1,1.5) {\code{cg\_first\_step}\\\scriptsize runs once; makes $\beta_0$};
+    \node[stage, minimum width=26mm, fill=simBgGreen, draw=simGreen, align=center]
+      (steady) at (3.4,0.5) {\code{cg\_steady\_step}\\\scriptsize branch-free};
+    \draw[flow] (boot.south) .. controls +(0,-0.5) and +(-1.2,0.4) ..
+      node[below left=-1mm, font=\scriptsize, text=simBlue] {$\beta_0$} (steady.west);
+    \draw[backflow] (steady.east) .. controls +(0.9,0) and +(0.9,0) .. (steady.north east)
+      node[midway, right=1mm, font=\scriptsize, text=simGreen] {loop};
+    \node[font=\scriptsize\itshape, text=simGreen, align=center] at (2.4,-0.7)
+      {$\beta$ threaded as a CLOSURE arg\\(\code{iterate\_while\_with\_prev});\\carry one slot lighter};
+  \end{scope}
+\end{tikzpicture}
+\caption[The Form A \texorpdfstring{$\to$}{->} Form B rotation]{The
+first-iteration-unrolling rotation (\cref{ch:fold}) applied to \code{krylov\_step}.
+\emph{Left, Form A}: a single step body carries an \lstinline[style=l4style]|if it==0|
+branch (the $\beta_{k-1}$ has no value on iteration~0), tested on every pass though
+meaningful only on the first, and a \code{beta\_prev} slot in the carry. \emph{Right,
+Form B}: the loop is unrolled once into a \code{cg\_first\_step} (runs exactly once,
+manufactures the first $\beta_0$) and a \emph{branch-free} \code{cg\_steady\_step};
+the previous $\beta$ is threaded by \code{iterate\_while\_with\_prev} as a
+\emph{closure argument}, so the steady carry is one slot lighter and the steady step
+has no conditional. Same algorithm, rotated for a cleaner steady state.}
+\label{fig:formAB}
+\end{figure}
+
+Here are the two unrolled steps and the driver that folds them, rendered in full.
+This is the synthesized conjugate-gradient method:
+
+\begin{lstlisting}[style=l4style]
+-- the v0.5 CgState: ONE scalar lighter than Form A -- beta_prev is gone, threaded
+-- instead as the PrevCarry closure parameter of iterate_while_with_prev.
+type CgState = { x: Tensor[$S], r: Tensor[$S], p: Tensor[$S],
+                 beta: Scalar, it: Int, converged: Bool }
+
+-- the FIRST step: it == 0, so p <- r unconditionally (the Form-A branch, hoisted out)
+cg_first_step :: LinOp[$S] -> Scalar -> CgState -> { state: CgState, residual_norm: Scalar }
+cg_first_step opA eps s =
+  let p'    = s.r                  in   -- it == 0  =>  p <- r   (no branch: this IS the first step)
+  let Ap    = apply_linop opA p'   in
+  let alpha = s.beta / dot Ap p'   in
+  let x'    = axpy alpha p' s.x    in
+  let r'    = axpy (negate alpha) Ap s.r in
+  let beta' = dot r' r'            in
+  let res'  = sqrt (abs beta')     in
+  { state: { x: x', r: r', p: p', beta: beta', it: 1, converged: res' < eps },
+    residual_norm: res' }
+
+-- the STEADY step: branch-free; beta_prev is the closure carry (NOT a state field)
+cg_steady_step :: LinOp[$S] -> Scalar -> Scalar -> CgState -> { state: CgState, residual_norm: Scalar }
+cg_steady_step opA eps beta_prev s =
+  let p'    = axpby 1.0 s.r (s.beta / beta_prev) s.p in   -- p <- r + (beta/beta_prev) p
+  let Ap    = apply_linop opA p'   in
+  let alpha = s.beta / dot Ap p'   in
+  let x'    = axpy alpha p' s.x    in
+  let r'    = axpy (negate alpha) Ap s.r in
+  let beta' = dot r' r'            in
+  let res'  = sqrt (abs beta')     in
+  { state: { x: x', r: r', p: p', beta: beta', it: s.it + 1, converged: res' < eps },
+    residual_norm: res' }
+
+-- the DRIVER: first step, then fold cg_steady_step with iterate_while_with_prev,
+-- threading the prior step's beta as the next step's beta_prev (closure, not a field).
+cg_solve :: CgConfig -> LinOp[$S] -> Tensor[$S] -> Tensor[$S] -> Bool
+         -> { final_state: CgState, residual_history: [Scalar] }
+cg_solve config opA b x0 initial_guess =
+  let { state: s0, initial_res } = cg_init opA b x0 initial_guess in
+  let eps = max (config.rel_tol * initial_res) config.abs_tol in
+  if sqrt (abs s0.beta) < eps                              -- already converged? do zero work
+    then { final_state: { ...s0, converged: True }, residual_history: [] }
+    else
+      let { state: s1, residual_norm: res1 } = cg_first_step opA eps s0 in   -- the bootstrap
+      if s1.converged || s1.it >= config.max_it
+        then { final_state: s1, residual_history: [res1] }
+        else
+          let { final_state, trajectory } =
+            iterate_while_with_prev
+              (\_ -> pure { state: s1, prev: s0.beta })   -- bootstrap: seed (s1, beta_prev = s0.beta)
+              s1                                          -- initial carry
+              (\(s, beta_prev) ->                         -- steady body: (carry, prev)
+                 let r = cg_steady_step opA eps beta_prev s in
+                 pure { state: r.state, prev: s.beta, residual_norm: r.residual_norm })
+              (\s -> s.it < config.max_it && not s.converged)   -- predicate: PURE on the carry
+          in { final_state, residual_history: [res1] ++ trajectory.map (\t -> t.residual_norm) }
+\end{lstlisting}
+
+\noindent Read \code{cg\_solve} as the chapter's punchline. It is the
+conjugate-gradient method of \cref{ch:cg}---a real, convergent linear solver---written
+as a few lines over the combinator of \cref{ch:fold}. The \texttt{while} convention
+of \cref{ch:fold} is visible in the very first \code{if}: an already-converged input
+does \emph{zero} work. The bootstrap-then-steady split is
+\code{iterate\_while\_with\_prev}. The predicate
+\lstinline[style=l4style]|\s -> s.it < config.max_it && not s.converged| is pure on
+the carry, reading the convergence flag and counter the step folded into the
+state---never the residual the step just produced (\cref{ch:fold}'s predicate rule).
+And the \code{residual\_history} is assembled from the trajectory the combinator
+collected---demand-pruned away when nobody reads it. Everything those chapters built
+abstractly is here, doing work.
+
+\begin{keyidea}
+The calculus produces real algorithm code. \code{cg\_solve} is the conjugate-gradient
+method (\cref{ch:cg}) written as a short composition over
+\code{iterate\_while\_with\_prev} (\cref{ch:fold}): a bootstrap step manufactures the
+first $\beta$, a branch-free steady step folds the recurrence, the previous $\beta$
+rides as a closure argument (\cref{ch:strata}), the predicate is pure on the carry,
+the sole mutation is one \code{modify} of the counter (\cref{ch:monad}), and the
+residual history is a demand-pruned trajectory. No part of it is pseudocode dressed
+up---it is the abstract combinators of Part~III, instantiated, running a real solver.
+\end{keyidea}
+
+\section{Two worked examples}
+\label{sec:worked}
+
+The first worked example renders and walks the \code{electrostatic} driver against a
+problem small enough to do by hand---from \code{IoData} projection to the capacitance
+matrix---naming each library call as it fires. The second traces one CG step through
+the synthesized \code{cg\_steady\_step}, tying every line to the conjugate-gradient
+math of \cref{ch:cg}.
+
+\begin{workedexample}{The \texttt{electrostatic} driver, run by hand}{es-driver}
+We run the rendered driver of \S\ref{sec:es-rendered} on the two-conductor capacitor
+of \cref{ch:electrostatics} (\cref{wex:es-twocond}), discretized to a single interior
+degree of freedom, watching each library call do its job.
+
+\medskip
+\emph{(0) Project the config.} The parsed \code{IoData} has
+\lstinline[style=l4style]|problemType cfg = ELECTROSTATIC|, so the lifecycle
+(\S\ref{sec:lifecycle}) dispatched to \code{electrostatic} and handed it the config.
+The driver reads its electrostatic view: \code{permittivity cfg} $=\varepsilon$, and
+\lstinline[style=l4style]|terminal_sources cfg = [1, 2]| (two conductors). Line~(0)
+builds \code{space = h1\_space cfg}, the scalar $\Hone$ space; on this coarse mesh it
+has one free interior node.
+
+\emph{(1) \code{fe\_assemble}, once.} Line~(1) folds the one-term list
+\code{[\,diffusion}~$\varepsilon$\code{\,]} over the mesh. With $g=2\varepsilon A/L$
+the half-gap conductance, the assembled-then-constrained stiffness is the scalar
+$\Kop=2g$ (\cref{wex:es-twocond}). This is \code{k}, built a single time.
+
+\emph{(2) The RHS family.} Line~(2)'s comprehension ranges over the two terminals.
+\code{excitation cfg 1} encodes ``conductor~1 at one volt, conductor~2 grounded,''
+giving $b_1=g$; \code{excitation cfg 2} gives $b_2=g$ by symmetry. So
+\lstinline[style=l4style]|rhss = [g, g]|.
+
+\emph{(3) \code{solve\_family k rhss}.} Line~(3) maps \code{ksp\_solve k} over the
+family, reusing the \emph{one} operator \code{k} $=2g$ for both. Each solve is
+$\Kop u=b$: $u_1=b_1/\Kop=g/(2g)=\tfrac12$ and $u_2=\tfrac12$. Reconstructing the full
+nodal fields gives $V_1=(1,\tfrac12,0)$ and $V_2=(0,\tfrac12,1)$. So
+\lstinline[style=l4style]|vs = [V1, V2]|---the solution family, produced by a map that
+captured \code{k} once.
+
+\emph{(4) \code{gram\_reduce k vs (\textbackslash i j -> 1)}.} Line~(4) pairs the
+family against \code{k} with unit weight. The upper triangle is
+$C_{11}=V_1^{\!\top}\Kop V_1=g/2$, $C_{22}=g/2$, and
+$C_{12}=V_2^{\!\top}\Kop V_1=-g/2$; the verb mirrors $C_{21}=C_{12}$ (because $\Kop$
+is symmetric). The returned product is
+\[
+  \mat{C}=\frac{g}{2}\begin{pmatrix}1&-1\\-1&1\end{pmatrix},
+  \qquad -C_{12}=\frac{g}{2}=\frac{\varepsilon A}{L},
+\]
+the textbook parallel-plate capacitance. \tcblower
+\emph{What the rendering added.} The arithmetic is identical to
+\cref{wex:es-twocond}---but now we watched it run as \emph{code}. The same \code{k}
+appeared in line~(3) (the solve) and line~(4) (the reduce): one value, two
+consumers, the back-edge of \cref{fig:es-dataflow} made literal. The ``two solves''
+were the two elements of \code{rhss}, not a hand-written loop. And the whole thing had
+type \code{ElectrostaticConfig -> CapacitanceMatrix}: \code{IoData} in, $\mat{C}$ out,
+nothing mutable crossing the boundary. On a real mesh only line~(3) changes
+character---the two scalar divisions become two million-dimensional CG solves, each
+the \code{cg\_solve} of \S\ref{sec:cg-flagship}---but the composition is exactly the
+five lines we ran.
+\end{workedexample}
+
+\begin{workedexample}{One CG step through \texttt{cg\_steady\_step}}{cg-step}
+We trace a single iteration of the synthesized \code{cg\_steady\_step}
+(\S\ref{sec:cg-flagship}) and tie each line to the conjugate-gradient math of
+\cref{ch:cg}. Take the tiny SPD system
+\[
+  \mat{A}=\begin{pmatrix}4&1\\1&3\end{pmatrix},\quad \vb=\begin{pmatrix}1\\2\end{pmatrix},
+\]
+and suppose the loop has reached a steady state with carry
+\lstinline[style=l4style]|s = { x, r, p, beta, it, ... }| where
+$\vr=(\tfrac{1}{2},\tfrac{1}{2})^{\!\top}$, $\vp=(1,0)^{\!\top}$, the carry's
+$\code{beta}=\inner{\vr}{\vr}=\tfrac12$, and the closure carry
+$\code{beta\_prev}=2$ (the previous step's residual energy). We run
+\code{cg\_steady\_step opA eps beta\_prev s} line by line.
+
+\medskip
+\emph{Line 1 --- the direction update \code{p' = axpby 1.0 s.r (s.beta/beta\_prev) s.p}.}
+The coefficient is $\beta/\beta_{\text{prev}}=\tfrac12/2=\tfrac14$. This is the CG
+$\beta_k=\inner{\vr_k}{\vr_k}/\inner{\vr_{k-1}}{\vr_{k-1}}$ of \cref{ch:cg}, and the
+threaded \code{beta\_prev} is exactly $\inner{\vr_{k-1}}{\vr_{k-1}}$---the
+\emph{previous} residual energy, supplied as a closure argument, not read from a state
+field. The new direction is
+$\vp'=\vr+\tfrac14\vp=(\tfrac12+\tfrac14,\ \tfrac12)=(\tfrac34,\tfrac12)^{\!\top}$.
+
+\emph{Line 2 --- the apply \code{Ap = apply\_linop opA p'}.} One operator application,
+$\mat{A}\vp'=(4\cdot\tfrac34+\tfrac12,\ \tfrac34+3\cdot\tfrac12)=(\tfrac72,\tfrac94)^{\!\top}$.
+This is the single matrix--vector product that is the cost of a CG step (\cref{ch:cg});
+in the driver it is one \code{krylov\_step}'s operator apply, the matrix-free leaf of
+\cref{ch:fulltrace}.
+
+\emph{Line 3 --- the step length \code{alpha = s.beta / dot Ap p'}.} The denominator
+is $\inner{\mat{A}\vp'}{\vp'}=\tfrac72\cdot\tfrac34+\tfrac94\cdot\tfrac12=\tfrac{21}{8}+\tfrac98=\tfrac{30}{8}=\tfrac{15}{4}$,
+so $\alpha=\beta/\inner{\mat{A}\vp'}{\vp'}=\tfrac12/\tfrac{15}{4}=\tfrac{2}{15}$.
+This is the CG line-search $\alpha_k=\inner{\vr_k}{\vr_k}/\inner{\vp_k}{\mat{A}\vp_k}$
+(\cref{ch:cg}), the step that minimizes the energy norm along $\vp'$.
+
+\emph{Lines 4--5 --- the updates \code{x' = axpy alpha p' s.x},
+\code{r' = axpy (-alpha) Ap s.r}.} The iterate moves $\vx'=\vx+\alpha\vp'$ and the
+residual updates $\vr'=\vr-\alpha\mat{A}\vp'$---the two \code{axpy} fused-multiply-adds
+that advance CG (\cref{ch:cg}). Numerically
+$\vr'=(\tfrac12,\tfrac12)-\tfrac{2}{15}(\tfrac72,\tfrac94)=(\tfrac12-\tfrac{7}{15},\ \tfrac12-\tfrac{3}{10})=(\tfrac{1}{30},\tfrac{1}{5})^{\!\top}$.
+
+\emph{Lines 6--7 --- the new residual energy and convergence.}
+$\code{beta'}=\inner{\vr'}{\vr'}=(\tfrac{1}{30})^2+(\tfrac15)^2\approx0.0411$, and
+$\code{res'}=\sqrt{\code{beta'}}\approx0.203$---a smaller residual than the
+$\sqrt{\code{beta}}=\sqrt{\tfrac12}\approx0.707$ we started with. The step writes
+\code{converged: res' < eps} into the state.
+
+\tcblower
+\emph{Reading the trace as the calculus.} Every CG quantity of \cref{ch:cg} appears
+exactly once and in the expected place: $\beta_k$ on line~1, the apply on line~2,
+$\alpha_k$ on line~3, the iterate and residual updates on lines~4--5. The step is
+\emph{branch-free}---there is no \lstinline[style=l4style]|if it==0|---because the
+unrolling of \S\ref{sec:cg-flagship} moved that case into \code{cg\_first\_step}; and
+the previous residual energy reached this step as the closure argument
+\code{beta\_prev}, threaded by \code{iterate\_while\_with\_prev} (\cref{ch:fold}), not
+stored in \code{CgState}. The one effect on the persistent \code{SimState}---the
+counter bump and convergence flag---is the lone \code{modify} of Form~A
+(\cref{ch:monad}); the iterate, residual, and direction are pure \code{let}s. This is
+the conjugate-gradient method of \cref{ch:cg}, running, with each line a calculus
+construct we built earlier in the book.
+\end{workedexample}
+
+\section{Writing a new analysis, and the spine that runs them}
+\label{sec:lifecycle}
+
+We close by stepping back from the six existing drivers to the shape they share, and
+asking what it would take to write a seventh.
+
+\subsection{How a new analysis is written}
+
+Because a driver is nothing but a composition, adding an analysis is a matter of
+\emph{three choices}, not a new program (\cref{fig:new-analysis}):
+
+\begin{enumerate}[nosep]
+  \item \textbf{Pick the corner.} Decide how the solves coordinate: a fixed-operator
+  map (\code{solve\_family}), an operator-varying map (\code{frequency\_sweep}), a
+  state-threaded fold (\code{fold\_solve}), or a single opaque call (\code{eigsolve}).
+  This is the choice of coordination shape from \code{coordination}.
+  \item \textbf{Pick the reduction.} Decide what physical product the solved family
+  collapses to: a symmetric Gram (\code{gram\_reduce}), a port-projection
+  (\code{sparameter\_reduce}), a per-mode table (\code{eigenfreq\_qfactor\_reduce}),
+  an energy table (\code{domain\_energy\_reduce}). This is a verb from
+  \code{data-algebra}.
+  \item \textbf{Compose.} Wire \code{fe\_assemble} (the right term list) into the
+  chosen corner into the chosen reduction. That composition \emph{is} the driver.
+\end{enumerate}
+
+\noindent No new combinator, no new record, no new loop. The expressive economy is
+the whole argument of the book cashed out: the simulator is a small library, and an
+analysis is a short composition over it. The four existing reduction verbs and four
+coordination shapes already span the six analyses Palace ships; a genuinely new
+analysis would reuse them and differ only in its term list and its choice of corner
+and reduction.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=5mm]
+  \node[data, align=center, text width=20mm] (cfg) at (0,0) {term list +\\config view};
+  \node[stage, fill=simBgGold, draw=simGold, right=10mm of cfg, text width=18mm, align=center]
+    (asm) {\code{fe\_assemble}\\\scriptsize \code{data-algebra}};
+  % the corner choice
+  \node[stage, fill=simBgRust, draw=simRust, right=9mm of asm, text width=24mm, align=center]
+    (corner) {\textbf{pick the corner}\\\scriptsize map / map / fold / call\\\code{coordination}};
+  \node[stage, fill=simBgBlue, draw=simBlue, right=9mm of corner, text width=22mm, align=center]
+    (red) {\textbf{pick the reduce}\\\scriptsize Gram / proj / table\\\code{data-algebra}};
+  \node[product, right=7mm of red, text width=14mm, align=center] (prod) {new\\product};
+  \draw[flow] (cfg)--(asm); \draw[flow] (asm)--(corner);
+  \draw[flow] (corner)--(red); \draw[flow] (red)--(prod);
+  \node[cornertag, below=1mm of corner] {choice 1};
+  \node[cornertag, below=1mm of red] {choice 2};
+  \node[font=\scriptsize\itshape, text=simGray] at (6.3,-1.5)
+    {choice 3: compose the three into one driver def};
+\end{tikzpicture}
+\caption[Writing a new analysis]{Writing a new analysis is three choices, not a new
+program. Start from a weak-form term list and a config view; assemble with
+\code{fe\_assemble} (\code{data-algebra}); \textbf{pick the corner}---one of the four
+coordination shapes (\code{coordination}); \textbf{pick the reduction}---one of the
+verbs (\code{data-algebra}); and \textbf{compose} the three into a driver definition.
+No new combinator or record is written; the new analysis reuses the same library and
+differs only in its term list and its two choices. This is why the six drivers are
+each a handful of lines.}
+\label{fig:new-analysis}
+\end{figure}
+
+\subsection{The spine root: \texttt{lifecycle} dispatches over the six}
+
+One definition sits above all six drivers and runs them: the \code{lifecycle} root
+(\cref{ch:fulltrace}). It is the topologically last definition in the library---it
+\emph{composes the driver defs themselves}---and it is short, because dispatch is one
+field read:
+
+\begin{lstlisting}[style=l4style]
+lifecycle :: IoData -> Product
+lifecycle cfg =
+  let mesh0 = build_mesh cfg                          -- shared front end: load + partition mesh
+      drv   = dispatch (problemType cfg)              -- the specialization seam: pick ONE driver
+      step  = \m -> estimate_mark_refine cfg (drv cfg m)  -- run the driver, then mark/refine
+  in  fold_solve_amr step mesh0 (refinement cfg)      -- adaptive estimate-mark-refine OUTER fold
+  where
+    dispatch ELECTROSTATIC = electrostatic            -- the six driver defs, by problem type
+    dispatch MAGNETOSTATIC = magnetostatic
+    dispatch DRIVEN        = driven
+    dispatch TRANSIENT     = transient
+    dispatch EIGENMODE     = eigenmode
+    dispatch BOUNDARYMODE  = boundary_mode
+\end{lstlisting}
+
+\noindent Three things to read. First, \code{build\_mesh} and the parse that produced
+\code{cfg} are the \emph{shared front end} (\cref{ch:fulltrace})---driver-agnostic,
+run identically whichever analysis follows. Second, \code{dispatch (problemType cfg)}
+is the \emph{specialization seam}: one field of the one \code{IoData} selects one of
+the six driver defs above. Everything before the seam is shared; the seam picks the
+one stage that differs. Third, the whole run is wrapped in \code{fold\_solve}---the
+adaptive estimate--mark--refine loop is itself a fold (\cref{ch:fold}), whose carry is
+the mesh, degenerating to a single solve when refinement is off. The spine root is the
+\emph{fourth} use of the same coordination vocabulary: a fold wrapped around a
+dispatch wrapped around the six compositions.
+
+\begin{keyidea}
+The whole simulator is one library and a one-field dispatch. \code{lifecycle} parses
+\code{IoData}, builds the mesh (the shared front end), reads \code{problemType} to
+select one of the six driver compositions (the specialization seam), and threads the
+adaptive loop through \code{fold\_solve}. Above the six few-line drivers sits one
+few-line root that runs any of them. From parse to product, the entire machine is the
+five-module library of \cref{ch:fivelibs} composed---no glue beyond the compositions
+themselves.
+\end{keyidea}
+
+\subsection{Where this leaves us}
+
+We set out, in \cref{ch:fulltrace}, to \emph{draw} the simulator as one composition;
+in this chapter we \emph{wrote} it. The six drivers are six short compositions over
+four libraries; the conjugate-gradient solver inside every one of them is a few lines
+over the combinator of \cref{ch:fold}; and a seventh analysis would be three choices
+and a composition. The synthesized library is not a metaphor for the simulator---it is
+the simulator, with its compositions made into code. What remains is to step back one
+final time and see the whole machine---library, drivers, and lifecycle---as a single
+object, which is the closing chapter, \cref{ch:wholemachine}.
+
+\summarysection
+The \code{drivers} library is the top module of the synthesized library
+(\cref{ch:fivelibs}): it holds the six entry-point analyses, each a short composition
+over the four calculus libraries (\code{types}, \code{iteration}, \code{data-algebra},
+\code{coordination}) and adding no new vocabulary. The six are one-liners in a single
+algebra---\code{electrostatic} $=$ \code{gram\_reduce}$(w{=}1)\circ$%
+\code{solve\_family}$\circ$\code{fe\_assemble}; \code{magnetostatic} the same with the
+weight $1/(I_iI_j)$; \code{driven} $=$ \code{sparameter\_reduce}$\circ$%
+\code{frequency\_sweep}$\circ$\code{fe\_assemble}$^{\times3}$; \code{transient} $=$
+\code{fold\_solve}$\circ$\code{fe\_assemble}$^{\times3}$; \code{eigenmode} and
+\code{boundary\_mode} $=$ \code{map readout}$\circ$\code{eigsolve}$\circ$%
+\code{eig\_pencil}$\circ\cdots$. Beneath the four solve corners of \cref{ch:situating}
+lie just three coordination shapes---\texttt{map} (independent solves), \texttt{fold}
+(sequential chain), and \texttt{single call} (opaque eigensolve)---and every driver is
+one of the three wrapped around \texttt{assemble} and capped by \texttt{reduce}. The
+per-driver config types are projection-views of the one \code{IoData}, not new shapes.
+We rendered \code{electrostatic} in full and walked its five lines, naming the library
+each call comes from---\code{fe\_assemble} assembles $\Kop$ once (\code{data-algebra});
+a comprehension builds the per-terminal RHS family; \code{solve\_family} maps the
+fixed-operator solve (\code{coordination}); \code{gram\_reduce} pairs the family
+against the same $\Kop$ (\code{data-algebra})---and contrasted \code{driven}, whose only
+real difference is rebuilding $\mat{A}(\omega)$ \emph{inside} \code{frequency\_sweep}.
+The flagship is \code{krylov\_step}/CG: Form~A (branch-in-body, one \code{modify} amid
+pure \code{let}s) rotated by first-iteration unrolling into Form~B
+(\code{cg\_first\_step} $+$ branch-free \code{cg\_steady\_step}), folded by
+\code{iterate\_while\_with\_prev} in \code{cg\_solve}---the conjugate-gradient method of
+\cref{ch:cg} as runnable code, with $\beta$ threaded as a closure argument
+(\cref{ch:strata}), the predicate pure on the carry (\cref{ch:fold}), and the residual
+history demand-pruned. A new analysis is three choices---pick the corner, pick the
+reduction, compose---and the \code{lifecycle} root parses \code{IoData}, builds the
+mesh, dispatches on one field to one of the six drivers, and wraps the adaptive loop in
+\code{fold\_solve}. Every driver is a few lines of map/fold/single-call over
+\texttt{assemble}$\to$\texttt{reduce}, and the abstract calculus of Part~III produces
+real algorithm code.
+
+\furtherreading
+The conjugate-gradient method rendered here as \code{cg\_solve}, and the broader family
+of Krylov solvers the other drivers invoke, are developed in full by
+Saad~\citep{saad2003}, whose treatment of CG, its short recurrence, and the role of the
+$\beta$ coefficient is the standard reference behind \cref{ch:cg} and this chapter's
+flagship. The functional-programming machinery that makes the synthesized rendering
+possible---the state monad threading \code{SimState}, the \code{do}-notation, the
+higher-order combinators that \code{iterate\_while\_with\_prev} specializes---is
+documented by Peyton Jones~\citep{peytonjones2003}, the source behind \cref{ch:monad}
+and \cref{ch:fold}. The simulator whose six drivers we have rendered is Palace itself,
+documented at the project~\citep{palace2023}; readers comparing the synthesized
+compositions to the original C++ will find the driver dispatch and the per-analysis
+solvers there, in the imperative form this book has spent six parts rotating into the
+pure compositions of this chapter. The closing chapter, \cref{ch:wholemachine},
+assembles library, drivers, and lifecycle into one final view of the whole machine.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Read the one-liners.} For each of the six driver one-liners (the list
+  at the opening of the chapter), name (a) how many operators \code{fe\_assemble}
+  builds, (b) which coordination shape runs the solve (\code{solve\_family} /
+  \code{frequency\_sweep} / \code{fold\_solve} / \code{eigsolve}), and (c) which
+  reduction caps it. Which two drivers share the \emph{same} coordination shape but
+  differ only in a weight?
+  \item \textbf{Walk the rendering.} Take the rendered \code{electrostatic} driver of
+  \S\ref{sec:es-rendered} and, for each of its five body lines, name the library the
+  call comes from and the one fact the line establishes. Which value is \code{let}-bound
+  on one line and consumed on \emph{two} later lines, and why does that double use
+  appear as a back-edge in \cref{fig:es-dataflow}?
+  \item \textbf{The one moved call.} Comparing \code{electrostatic} and \code{driven},
+  identify the single coordination call that swaps (\code{solve\_family} for
+  \code{frequency\_sweep}) and explain, in terms of \emph{where} the operator capture
+  sits relative to the loop, why one rebuilds the operator inside the map and the other
+  does not. Cross-check against \cref{ch:driven}.
+  \item \textbf{Magnetostatics as one closure.} Magnetostatics calls the \emph{same}
+  \code{gram\_reduce} as electrostatics. Write the weight closure each passes, and
+  explain why the inductance matrix and the capacitance matrix come from one verb with
+  two lambdas rather than two reduction routines. (See the notation box in
+  \S\ref{sec:driven-contrast}.)
+  \item \textbf{Count the monad.} In Form~A of \code{krylov\_step}
+  (\S\ref{sec:cg-flagship}), classify every line as ``in the monad'' or ``outside the
+  monad'' by the rule of thumb of \cref{ch:monad}. How many are in the monad? Name the
+  three strata (\cref{ch:strata}) the step touches and which variable carries each.
+  \item \textbf{Why unroll.} Explain what the first-iteration unrolling
+  (\cref{fig:formAB}) buys: what branch does \code{cg\_steady\_step} avoid that Form~A
+  carries, where did that case go, and how is the previous $\beta$ supplied to the
+  steady step if it is no longer a field of \code{CgState}? Which combinator threads it?
+  \item \textbf{Trace a CG step.} Repeat \cref{wex:cg-step} for the \emph{next} step:
+  use the carry it produced (the new $\vr'$, $\vp'$, and $\beta'=\inner{\vr'}{\vr'}$),
+  take \code{beta\_prev} to be the previous step's $\beta=\tfrac12$, and run
+  \code{cg\_steady\_step} line by line to compute the new direction, step length,
+  iterate, and residual. Confirm the residual norm continues to fall, and name the CG
+  formula each line implements.
+  \item \textbf{Write the seventh analysis.} Suppose you wanted a driver that computes
+  the \emph{energy} stored by each of several independent excitations (no cross terms).
+  Using the three-choice recipe of \S\ref{sec:lifecycle}: which coordination shape would
+  you pick, which reduction verb, and what term list would \code{fe\_assemble} take?
+  Sketch the five-line driver by analogy with \code{electrostatic}, and say which one
+  line differs from it.
+\end{enumerate}

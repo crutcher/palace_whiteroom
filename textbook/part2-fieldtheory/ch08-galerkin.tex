@@ -1,0 +1,979 @@
+\chapter{Galerkin's Method and the Bilinear-Form Family}
+\label{ch:galerkin}
+
+\chapterorient{In \cref{ch:weak} we turned a partial differential equation into
+a \emph{weak form}: find a function $u$ such that $a(u,v)=\ell(v)$ for every test
+function $v$. That statement is exact, but it lives in an infinite-dimensional
+space of functions---there is no way to hand it to a computer as written. This
+chapter performs the single decisive step that makes the weak form
+\emph{computable}: replace the infinite-dimensional space with a finite one
+spanned by $N$ chosen functions, and the weak form collapses into a system of
+$N$ linear equations in $N$ unknowns, $\mat{K}\vx=\vb$. We will see where the
+matrices $\mat{K}$ and $\mat{M}$ that the rest of the book solves actually
+\emph{come from}---they are nothing but the bilinear form evaluated on pairs of
+basis functions---and why the properties an engineer cares about (symmetry,
+sparsity, positive-definiteness) are inherited directly from the form. By the
+end you will have assembled, by hand, the classic tridiagonal stiffness matrix
+of the one-dimensional Poisson equation.}
+
+\section{From an infinite problem to a finite one}
+
+Recall the shape of the weak form. We have a real number $a(u,v)$ that depends
+linearly on each of two functions $u$ and $v$---a \emph{bilinear form}---and a
+real number $\ell(v)$ that depends linearly on one function---a \emph{linear
+functional}. The weak problem is:
+
+\begin{quote}
+find $u$ in the trial space $V$ such that $a(u,v)=\ell(v)$ for \emph{all} $v$ in
+the test space $V$.
+\end{quote}
+
+For the model problem of this chapter, the one-dimensional Poisson equation
+$-u''=f$ on the interval $(0,1)$ with $u(0)=u(1)=0$, integration by parts gave us
+(in \cref{ch:weak}) the concrete pair
+\begin{equation}
+a(u,v)=\int_0^1 u'(x)\,v'(x)\dx,
+\qquad
+\ell(v)=\int_0^1 f(x)\,v(x)\dx.
+\label{eq:poisson-weak}
+\end{equation}
+The space $V$ here is the set of all functions on $(0,1)$ that vanish at the two
+endpoints and whose first derivative is square-integrable---an
+\emph{infinite-dimensional} space. We cannot loop over ``all $v$ in $V$''; there
+are uncountably many, and no finite list of equations pins $u$ down. Something
+has to give.
+
+\subsection{The Galerkin idea}
+
+The idea, due to Boris Galerkin, is disarmingly simple: \emph{stop asking for the
+exact answer in the infinite space, and instead ask for the best answer you can
+build out of a finite menu of functions.} We pick, once and for all, $N$
+functions
+\[
+\phi_1,\phi_2,\dots,\phi_N,
+\]
+each one a legal member of $V$ (each vanishes at the boundary, each is smooth
+enough), and we agree to look for our solution only among combinations of them.
+The set of all such combinations is a finite-dimensional subspace,
+\begin{equation}
+V_h=\operatorname{span}\{\phi_1,\dots,\phi_N\}
+=\Bigl\{\,\textstyle\sum_{j=1}^N c_j\phi_j : c_j\in\Real\,\Bigr\}\subset V,
+\label{eq:Vh}
+\end{equation}
+where the subscript $h$ is the traditional reminder that the menu came from a
+\emph{mesh} of spacing $h$ (we make this concrete in \cref{sec:worked-stiffness}).
+The functions $\phi_i$ are the \emph{basis functions}, and choosing them well is,
+as \cref{sec:basis-is-everything} argues, the entire game.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % the big infinite space V
+  \draw[draw=simGray, fill=simBgGray, rounded corners=10pt]
+    (-3.4,-1.9) rectangle (3.4,2.0);
+  \node[simGray] at (0,1.65) {$V$ \;(infinite-dimensional)};
+  % the finite subspace V_h
+  \draw[draw=simGreen, fill=simBgGreen, rounded corners=6pt, thick]
+    (-2.6,-1.5) rectangle (2.6,0.7);
+  \node[simGreen!70!simInk] at (0,0.42) {$V_h=\operatorname{span}\{\phi_1,\dots,\phi_N\}$};
+  % the exact solution
+  \fill[simRust] (1.9,1.25) circle (1.6pt);
+  \node[simRust, above right=-1pt and -2pt] at (1.9,1.25) {$u$ (exact)};
+  % the galerkin solution inside V_h
+  \fill[simBlue] (0.55,-0.55) circle (1.6pt);
+  \node[simBlue, below=1pt] at (0.55,-0.7) {$u_h$ (Galerkin)};
+  % projection arrow
+  \draw[flow, simInk] (1.9,1.25) -- node[right=1pt,font=\scriptsize]{project} (0.55,-0.55);
+  % the residual is orthogonal to V_h: little right-angle marker idea
+  \node[font=\scriptsize\itshape, simInk] at (-1.45,-1.05)
+    {$a(u-u_h,\,v_h)=0\ \ \forall v_h\in V_h$};
+\end{tikzpicture}
+\caption[The Galerkin projection]{The Galerkin idea in one picture. The exact
+solution $u$ lives somewhere in the infinite-dimensional space $V$; we cannot
+reach it. Instead we look inside the finite-dimensional subspace $V_h$ and pick
+the element $u_h$ whose \emph{error} $u-u_h$ is invisible to every test function
+in $V_h$---formally, $a(u-u_h,v_h)=0$ for all $v_h\in V_h$. In the energy
+geometry set by $a(\cdot,\cdot)$ this is an orthogonal projection, which is why
+$u_h$ turns out to be the \emph{best} approximation $V_h$ can offer
+(\cref{sec:cea}).}
+\label{fig:galerkin-projection}
+\end{figure}
+
+Having narrowed the search to $V_h$, we must also narrow the supply of test
+functions: it is unreasonable to demand $a(u_h,v)=\ell(v)$ for \emph{all} $v$ in
+the infinite $V$ when $u_h$ only has $N$ knobs to turn. The \emph{Galerkin
+choice} is to use the same finite menu for both roles---trial and test---and
+require the weak equation only against the $N$ basis functions:
+\begin{equation}
+\text{find } u_h\in V_h \text{ such that }
+a(u_h,\phi_i)=\ell(\phi_i)
+\quad\text{for } i=1,2,\dots,N.
+\label{eq:galerkin}
+\end{equation}
+Because $a$ and $\ell$ are linear in their test slot, requiring
+\cref{eq:galerkin} against each basis function $\phi_i$ is exactly the same as
+requiring it against every combination $v_h=\sum_i d_i\phi_i$---so
+\cref{eq:galerkin} really does enforce the weak form for \emph{all} of $V_h$,
+not just the basis. We have replaced ``for all $v\in V$,'' an infinitude of
+conditions, with ``for $i=1,\dots,N$,'' exactly $N$ of them.
+
+\subsection{Counting: \texorpdfstring{$N$}{N} equations, \texorpdfstring{$N$}{N} unknowns}
+
+Now write the unknown $u_h$ out in the basis. Every element of $V_h$ is some
+combination $\sum_j u_j\phi_j$; finding $u_h$ \emph{means} finding the
+coefficients $u_1,\dots,u_N$. So we substitute
+\begin{equation}
+u_h=\sum_{j=1}^N u_j\,\phi_j
+\label{eq:uh-expansion}
+\end{equation}
+into the Galerkin condition \cref{eq:galerkin} and use bilinearity of $a$ to pull
+the unknown coefficients out of the form:
+\begin{equation}
+a(u_h,\phi_i)
+=a\Bigl(\sum_{j=1}^N u_j\phi_j,\;\phi_i\Bigr)
+=\sum_{j=1}^N u_j\,a(\phi_j,\phi_i)
+=\ell(\phi_i),
+\qquad i=1,\dots,N.
+\label{eq:galerkin-expanded}
+\end{equation}
+Look at what \cref{eq:galerkin-expanded} is. For each $i$ it is one linear
+equation in the unknowns $u_1,\dots,u_N$. There are $N$ values of $i$, hence $N$
+equations; there are $N$ unknowns $u_j$. The numbers $a(\phi_j,\phi_i)$ and
+$\ell(\phi_i)$ are not unknown---they are definite integrals we can compute from
+the data of the problem. The infinite-dimensional weak form has become a
+square linear system. That is the whole of Galerkin's method.
+
+\begin{keyidea}
+The matrices \emph{are} the bilinear form, sampled on basis pairs. There is no
+separate ``matrix-building'' physics: the entry in row $i$, column $j$ of the
+stiffness matrix is \emph{defined} to be $a(\phi_j,\phi_i)$, the bilinear form
+fed the $j$th and $i$th basis functions. Symmetry, definiteness, sparsity---every
+property of the matrix is a property of the form $a$ read off through this
+sampling. To know the matrix, know the form and know the basis; nothing else
+enters.
+\end{keyidea}
+
+\section{The assembled system \texorpdfstring{$\mat{K}\vx=\vb$}{Kx=b}}
+
+We collect \cref{eq:galerkin-expanded} into matrix--vector form. Define the
+$N\times N$ matrix $\mat{K}$ and the $N$-vectors $\vx,\vb$ by
+\begin{equation}
+\mat{K}_{ij}=a(\phi_j,\phi_i),
+\qquad
+\vx_j=u_j,
+\qquad
+\vb_i=\ell(\phi_i).
+\label{eq:stiffness-def}
+\end{equation}
+Then the $N$ Galerkin equations \cref{eq:galerkin-expanded} are precisely the
+single matrix equation
+\begin{equation}
+\boxed{\;\mat{K}\,\vx=\vb\;}
+\label{eq:Kxb}
+\end{equation}
+This is the discrete problem the rest of the book solves. The matrix $\mat{K}$ is
+called the \emph{stiffness matrix}, a name inherited from structural mechanics,
+where $a(u,v)$ measured elastic energy and its discretization measured how stiffly
+a structure resisted deformation. The vector $\vb$ is the \emph{load vector}, and
+$\vx$ holds the coefficients of the discrete solution $u_h=\sum_j x_j\phi_j$.
+
+\begin{notationbox}
+A small but constant source of confusion: the index order in
+$\mat{K}_{ij}=a(\phi_j,\phi_i)$ has $j$ (the trial index, the column) inside the
+form's \emph{first} slot and $i$ (the test index, the row) in the \emph{second}.
+We chose this so that $\mat{K}\vx$ produces row $i=\sum_j a(\phi_j,\phi_i)x_j
+=a(u_h,\phi_i)$, the left side of the Galerkin equation. When $a$ is symmetric
+($a(u,v)=a(v,u)$, the case for all the stiffness and mass matrices in this book)
+the order does not matter and $\mat{K}_{ij}=\mat{K}_{ji}$. It matters only for the
+\emph{non}symmetric forms we meet in the driven analysis (\cref{ch:driven}); we
+flag it now so the convention is never a surprise.
+\end{notationbox}
+
+\subsection{Where \texorpdfstring{$\mat{K}$}{K} and \texorpdfstring{$\mat{M}$}{M} come from}
+
+The two matrices that dominate this book---the stiffness $\mat{K}$ and the
+\emph{mass} $\mat{M}$---are both instances of \cref{eq:stiffness-def}, differing
+only in which bilinear form is sampled. The stiffness matrix samples a form built
+from \emph{derivatives} of the basis functions; the mass matrix samples the
+plain $L^2$ pairing with \emph{no} derivative:
+\begin{equation}
+\mat{K}_{ij}=a(\phi_j,\phi_i)=\int_\dom Q\,\diffop\phi_j\cdot\diffop\phi_i\dV,
+\qquad
+\mat{M}_{ij}=\int_\dom \phi_i\,\phi_j\dV.
+\label{eq:KM}
+\end{equation}
+Here $\diffop$ is whichever differential operator the weak form attached to the
+trial and test functions---$\Grad$, $\Curl$, $\Div$, or the identity---and $Q$ is
+a material weight (a permittivity $\varepsilon$, a reluctivity $\nu=1/\mu$, and so
+on). The mass matrix is the special case $\diffop=\text{identity}$ and $Q=1$:
+$\mat{M}_{ij}=\int\phi_i\phi_j$ measures the overlap of basis function $i$ with
+basis function $j$.
+
+We will meet these two matrices in every analysis. The eigenmode problem of
+\cref{ch:eigenmodes} is the generalized eigenvalue problem $\mat{K}\vx=\lambda
+\mat{M}\vx$; the transient problem of \cref{ch:transient} marches
+$\mat{M}\ddot{\vs}+\mat{C}\dot{\vs}+\mat{K}\vs=\vJ(t)$; the driven problem of
+\cref{ch:driven} solves $(\mat{K}+i\omega\mat{C}-\omega^2\mat{M})\vE=\vb$. In
+\emph{every} one of these, $\mat{K}$ and $\mat{M}$ are the bilinear forms of
+\cref{eq:KM} sampled on basis pairs. They look like distinct objects in a linear
+algebra library; they are, in truth, the same form-on-basis construction with
+different $\diffop$ and $Q$.
+
+\begin{physicsbox}
+The mass matrix earns its name from dynamics. In the wave-equation
+discretization $\mat{M}\ddot{\vs}+\mat{K}\vs=0$, the term $\mat{M}\ddot{\vs}$ is
+the discrete analogue of ``mass times acceleration.'' Off-diagonal entries
+$\mat{M}_{ij}\neq0$ mean basis functions $i$ and $j$ overlap, so that
+accelerating the coefficient $u_j$ exerts an inertial pull on equation $i$---the
+finite-element mesh has, in effect, a smeared-out mass distribution rather than
+point masses. A diagonal (``lumped'') mass matrix is the point-mass
+idealization; the true \emph{consistent} mass matrix of \cref{eq:KM} couples
+neighbours, as we will see in \cref{wex:mass}.
+\end{physicsbox}
+
+\section{Three properties that decide everything downstream}
+
+The matrix $\mat{K}$ inherits its character from the form $a$. Three inherited
+properties govern which solver the rest of the book reaches for, and we take them
+in turn.
+
+\subsection{Symmetry}
+
+If the form is symmetric, $a(u,v)=a(v,u)$, then by \cref{eq:stiffness-def}
+\[
+\mat{K}_{ij}=a(\phi_j,\phi_i)=a(\phi_i,\phi_j)=\mat{K}_{ji},
+\]
+so $\mat{K}$ is a symmetric matrix, $\mat{K}=\mat{K}^{\mathsf T}$. Every form of
+the family \cref{eq:KM} with a symmetric (in particular, scalar) weight $Q$ is
+symmetric, because $Q\,\diffop\phi_j\cdot\diffop\phi_i=Q\,\diffop\phi_i\cdot
+\diffop\phi_j$ pointwise. Symmetry is not a cosmetic nicety: it is the hypothesis
+the conjugate-gradient method requires. When $\mat{K}$ is symmetric (and positive
+definite, below), the system $\mat{K}\vx=\vb$ can be solved by conjugate
+gradients, the workhorse iterative method of \cref{ch:cg}---which exploits exactly
+this symmetry to build its short three-term recurrence. A nonsymmetric $\mat{K}$
+forces the more expensive GMRES of \cref{ch:gmres} instead. The choice of solver
+is decided here, at assembly time, by a property of the continuous form.
+
+\subsection{Coercivity and positive-definiteness}
+
+\Cref{ch:weak} introduced \emph{coercivity}: there is a constant $\alpha>0$ with
+$a(v,v)\ge\alpha\norm{v}^2$ for every $v\in V$. Coercivity is what guaranteed the
+continuous weak problem had a unique solution (the Lax--Milgram theorem). It
+descends to the matrix as \emph{positive-definiteness}. Take any nonzero
+coefficient vector $\vy=(y_1,\dots,y_N)$ and let $v_h=\sum_j y_j\phi_j$, a nonzero
+element of $V_h$. Then
+\begin{equation}
+\vy^{\mathsf T}\mat{K}\vy
+=\sum_{i,j}y_i\,\mat{K}_{ij}\,y_j
+=\sum_{i,j}y_i\,a(\phi_j,\phi_i)\,y_j
+=a\Bigl(\textstyle\sum_j y_j\phi_j,\sum_i y_i\phi_i\Bigr)
+=a(v_h,v_h)
+\ge\alpha\norm{v_h}^2>0.
+\label{eq:spd}
+\end{equation}
+The chain \cref{eq:spd} is worth pausing on: the algebraic quantity
+$\vy^{\mathsf T}\mat{K}\vy$, the thing a numerical analyst calls the matrix's
+quadratic form, is \emph{equal} to the continuous energy $a(v_h,v_h)$ of the
+function $v_h$ those coefficients represent. Coercivity of the form is thus,
+literally, positive-definiteness of the matrix. A symmetric positive-definite
+(SPD) matrix is invertible---so the discrete system has a unique solution---and it
+is precisely the class on which conjugate gradients is guaranteed to converge.
+Two properties an engineer wants, solvability and a fast solver, both flow from
+the single analytic fact that $a$ is coercive.
+
+\subsection{Sparsity}
+\label{sec:sparsity}
+
+The third inherited property is the one that makes large problems tractable at
+all. The entry $\mat{K}_{ij}=\int_\dom Q\,\diffop\phi_j\cdot\diffop\phi_i\dV$ is a
+product of two basis functions integrated over the domain. If $\phi_i$ and
+$\phi_j$ are nonzero on \emph{disjoint} regions of the domain, their product is
+zero everywhere and so is the integral: $\mat{K}_{ij}=0$. Finite-element basis
+functions are built to have \emph{local support}---each $\phi_i$ is nonzero only
+on the handful of mesh cells touching node $i$ (\cref{fig:hats})---so for the
+overwhelming majority of index pairs $(i,j)$ the supports miss each other and the
+entry vanishes.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % nodes around node i, showing only i-1, i, i+1 couple
+  \def\R{0.16}
+  \foreach \k/\x in {{i-2}/0,{i-1}/1.6,{i}/3.2,{i+1}/4.8,{i+2}/6.4}{
+    \fill[simInk] (\x,0) circle (\R);
+    \node[below=2pt] at (\x,0) {$\phi_{\k}$};
+  }
+  % highlight phi_i support region
+  \draw[draw=simBlue, fill=simBgBlue, rounded corners=4pt, opacity=0.6]
+    (1.6,-0.5) rectangle (4.8,0.95);
+  \node[simBlue!70!simInk, above] at (3.2,0.62) {support of $\phi_i$};
+  % coupling arcs: i couples only to i-1 and i+1
+  \draw[depedge, bend left=40] (3.2,0.12) to (1.6,0.12);
+  \draw[depedge, bend left=40] (3.2,0.12) to (4.8,0.12);
+  \node[simBlue, font=\scriptsize] at (2.4,0.95) {couples};
+  % the far ones don't couple: dotted cross
+  \draw[refedge] (3.2,-0.28) -- (6.4,-0.28);
+  \node[simGray, font=\scriptsize] at (5.4,-0.5) {$\mat{K}_{i,\,i+2}=0$};
+\end{tikzpicture}
+\caption[Local support gives sparsity]{Why $\mat{K}$ is sparse. A finite-element
+basis function $\phi_i$ is nonzero only on the cells immediately around node $i$
+(shaded). The entry $\mat{K}_{ij}=\int Q\,\diffop\phi_j\cdot\diffop\phi_i$ is
+nonzero only when the supports of $\phi_i$ and $\phi_j$ \emph{overlap}, which
+happens only for the few $j$ that are mesh-neighbours of $i$. Here $\phi_i$
+couples to $\phi_{i-1}$ and $\phi_{i+1}$ but not to $\phi_{i+2}$, whose support is
+disjoint---so that matrix entry is exactly zero.}
+\label{fig:sparsity-support}
+\end{figure}
+
+The consequence is that $\mat{K}$ has only $\mathcal{O}(N)$ nonzero entries, not
+$N^2$. For a one-dimensional mesh with the hat functions of
+\cref{sec:worked-stiffness} each row has at most three nonzeros and $\mat{K}$ is
+\emph{tridiagonal}; in three dimensions each row has a few tens of nonzeros
+regardless of how large $N$ grows. A matrix with $\mathcal{O}(N)$ nonzeros can be
+\emph{multiplied} by a vector in $\mathcal{O}(N)$ work without ever forming the
+$N^2$ dense array---and that is the only operation the iterative solvers of
+\cref{ch:krylov} ever ask of it. Sparsity is the reason we solve $\mat{K}\vx=\vb$
+by iteration rather than by Gaussian elimination: the matrix is too large to store
+densely but cheap to apply.
+
+\begin{pitfall}
+Sparsity is a property of the \emph{basis}, not of the differential equation.
+Choose global basis functions---say $\phi_k(x)=\sin(k\pi x)$, each nonzero across
+the whole interval---and \emph{every} pair of supports overlaps, so $\mat{K}$ is
+dense even for the same Poisson problem. (For that particular global basis
+$\mat{K}$ happens to come out diagonal by orthogonality, but that is a lucky
+accident of the sine basis, not a general phenomenon.) The finite-element method
+earns its sparsity precisely by insisting on \emph{locally} supported basis
+functions; a different choice forfeits it. This is the first hint of the theme of
+\cref{sec:basis-is-everything}: the basis is the whole game.
+\end{pitfall}
+
+\section{Worked example: the 1-D Poisson stiffness matrix}
+\label{sec:worked-stiffness}
+
+We now assemble $\mat{K}$ explicitly for the model problem
+\cref{eq:poisson-weak}, and discover the most famous matrix in numerical analysis.
+
+\subsection{The mesh and the hat basis}
+
+Partition the interval $[0,1]$ into $n$ equal cells with $n+1$ nodes
+\[
+x_0=0,\quad x_1=h,\quad x_2=2h,\quad\dots,\quad x_n=1,
+\qquad h=\frac1n.
+\]
+At each \emph{interior} node $x_i$ ($i=1,\dots,n-1$) place the \emph{hat
+function} $\phi_i$: the piecewise-linear function equal to $1$ at $x_i$, equal to
+$0$ at every other node, and linear in between (\cref{fig:hats}). Explicitly,
+\begin{equation}
+\phi_i(x)=
+\begin{cases}
+\dfrac{x-x_{i-1}}{h}, & x_{i-1}\le x\le x_i,\\[2ex]
+\dfrac{x_{i+1}-x}{h}, & x_i\le x\le x_{i+1},\\[1ex]
+0, & \text{otherwise.}
+\end{cases}
+\label{eq:hat}
+\end{equation}
+There are $N=n-1$ of them, one per interior node; the two boundary nodes carry no
+unknown because $u(0)=u(1)=0$ is built in (those are the \emph{essential} boundary
+conditions of \cref{ch:weak}, and we simply omit their hats). Each hat is nonzero
+on exactly two cells, so its support is local and \cref{sec:sparsity} promises a
+sparse---in fact tridiagonal---matrix.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\begin{axis}[
+  width=12cm, height=5.2cm,
+  xmin=-0.05, xmax=1.05, ymin=-0.08, ymax=1.18,
+  xtick={0,0.2,0.4,0.6,0.8,1.0},
+  xticklabels={$x_0$,$x_1$,$x_2$,$x_3$,$x_4$,$x_5$},
+  ytick={0,1}, ylabel={}, axis lines=left,
+  tick label style={font=\footnotesize},
+  clip=false,
+]
+  % hat phi_1 at x=0.2
+  \addplot[simBlue, very thick] coordinates {(0,0)(0.2,1)(0.4,0)(1.0,0)};
+  % hat phi_2 at x=0.4
+  \addplot[simRust, very thick] coordinates {(0,0)(0.2,0)(0.4,1)(0.6,0)(1.0,0)};
+  % hat phi_3 at x=0.6
+  \addplot[simGreen, very thick] coordinates {(0,0)(0.4,0)(0.6,1)(0.8,0)(1.0,0)};
+  % hat phi_4 at x=0.8
+  \addplot[simViolet, very thick] coordinates {(0,0)(0.6,0)(0.8,1)(1.0,0)};
+  % node markers
+  \addplot[only marks, mark=*, mark size=1.4pt, simInk]
+    coordinates {(0,0)(0.2,0)(0.4,0)(0.6,0)(0.8,0)(1.0,0)};
+  \node[font=\scriptsize, simBlue]   at (axis cs:0.2,1.08) {$\phi_1$};
+  \node[font=\scriptsize, simRust]   at (axis cs:0.4,1.08) {$\phi_2$};
+  \node[font=\scriptsize, simGreen]  at (axis cs:0.6,1.08) {$\phi_3$};
+  \node[font=\scriptsize, simViolet] at (axis cs:0.8,1.08) {$\phi_4$};
+\end{axis}
+\end{tikzpicture}
+\caption[The hat basis]{The hat (piecewise-linear ``tent'') basis on a uniform
+mesh of $n=5$ cells, $h=\tfrac15$. Each interior node $x_i$ carries one basis
+function $\phi_i$ that peaks at $1$ on its own node and falls linearly to $0$ at
+the two neighbouring nodes, vanishing everywhere else. The two boundary nodes
+$x_0,x_5$ carry no function because $u$ is pinned to zero there. Adjacent hats
+overlap on one cell (so they couple); hats two nodes apart do not (so their matrix
+entry is zero)---the picture of sparsity from \cref{fig:sparsity-support}.}
+\label{fig:hats}
+\end{figure}
+
+\subsection{Computing the entries}
+
+The form is $a(\phi_j,\phi_i)=\int_0^1\phi_j'(x)\,\phi_i'(x)\dx$. The derivative
+of a hat is a pair of constants: from \cref{eq:hat},
+\[
+\phi_i'(x)=
+\begin{cases}
++1/h, & x_{i-1}<x<x_i,\\
+-1/h, & x_i<x<x_{i+1},\\
+0, & \text{otherwise,}
+\end{cases}
+\]
+a $+1/h$ slope going up and a $-1/h$ slope coming down. We need three kinds of
+entry.
+
+\medskip
+\noindent\textbf{Diagonal, $\mathbf{K_{ii}}$.} On its support, $\phi_i$ has slope
+$\pm1/h$ over two cells each of length $h$:
+\[
+\mat{K}_{ii}=\int_{x_{i-1}}^{x_{i+1}}\bigl(\phi_i'\bigr)^2\dx
+=\Bigl(\tfrac1h\Bigr)^2\!\cdot h+\Bigl(-\tfrac1h\Bigr)^2\!\cdot h
+=\frac1h+\frac1h=\frac2h.
+\]
+
+\noindent\textbf{First off-diagonal, $\mathbf{K_{i,i+1}}$.} The hats $\phi_i$ and
+$\phi_{i+1}$ overlap only on the single cell $[x_i,x_{i+1}]$. There
+$\phi_i'=-1/h$ (coming down) while $\phi_{i+1}'=+1/h$ (going up), so
+\[
+\mat{K}_{i,i+1}=\int_{x_i}^{x_{i+1}}\phi_i'\,\phi_{i+1}'\dx
+=\Bigl(-\tfrac1h\Bigr)\Bigl(+\tfrac1h\Bigr)\cdot h=-\frac1h.
+\]
+By symmetry $\mat{K}_{i+1,i}=-1/h$ as well.
+
+\medskip
+\noindent\textbf{Everything else, $\mathbf{K_{ij}}$ with $|i-j|\ge2$.} Disjoint
+supports, so the integral is zero.
+
+\medskip
+Assembling these into the $N\times N$ matrix gives the celebrated tridiagonal
+form
+\begin{equation}
+\mat{K}=\frac1h
+\begin{pmatrix}
+2 & -1 & & & \\
+-1 & 2 & -1 & & \\
+ & -1 & 2 & \ddots & \\
+ & & \ddots & \ddots & -1\\
+ & & & -1 & 2
+\end{pmatrix}
+=\frac1h\,\operatorname{tridiag}(-1,\,2,\,-1).
+\label{eq:tridiag}
+\end{equation}
+This is the discrete second derivative, the same matrix a finite-difference
+scheme produces by approximating $-u''$ with
+$\bigl(-u_{i-1}+2u_i-u_{i+1}\bigr)/h^2$ (the $1/h$ versus $1/h^2$ difference is
+just where the cell width is booked; the finite-difference RHS carries an extra
+$h$). The finite-element method has reproduced the classical stencil---but it
+arrived by sampling a bilinear form on basis functions, which is what lets the
+same machinery handle curved elements, anisotropic materials, and vector fields
+that the finite-difference stencil cannot.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.62, every node/.style={font=\scriptsize}]
+  \def\nz{simBlue}
+  % draw a 7x7 grid; nonzeros on tridiagonal
+  \foreach \r in {0,...,6}{
+    \foreach \c in {0,...,6}{
+      \pgfmathtruncatemacro{\d}{abs(\r-\c)}
+      \ifnum\d<2
+        \fill[\nz] (\c,-\r) rectangle ++(0.92,-0.92);
+      \else
+        \draw[simGray!40] (\c,-\r) rectangle ++(0.92,-0.92);
+      \fi
+    }
+  }
+  % frame
+  \draw[simInk, thick] (0,0) rectangle (6.92,-6.92);
+  \node[anchor=south, font=\footnotesize] at (3.46,0.25) {columns $j$};
+  \node[anchor=east, rotate=90, font=\footnotesize] at (-0.3,-3.46) {rows $i$};
+  % legend
+  \fill[\nz] (8.0,-1.0) rectangle ++(0.7,0.7);
+  \node[anchor=west] at (8.85,-0.65) {nonzero $\mat{K}_{ij}$};
+  \draw[simGray!40] (8.0,-2.2) rectangle ++(0.7,0.7);
+  \node[anchor=west] at (8.85,-1.85) {zero};
+\end{tikzpicture}
+\caption[Tridiagonal sparsity pattern]{The sparsity pattern of the assembled
+stiffness matrix \cref{eq:tridiag} for $N=7$ interior nodes. Filled cells are the
+nonzero entries; they sit only on the diagonal and the two adjacent off-diagonals,
+because (\cref{fig:sparsity-support}) a hat couples only to its two
+nearest-neighbour hats. Of the $49$ possible entries only $19$ are nonzero, and
+the fraction shrinks as $N$ grows: a matrix this empty is never stored as a full
+array.}
+\label{fig:sparsity-grid}
+\end{figure}
+
+\subsection{Solving a small system}
+
+Take $n=4$ cells, $h=\tfrac14$, so $N=3$ interior unknowns, and a constant load
+$f(x)=1$. The load vector entries are
+$\vb_i=\int_0^1 1\cdot\phi_i\dx=\text{area of the hat}=h=\tfrac14$ (each hat is a
+triangle of base $2h$ and height $1$, area $h$). The system $\mat{K}\vx=\vb$ is,
+multiplying \cref{eq:tridiag} by $h=\tfrac14$ to clear the prefactor,
+\[
+\frac1{1/4}
+\begin{pmatrix} 2&-1&0\\-1&2&-1\\0&-1&2\end{pmatrix}
+\begin{pmatrix}x_1\\x_2\\x_3\end{pmatrix}
+=\begin{pmatrix}1/4\\1/4\\1/4\end{pmatrix}
+\;\Longrightarrow\;
+\begin{pmatrix} 2&-1&0\\-1&2&-1\\0&-1&2\end{pmatrix}
+\begin{pmatrix}x_1\\x_2\\x_3\end{pmatrix}
+=\begin{pmatrix}1/16\\1/16\\1/16\end{pmatrix}.
+\]
+Solving the tridiagonal system (eliminate downward, then back-substitute) gives
+\[
+x_1=\tfrac{3}{32}=0.09375,\quad
+x_2=\tfrac{4}{32}=0.125,\quad
+x_3=\tfrac{3}{32}=0.09375.
+\]
+The exact solution of $-u''=1$, $u(0)=u(1)=0$ is the parabola
+$u(x)=\tfrac12 x(1-x)$, whose values at the nodes $x=\tfrac14,\tfrac12,\tfrac34$
+are $\tfrac{3}{32},\tfrac14\!\cdot\!\tfrac34\!\cdot\!\tfrac12=\tfrac{3}{32}$\dots
+let us check: $u(\tfrac14)=\tfrac12\cdot\tfrac14\cdot\tfrac34=\tfrac{3}{32}$,
+$u(\tfrac12)=\tfrac12\cdot\tfrac12\cdot\tfrac12=\tfrac18=\tfrac{4}{32}$,
+$u(\tfrac34)=\tfrac{3}{32}$. The finite-element coefficients match the exact
+nodal values \emph{exactly}. This is no coincidence: for the 1-D Poisson problem
+with the hat basis, the Galerkin solution is \emph{nodally exact}---a celebrated
+special feature of this problem that does not survive into two dimensions or to
+variable coefficients, but is a satisfying confirmation that the machinery works.
+
+\begin{workedexample}{Is this $\mat{K}$ symmetric positive definite?}{spd-check}
+We verify directly that the $3\times3$ stiffness above is SPD, the property
+\cref{eq:spd} promised.
+
+\emph{Symmetric.} By inspection $\mat{K}=\mat{K}^{\mathsf T}$: the
+$(1,2)$ and $(2,1)$ entries are both $-1$, and so on. (We knew this must hold:
+$a(u,v)=\int u'v'$ is symmetric in $u,v$.)
+
+\emph{Positive definite.} Use the chain \cref{eq:spd}: for any
+$\vy=(y_1,y_2,y_3)\neq\mathbf 0$,
+\[
+\vy^{\mathsf T}\mat{K}\vy
+=2y_1^2+2y_2^2+2y_3^2-2y_1y_2-2y_2y_3
+=y_1^2+(y_1-y_2)^2+(y_2-y_3)^2+y_3^2,
+\]
+a sum of squares that is zero only if $y_1=0$, $y_1=y_2$, $y_2=y_3$, $y_3=0$, i.e.
+only if $\vy=\mathbf 0$. So $\vy^{\mathsf T}\mat{K}\vy>0$ for every nonzero $\vy$:
+$\mat{K}$ is positive definite. (Equivalently, its leading principal minors
+$2,\,3,\,4$ are all positive---Sylvester's criterion.) Because $\mat{K}$ is SPD,
+$\mat{K}\vx=\vb$ has a unique solution and conjugate gradients (\cref{ch:cg}) is
+guaranteed to find it.
+\end{workedexample}
+
+\section{Worked example: the mass matrix}
+
+\begin{workedexample}{The 1-D hat mass matrix}{mass}
+\label{wex:mass}
+For the \emph{same} hat basis on the same uniform mesh, assemble the mass matrix
+$\mat{M}_{ij}=\int_0^1\phi_i\phi_j\dx$---no derivatives this time. We need the
+overlap integrals of the hats themselves.
+
+\emph{Diagonal.} On its two support cells $\phi_i$ is a triangle of height $1$;
+$\int\phi_i^2$ over one cell of length $h$ is, for a linear function running
+$0\to1$, equal to $h/3$. Two cells give
+\[
+\mat{M}_{ii}=\int_{x_{i-1}}^{x_{i+1}}\phi_i^2\dx=\frac h3+\frac h3=\frac{2h}{3}.
+\]
+
+\emph{Off-diagonal.} On the shared cell $[x_i,x_{i+1}]$, $\phi_i$ runs $1\to0$
+while $\phi_{i+1}$ runs $0\to1$; their product integrates to $h/6$:
+\[
+\mat{M}_{i,i+1}=\int_{x_i}^{x_{i+1}}\phi_i\,\phi_{i+1}\dx=\frac h6.
+\]
+Entries with $|i-j|\ge2$ vanish (disjoint support). Hence
+\[
+\mat{M}=\frac h6
+\begin{pmatrix}
+4 & 1 & & \\
+1 & 4 & 1 & \\
+ & 1 & 4 & \ddots\\
+ & & \ddots & \ddots
+\end{pmatrix}
+=\frac h6\,\operatorname{tridiag}(1,\,4,\,1).
+\]
+
+\emph{Contrast with $\mat{K}$.} Both matrices are symmetric, tridiagonal, and
+share the \emph{same} sparsity pattern (\cref{fig:sparsity-grid})---unsurprising,
+since the nonzero pattern is fixed by which supports overlap, and both forms use
+the same hats. But the \emph{signs} differ sharply: $\mat{K}$ has \emph{negative}
+off-diagonals (a difference operator, $\diffop\phi_i\cdot\diffop\phi_j<0$ where
+the slopes oppose), while $\mat{M}$ has \emph{positive} off-diagonals (an overlap
+operator, $\phi_i\phi_j>0$ wherever the hats coexist). $\mat{M}$ is also SPD---it
+is a Gram matrix of linearly independent functions---but it is much
+better-conditioned than $\mat{K}$, which is why it appears on the ``easy'' side of
+the generalized eigenproblem $\mat{K}\vx=\lambda\mat{M}\vx$
+(\cref{ch:eigenmodes}).
+\end{workedexample}
+
+\section{The bilinear-form family is an operator family}
+\label{sec:family}
+
+We have so far assembled \emph{one} matrix from \emph{one} bilinear form. Real
+analyses assemble several terms at once. The electrostatic stiffness is a single
+diffusion term $(\varepsilon\Grad u,\Grad v)$; but the driven Maxwell operator
+$\mat{A}(\omega)=\mat{K}+i\omega\mat{C}-\omega^2\mat{M}$ is a \emph{sum} of three,
+and a lossy or multi-material problem adds still more. The structure that makes
+this clean is the subject of \cref{ch:assembly}, but the essential idea belongs
+here, because it is a direct consequence of the linearity of the form.
+
+\subsection{Each term becomes one operator}
+
+Every member of the bilinear-form family has the shape
+$a_t(u,v)=(Q_t\,\diffop_t u,\diffop_t v)$ for some weight $Q_t$ and differential
+operator $\diffop_t$---a permittivity-weighted gradient term, a
+reluctivity-weighted curl term, a mass term, and so on. Sampling \emph{one} such
+term on basis pairs produces \emph{one} matrix, exactly as in \cref{eq:KM}; call
+it $\mat{A}(\text{term}_t)$. The full operator an analysis needs is the matrix of
+its total form $a=\sum_t a_t$. Because sampling is linear in the form,
+\begin{equation}
+\mat{K}_{ij}=\Bigl(\sum_t a_t\Bigr)(\phi_j,\phi_i)
+=\sum_t a_t(\phi_j,\phi_i)
+=\sum_t \mat{A}(\text{term}_t)_{ij},
+\qquad\text{i.e.}\qquad
+\mat{K}=\sum_t \mat{A}(\text{term}_t).
+\label{eq:assembly-sum}
+\end{equation}
+The global operator is a \emph{sum of per-term operators}. Adding a physical
+effect---a boundary loss, a second material, the $i\omega\mat{C}$ damping---is
+adding one more matrix to the sum, never rebuilding from scratch.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm and 9mm, every node/.style={font=\footnotesize}]
+  \node[opbox] (t1) {$\text{term}_1$\\$(\varepsilon\Grad u,\Grad v)$};
+  \node[opbox, below=of t1] (t2) {$\text{term}_2$\\$(\sigma u, v)$};
+  \node[opbox, below=of t2] (t3) {$\text{term}_3$\\$(\nu\Curl u,\Curl v)$};
+  % per-term operators
+  \node[stage, right=14mm of t1] (a1) {$\mat{A}_1$};
+  \node[stage, right=14mm of t2] (a2) {$\mat{A}_2$};
+  \node[stage, right=14mm of t3] (a3) {$\mat{A}_3$};
+  \draw[flow] (t1) -- node[above,font=\scriptsize]{sample} (a1);
+  \draw[flow] (t2) -- node[above,font=\scriptsize]{sample} (a2);
+  \draw[flow] (t3) -- node[above,font=\scriptsize]{sample} (a3);
+  % the sum node
+  \node[product, right=20mm of a2] (K) {$\mat{K}=\sum_t\mat{A}_t$};
+  \draw[flow] (a1) -- (K);
+  \draw[flow] (a2) -- (K);
+  \draw[flow] (a3) -- (K);
+  % bracket label
+  \node[font=\scriptsize\itshape, simGray, above=1mm of a1] {one operator per term};
+\end{tikzpicture}
+\caption[Assembly as a sum of term-operators]{The bilinear-form family becomes an
+operator family. Each weak-form term $a_t(u,v)=(Q_t\diffop_t u,\diffop_t v)$
+samples, on basis pairs, into its own matrix $\mat{A}_t$; the global operator of
+the analysis is their sum, $\mat{K}=\sum_t\mat{A}_t$ (\cref{eq:assembly-sum}).
+Because addition of operators is commutative and associative, the order in which
+the terms are accumulated is immaterial---the structure of a \emph{commutative-
+monoid fold} over the list of terms, which \cref{ch:assembly} makes precise.}
+\label{fig:assembly-sum}
+\end{figure}
+
+\subsection{Assembly is a fold: a preview}
+
+\Cref{eq:assembly-sum} is more than a formula; it is a \emph{computational
+pattern}. We have a list of terms $[\text{term}_1,\dots,\text{term}_m]$, a way to
+turn each into a matrix, and a way to combine matrices (add them). Combining a
+list of things with an associative, commutative operation that has an identity
+(the zero matrix) is the canonical setting for a \emph{fold}---the higher-order
+function that walks a list accumulating a result. In the pseudo-language of
+Part~III we will write assembly as
+\begin{equation}
+\mat{K}=\texttt{fe\_assemble}(\textit{space},\textit{terms})
+=\textstyle\sum_{t\in\textit{terms}}\mat{A}(\textit{space},t),
+\label{eq:fe-assemble}
+\end{equation}
+literally a fold of the per-term assembly map over the immutable list of terms.
+Two features of this fold are worth flagging now, because they are properties of
+the \emph{form}, not of any particular code:
+
+\begin{itemize}[nosep]
+\item \textbf{Order independence.} Operator addition is commutative and
+associative, so $\sum_t\mat{A}_t$ does not depend on the order the terms are
+listed. The fold is over a \emph{commutative monoid}; the term list is really an
+unordered bag.
+\item \textbf{The list-homomorphism intuition.} Assembling a concatenated term
+list equals assembling the pieces and adding:
+$\texttt{fe\_assemble}(\textit{space},\,T_1\!+\!\!+\,T_2)=
+\texttt{fe\_assemble}(\textit{space},T_1)+\texttt{fe\_assemble}(\textit{space},T_2)$.
+A function that turns list-concatenation into a combine on results is a
+\emph{list homomorphism}, the structure that makes assembly splittable, mergeable,
+and---on a parallel machine---divisible across processors.
+\end{itemize}
+
+This is why \cref{ch:assembly} can treat assembly as one combinator rather than a
+tangle of nested loops, and why the matrix-free operator of \cref{ch:matrixfree}
+can apply the global $\mat{K}$ without ever forming it: applying a sum of
+operators is applying each and adding. The bilinear-form family, sampled, is an
+operator family, folded.
+
+\section{How good is the Galerkin solution?}
+\label{sec:cea}
+
+We have a recipe that produces \emph{some} $u_h$ in $V_h$. Is it any good? The
+reassuring answer, made precise by a one-line argument of Jean Céa, is that the
+Galerkin solution is \emph{quasi-optimal}: it is, up to a fixed constant, as
+accurate as the very best approximation the subspace $V_h$ could possibly offer.
+
+\subsection{Galerkin orthogonality}
+
+Start from a small but powerful fact. The exact solution $u$ satisfies
+$a(u,v)=\ell(v)$ for all $v\in V$, and in particular for all $v_h\in V_h\subset V$.
+The Galerkin solution $u_h$ satisfies $a(u_h,v_h)=\ell(v_h)$ for all $v_h\in V_h$.
+Subtracting,
+\begin{equation}
+a(u-u_h,\,v_h)=0
+\qquad\text{for all } v_h\in V_h.
+\label{eq:galerkin-orthog}
+\end{equation}
+The error $u-u_h$ is invisible to every test function in $V_h$: in the geometry
+the form $a$ defines, the error is \emph{orthogonal} to the whole subspace. This
+is the precise content of \cref{fig:galerkin-projection}---$u_h$ is the orthogonal
+projection of $u$ onto $V_h$ in the energy inner product---and it is the engine of
+the next result.
+
+\subsection{Céa's lemma}
+
+\begin{lemma}[Céa, quasi-optimality]
+Suppose $a$ is bounded, $\abs{a(u,v)}\le M\norm{u}\,\norm{v}$, and coercive,
+$a(v,v)\ge\alpha\norm{v}^2$. Then the Galerkin error is controlled by the best
+approximation error in $V_h$:
+\begin{equation}
+\norm{u-u_h}\le\frac{M}{\alpha}\,\min_{v_h\in V_h}\norm{u-v_h}.
+\label{eq:cea}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Let $v_h\in V_h$ be \emph{any} element of the subspace. Using coercivity, then
+Galerkin orthogonality \cref{eq:galerkin-orthog} to subtract the cross term
+$a(u-u_h,v_h-u_h)=0$ (legal because $v_h-u_h\in V_h$), then boundedness:
+\[
+\alpha\norm{u-u_h}^2
+\le a(u-u_h,\,u-u_h)
+= a(u-u_h,\,u-v_h)
+\le M\,\norm{u-u_h}\,\norm{u-v_h}.
+\]
+Divide both sides by $\alpha\norm{u-u_h}$ (zero error is trivially optimal) to get
+$\norm{u-u_h}\le(M/\alpha)\norm{u-v_h}$. Since $v_h$ was arbitrary, take the
+minimum over $v_h\in V_h$.
+\end{proof}
+
+Read \cref{eq:cea} carefully, because it is the deepest single fact in this
+chapter. The right-hand side, $\min_{v_h}\norm{u-v_h}$, is a question of
+\emph{approximation theory} alone: how well can the functions in $V_h$ approximate
+$u$, ignoring the differential equation entirely? Céa's lemma says the Galerkin
+method---which knows nothing of $u$ and only solves $\mat{K}\vx=\vb$---comes
+within a constant factor $M/\alpha$ of that best-possible answer
+(\cref{fig:cea}). The method does not need to be clever about $u$; it only needs a
+subspace $V_h$ that \emph{can} approximate $u$ well. The job of choosing such a
+subspace is the job of the basis, which returns us to the chapter's refrain.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % subspace line V_h
+  \draw[draw=simGreen, fill=simBgGreen, rounded corners=4pt]
+    (-3.2,-0.35) rectangle (3.2,0.35);
+  \draw[simGreen!60!simInk, thick] (-3.0,0)--(3.0,0);
+  \node[simGreen!70!simInk, left] at (-3.05,0) {$V_h$};
+  % exact solution above
+  \fill[simRust] (0.0,1.9) circle (1.8pt);
+  \node[simRust, above] at (0.0,2.0) {$u$};
+  % best approx (foot of perpendicular)
+  \fill[simInk] (0.0,0) circle (1.8pt);
+  \node[simInk, below right=-1pt] at (0.05,-0.05) {$v_h^\star$ (best)};
+  % galerkin solution nearby
+  \fill[simBlue] (1.3,0) circle (1.8pt);
+  \node[simBlue, below] at (1.3,-0.12) {$u_h$ (Galerkin)};
+  % best distance (perpendicular)
+  \draw[flow, simInk] (0.0,1.9) -- (0.0,0.06);
+  \node[simInk, right, font=\scriptsize] at (0.06,1.0) {$\min_{v_h}\|u-v_h\|$};
+  % galerkin distance
+  \draw[flow, simBlue] (0.0,1.9) -- (1.3,0.06);
+  \node[simBlue, right=1pt, font=\scriptsize] at (0.78,1.05) {$\|u-u_h\|$};
+  % right-angle marker for best approx
+  \draw[simInk] (0.0,0.18)--(0.18,0.18)--(0.18,0);
+\end{tikzpicture}
+\caption[Céa's quasi-optimality]{Céa's lemma, geometrically. The best the
+subspace $V_h$ can do is the foot of the perpendicular $v_h^\star$, at distance
+$\min_{v_h}\norm{u-v_h}$ from the exact solution $u$. The Galerkin solution $u_h$
+need not be that closest point (it is closest in the \emph{energy} norm, not the
+norm drawn), but \cref{eq:cea} guarantees it is no worse than a fixed multiple
+$M/\alpha$ of the best distance. The Galerkin method is therefore only as good---
+and only as bad---as the approximating power of the basis.}
+\label{fig:cea}
+\end{figure}
+
+\subsection{Convergence: \texorpdfstring{$h$}{h}- and \texorpdfstring{$p$}{p}-refinement}
+
+Quasi-optimality turns convergence questions into approximation questions, and
+approximation theory then supplies the rates. Two knobs control how well $V_h$
+can approximate, and refining either drives the error down.
+
+\emph{$h$-refinement} shrinks the mesh spacing $h$, adding more, smaller elements.
+For a basis of piecewise polynomials of degree $p$ on a mesh of size $h$,
+approximating a smooth $u$, standard interpolation estimates give
+$\min_{v_h}\norm{u-v_h}=\mathcal{O}(h^{p})$ in the energy norm, so by Céa
+\begin{equation}
+\norm{u-u_h}=\mathcal{O}(h^{p}).
+\label{eq:hrate}
+\end{equation}
+With the linear hats ($p=1$) of our worked example, halving $h$ halves the energy
+error; the error in the solution value itself converges one order faster,
+$\mathcal{O}(h^{p+1})$. More elements, more accuracy, at a predictable rate.
+
+\emph{$p$-refinement} keeps the mesh but raises the polynomial degree $p$ of the
+basis on each element. For smooth $u$ this is dramatically more effective: the
+error falls \emph{faster than any fixed power of $1/p$}---so-called spectral or
+exponential convergence---because high-degree polynomials approximate smooth
+functions extraordinarily well. Palace exploits both knobs, and combines them in
+the $p$-multigrid hierarchy of \cref{ch:multigrid}. Which knob to turn is a
+judgement about the smoothness of the solution: $h$-refinement is robust near
+singularities (sharp corners, material interfaces), $p$-refinement wins where the
+field is smooth.
+
+\begin{remark}
+The constant $M/\alpha$ in \cref{eq:cea} is the form's \emph{condition number} in
+disguise---the ratio of its boundedness constant to its coercivity constant. The
+same ratio reappears as the condition number $\kappa(\mat{K})$ of the assembled
+matrix, which (\cref{ch:cg}) sets the convergence rate of conjugate gradients.
+A form that is barely coercive ($\alpha$ small) gives both a loose error bound and
+a slow solver---another instance of a continuous property dictating discrete
+behaviour.
+\end{remark}
+
+\section{The basis is the whole game}
+\label{sec:basis-is-everything}
+
+Step back and notice how little of Galerkin's method depended on the
+\emph{physics}. The recipe $\mat{K}_{ij}=a(\phi_j,\phi_i)$, $\vb_i=\ell(\phi_i)$,
+solve $\mat{K}\vx=\vb$, is identical for the Poisson equation, the curl--curl
+equation, and every analysis in this book. What changes from one problem to the
+next, beyond the form $a$, is the \emph{basis} $\{\phi_i\}$---and the basis alone
+determines:
+
+\begin{itemize}[nosep]
+\item the \textbf{size} $N$ of the system (one unknown per basis function);
+\item the \textbf{sparsity} of $\mat{K}$ (which supports overlap,
+\cref{sec:sparsity});
+\item the \textbf{accuracy}, through the best-approximation term in Céa's lemma
+(\cref{sec:cea});
+\item and, crucially, \textbf{which physical fields the method can represent
+faithfully.}
+\end{itemize}
+
+That last point is where the rest of Part~II is heading. A scalar potential $V$
+is well represented by the continuous, nodal hat functions of this chapter---an
+$\Hone$-conforming basis, in the language of \cref{ch:functionspaces}. But an
+electric field $\vE$ is a \emph{vector} field with a different continuity
+requirement (its tangential component, not its full value, is continuous across
+material interfaces), and forcing nodal hats onto it produces spurious,
+unphysical modes. The fix is a different basis entirely---the edge elements of
+$\Hcurl$, whose degrees of freedom live on mesh \emph{edges} rather than nodes.
+Which basis a field needs is dictated by the differential operator $\diffop$ in
+its form: $\Grad$ wants nodes, $\Curl$ wants edges, $\Div$ wants faces. Building
+those bases, and the reference elements they are constructed on, is the work of
+\cref{ch:functionspaces,ch:refelement}. Galerkin's method is the same for all of
+them; only the menu of functions changes.
+
+\summarysection
+Galerkin's method makes the weak form computable by replacing the
+infinite-dimensional trial/test space $V$ with a finite-dimensional subspace
+$V_h=\operatorname{span}\{\phi_1,\dots,\phi_N\}$ and requiring the weak equation
+only against the $N$ basis functions. Expanding the unknown $u_h=\sum_j u_j\phi_j$
+turns this into a square linear system $\mat{K}\vx=\vb$ with
+$\mat{K}_{ij}=a(\phi_j,\phi_i)$ and $\vb_i=\ell(\phi_i)$---the matrix \emph{is}
+the bilinear form sampled on basis pairs, and the mass matrix
+$\mat{M}_{ij}=\int\phi_i\phi_j$ is the same construction with the identity
+operator. The matrix inherits its properties from the form: symmetry (enabling
+conjugate gradients), positive-definiteness from coercivity (guaranteeing a unique
+solution), and---from the \emph{local support} of the basis---sparsity, which is
+why we solve by iteration. The bilinear-form family is an operator family: each
+term $a_t=(Q_t\diffop_t u,\diffop_t v)$ assembles into one matrix and the global
+operator is their sum $\mat{K}=\sum_t\mat{A}_t$, a commutative-monoid fold and
+list homomorphism over the term list---the assembly-as-a-fold of \cref{ch:assembly}.
+Céa's lemma shows the Galerkin solution is quasi-optimal: within a constant
+$M/\alpha$ of the best approximation $V_h$ can provide, so convergence ($h$- and
+$p$-refinement) is governed by the approximating power of the basis. The basis,
+in the end, is the whole game.
+
+\furtherreading
+The variational and approximation theory of this chapter---Galerkin orthogonality,
+Céa's lemma, the $h$- and $p$-estimates, and the SPD structure of stiffness
+matrices---is developed rigorously in Brenner and Scott~\citep{brennerscott2008},
+the standard graduate reference for the mathematics of finite elements; their
+treatment of the bilinear-form framework and approximation rates expands every
+result we stated. For the linear-algebra side---why sparsity and conditioning
+decide between conjugate gradients and GMRES, and how the matrix's spectral
+properties govern iterative convergence---Trefethen and Bau~\citep{trefethenbau1997}
+is the classic and exceptionally readable account. For the engineering
+practice of assembling and solving finite-element systems for electromagnetics
+specifically, including vector ($\Hcurl$) bases and the families we turn to next,
+Jin~\citep{jin2014} is the comprehensive reference.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{One more node.} Redo the worked example of
+  \cref{sec:worked-stiffness} with $n=5$ cells ($h=\tfrac15$, $N=4$ unknowns) and
+  constant load $f=1$. Write down the $4\times4$ system $\mat{K}\vx=\vb$ and solve
+  it. Confirm that the coefficients again equal the exact nodal values of
+  $u=\tfrac12 x(1-x)$.
+
+  \item \textbf{Variable load.} Keep $n=4$, $h=\tfrac14$, but take
+  $f(x)=x$. Compute the load vector $\vb_i=\int_0^1 x\,\phi_i(x)\dx$ (the
+  integral of $x$ against each hat) and solve $\mat{K}\vx=\vb$ with the same
+  $\mat{K}$ as in the text. Why did $\mat{K}$ not change when the right-hand side
+  did?
+
+  \item \textbf{Counting nonzeros.} For the 1-D hat basis on $N$ interior nodes,
+  how many nonzero entries does $\mat{K}$ have? Express it as a function of $N$ and
+  confirm it is $\mathcal{O}(N)$, not $\mathcal{O}(N^2)$. How many nonzeros would
+  a 2-D mesh in which each node couples to six neighbours have per row?
+
+  \item \textbf{Symmetry from the form.} Show that \emph{any} form of the family
+  $a(u,v)=\int_\dom Q\,\diffop u\cdot\diffop v$ with scalar $Q$ assembles a
+  symmetric matrix, directly from $\mat{K}_{ij}=a(\phi_j,\phi_i)$. Then give an
+  example of a form (a first-derivative ``advection'' term $\int u'\,v$) whose
+  matrix is \emph{not} symmetric, and identify which step of the symmetry argument
+  fails.
+
+  \item \textbf{Mass-matrix positive-definiteness.} Using the chain
+  \cref{eq:spd}, argue that the mass matrix $\mat{M}_{ij}=\int\phi_i\phi_j$ is
+  positive definite whenever the basis functions $\{\phi_i\}$ are linearly
+  independent. (Hint: $\vy^{\mathsf T}\mat{M}\vy=\int(\sum_j y_j\phi_j)^2$. When is
+  this zero?)
+
+  \item \textbf{Best approximation versus Galerkin.} For the $n=4$ Poisson
+  example, the Galerkin solution was \emph{nodally exact}. The best $L^2$
+  approximation of $u=\tfrac12 x(1-x)$ in $V_h$ minimizes $\int(u-v_h)^2$ and is
+  generally \emph{not} nodally exact. Without computing it, explain using Céa's
+  lemma and Galerkin orthogonality why the two need not coincide, and which inner
+  product the Galerkin solution \emph{is} optimal in.
+
+  \item \textbf{Assembly as a fold.} An analysis has three weak-form terms with
+  per-term matrices $\mat{A}_1,\mat{A}_2,\mat{A}_3$. Write the global operator
+  three different ways---$\mat{A}_1+(\mat{A}_2+\mat{A}_3)$,
+  $(\mat{A}_1+\mat{A}_2)+\mat{A}_3$, and $\mat{A}_2+\mat{A}_3+\mat{A}_1$---and
+  argue they are equal. Which algebraic properties of operator addition did you
+  use, and why do they make assembly a \emph{commutative-monoid} fold rather than
+  merely a list fold?
+
+  \item \textbf{Why not a global basis?} Suppose you chose the global sine basis
+  $\phi_k(x)=\sin(k\pi x)$ on $(0,1)$ instead of hats. (a)~Show every pair of
+  supports overlaps, so the sparsity argument of \cref{sec:sparsity} fails.
+  (b)~Compute $\mat{K}_{ij}=\int_0^1\phi_i'\phi_j'$ for this basis and show it
+  comes out \emph{diagonal} anyway. (c)~Explain why this pleasant accident does
+  not save the finite-element method in general, and what is lost by giving up
+  local support.
+\end{enumerate}

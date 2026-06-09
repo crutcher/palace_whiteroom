@@ -1,0 +1,1043 @@
+\chapter{Wave Ports and Boundary Modes}
+\label{ch:waveports}
+
+\chapterorient{The eigenmode analysis (\cref{ch:eigenmodes}) found the resonances
+of a three-dimensional cavity by handing an operator pencil to an opaque
+eigenvalue library. This chapter runs \emph{the very same} black-box solve corner,
+but on a two-dimensional cross-section sliced out of a three-dimensional boundary,
+and it computes something different: not the resonances of a closed volume but the
+\emph{propagation modes} of a waveguide---the field patterns that carry energy
+along a pipe, a cable, an on-chip line. There is exactly one new idea, and it
+comes \emph{before} the solve: a stage-0 extraction that cuts a 2D submesh from
+named 3D boundary faces. Everything after it---assemble a pencil, one opaque
+\texttt{eigsolve}, a per-mode readout---is the eigenmode machine you already know.
+And the product closes a loop: these port modes are precisely the basis the driven
+analysis (\cref{ch:driven}) projects its solved fields onto to define its
+scattering parameters. By the end you will read the wave-port analysis as
+``eigenmodes on an extracted 2D cross-section, feeding the driven solver's ports.''}
+
+\section{The physical question: how does a pipe carry a wave?}
+
+A microwave signal does not travel through free space to get from a generator to a
+device; it travels down a \emph{guide}---a hollow rectangular pipe, a coaxial
+cable, a microstrip trace on a circuit board, an on-chip coplanar waveguide. Each
+of these guides has a characteristic way of carrying energy: the field does not
+fill the cross-section arbitrarily but settles into one of a discrete set of
+\emph{propagation modes}, each with its own transverse field pattern that simply
+\emph{translates} down the guide's axis, multiplied by a travelling-wave factor
+$e^{-i k_n z}$. The number $k_n$ is the mode's \emph{propagation constant}: how
+many radians of phase the wave accumulates per unit length as it moves down the
+guide (\cref{fig:wg-setup}). A mode with a real $k_n$ \emph{propagates}---it
+carries energy down the guide without decaying; a mode with an imaginary $k_n$ is
+\emph{evanescent}---it dies away exponentially and carries no net power.
+
+\begin{physicsbox}
+Picture a long uniform guide running along the $z$ axis. Because the guide is the
+same at every cross-section, a field that ``fits'' the cross-section can ride along
+the axis unchanged in shape:
+\[
+  \vE(x,y,z) \;=\; \vE_t(x,y)\,e^{-i k_n z},
+\]
+a fixed transverse pattern $\vE_t(x,y)$ multiplied by the travelling-wave phase
+$e^{-i k_n z}$. The pattern $\vE_t$ is the \emph{mode}; the number $k_n$ is its
+\emph{propagation constant}, the spatial frequency of the wave along the guide.
+When $k_n$ is real the mode is a true travelling wave (it propagates with phase
+velocity $\omega/k_n$ and carries power); when $k_n$ is imaginary the factor
+$e^{-i k_n z}=e^{-\abs{k_n} z}$ is a pure decay (the mode is \emph{evanescent} and
+stores energy near its source without transporting it). Each guide supports a
+\emph{ladder} of such modes; which ones propagate depends on the operating
+frequency. Finding the modes of a given cross-section is the whole job of this
+chapter.
+\end{physicsbox}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % --- the guide drawn in perspective, axis to the right ---
+  % back cross-section (2D port face)
+  \draw[thick, simInk, fill=simBgGray] (0,0) rectangle (1.7,2.2);
+  % front cross-section, offset for depth
+  \draw[thick, simInk, fill=simBgGray, opacity=0.55]
+    (3.4,0.55) rectangle (5.1,2.75);
+  % connecting edges (the pipe length)
+  \draw[simGray] (0,0) -- (3.4,0.55);
+  \draw[simGray] (1.7,0) -- (5.1,0.55);
+  \draw[simGray] (0,2.2) -- (3.4,2.75);
+  \draw[simGray] (1.7,2.2) -- (5.1,2.75);
+  % transverse field pattern Et on the near face (vertical arrows, sine envelope)
+  \foreach \xx in {0.28,0.57,0.85,1.13,1.42}{
+    \pgfmathsetmacro{\amp}{0.7*sin(deg(pi*\xx/1.7))}
+    \draw[->, simBlue, thick] (\xx,1.1) -- (\xx,{1.1+\amp});
+    \draw[->, simBlue, thick] (\xx,1.1) -- (\xx,{1.1-\amp});}
+  \node[text=simBlue] at (0.85,2.45) {$\vE_t(x,y)$};
+  \node[font=\scriptsize, text=simGray, anchor=north] at (0.85,-0.08)
+    {2D cross-section (the port)};
+  % propagation axis arrow
+  \draw[->, very thick, simRust] (1.9,1.3) -- (3.2,1.55)
+    node[midway, above, sloped, font=\scriptsize, text=simRust]
+      {$e^{-i k_n z}$};
+  \node[text=simRust, font=\scriptsize] at (3.0,0.95) {propagate along $z$};
+  % phase wavelength bracket along the axis
+  \draw[<->, simGreen, thick] (1.95,0.15) -- (3.35,0.42)
+    node[midway, below, sloped, font=\scriptsize, text=simGreen]
+      {$\lambda_g=2\pi/k_n$};
+\end{tikzpicture}
+\caption[A waveguide and its propagation mode]{A uniform waveguide carries energy
+in propagation modes. A mode is a fixed transverse field pattern $\vE_t(x,y)$ on
+the 2D cross-section (left face, blue), multiplied by the travelling-wave factor
+$e^{-i k_n z}$ as it moves down the guide's axis (rust). The propagation constant
+$k_n$ sets the guide wavelength $\lambda_g = 2\pi/k_n$ along the axis. A real $k_n$
+is a propagating wave that carries power; an imaginary $k_n$ is an evanescent mode
+that decays without transporting energy. The wave-port analysis computes these
+transverse patterns and their $k_n$ directly from the cross-section geometry---and
+the cross-section is a \emph{2D surface}, which is the first hint of what makes
+this analysis structurally distinct.}
+\label{fig:wg-setup}
+\end{figure}
+
+\subsection{Why we compute them: the driven analysis needs its ports}
+
+The wave-port analysis is not usually run for its own sake. It is run because
+\emph{something downstream needs the modes}---and that something is the driven
+frequency sweep of \cref{ch:driven}. Recall how the driven analysis ends. It
+solves the time-harmonic field $\vE_j(\omega)$ inside a device with port $j$
+excited, then \emph{projects} that solved field onto each port's mode to read off
+a scattering parameter,
+\[
+  S_{ij} \;=\; \sigma_{ij}\bigl(\inner{\vs_i}{\vE_j(\omega)} - \delta_{ij}\bigr),
+\]
+the central reduction of that chapter (\cref{ch:driven}). The projection basis
+$\vs_i$---``the wave that propagates out of port $i$''---does \emph{not} come from
+the driven solve. It is a \emph{precomputed input}: the propagation mode of port
+$i$'s cross-section. The driven analysis cannot define its ports without first
+knowing what waves those ports support, and \emph{that is what this chapter
+computes}. Wave ports sit \emph{upstream} of the driven sweep; their output is the
+driven reduction's input (\cref{fig:loop-close}, revisited at the end of the
+chapter).
+
+\begin{keyidea}
+\textbf{Wave ports $=$ the eigenmode black box (\cref{ch:eigenmodes}) on an
+extracted 2D cross-section, producing the port modes the driven analysis
+(\cref{ch:driven}) projects onto.} The boundary-mode analysis runs the same opaque
+\texttt{eigsolve} solve corner as the eigenmode analysis, with the same
+assemble--solve--readout skeleton, but on a 2D submesh cut from named 3D boundary
+faces and over a \emph{block} field space. Its product is a table of propagation
+modes $\{k_n,\,n_\text{eff},\,(\vE_t,E_n,B_z)\}$, one row per mode---and those mode
+fields $\vE_t$ are exactly the basis $\vs_i$ that the driven solver projects its
+solved fields onto to compute $S_{ij}$. The chapter has one genuinely new stage
+(the 2D extraction) bolted onto a solve corner you already understand.
+\end{keyidea}
+
+The rest of the chapter walks the pipeline in order. Stage~0 is the new
+idea---extracting a 2D submesh from a 3D boundary (\cref{sec:extract}). Stage~1
+assembles the block eigenproblem on that submesh (\cref{sec:assemble}). Stage~2 is
+the opaque solve, identical to the eigenmode corner (\cref{sec:solve}). Stage~3
+reads out the waveguide-mode table (\cref{sec:reduce}). Two worked examples make
+the rectangular guide concrete, and the closing section feeds the modes back to
+the driven solver.
+
+\section{Stage 0: extracting the 2D submesh (the distinguishing preface)}
+\label{sec:extract}
+
+Every other analysis in this book---the five volume drivers---poses its problem on
+the simulation mesh as given. The boundary-mode analysis is the one exception, and
+the exception is its defining feature. \emph{Before} it can assemble anything, it
+must first manufacture the mesh it will work on, by cutting a two-dimensional
+cross-section out of the three-dimensional model.
+
+The physical reason is simple: a port is a \emph{surface}, not a volume. When a
+designer marks ``this face of the bounding box is port~1,'' they are naming a 2D
+patch of the 3D boundary---the open end of a waveguide, the cross-section of a
+coax, the footprint where a feed line meets the device. The modes that propagate
+through that port live on that 2D surface. So the analysis must reduce the 3D
+boundary description down to a self-contained 2D mesh on which a genuinely 2D
+eigenproblem can be posed (\cref{fig:extract}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % --- LEFT: 3D box with a highlighted boundary face ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries] at (1.5,3.1) {3D model};
+    % box (simple cabinet projection)
+    \coordinate (A) at (0,0);     \coordinate (B) at (2.6,0);
+    \coordinate (C) at (2.6,1.9); \coordinate (D) at (0,1.9);
+    \coordinate (dx) at (0.9,0.6);
+    \draw[thick, simInk] (A) -- (B) -- (C) -- (D) -- cycle;
+    \draw[thick, simInk] (B) -- ($(B)+(dx)$) -- ($(C)+(dx)$) -- (C);
+    \draw[thick, simInk] (D) -- ($(D)+(dx)$) -- ($(C)+(dx)$);
+    \draw[simGray, densely dashed] (A) -- ($(A)+(dx)$) -- ($(B)+(dx)$);
+    \draw[simGray, densely dashed] ($(A)+(dx)$) -- ($(D)+(dx)$);
+    % highlighted boundary face = the named port face (left face)
+    \fill[simBlue, opacity=0.28] (A) -- (D) -- ($(D)+(dx)$) -- ($(A)+(dx)$) -- cycle;
+    \node[text=simBlue, font=\scriptsize, align=center] at (0.55,-0.55)
+      {named\\boundary face};
+  \end{scope}
+  % --- arrow: CreateFromBoundary ---
+  \draw[->, very thick, simRust] (4.0,1.3) -- (5.4,1.3)
+    node[midway, above, font=\scriptsize, text=simRust, align=center]
+      {\code{CreateFromBoundary}}
+    node[midway, below, font=\scriptsize, text=simRust, align=center]
+      {project $\to$ 2D};
+  % --- MIDDLE: extracted 2D mesh ---
+  \begin{scope}[shift={(5.8,0)}]
+    \node[font=\small\bfseries] at (1.1,3.1) {2D submesh};
+    \draw[thick, simBlue, fill=simBgBlue] (0,0) rectangle (2.2,2.4);
+    % a coarse triangulation
+    \draw[simGray] (0,0) -- (2.2,2.4); \draw[simGray] (0,1.2) -- (1.1,2.4);
+    \draw[simGray] (1.1,0) -- (2.2,1.2); \draw[simGray] (0,1.2) -- (2.2,1.2);
+    \draw[simGray] (1.1,0) -- (1.1,2.4);
+    \node[font=\scriptsize, text=simGray, anchor=north] at (1.1,-0.15)
+      {tangent-plane mesh};
+  \end{scope}
+  % --- the tensor-rotation annotation below ---
+  \node[font=\scriptsize, text=simGreen, align=center] at (4.5,-1.15)
+    {and: rotate material tensors $\varepsilon,\mu$ into the local tangent frame
+     $\;\Rightarrow\;$ a genuinely 2D problem};
+\end{tikzpicture}
+\caption[The 2D-submesh extraction]{Stage~0, the distinguishing preface. The
+analysis selects the named boundary faces of the 3D model (left, blue patch),
+extracts them with \code{CreateFromBoundary}, and projects the 3D coordinates of
+those faces into the 2D tangent plane to produce a self-contained 2D submesh
+(middle). It also rotates the material tensors $\varepsilon,\mu$ (and any path
+coordinates) from the global 3D frame into the submesh's local tangent frame
+(green), so that the mode problem posed on the 2D mesh is a faithful 2D reduction
+of the 3D physics. This extraction is what no other driver does---it is why
+wave-ports is a distinct analysis and not merely ``eigenmodes again.'' When the
+configuration supplies a 2D mesh directly, this whole stage is the identity.}
+\label{fig:extract}
+\end{figure}
+
+Concretely, stage~0 does three things, in order:
+\begin{enumerate}[nosep]
+  \item \textbf{Select and extract the faces.} The configuration names a set of
+  boundary attributes---the faces that constitute the port. Those faces are pulled
+  out of the parent 3D mesh as a standalone submesh (\code{CreateFromBoundary}),
+  with the boundary attributes remapped and the internal boundary edges added so
+  the submesh is a complete 2D mesh in its own right.
+  \item \textbf{Project to the tangent plane.} The extracted faces still carry
+  their 3D coordinates. A 3D$\to$2D projection drops them onto the face's tangent
+  plane, giving each node an honest $(x,y)$ pair in the cross-section's own 2D
+  coordinate system.
+  \item \textbf{Rotate the material tensors.} Permittivity $\varepsilon$ and
+  permeability $\mu$ are tensors in the global 3D frame; the 2D mode problem needs
+  them expressed in the cross-section's local tangent frame. The extraction
+  rotates them (and the port path coordinates) into that frame, so the assembled
+  operators see the correct 2D material response.
+\end{enumerate}
+
+\begin{notationbox}
+The extraction is a genuine \emph{mesh} operation, not a change of variables on the
+fly. It produces a new, smaller, lower-dimensional mesh object---two dimensions
+where the parent had three, a handful of elements where the parent had many---and
+every later stage (assemble, solve, readout) runs on \emph{that} 2D mesh, knowing
+nothing of the parent. This is exactly why the cost of the wave-port analysis is
+tiny compared with a volume solve: a 2D eigenproblem on a port cross-section is
+orders of magnitude smaller than the 3D volume problem the same device's driven
+sweep solves. The port modes are cheap precisely because they live on a surface.
+\end{notationbox}
+
+With the 2D submesh in hand, the remaining three stages are the eigenmode pipeline
+of \cref{ch:eigenmodes}, transplanted onto the cross-section.
+
+\section{Stage 1: assemble the block ND$\,\oplus\,$H1 pencil}
+\label{sec:assemble}
+
+On the 2D submesh we now pose the eigenproblem whose eigenvalues are the
+propagation constants. The subtlety that distinguishes it from the volume
+eigenmode problem of \cref{ch:eigenmodes}---beyond living in 2D---is that the field
+splits into \emph{two pieces of different character}, and the eigenproblem is a
+\emph{block} system over a pair of function spaces.
+
+\subsection{Why the field splits: transverse and longitudinal}
+
+A waveguide mode's electric field has a part lying \emph{in} the cross-section
+plane and a part pointing \emph{along} the propagation axis. These two parts obey
+different continuity requirements at material interfaces, and so they want
+different finite-element spaces (\cref{ch:functionspaces}, \cref{ch:derham}):
+\begin{itemize}[nosep]
+  \item the \textbf{transverse field} $\vE_t$---the in-plane part, the pattern
+  that actually looks like \cref{fig:wg-setup}'s arrows---lives in the
+  two-dimensional Nédélec edge space $\Hcurl$ on the submesh. As always for an
+  electric field, $\Hcurl$ builds tangential continuity into the basis, the right
+  physics for $\vE$ at an interface;
+  \item the \textbf{longitudinal field} $E_n$---the component pointing down the
+  guide axis, normal to the cross-section---is a scalar on the cross-section and
+  lives in the ordinary $\Hone$ nodal space.
+\end{itemize}
+The full mode is the pair $(\vE_t, E_n)$, an element of the \emph{direct sum}
+$\Hcurl \oplus \Hone$ (\cref{fig:block-space}). This block structure is forced by
+the physics: you cannot describe a waveguide mode with a single space, because its
+two field components genuinely belong to different members of the de Rham complex
+(\cref{ch:derham}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % H(curl) block
+  \node[space, minimum width=30mm, minimum height=15mm, align=center] (curl)
+    at (0,0) {$\Hcurl$\\\scriptsize (Nédélec, 2D)};
+  \node[font=\scriptsize, text=simGreen, align=center, below=1mm of curl]
+    {transverse $\vE_t$\\(in-plane vector)};
+  % oplus
+  \node[font=\Large] (op) at (3.0,0) {$\oplus$};
+  % H1 block
+  \node[space, minimum width=30mm, minimum height=15mm, align=center, fill=simBgGold,
+        draw=simGold] (h1) at (6.0,0) {$\Hone$\\\scriptsize (nodal scalar)};
+  \node[font=\scriptsize, text=simGold!70!black, align=center, below=1mm of h1]
+    {longitudinal $E_n$\\(axial scalar)};
+  % the combined mode bracket
+  \draw[decorate, decoration={brace, amplitude=5pt}, simInk]
+    (-1.65,1.05) -- (7.65,1.05);
+  \node[font=\small, text=simInk] at (3.0,1.5)
+    {one waveguide mode $=(\vE_t,\,E_n)\in \Hcurl\oplus\Hone$};
+  % the block operator shape
+  \node[font=\footnotesize, align=center, text=simBlue] at (3.0,-2.6)
+    {block pencil $(\mat{A}(\omega,\sigma),\,\mat{B})$ over the combined space:};
+  \node[font=\small] at (3.0,-3.5)
+    {$\mat{A} = \begin{pmatrix}\mat{A}_{tt} & \mat{A}_{tn}\\
+                               \mat{A}_{nt} & \mat{A}_{nn}\end{pmatrix}$,
+     \quad coupling $\vE_t$ and $E_n$};
+\end{tikzpicture}
+\caption[The block ND $\oplus$ H1 space]{The waveguide mode lives in a \emph{block}
+function space. The transverse field $\vE_t$ is an in-plane vector and lives in the
+2D Nédélec edge space $\Hcurl$ (green); the longitudinal field $E_n$ is an axial
+scalar and lives in the nodal $\Hone$ space (gold). A single mode is the pair
+$(\vE_t,E_n)$ in the direct sum $\Hcurl\oplus\Hone$. The eigenproblem's operators
+are therefore \emph{block} operators, with diagonal blocks acting within each space
+and off-diagonal blocks coupling the transverse and longitudinal parts---the
+de Rham structure of \cref{ch:derham} made into a matrix.}
+\label{fig:block-space}
+\end{figure}
+
+\subsection{The generalized eigenproblem, shift-inverted}
+
+On this block space we assemble the generalized eigenproblem whose eigenvalues
+carry the propagation constants. It is a \emph{generalized} eigenproblem
+(\cref{ch:eigenvalues}, \cref{ch:reductions-pde}), a pencil $(\mat{A},\mat{B})$:
+\begin{equation}
+  \mat{A}(\omega,\sigma)\,\vx \;=\; \lambda\,\mat{B}\,\vx,
+  \qquad \vx = (\vE_t, E_n) \in \Hcurl\oplus\Hone,
+  \label{eq:wg-gevp}
+\end{equation}
+where $\mat{A}(\omega,\sigma)$ is the block system operator---it depends on the
+operating frequency $\omega$ \emph{and} on the spectral shift $\sigma$, because the
+boundary-mode formulation folds the shift into the operator---and $\mat{B}$ is the
+block mass operator on the right-hand side. Both are built by the ordinary
+assemble fold of \cref{ch:fem}, just with block-structured terms; in the
+framework's vocabulary they are two \code{fe\_assemble} calls, run once each.
+
+The eigenvalue $\lambda$ relates to the propagation constant. The formulation
+\emph{shift-inverts} (\cref{ch:eigenvalues}, \cref{ch:eigenmodes}) around a target,
+\begin{equation}
+  \sigma \;=\; -\,k_{n,\text{target}}^2,
+  \label{eq:wg-shift}
+\end{equation}
+the negative square of the propagation constant we are hunting for. Shift-invert is
+the same trick the eigenmode chapter used to pull \emph{interior} eigenvalues out
+of a large spectrum (\cref{ch:eigenvalues}): by centering the spectral transform on
+$-k_{n,\text{target}}^2$ we ask the solver to return the modes whose propagation
+constant is nearest the target, which are the modes of physical interest---the
+propagating ones near the operating frequency. The target itself comes either from
+a user-supplied effective index ($k_{n,\text{target}} = n_\text{eff}\cdot\omega$)
+or, when none is given, from the material's light speed.
+
+\begin{keyidea}
+Stage~1 assembles a \emph{block} generalized eigenproblem
+$\mat{A}(\omega,\sigma)\vx=\lambda\mat{B}\vx$ on the combined Nédélec$\,\oplus\,$nodal
+space $\Hcurl\oplus\Hone$ of the 2D submesh: the transverse field $\vE_t$ in
+$\Hcurl$, the longitudinal field $E_n$ in $\Hone$. It is shift-inverted around
+$\sigma=-k_{n,\text{target}}^2$ to target the modes near a chosen propagation
+constant. Two differences from the volume eigenmode pencil (\cref{ch:eigenmodes}):
+the space is a \emph{block} $\Hcurl\oplus\Hone$ rather than a single $\Hcurl$, and
+the mesh is the 2D submesh of stage~0 rather than the 3D domain. The assemble
+\emph{shape}---fold weak-form terms into a pencil, once---is unchanged.
+\end{keyidea}
+
+\section{Stage 2: solve --- the same opaque black box}
+\label{sec:solve}
+
+Here is the payoff of the whole chapter's framing: stage~2 is \emph{nothing new}.
+We have a generalized eigenproblem pencil $(\mat{A},\mat{B})$; we hand it whole to
+the opaque eigenvalue library, with the shift target, and get the converged modes
+back from a single call. This is the identical solve corner the eigenmode analysis
+used (\cref{ch:eigenmodes})---the fourth corner of \cref{ch:situating}, the opaque
+black box---transplanted onto the 2D block problem (\cref{fig:wg-pipeline}).
+\[
+  \texttt{eigs} \;=\; \texttt{eigsolve}\;\bigl((\mat{A},\mat{B}),\ \sigma,\
+  n_{\text{modes}}\bigr).
+\]
+Palace writes \emph{no} eigen-iteration loop here, exactly as in the volume case.
+The library (SLEPc or ARPACK, \cref{ch:eigenvalues}) runs its own Krylov--Schur or
+Arnoldi process with the shift-and-invert spectral transform
+(\cref{ch:krylovschur}), calling back into our code only to apply the operators---and,
+because the shift-invert needs $(\mat{A}-\sigma\mat{B})^{-1}$, each callback hides
+an inner linear solve, the same nested structure the eigenmode chapter dissected
+(\cref{ch:eigenmodes}). We see one call and its result.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm and 8mm, font=\small, >=Stealth]
+  \node[data] (cfg) {config};
+  \node[stage, right=of cfg, align=center] (ext)
+    {extract\\2D submesh};
+  \node[stage, right=of ext, align=center] (asm)
+    {assemble\\block pencil};
+  \node[extern, right=of asm, minimum width=20mm, minimum height=11mm,
+        align=center] (solve) {\textbf{eigsolve}\\\scriptsize SLEPc / ARPACK};
+  \node[stage, right=of solve, align=center] (map) {map\\readout};
+  \node[product, right=of map, align=center] (prod)
+    {waveguide-\\mode table};
+  \draw[flow] (cfg) -- (ext);
+  \draw[flow] (ext) -- node[above, font=\scriptsize]{2D mesh} (asm);
+  \draw[flow] (asm) -- node[above, font=\scriptsize]{$(\mat{A},\mat{B}),\sigma$} (solve);
+  \draw[flow] (solve) -- node[above, font=\scriptsize]{eigenpairs} (map);
+  \draw[flow] (map) -- (prod);
+  % the distinguishing-stage callout
+  \node[font=\scriptsize, text=simBlue, align=center, below=4mm of ext]
+    {the \emph{new} stage\\(3D boundary $\to$ 2D)};
+  \draw[refedge] (ext.south) ++(0,-1mm) -- ++(0,-2.5mm);
+  % the library's hidden inner loop
+  \node[font=\scriptsize, text=simViolet, align=center, below=4mm of solve]
+    {opaque eigen-iteration\\(SAME corner as\\\cref{ch:eigenmodes})};
+  \draw[refedge] (solve.south) ++(0,-1mm) -- ++(0,-2.5mm);
+  % the only Palace loop
+  \node[font=\scriptsize, text=simGreen, align=center, below=4mm of map]
+    {the only loop\\Palace writes};
+  \draw[refedge] (map.south) ++(0,-1mm) -- ++(0,-2.5mm);
+\end{tikzpicture}
+\caption[The boundary-mode pipeline]{The boundary-mode pipeline. A stage~0
+extraction (blue) cuts a 2D submesh from the named 3D boundary faces---the one new
+idea. Assembly then builds the block $\Hcurl\oplus\Hone$ pencil
+$(\mat{A},\mat{B})$ on that submesh. The \texttt{eigsolve} box is dashed and
+violet, the \cref{ch:situating} convention for a corner where Palace writes no
+loop: the entire eigen-iteration happens inside the library, exactly as in the
+volume eigenmode analysis (\cref{ch:eigenmodes})---this is the \emph{same} black
+box, just fed a 2D block problem. The single Palace-written loop (green) is the
+per-mode readout map that turns each converged eigenpair into a row of the
+waveguide-mode table. Compare \cref{ch:eigenmodes}: same skeleton, with one extra
+stage at the front and a block space inside the pencil.}
+\label{fig:wg-pipeline}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % --- LEFT: eigenmode (volume) corner ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, align=center] at (1.7,2.6)
+      {Eigenmode (\cref{ch:eigenmodes})};
+    \node[opbox, minimum width=18mm, align=center] (pen1) at (0.1,1.2)
+      {$(\Kop,\Cop,\Mop)$\\\scriptsize 3D, single $\Hcurl$};
+    \node[extern, minimum width=14mm, minimum height=9mm] (bb1) at (2.4,1.2)
+      {\scriptsize eigsolve};
+    \draw[flow, shorten >=1pt] (pen1.east) -- (bb1.west);
+    \node[product, minimum width=9mm, minimum height=5mm, scale=0.75]
+      (o1) at (3.9,1.2) {\scriptsize eigs};
+    \draw[flow, shorten >=1pt] (bb1.east) -- (o1.west);
+    \node[font=\scriptsize\itshape, align=center] at (1.9,0.2)
+      {one opaque call,\\volume modes};
+  \end{scope}
+  % divider
+  \draw[simGray, densely dashed] (4.7,-0.4) -- (4.7,2.9);
+  % --- RIGHT: boundary-mode (2D block) corner ---
+  \begin{scope}[shift={(5.3,0)}]
+    \node[font=\small\bfseries, align=center] at (1.7,2.6)
+      {Boundary-mode (this chapter)};
+    \node[opbox, minimum width=18mm, align=center, fill=simBgBlue, draw=simBlue]
+      (pen2) at (0.1,1.2) {$(\mat{A},\mat{B})$\\\scriptsize 2D, $\Hcurl\oplus\Hone$};
+    \node[extern, minimum width=14mm, minimum height=9mm] (bb2) at (2.4,1.2)
+      {\scriptsize eigsolve};
+    \draw[flow, shorten >=1pt] (pen2.east) -- (bb2.west);
+    \node[product, minimum width=9mm, minimum height=5mm, scale=0.75]
+      (o2) at (3.9,1.2) {\scriptsize eigs};
+    \draw[flow, shorten >=1pt] (bb2.east) -- (o2.west);
+    \node[font=\scriptsize\itshape, align=center] at (1.9,0.2)
+      {one opaque call,\\port modes};
+  \end{scope}
+  % the shared box
+  \node[font=\scriptsize, text=simViolet] at (5.0,-0.95)
+    {\emph{identical} \code{eigsolve} corner --- only the pencil and the mesh differ};
+\end{tikzpicture}
+\caption[The same black box, two pencils]{The solve corner is literally the same
+combinator in both analyses. Left: the eigenmode analysis hands a 3D pencil over a
+single $\Hcurl$ space to the opaque \texttt{eigsolve} (\cref{ch:eigenmodes}).
+Right: the boundary-mode analysis hands a 2D pencil over the block
+$\Hcurl\oplus\Hone$ space to the \emph{same} opaque \texttt{eigsolve}. The dashed
+violet box---the library boundary where Palace writes no loop---is drawn identically
+on both sides on purpose: only the operands change (the pencil's blocks and the
+mesh's dimension), never the corner. This is why understanding
+\cref{ch:eigenmodes} is most of the work of understanding this chapter.}
+\label{fig:same-box}
+\end{figure}
+
+\begin{keyidea}
+The solve is \emph{one} \code{eigsolve} call into the opaque eigenvalue library,
+\emph{identical} to the eigenmode solve corner (\cref{ch:eigenmodes})---the fourth
+corner of \cref{ch:situating}. Palace writes no eigen-iteration loop; the library
+owns the Krylov--Schur shift-invert iteration (\cref{ch:krylovschur}) and only
+calls back for operator applies, each containing an inner linear solve from the
+shift-and-invert. There is no \code{solve\_family} map (no operator/RHS family) and
+no state-threaded fold here: the single black-box call \emph{is} the entire solve.
+The only thing that changed from \cref{ch:eigenmodes} is what we fed it---a 2D
+block pencil instead of a 3D single-space one.
+\end{keyidea}
+
+\begin{remark}[Where the null-space subtlety went]
+The volume eigenmode analysis had to fight the curl--curl operator's gradient null
+space \emph{before} its solve, projecting it out so the black box would not return
+a cloud of spurious zero-frequency modes (\cref{ch:eigenmodes}). The boundary-mode
+problem carries the same $\Hcurl$ structure on its transverse block, so the same
+concern is present in principle; the block $\Hcurl\oplus\Hone$ formulation and the
+shift-invert targeting $\sigma=-k_{n,\text{target}}^2$ together keep the iteration
+focused on the physical propagating modes near the target rather than the
+gradient cloud near the origin. The lesson is identical to
+\cref{ch:eigenmodes}: the black box cannot tell physics from artifact, so the
+formulation must be arranged \emph{before} the solve to return the modes we want.
+\end{remark}
+
+\section{Stage 3: reduce --- the waveguide-mode table}
+\label{sec:reduce}
+
+The library returns converged eigenpairs $(\lambda_m,\vx_m)$. The reduce stage
+turns them into the physical product: a \emph{table}, one row per mode---the rank-1
+``Shape~3'' reduction of \cref{ch:reductions}, the same shape as the eigenmode
+$(f,Q)$ table, but now each row carries \emph{fields}. This stage is the one
+Palace-written loop in the driver: a \code{map} over the converged modes, with no
+coupling between rows, which is exactly what makes it a map and not a fold. The
+framework names it \code{waveguide\_mode\_reduce}. Each row carries four things.
+
+\subsection{The propagation constant and effective index}
+
+The headline number is the \emph{propagation constant} $k_n$, recovered from the
+eigenvalue by the shift-invert un-transform (\cref{ch:eigenvalues},
+\cref{ch:eigenmodes})---the solver works in shifted coordinates, and undoing the
+shift \eqref{eq:wg-shift} returns the physical $k_n$. From it the
+\emph{effective index} follows by a single divide,
+\begin{equation}
+  n_\text{eff} \;=\; \frac{k_n}{\omega},
+  \label{eq:neff}
+\end{equation}
+the ratio of the mode's propagation constant to the free-space wavenumber---how
+much more slowly (or quickly) the mode travels down the guide than a wave in free
+space would. The effective index is the number a microwave engineer reads first: a
+mode with $n_\text{eff}$ near $1$ is loosely guided, one with large
+$n_\text{eff}$ is tightly bound to the structure.
+
+\subsection{The mode fields, back-transformed and normalized}
+
+Each eigenvector $\vx_m$ \emph{is} the mode, but in the raw block degrees of
+freedom of the shift-inverted problem. The readout applies a \emph{back-transform}
+to recover the physical transverse and longitudinal fields $(\vE_t, E_n)$, then
+\emph{power-normalizes} the mode so that its Poynting power is unity, $\abs{P}=1$.
+Normalization matters because an eigenvector is defined only up to a scalar; fixing
+the power to $1$ gives every mode a canonical amplitude, which is what makes the
+later projection $\inner{\vs_i}{\vE_j}$ in the driven analysis (\cref{ch:driven})
+mean ``fraction of unit power in this mode'' rather than an arbitrary multiple.
+(The normalization has a totality guard: if a mode's computed power is zero---a
+degenerate or purely evanescent edge case---it is left unscaled rather than divided
+by zero, the same defensive pattern as the eigenmode $Q=\infty$ lossless limit of
+\cref{ch:eigenmodes}.)
+
+Finally, for \emph{propagating} modes only, the readout forms the longitudinal
+magnetic field from the transverse electric field by a discrete curl,
+\begin{equation}
+  B_z \;=\; \frac{\Curl\,\vE_t}{i\,\omega},
+  \label{eq:bz}
+\end{equation}
+one curl and a complex scale per mode (the discrete-curl operator is the de Rham
+interpolator of \cref{ch:derham}). For an evanescent mode this field is omitted---a
+per-mode conditional, ``$B_z$ if propagating, nothing otherwise,'' keyed on whether
+$k_n$ is real.
+
+\subsection{Propagating versus evanescent, and the cutoff}
+
+The single most important reading of the table is the split between
+\emph{propagating} and \emph{evanescent} modes, and it lives entirely in whether
+$k_n$ is real or imaginary (\cref{fig:dispersion}). A guide mode has a
+\emph{cutoff frequency} $f_c$: below it the mode cannot propagate. The relationship
+is the dispersion law
+\begin{equation}
+  k_n^2 \;=\; \Bigl(\frac{\omega}{c}\Bigr)^2 - k_c^2,
+  \qquad k_c = \frac{\omega_c}{c} = \frac{2\pi f_c}{c},
+  \label{eq:dispersion}
+\end{equation}
+where $k_c$ is the mode's \emph{cutoff wavenumber}, a fixed property of the
+cross-section geometry. Read it directly:
+\begin{itemize}[nosep]
+  \item \textbf{Above cutoff} ($\omega > \omega_c$): the right-hand side is
+  positive, so $k_n$ is \emph{real}. The mode \emph{propagates}---it carries power
+  down the guide with phase velocity $\omega/k_n$, and the readout forms its $B_z$.
+  \item \textbf{Below cutoff} ($\omega < \omega_c$): the right-hand side is
+  negative, so $k_n$ is \emph{imaginary}. The mode is \emph{evanescent}---the
+  factor $e^{-ik_n z}=e^{-\abs{k_n}z}$ is a pure decay, carrying no net power, and
+  $B_z$ is omitted.
+\end{itemize}
+At cutoff exactly, $k_n=0$: the mode neither propagates nor decays, oscillating in
+place. The cutoff is the gate, and the dispersion law \eqref{eq:dispersion} is the
+single equation that decides, for every mode at every frequency, which side of the
+gate it is on.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.84\linewidth, height=6.2cm,
+  xlabel={angular frequency $\omega$}, ylabel={propagation constant},
+  xmin=0, xmax=4, ymin=-2.2, ymax=2.6,
+  xtick={1.2}, xticklabels={$\omega_c$},
+  ytick={0}, yticklabels={$0$},
+  axis lines=middle,
+  legend pos=north west, legend cell align=left,
+  tick label style={font=\footnotesize}, label style={font=\footnotesize},
+  legend style={font=\footnotesize, draw=simGray!40},
+  clip=false,
+]
+% propagating branch: k_n = sqrt(omega^2 - wc^2) for omega>wc  (c=1, wc=1.2)
+\addplot[very thick, simBlue, smooth, samples=120, domain=1.2:4]
+  { sqrt(x^2 - 1.44) };
+\addlegendentry{$k_n$ real (propagating)}
+% evanescent branch: |k_n| = sqrt(wc^2 - omega^2) drawn negative (imaginary magnitude)
+\addplot[very thick, simRust, densely dashed, smooth, samples=120, domain=0:1.2]
+  { -sqrt(1.44 - x^2) };
+\addlegendentry{$k_n$ imaginary (evanescent)}
+% cutoff marker
+\draw[simGray, densely dotted] (axis cs:1.2,-2.2) -- (axis cs:1.2,2.6);
+\node[font=\scriptsize, text=simGreen, anchor=west] at (axis cs:2.4,1.9)
+  {above cutoff: carries power};
+\node[font=\scriptsize, text=simRust, anchor=west] at (axis cs:0.05,-1.6)
+  {below cutoff: decays};
+\node[font=\scriptsize, text=simInk] at (axis cs:1.25,2.35) {cutoff};
+\end{axis}
+\end{tikzpicture}
+\caption[Dispersion: propagating versus evanescent]{The dispersion relation
+$k_n^2=(\omega/c)^2-k_c^2$ for a single guide mode, the gate between propagation
+and decay. Above the cutoff frequency $\omega_c$ (right of the dotted line) the
+right-hand side is positive: $k_n$ is real (blue), the mode is a true travelling
+wave carrying power down the guide. Below cutoff (left) the right-hand side is
+negative: $k_n$ is imaginary (rust, drawn as its magnitude below the axis), the
+mode is evanescent and decays without transporting energy. Exactly at $\omega_c$
+the mode has $k_n=0$. Each mode of a cross-section has its own cutoff; at a given
+operating frequency, only the modes whose cutoff lies below it propagate. The
+wave-port readout reports $k_n$ for every mode, and this sign of $k_n^2$ is how the
+table is read.}
+\label{fig:dispersion}
+\end{figure}
+
+\begin{keyidea}
+The reduce stage is a \code{map} over the converged eigenpairs producing the
+\emph{waveguide-mode table}, one row per mode, each carrying: the propagation
+constant $k_n$ (the eigenvalue, shift-invert un-transformed); the effective index
+$n_\text{eff}=k_n/\omega$; the back-transformed, power-normalized mode fields
+$(\vE_t,E_n)$; and, for propagating modes only, $B_z=\Curl\vE_t/(i\omega)$. It is a
+rank-1 ``Shape~3'' table like the eigenmode $(f,Q)$ table (\cref{ch:reductions}),
+but its rows carry \emph{fields}, not just scalars---the defining difference from
+its scalar-only sibling. A mode propagates when $k_n$ is real (above cutoff) and is
+evanescent when $k_n$ is imaginary (below cutoff). This is the only loop the
+boundary-mode driver writes, and it is a pure post-processing map---never a solve.
+\end{keyidea}
+
+\section{The composition, and closing the loop to the driven solver}
+\label{sec:compose}
+
+The whole boundary-mode driver is the clean four-stage composition the framework
+names (\cref{lst:wgcompose}): extract the 2D submesh, assemble the block pencil,
+one opaque eigensolve, one per-mode readout map.
+
+\begin{figure}[t]
+\begin{lstlisting}[style=l4style, caption={[The boundary-mode composition]The
+boundary-mode feature as a composition of firm vocabulary. Stage~0 extracts the 2D
+submesh from the named 3D boundary faces---the one new idea. Stages~1--3 are the
+eigenmode pipeline of \cref{ch:eigenmodes}: assemble the block
+$\Hcurl\oplus\Hone$ pencil, hand it to the opaque \texttt{eigsolve} once, and
+\texttt{map} the per-mode readout over the converged modes. The only
+Palace-written loop is the final \texttt{map}.}, label={lst:wgcompose}]
+boundary_mode :: BoundaryModeConfig -> WaveguideModeTable
+boundary_mode cfg =
+  let mesh2d = extract_boundary_2d_submesh (parent_mesh cfg) (surface_attrs cfg) -- (0) 3D boundary -> 2D submesh
+      space  = mode_space mesh2d cfg                  -- the block ND (+) H1 space on the 2D submesh
+      opA    = fe_assemble space [ block_system (omega cfg) (sigma cfg) ]  -- (1a) block system A(w,s)
+      opB    = fe_assemble space [ mass_block ]       -- (1b) generalized RHS block B
+      pencil = eig_pencil opA opB (sigma cfg) (n_modes cfg)  -- (A, B) + shift-invert s = -kn_target^2
+      eigs   = eigsolve pencil (initial_space cfg)    -- (2) ONE opaque eigensolve -- SAME corner as eigenmode
+  in  map (waveguide_mode_readout cfg (omega cfg)) eigs  -- (3) per-mode readout map: kn, n_eff, (Et, En, Bz)
+\end{lstlisting}
+\end{figure}
+
+Read as a pipeline composition,
+\[
+  \texttt{boundary\_mode}
+    \;=\;
+  (\texttt{map}\ \texttt{readout})
+    \;\circ\;
+  \texttt{eigsolve}
+    \;\circ\;
+  \texttt{fe\_assemble}^{\times 2}
+    \;\circ\;
+  \texttt{extract\_2d\_submesh}.
+\]
+Three of the four stages are shared verbatim with the eigenmode analysis
+(\cref{ch:eigenmodes})---the assemble fold, the opaque solve, the readout
+map---and the fourth, the extraction, is the prefix that makes this analysis
+distinct.
+
+\subsection{Where the modes go: the driven port projection}
+
+Now we close the loop opened in \cref{sec:assemble}. The waveguide-mode table is
+not the end of the story; it is an \emph{input} to the driven analysis
+(\cref{ch:driven}). Each port mode field $\vE_t$ in the table \emph{is} a
+projection basis vector $\vs_i$ in the driven reduction
+(\cref{fig:loop-close}). When the driven sweep solves its 3D field $\vE_j(\omega)$
+and needs the scattering parameter $S_{ij}$, it computes the modal overlap of that
+solved field with port $i$'s mode---the very mode this chapter produced:
+\[
+  S_{ij}
+    \;=\;
+  \sigma_{ij}\bigl(\inner{\vs_i}{\vE_j(\omega)} - \delta_{ij}\bigr),
+  \qquad
+  \vs_i \;=\; \text{port $i$'s mode field } \vE_t \text{ (from this chapter)}.
+\]
+The power-normalization of \cref{sec:reduce} is what makes this projection a clean
+fraction; the propagation constant $k_n$ is what supplies the de-embedding phase
+$e^{ik_n d}$ that shifts the reference plane in $\sigma_{ij}$ (\cref{ch:driven}).
+The boundary-mode analysis is, in this sense, a \emph{subroutine} of the driven
+analysis: run once per port to characterize what waves it supports, before the
+frequency sweep can interpret its solved fields.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm and 14mm, >=Stealth]
+  % boundary-mode pipeline (compressed)
+  \node[stage, align=center] (bm) {boundary-mode\\\scriptsize(this chapter)};
+  \node[product, right=of bm, align=center] (modes)
+    {port modes\\$\vs_i=\vE_t$, $k_n$};
+  % driven pipeline
+  \node[stage, right=of modes, align=center, fill=simBgRust, draw=simRust] (drv)
+    {driven sweep\\\scriptsize(\cref{ch:driven})};
+  \node[product, right=of drv, align=center] (S) {$S_{ij}(\omega)$};
+  \draw[flow] (bm) -- node[above, font=\scriptsize]{eigsolve} (modes);
+  \draw[flow] (modes) -- node[above, font=\scriptsize, align=center]
+    {projection\\basis} (drv);
+  \draw[flow] (drv) -- node[above, font=\scriptsize]{project} (S);
+  % the projection equation below
+  \node[font=\footnotesize, text=simInk, below=7mm of drv]
+    {$S_{ij}=\sigma_{ij}(\inner{\vs_i}{\vE_j(\omega)}-\delta_{ij})$};
+  \draw[refedge] (modes.south) .. controls +(0,-7mm) and +(-1.2,4mm) ..
+    ($(drv.south)+(-0.3,-6mm)$);
+  \node[font=\scriptsize\itshape, text=simGray, below=1mm of modes]
+    {computed once per port};
+\end{tikzpicture}
+\caption[Closing the modality loop]{How the wave-port analysis feeds the driven
+analysis, closing the modality loop. This chapter computes a port's propagation
+modes (the table $\{\vs_i=\vE_t,\,k_n,\,\dots\}$) by the eigenmode black box on a 2D
+cross-section. The driven analysis (\cref{ch:driven}) then \emph{consumes} those
+modes: it solves its 3D field $\vE_j(\omega)$ with port $j$ excited and projects
+the result onto each port mode $\vs_i$ to read off the scattering parameter
+$S_{ij}$. The port modes are the projection basis the driven reduction cannot
+define without; the boundary-mode analysis runs once per port, upstream of the
+sweep. The two modalities are not independent---one produces exactly what the other
+needs.}
+\label{fig:loop-close}
+\end{figure}
+
+\subsection{Fundamental and higher modes; single-mode operation}
+
+A guide's modes form a ladder ordered by cutoff frequency. The
+\emph{fundamental}---the mode with the lowest cutoff---is the one a guide is
+usually \emph{designed} to carry: between the fundamental's cutoff and the next
+mode's cutoff lies the \emph{single-mode band}, the frequency range in which
+exactly one mode propagates and all others are evanescent. Operating a guide in its
+single-mode band is the norm in microwave engineering, because a single propagating
+mode means the field at the port is unambiguous: one $\vs_i$ to project onto, one
+$k_n$ to de-embed with, a clean port definition. The wave-port analysis typically
+requests the lowest few modes (via the shift-invert target of \cref{sec:assemble}),
+identifies which propagate at the operating frequency, and hands the fundamental
+(and any other propagating modes) to the driven solver as the port basis.
+
+\section{Worked examples}
+
+\begin{workedexample}{The rectangular waveguide, by hand}{rectwg}
+We compute the modes of the simplest guide---a hollow rectangular pipe of
+cross-section $a\times b$ (with $a>b$), filled with a medium of light speed $c$,
+its walls perfect conductors---and show how the discrete 2D eigenproblem of
+\cref{sec:assemble} recovers the textbook answer. The continuous problem has
+closed-form modes (the TE and TM families); we use them to anchor what the
+black box returns.
+
+\emph{The analytic cutoffs.} A rectangular guide's modes are indexed by two
+integers $(m,n)$, counting half-wavelengths across the two transverse directions.
+Each mode's cutoff \emph{wavenumber} is set by the geometry,
+\[
+  k_{c,mn} \;=\; \pi\sqrt{\Bigl(\frac{m}{a}\Bigr)^2 + \Bigl(\frac{n}{b}\Bigr)^2},
+\]
+and its cutoff \emph{frequency} follows as $f_{c,mn}=c\,k_{c,mn}/2\pi$, i.e.
+\[
+  f_{c,mn} \;=\; \frac{c}{2}\sqrt{\Bigl(\frac{m}{a}\Bigr)^2
+                                 + \Bigl(\frac{n}{b}\Bigr)^2}.
+\]
+The \emph{fundamental} is the $\mathrm{TE}_{10}$ mode ($m=1,n=0$), the lowest
+cutoff because $a$ is the larger dimension:
+\[
+  f_{c,10} \;=\; \frac{c}{2a},
+\]
+a mode that fits exactly half a transverse wavelength across the wide wall---the
+2D analog of the half-wavelength cavity fundamental of \cref{ch:eigenmodes}.
+
+\emph{A number.} Take the standard X-band guide WR-90, with
+$a=\SI{22.86}{\milli\metre}$ and $b=\SI{10.16}{\milli\metre}$, air-filled
+($c=\SI{3.0e8}{\metre\per\second}$). The fundamental cutoff is
+\[
+  f_{c,10} \;=\; \frac{c}{2a}
+    \;=\; \frac{3.0\times10^8}{2\cdot 0.02286}\,\si{\hertz}
+    \;\approx\; \SI{6.56}{\giga\hertz}.
+\]
+The next modes up are $\mathrm{TE}_{20}$ at $f_{c,20}=c/a\approx\SI{13.1}{\giga\hertz}$
+and $\mathrm{TE}_{01}$ at $f_{c,01}=c/2b\approx\SI{14.8}{\giga\hertz}$. So between
+$\SI{6.56}{}$ and $\SI{13.1}{\giga\hertz}$ exactly one mode propagates: the
+single-mode band, which is why WR-90 is specified for roughly
+$\SI{8.2}{}$--$\SI{12.4}{\giga\hertz}$ operation.
+
+\emph{What the discrete solve does.} The wave-port analysis does not know these
+formulas. It triangulates the $a\times b$ rectangle into the 2D submesh
+(\cref{sec:extract}), assembles the block $\Hcurl\oplus\Hone$ pencil
+$(\mat{A},\mat{B})$ on it (\cref{sec:assemble}), shift-inverts around a target near
+the fundamental, and hands the pencil to \texttt{eigsolve} (\cref{sec:solve}). The
+library returns eigenvalues $\lambda_m$; the readout un-transforms each to a
+propagation constant $k_{n,m}$ (\cref{sec:reduce}). For the fundamental at an
+operating frequency $\omega$ above cutoff, that recovered $k_n$ satisfies---to
+discretization error---the dispersion law \eqref{eq:dispersion} with the analytic
+cutoff wavenumber:
+\[
+  k_n^2 \;=\; \Bigl(\frac{\omega}{c}\Bigr)^2 - k_{c,10}^2,
+  \qquad
+  k_{c,10} = \frac{\pi}{a}.
+\]
+Exactly as the coarse $3\times3$ cavity mesh of \cref{ch:eigenmodes} pinned the
+fundamental resonance to within a few percent, a modest 2D mesh of the WR-90
+cross-section pins $k_{c,10}=\pi/a$---hence the fundamental cutoff---to within
+discretization error, with the eigenvector reproducing the
+$\mathrm{TE}_{10}$ transverse pattern ($\vE_t$ a single half-sine across the wide
+wall). \emph{This little eigenproblem is, in miniature, exactly what the black box
+does at scale}: build $(\mat{A},\mat{B})$ on the cross-section, find $\lambda$,
+un-transform to $k_n$. The only difference at full size is the mesh resolution and
+that we hand the pencil to a library instead of reading $k_c$ off a formula.
+\end{workedexample}
+
+\begin{workedexample}{Propagating versus evanescent at a fixed frequency}{propevan}
+We run the WR-90 guide of \cref{wex:rectwg} at a single operating frequency and ask
+the question the table is read for: which modes propagate and which decay? Take
+$f=\SI{10}{\giga\hertz}$ (mid-band), so $\omega/c = 2\pi f/c$ with
+$\omega/c \approx \SI{209.4}{\per\metre}$.
+
+\emph{The dispersion test.} For each mode we compute $k_n^2 = (\omega/c)^2 - k_c^2$
+from \eqref{eq:dispersion} and read the sign. The cutoff wavenumbers are
+$k_{c,10}=\pi/a$, $k_{c,20}=2\pi/a$, $k_{c,01}=\pi/b$:
+\[
+  k_{c,10} = \frac{\pi}{0.02286} \approx \SI{137.4}{\per\metre},
+  \quad
+  k_{c,20} \approx \SI{274.9}{\per\metre},
+  \quad
+  k_{c,01} = \frac{\pi}{0.01016} \approx \SI{309.2}{\per\metre}.
+\]
+With $(\omega/c)^2 \approx (209.4)^2 = \SI{4.385e4}{\per\metre\squared}$:
+\begin{itemize}[nosep]
+  \item $\mathrm{TE}_{10}$: $k_n^2 = 4.385\times10^4 - (137.4)^2
+    = 4.385\times10^4 - 1.888\times10^4 = +2.497\times10^4>0$, so
+    $k_n=\SI{158.0}{\per\metre}$ is \emph{real}---\textbf{propagating}.
+  \item $\mathrm{TE}_{20}$: $k_n^2 = 4.385\times10^4 - (274.9)^2
+    = 4.385\times10^4 - 7.557\times10^4 = -3.172\times10^4<0$, so $k_n$ is
+    \emph{imaginary}---\textbf{evanescent}.
+  \item $\mathrm{TE}_{01}$: $k_n^2 = 4.385\times10^4 - (309.2)^2
+    = 4.385\times10^4 - 9.560\times10^4 = -5.175\times10^4<0$, so $k_n$ is
+    \emph{imaginary}---\textbf{evanescent}.
+\end{itemize}
+At $\SI{10}{\giga\hertz}$ exactly \emph{one} mode propagates---the fundamental
+$\mathrm{TE}_{10}$---confirming the single-mode band of \cref{wex:rectwg}.
+
+\emph{The effective index.} For the propagating fundamental, the effective index
+\eqref{eq:neff} is
+\[
+  n_\text{eff} \;=\; \frac{k_n}{\omega/c}
+    \;=\; \frac{158.0}{209.4}
+    \;\approx\; 0.755.
+\]
+The mode travels with $n_\text{eff}<1$: its guide wavelength
+$\lambda_g=2\pi/k_n\approx\SI{39.8}{\milli\metre}$ is \emph{longer} than the
+free-space wavelength ($\SI{30}{\milli\metre}$ at $\SI{10}{\giga\hertz}$), the
+familiar fact that a guided wave's phase races ahead of free space near cutoff.
+
+\emph{What the readout records.} For $\mathrm{TE}_{10}$ the readout reports the real
+$k_n$, the effective index $0.755$, the back-transformed power-normalized fields
+$(\vE_t,E_n)$, and---because the mode propagates---the longitudinal magnetic field
+$B_z=\Curl\vE_t/(i\omega)$ \eqref{eq:bz}. For $\mathrm{TE}_{20}$ and
+$\mathrm{TE}_{01}$ the readout reports the imaginary $k_n$ and the fields but
+\emph{omits} $B_z$ (the per-mode conditional of \cref{sec:reduce}), because an
+evanescent mode carries no propagating longitudinal flux. This is the table the
+driven analysis (\cref{ch:driven}) would receive: at $\SI{10}{\giga\hertz}$, drive
+the single propagating $\mathrm{TE}_{10}$ mode and project onto it---one clean port
+basis vector.
+\end{workedexample}
+
+\section{A gallery of transverse mode patterns}
+
+Different guides support different transverse patterns, and the eigenvector $\vx_m$
+is exactly that pattern (\cref{fig:patterns}). The fundamental rectangular mode is
+a single transverse lobe; higher modes add nodal lines; a coaxial line's
+fundamental is the radial TEM pattern that has no cutoff at all. The wave-port
+analysis returns these as the field part of each table row, and a designer reads
+them to understand \emph{where} on the port the field concentrates---which sets
+where loss matters and how the port couples to the device.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % --- TE10: single half-sine across width ---
+  \begin{scope}[shift={(0,0)}]
+    \draw[thick, simInk] (0,0) rectangle (2.6,1.6);
+    \foreach \xx in {0.3,0.6,...,2.4}{
+      \pgfmathsetmacro{\amp}{0.45*sin(deg(pi*\xx/2.6))}
+      \draw[->, simBlue, semithick] (\xx,0.8) -- (\xx,{0.8+\amp});
+      \draw[->, simBlue, semithick] (\xx,0.8) -- (\xx,{0.8-\amp});}
+    \node[font=\scriptsize, anchor=north] at (1.3,-0.1)
+      {$\mathrm{TE}_{10}$ (fundamental)};
+  \end{scope}
+  % --- TE20: two half-sines ---
+  \begin{scope}[shift={(3.6,0)}]
+    \draw[thick, simInk] (0,0) rectangle (2.6,1.6);
+    \foreach \xx in {0.3,0.6,...,2.4}{
+      \pgfmathsetmacro{\amp}{0.42*sin(deg(2*pi*\xx/2.6))}
+      \draw[->, simRust, semithick] (\xx,0.8) -- (\xx,{0.8+\amp});
+      \draw[->, simRust, semithick] (\xx,0.8) -- (\xx,{0.8-\amp});}
+    \draw[densely dashed, simGray] (1.3,0) -- (1.3,1.6);
+    \node[font=\scriptsize, anchor=north] at (1.3,-0.1)
+      {$\mathrm{TE}_{20}$ (one node)};
+  \end{scope}
+  % --- coax TEM: radial arrows ---
+  \begin{scope}[shift={(7.2,0)}]
+    \draw[thick, simInk] (1.3,0.8) circle (0.78);
+    \fill[simInk] (1.3,0.8) circle (0.22);
+    \foreach \ang in {0,45,...,315}{
+      \draw[->, simGreen, semithick]
+        ({1.3+0.28*cos(\ang)},{0.8+0.28*sin(\ang)}) --
+        ({1.3+0.72*cos(\ang)},{0.8+0.72*sin(\ang)});}
+    \node[font=\scriptsize, anchor=north] at (1.3,-0.1)
+      {coax TEM (no cutoff)};
+  \end{scope}
+\end{tikzpicture}
+\caption[Transverse mode patterns]{A small gallery of transverse mode patterns
+$\vE_t$, the field part of the waveguide-mode table. Left: the rectangular
+fundamental $\mathrm{TE}_{10}$, a single transverse lobe (half a sine across the
+wide wall). Middle: the higher $\mathrm{TE}_{20}$ mode, with one interior nodal line
+(dashed) where the field reverses---it has a higher cutoff and propagates only at
+higher frequency (\cref{wex:propevan}). Right: a coaxial line's fundamental, the
+radial TEM mode, which uniquely has \emph{no} cutoff (it propagates at every
+frequency, down to DC)---which is why coax is the medium of choice for broadband
+connections. Each pattern is one eigenvector $\vx_m$ returned by the black box;
+the designer reads it to see where the port's field lives.}
+\label{fig:patterns}
+\end{figure}
+
+\begin{remark}[Why ``boundary'' mode]
+The analysis is called \emph{boundary}-mode in Palace because its defining stage
+extracts the mesh from the model's \emph{boundary} faces (\cref{sec:extract}),
+where the ports physically are, rather than from the interior volume. The names
+``wave-port mode,'' ``boundary mode,'' and ``port mode'' all denote the same
+object: the propagation modes of a cross-section, computed so the driven analysis
+can use them as ports. The dispatch is a sixth analysis branch alongside the five
+volume drivers, sharing their solve infrastructure but distinguished by the 2D
+extraction at its front.
+\end{remark}
+
+\summarysection
+The wave-port (boundary-mode) analysis computes the propagation modes of a
+waveguide cross-section---the field patterns $\vE_t$ that ride down a guide as
+$\vE_t\,e^{-ik_n z}$, each with its propagation constant $k_n$ and effective index
+$n_\text{eff}=k_n/\omega$. It is the eigenmode analysis (\cref{ch:eigenmodes}) with
+one new stage at the front. \emph{Stage~0}, the distinguishing preface, extracts a
+2D submesh from named 3D boundary faces (\code{CreateFromBoundary} $\to$ project to
+the tangent plane $\to$ rotate the material tensors), because a port is a 2D
+surface. \emph{Stage~1} assembles a generalized eigenproblem
+$\mat{A}(\omega,\sigma)\vx=\lambda\mat{B}\vx$ on the \emph{block}
+$\Hcurl\oplus\Hone$ space of that submesh---transverse $\vE_t$ in the 2D Nédélec
+space, longitudinal $E_n$ in the nodal space (\cref{ch:functionspaces},
+\cref{ch:derham})---shift-inverted around $\sigma=-k_{n,\text{target}}^2$.
+\emph{Stage~2} is \emph{one} \code{eigsolve} call into the opaque eigenvalue
+library---the \emph{identical} black-box solve corner as the eigenmode analysis
+(\cref{ch:eigenmodes}, \cref{ch:eigenvalues}), Palace writes no eigen-iteration
+loop---just fed a 2D block pencil instead of a 3D single-space one. \emph{Stage~3}
+is a \code{map} producing the rank-1 waveguide-mode table (\cref{ch:reductions}):
+per mode, the un-transformed $k_n$, the effective index, the back-transformed
+power-normalized fields $(\vE_t,E_n)$, and---for propagating modes
+($k_n$ real, above cutoff)---the longitudinal $B_z=\Curl\vE_t/(i\omega)$; evanescent
+modes ($k_n$ imaginary, below cutoff) omit $B_z$. The whole driver is
+$\texttt{boundary\_mode}=(\texttt{map}\ \texttt{readout})\circ\texttt{eigsolve}
+\circ\texttt{fe\_assemble}^{\times2}\circ\texttt{extract\_2d\_submesh}$. Its product
+closes the modality loop: the port mode fields $\vE_t$ are exactly the basis
+$\vs_i$ the driven analysis (\cref{ch:driven}) projects its solved fields onto to
+define the scattering parameters $S_{ij}=\sigma_{ij}(\inner{\vs_i}{\vE_j}-\delta_{ij})$.
+Wave ports are eigenmodes on an extracted 2D cross-section, computed so the driven
+sweep can have its ports.
+
+\furtherreading
+Pozar's \emph{Microwave Engineering}~\citep{pozar2011} is the standard
+device-level account of waveguides, the TE/TM mode families, cutoff frequencies,
+the propagation constant and guide wavelength, and the single-mode band---the
+physical reading of everything in \cref{wex:rectwg} and \cref{wex:propevan}, and the
+de-embedding and impedance normalization that turn a port mode into a scattering
+reference. Jin's \emph{Finite Element Method in
+Electromagnetics}~\citep{jin2014} develops the finite-element waveguide
+eigenproblem in full---the block $\Hcurl\oplus\Hone$ formulation, the
+transverse/longitudinal field split, and the modal projection that defines the
+wave-port boundary condition feeding the driven solve (\cref{ch:driven})---and is
+the FEM-level companion to this chapter. For the underlying mathematics of edge
+elements, the de Rham complex on a 2D cross-section, and why the transverse field
+belongs in $\Hcurl$ while the longitudinal field belongs in $\Hone$, Monk's
+\emph{Finite Element Methods for Maxwell's Equations}~\citep{monk2003} is the
+rigorous reference; \cref{ch:derham} builds the relevant structure. The opaque
+eigensolver corner itself is the subject of \cref{ch:eigenmodes} and the
+shift-and-invert machinery of \cref{ch:eigenvalues}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{The one new stage.} State precisely which stage of the
+  \texttt{extract}$\to$\texttt{assemble}$\to$\texttt{solve}$\to$\texttt{reduce}
+  pipeline distinguishes the boundary-mode analysis from the eigenmode analysis
+  (\cref{ch:eigenmodes}), and which three stages the two analyses share. In one
+  sentence, say \emph{why} a port needs that extra stage but a cavity does not.
+  \item \textbf{The block space.} A waveguide mode is the pair $(\vE_t, E_n)$ in
+  $\Hcurl\oplus\Hone$. Which physical field component lives in which space, and
+  why---what continuity does each space build into its basis
+  (\cref{ch:functionspaces}, \cref{ch:derham})? Why can a single function space not
+  describe the whole mode?
+  \item \textbf{The same black box.} The chapter insists stage~2 is identical to
+  the eigenmode solve corner (\cref{ch:eigenmodes}). Name the two things that
+  \emph{do} differ between the two solves, and the one thing---the structural
+  property of the solve stage---that is the same. Why does Palace write no loop in
+  either?
+  \item \textbf{Cutoff by hand.} For an air-filled rectangular guide with
+  $a=\SI{40}{\milli\metre}$, $b=\SI{20}{\milli\metre}$, compute the cutoff
+  frequencies of the $\mathrm{TE}_{10}$, $\mathrm{TE}_{20}$, and $\mathrm{TE}_{01}$
+  modes using $f_{c,mn}=\tfrac{c}{2}\sqrt{(m/a)^2+(n/b)^2}$. What is the single-mode
+  band (the range in which exactly one mode propagates)?
+  \item \textbf{Propagating or evanescent.} Using the guide of the previous
+  exercise at $f=\SI{5}{\giga\hertz}$, apply the dispersion test
+  $k_n^2=(\omega/c)^2-k_c^2$ to each of the three modes and state which propagate
+  ($k_n$ real) and which are evanescent ($k_n$ imaginary). For each propagating
+  mode, compute the effective index $n_\text{eff}=k_n/(\omega/c)$.
+  \item \textbf{Why $B_z$ only sometimes.} The readout forms
+  $B_z=\Curl\vE_t/(i\omega)$ for propagating modes but omits it for evanescent
+  ones. Explain physically why the longitudinal magnetic field is recorded only
+  when $k_n$ is real, and identify which per-mode conditional in the reduce stage
+  (\cref{sec:reduce}) makes this choice.
+  \item \textbf{Closing the loop.} The driven analysis (\cref{ch:driven}) computes
+  $S_{ij}=\sigma_{ij}(\inner{\vs_i}{\vE_j(\omega)}-\delta_{ij})$. Identify exactly
+  which output of \emph{this} chapter supplies $\vs_i$, and which supplies the
+  de-embedding phase inside $\sigma_{ij}$. Why must the boundary-mode analysis run
+  \emph{before} the driven sweep rather than after?
+  \item \textbf{Power normalization.} The readout normalizes each mode to unit
+  Poynting power $\abs{P}=1$, with a guard that leaves a mode unscaled when its
+  computed power is zero. Explain (i) why normalization is needed at all---what
+  ambiguity in an eigenvector it removes---and (ii) why the zero-power guard is the
+  same kind of defensive branch as the eigenmode $Q=\infty$ lossless limit
+  (\cref{ch:eigenmodes}).
+\end{enumerate}

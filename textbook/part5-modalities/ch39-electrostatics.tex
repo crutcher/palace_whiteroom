@@ -1,0 +1,937 @@
+\chapter{Electrostatics and Capacitance}
+\label{ch:electrostatics}
+
+\chapterorient{This chapter opens Part~V, and it is the one the rest of the part
+is written against. Every modality chapter to come is a variation on a single
+theme, and here we play that theme in full: we take the electrostatic
+analysis---the simplest of the six---and trace it end to end, from a
+configuration of conductors to the capacitance matrix that comes out, with no box
+left closed. We will watch the skeleton of \cref{ch:situating} become an actual
+computation: assemble the stiffness operator \emph{once}, map a family of
+independent solves over it (the fixed-operator corner), and Gram-reduce the solved
+fields into the answer. By the end you will have seen a complete analysis run, and
+you will be able to read every later modality as \emph{this pipeline, with one
+stage swapped}.}
+
+\section{The physical question}
+\label{sec:es-question}
+
+An engineer hands us a device---a few metal conductors embedded in an insulating
+dielectric---and asks a question as old as the Leyden jar: \emph{how much charge
+does it store per volt?} For a single isolated conductor the answer is one number,
+its capacitance. For $n$ conductors the answer is a \emph{matrix}, because the
+charge on each conductor depends on the voltage of \emph{every} conductor, not
+just its own. That $n\times n$ table is the \emph{capacitance matrix}
+$\mat{C}$, and computing it is the entire job of the electrostatic analysis.
+
+\begin{physicsbox}
+Several conductors sit in a dielectric medium (\cref{fig:es-setup}). Each
+conductor is a \emph{perfect equipotential}: a perfect conductor cannot sustain a
+tangential electric field, so its whole surface sits at one voltage. We are free
+to \emph{set} those voltages; the dielectric between the conductors responds with
+an electric field $\vE$, and charge collects on the conductor surfaces. The
+capacitance matrix relates the charges $\mathbf q=(q_1,\dots,q_n)$ to the applied
+voltages $\mathbf v=(V_1,\dots,V_n)$ by $\mathbf q = \mat{C}\,\mathbf v$. Nothing
+moves and nothing oscillates---this is a \emph{static} problem,
+$\partial/\partial t=0$ (\cref{ch:maxwell}, \cref{sec:regimes}).
+\end{physicsbox}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % dielectric background
+  \fill[simBgBlue] (-3.6,-1.7) rectangle (3.6,1.7);
+  \node[font=\scriptsize, text=simBlue] at (2.85,1.35) {dielectric $\varepsilon$};
+  % conductor 1 (left plate, held at +V)
+  \fill[simInk] (-2.7,0.55) rectangle (-0.4,0.95);
+  \node[font=\scriptsize, text=white] at (-1.55,0.75) {conductor 1};
+  \node[font=\scriptsize] at (-3.15,0.75) {$V_1$};
+  % conductor 2 (right plate, held at 0)
+  \fill[simInk] (-2.7,-0.95) rectangle (-0.4,-0.55);
+  \node[font=\scriptsize, text=white] at (-1.55,-0.75) {conductor 2};
+  \node[font=\scriptsize] at (-3.15,-0.75) {$V_2$};
+  % field lines E = -grad V between the plates
+  \foreach \x in {-2.4,-1.9,-1.4,-0.9}{
+    \draw[flow, simRust, shorten <=1pt, shorten >=1pt] (\x,0.5)--(\x,-0.5);}
+  \node[font=\scriptsize\itshape, text=simRust] at (-0.05,0.0) {$\vE=-\Grad V$};
+  % a third, floating conductor on the right
+  \fill[simInk] (1.3,-0.5) circle (0.45);
+  \node[font=\scriptsize, text=white] at (1.3,-0.5) {3};
+  \draw[flow, simRust, shorten >=1pt] (0.55,0.8) .. controls (1.0,0.4) .. (1.0,-0.2);
+  \draw[flow, simRust, shorten >=1pt] (2.05,0.8) .. controls (1.6,0.4) .. (1.6,-0.2);
+  % equipotential note
+  \node[font=\scriptsize, text=simGray, align=center] at (2.5,-1.25)
+    {each conductor:\\ an equipotential};
+\end{tikzpicture}
+\caption[The electrostatic setup]{The physical setup. A set of conductors
+(dark) is embedded in a dielectric of permittivity $\varepsilon$ (blue). Each
+conductor is a perfect equipotential held at a chosen voltage $V_i$; the
+dielectric between them carries the electric field $\vE=-\Grad V$ (rust lines,
+running from high potential to low and meeting every conductor at a right angle).
+The simulation prescribes the voltages and computes how much charge collects on
+each conductor per applied volt---the capacitance matrix. The field lines from the
+upper plate that terminate on the floating conductor~3 are exactly the
+\emph{mutual} coupling the off-diagonal entries of $\mat{C}$ measure.}
+\label{fig:es-setup}
+\end{figure}
+
+The governing physics is the simplest in the book, and we derived it in full in
+\cref{sec:electrostatic}. With $\vE=-\Grad V$ (a scalar potential, which makes the
+static law $\Curl\vE=\mathbf0$ hold identically) and the dielectric constitutive
+relation $\vD=\varepsilon\vE$, Gauss's law $\Div\vD=\rho$ collapses to the
+generalized Poisson equation
+\begin{equation}
+  -\Div(\varepsilon\,\Grad V) = \rho .
+  \label{eq:es-poisson-ch39}
+\end{equation}
+In the charge-free dielectric \emph{between} the conductors $\rho=0$, so the
+equation Palace actually solves in the interior is the homogeneous Laplace
+equation $-\Div(\varepsilon\Grad V)=0$; all the free charge lives on the conductor
+surfaces, and it enters the problem through the boundary conditions, not the
+right-hand side. The unknown $V$ is a scalar field, so it lives in the scalar
+finite-element space $\Hone$ (continuous, nodal) of \cref{ch:functionspaces}---the
+first slot of the de Rham complex, the natural home for a potential.
+
+\subsection{The method of unit excitations}
+\label{sec:unit-excitations}
+
+The capacitance matrix has $n^2$ entries, but we do not solve $n^2$ problems to
+find them. We solve $n$. The trick is the \emph{method of unit excitations}, and
+it is the structural heart of the whole analysis.
+
+The relation $\mathbf q=\mat{C}\,\mathbf v$ is linear. Its $j$th column,
+$\mat{C}\,\mathbf e_j$, is the vector of charges produced when the voltage vector
+is the $j$th standard basis vector $\mathbf e_j$---that is, when conductor $j$ is
+held at \emph{one volt} and all the others are \emph{grounded} at zero. So to read
+off column $j$ of $\mat{C}$ we set up exactly that excitation, solve the Laplace
+problem for the resulting potential field $V_j$, and extract the charges. Repeat
+for each conductor $j=1,\dots,n$ and we have all $n$ columns---the whole matrix
+(\cref{fig:es-unit}). The $n$ solves produce a \emph{family} of potential fields
+$\{V_1,\dots,V_n\}$, one per terminal, and that family is the raw material the
+reduction stage turns into $\mat{C}$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, font=\footnotesize]
+  % three little panels, one per unit excitation
+  \foreach \k/\dx in {1/0, 2/4.2, 3/8.4}{
+    \begin{scope}[shift={(\dx,0)}]
+      \draw[simGray, semithick, rounded corners=2pt] (-0.55,-1.25) rectangle (3.0,1.35);
+      \node[font=\scriptsize\bfseries] at (1.25,1.05) {excite conductor \k};
+    \end{scope}}
+  % panel 1: conductor 1 at 1V, others 0
+  \begin{scope}[shift={(0,0)}]
+    \fill[simRust] (0.0,0.45) rectangle (1.0,0.7);  \node[font=\scriptsize] at (-0.3,0.57){$1$};
+    \fill[simInk] (0.0,-0.7) rectangle (1.0,-0.45); \node[font=\scriptsize] at (-0.3,-0.57){$0$};
+    \fill[simInk] (1.7,-0.1) circle (0.22);          \node[font=\scriptsize] at (2.25,-0.1){$0$};
+    \foreach \x in {0.2,0.5,0.8}{\draw[flow,simBlue,shorten <=1pt,shorten >=1pt](\x,0.4)--(\x,-0.4);}
+    \node[font=\scriptsize\itshape] at (0.5,-1.02){$\to V_1$};
+  \end{scope}
+  % panel 2: conductor 2 at 1V
+  \begin{scope}[shift={(4.2,0)}]
+    \fill[simInk] (0.0,0.45) rectangle (1.0,0.7);   \node[font=\scriptsize] at (-0.3,0.57){$0$};
+    \fill[simRust] (0.0,-0.7) rectangle (1.0,-0.45);\node[font=\scriptsize] at (-0.3,-0.57){$1$};
+    \fill[simInk] (1.7,-0.1) circle (0.22);          \node[font=\scriptsize] at (2.25,-0.1){$0$};
+    \foreach \x in {0.2,0.5,0.8}{\draw[flow,simBlue,shorten <=1pt,shorten >=1pt](\x,-0.4)--(\x,0.4);}
+    \node[font=\scriptsize\itshape] at (0.5,-1.02){$\to V_2$};
+  \end{scope}
+  % panel 3: conductor 3 at 1V
+  \begin{scope}[shift={(8.4,0)}]
+    \fill[simInk] (0.0,0.45) rectangle (1.0,0.7);   \node[font=\scriptsize] at (-0.3,0.57){$0$};
+    \fill[simInk] (0.0,-0.7) rectangle (1.0,-0.45); \node[font=\scriptsize] at (-0.3,-0.57){$0$};
+    \fill[simRust] (1.5,-0.1) circle (0.24);         \node[font=\scriptsize] at (2.25,-0.1){$1$};
+    \draw[flow,simBlue,shorten >=1pt](1.25,0.3) .. controls (0.9,0.0) .. (1.0,-0.05);
+    \draw[flow,simBlue,shorten >=1pt](1.0,0.55) .. controls (0.7,0.2) .. (0.85,0.0);
+    \node[font=\scriptsize\itshape] at (1.25,-1.02){$\to V_3$};
+  \end{scope}
+\end{tikzpicture}
+\caption[The method of unit excitations]{The method of unit excitations on three
+conductors. To recover column $j$ of the capacitance matrix we hold conductor $j$
+at \emph{one volt} (rust) and ground all the others (dark, $0$), then solve the
+Laplace problem $-\Div(\varepsilon\Grad V_j)=0$ for the resulting potential field
+$V_j$ (blue field lines). Three excitations give three solved fields
+$\{V_1,V_2,V_3\}$---the solution \emph{family}. Each solve has \emph{the same}
+governing operator; only the prescribed boundary voltage moves. This is why the
+analysis sits in the fixed-operator corner of \cref{ch:situating}.}
+\label{fig:es-unit}
+\end{figure}
+
+\begin{keyidea}
+The electrostatic analysis never assembles the capacitance matrix directly. It
+exploits linearity: column $j$ of $\mat{C}$ is what you get by holding conductor
+$j$ at unit voltage and the rest at ground, solving for the potential, and reading
+off the charges. So $n$ conductors need $n$ solves, producing a \emph{family}
+$\{V_1,\dots,V_n\}$ of potential fields. Each solve uses the \emph{same} discrete
+operator and differs only in the prescribed boundary voltage---which is exactly the
+shape that makes the next three sections possible.
+\end{keyidea}
+
+With the physical question and the method fixed, we can run the skeleton. The
+electrostatic pipeline is
+\[
+  \texttt{config} \to \underbrace{\texttt{assemble}}_{\S\ref{sec:es-assemble}}
+  \to \underbrace{\texttt{solve}}_{\S\ref{sec:es-solve}}
+  \to \underbrace{\texttt{reduce}}_{\S\ref{sec:es-reduce}} \to \texttt{product},
+\]
+and the next three sections are those three stages, in order. We then post-process
+the fields (\S\ref{sec:es-fields}) and step back to read the whole pipeline as the
+anchor for Part~V (\S\ref{sec:es-anchor}).
+
+\section{Assemble, once}
+\label{sec:es-assemble}
+
+The first stage turns the continuous physics of \cref{eq:es-poisson-ch39} into a
+discrete operator. We did the mathematics in \cref{ch:weak} and \cref{ch:assembly};
+here we only need its result and---crucially---\emph{when} it runs.
+
+Multiplying the Laplace equation by a test function $v\in\Hone$ and integrating by
+parts (the weak form, \cref{ch:weak}) turns the differential operator
+$-\Div(\varepsilon\Grad\,\cdot\,)$ into the $\varepsilon$-weighted \emph{stiffness}
+bilinear form
+\begin{equation}
+  a(u,v) \;=\; \int_\dom \varepsilon\,\Grad u \cdot \Grad v \dV ,
+  \label{eq:es-bilinear-ch39}
+\end{equation}
+the single \code{weak\_form\_term} pairing the coefficient $\varepsilon$ with the
+\emph{gradient} differential operator. Assembled over the mesh by the
+assembly fold of \cref{ch:assembly}, this becomes a sparse, symmetric,
+positive-definite matrix---the electrostatic stiffness operator $\Kop$. In the
+framework's vocabulary the assembly is \code{fe\_assemble}, a fold that sums one
+contribution per weak-form term; electrostatics is its simplest possible use,
+because the term list has exactly one entry:
+\begin{lstlisting}[style=l4style]
+-- assemble the H1 stiffness operator from the single epsilon-weighted gradient term
+space = h1_space cfg                          -- the H1 finite-element space (read-only)
+terms = [ diffusion (permittivity cfg) ]      -- a one-term weak form: epsilon * grad
+k     = fe_assemble space terms               -- fold the term list -> the stiffness K
+\end{lstlisting}
+The space and the term list are read-only construction-stratum data
+(\cref{ch:strata}); $\Kop$ is a fresh value the fold returns. There is no mutation
+and no loop we write---the loop is \emph{inside} \code{fe\_assemble}, over the term
+list, and that list has length one.
+
+\subsection{The boundary conditions enter by elimination}
+
+The conductor voltages are essential (Dirichlet) boundary conditions
+(\cref{ch:maxwell}, \S\ref{sec:bc}; \cref{ch:bc}): they constrain the value of $V$
+on the conductor surfaces, so they must be built into the solution space rather
+than added as a source. The mechanism is \emph{elimination}: the degrees of
+freedom pinned by the boundary condition are removed from the unknown vector, and
+their known values are moved to the right-hand side. The constrained operator
+$\Kop$ is the stiffness matrix restricted to the free (interior) degrees of
+freedom, and it is this reduced, still-symmetric-positive-definite matrix that the
+solver receives. The free charge that Gauss's law puts on the conductor surfaces
+never appears as a volume source; it is implicit in the eliminated boundary data.
+
+\subsection{The load-bearing word is \emph{once}}
+
+Here is the fact this section exists to make. The operator $\Kop$ is assembled
+\emph{exactly once}, before any solving begins, and then held unchanged for the
+entire analysis. Every one of the $n$ unit-excitation solves uses the same $\Kop$.
+The driver makes this concrete: it builds the Krylov solver and hands it the
+operator with a single \code{SetOperators} call, and that call sits \emph{outside}
+the terminal loop.\footnote{In the Palace driver the operator is assembled by
+\code{laplace\_op.GetStiffnessMatrix()} and captured by \code{ksp.SetOperators(*K,
+*K)} \emph{before} the per-terminal \code{for} loop begins
+(\code{palace/drivers/electrostaticsolver.cpp:30,36,59}). The placement of that one
+call relative to that one loop is the entire structural signature of the
+fixed-operator corner.}
+
+\begin{pitfall}
+The single most important line in the electrostatic driver is not a line of
+arithmetic---it is the \emph{position} of the \code{SetOperators} call. It belongs
+\emph{above} the terminal loop. An implementation that ``tidied'' it inside the
+loop would reassemble (or at least re-factor and re-capture) the operator on every
+terminal, doing $n$ times the setup work for no change in the answer. Worse, it
+would erase the very property that distinguishes electrostatics from the driven
+analysis of \cref{ch:driven}, where the operator genuinely \emph{does} change each
+step and the call \emph{must} live inside the loop. Hoisting the operator is not an
+optimization detail bolted onto the analysis; it \emph{is} the analysis's identity.
+\end{pitfall}
+
+\section{Solve: the fixed-operator map}
+\label{sec:es-solve}
+
+With $\Kop$ assembled and captured, the middle stage runs the family of solves.
+This is the stage with all the structure, and it is the canonical occupant of the
+first solve corner of \cref{ch:situating}: the \emph{fixed-operator map}.
+
+\subsection{One operator, a fan of right-hand sides}
+
+For each terminal $j$ the driver forms the right-hand side $\vb_j$ that encodes
+``conductor $j$ at one volt, the rest grounded''---the eliminated boundary data of
+the previous section, assembled into a vector. It then solves the linear system
+\begin{equation}
+  \Kop\,V_j \;=\; \vb_j
+  \label{eq:es-system}
+\end{equation}
+for the potential field $V_j$. The operator $\Kop$ on the left is identical across
+all $n$ systems; only the right-hand side $\vb_j$ changes. The $n$ systems are
+therefore \emph{independent}---solving for $V_2$ needs nothing from $V_1$---so the
+collection of solves is a \texttt{map} over the family of right-hand sides, not a
+fold. They could be done in any order, or on $n$ separate machines at once
+(\cref{fig:es-solvefamily}). This is the framework combinator \code{solve\_family},
+and electrostatics is its defining witness:
+\begin{lstlisting}[style=l4style]
+-- the fixed-operator map: capture K ONCE, map the solver over the RHS family
+solve_family :: LinOp -> [Tensor] -> [Tensor]
+solve_family k bs = map (ksp_solve k) bs       -- k is captured once; reused per RHS
+
+rhss = [ excitation cfg idx | idx <- terminal_sources cfg ]  -- one RHS per terminal
+vs   = solve_family k rhss                       -- the solution family [V_1 .. V_n]
+\end{lstlisting}
+Read the body slowly. The operator \code{k} is a \emph{free variable} of the
+mapped function \code{ksp\_solve k}; the \texttt{map} closes over it once and reuses
+it for every element. That closure \emph{is} the hoist---the operator-capture made
+structural by the type, so that no implementation can accidentally rebuild it
+inside the loop. Each element solve \code{ksp\_solve k b\_j} is one preconditioned
+conjugate-gradient solve of the SPD system \cref{eq:es-system}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  % the single fixed operator
+  \node[opbox, minimum width=14mm, minimum height=12mm, fill=simBgBlue, draw=simBlue]
+    (K) {$\Kop$};
+  \node[font=\scriptsize\itshape, above=1.5mm of K] {assembled \emph{once}};
+  % the fan of RHS and solves
+  \foreach \j/\y in {1/2.2, 2/0.9, 3/-0.4, 4/-1.7}{
+    \node[data, minimum width=9mm, right=20mm of K, yshift=(\y-0.25)*10mm]
+      (b\j) {$\vb_{\j}$};
+    \node[product, minimum width=10mm, right=14mm of b\j] (v\j) {$V_{\j}$};
+    \draw[flow, shorten >=1pt] (K.east) .. controls +(0.9,0) .. (b\j.west);
+    \draw[flow, shorten >=1pt] (b\j.east) -- node[above,font=\scriptsize]{\code{ksp\_solve}} (v\j.west);
+  }
+  \node[font=\scriptsize\itshape, text=simGreen, align=center]
+    at ($(v4)+(0.1,-1.0)$) {independent solves:\\ embarrassingly parallel over terminals};
+\end{tikzpicture}
+\caption[\code{solve\_family} as a fixed-operator map]{The solve stage as a
+\emph{fixed-operator map}. One operator $\Kop$ (blue, assembled once) feeds a fan
+of independent solves, each with its own right-hand side $\vb_j$ (the $j$th unit
+excitation) and producing its own potential field $V_j$. Because every solve
+reuses the same $\Kop$ and none depends on another's result, the family is a
+\texttt{map}: reorderable, parallelizable, ``embarrassingly parallel over
+terminals.'' This is the combinator \code{solve\_family} of \cref{ch:combinators},
+and the electrostatic terminal sweep is its defining witness. Contrast the driven
+analysis (\cref{ch:driven}), where a \emph{fresh} operator feeds each solve.}
+\label{fig:es-solvefamily}
+\end{figure}
+
+\subsection{The element solve is preconditioned CG}
+
+Each \code{ksp\_solve} is a call to the conjugate-gradient method we built in
+\cref{ch:cg}. CG is the right engine here for a specific reason: the constrained
+stiffness $\Kop$ is symmetric positive-definite, and CG is the optimal Krylov
+method for exactly that class (\cref{ch:cg}). In practice it is run with a
+preconditioner---a cheap approximate inverse $\mat{P}^{-1}\approx\Kop^{-1}$ that
+clusters the spectrum and cuts the iteration count, as developed in
+\cref{ch:precond}. The convergence is the geometric decay of the CG error in the
+$\Kop$-norm; \cref{fig:es-cg} shows a representative residual history for one
+terminal solve, with and without preconditioning. The point for \emph{this} chapter
+is only that the element solve is a self-contained, well-understood SPD solve---a
+single piece of Part~IV machinery---and that the family runs $n$ of them over the
+one operator.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.74\linewidth, height=52mm,
+    xlabel={CG iteration $k$}, ylabel={relative residual $\norm{\vr_k}/\norm{\vb}$},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    xmin=0, xmax=60, ymin=1e-8, ymax=2,
+    ymode=log, ytick={1,1e-2,1e-4,1e-6,1e-8},
+    xtick={0,20,40,60},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.98,0.98)},
+      anchor=north east},
+    every axis plot/.append style={very thick},
+    axis lines=left,
+  ]
+  % unpreconditioned: slow geometric decay
+  \addplot[simRust, domain=0:60, samples=61] {exp(-0.26*x)};
+  \addlegendentry{plain CG}
+  % preconditioned: fast geometric decay
+  \addplot[simBlue, domain=0:18, samples=19] {exp(-0.95*x)};
+  \addlegendentry{preconditioned CG}
+  % convergence tolerance line
+  \addplot[simGray, densely dashed, domain=0:60, samples=2] {1e-6};
+  \addlegendentry{tolerance}
+\end{axis}
+\end{tikzpicture}
+\caption[CG convergence for one terminal solve]{A representative convergence
+history for a single unit-excitation solve $\Kop V_j=\vb_j$. The relative residual
+falls geometrically (a straight line on the log axis) until it crosses the
+convergence tolerance (dashed). A good preconditioner (\cref{ch:precond}, blue)
+clusters the spectrum of $\Kop$ and reaches tolerance in a fraction of the
+iterations of plain CG (\cref{ch:cg}, rust). Because the operator is fixed across
+the whole family, the same preconditioner is built once and reused for every
+terminal solve---another dividend of the hoist.}
+\label{fig:es-cg}
+\end{figure}
+
+\begin{notationbox}
+The fixed operator pays a second dividend beyond avoiding reassembly. Because
+$\Kop$ does not change, any \emph{preconditioner} built from it---an incomplete
+factorization, a multigrid hierarchy (\cref{ch:precond})---is also built once and
+reused across all $n$ solves. The expensive setup is amortized over the whole
+family. A direct factorization would amortize even more dramatically: factor
+$\Kop=\mat{L}\mat{L}^{\!\top}$ once, then each terminal is a pair of cheap
+triangular solves. ``Assemble once'' quietly licenses ``factor once'' and
+``precondition once''---the entire economic case for the fixed-operator corner.
+\end{notationbox}
+
+\section{Reduce: the symmetric Gram}
+\label{sec:es-reduce}
+
+The solve stage has handed us the family $\{V_1,\dots,V_n\}$. The reduction stage
+turns it into the capacitance matrix. We met this reduction in full generality in
+\cref{ch:reductions}; here it appears in its simplest and most important instance.
+
+\subsection{Capacitance is an operator-weighted Gram}
+
+The $(i,j)$ entry of the capacitance matrix is the operator-weighted bilinear form
+of two family members,
+\begin{equation}
+  \boxed{\;C_{ij} \;=\; V_j^{\!\top}\,\Kop\,V_i\;}
+  \label{eq:cap-gram-ch39}
+\end{equation}
+where $\Kop$ is the $\varepsilon$-weighted energy operator (the discrete form of
+the electric energy density $\tfrac12\varepsilon\abs{\vE}^2$ of \cref{ch:maxwell},
+eq.~\eqref{eq:energy-density}). This is the \emph{symmetric Gram reduction}
+$G_{ij}=w(i,j)\,V_j^{\!\top}\Kop V_i$ of \cref{ch:reductions}, with the weight set
+to unity, $w(i,j)=1$. The framework verb is \code{gram\_reduce}, and capacitance is
+its $w\equiv1$ specialization:
+\begin{lstlisting}[style=l4style]
+-- the symmetric Gram reduction; capacitance is the unit-weight (w = 1) member
+gram_reduce :: LinOp -> [Tensor] -> (Int -> Int -> Scalar) -> Matrix
+gram_reduce k vs w =
+  symmetric_from_upper                              -- mirror lower triangle from upper
+    [ [ w i j * entry k vs i j | j <- [i .. m-1] ]  -- map over upper-triangle pairs
+      | i <- [0 .. m-1] ]
+  where
+    m = length vs
+    entry k vs i j
+      | i == j    = matrix_weighted_norm (vs!!i) k  -- diagonal: V_i^T K V_i
+      | otherwise = bilinear_form (vs!!j) k (vs!!i) -- off-diag:  V_j^T K V_i
+
+capacitance = gram_reduce k vs (\i j -> 1)          -- w = 1: unit voltage excitation
+\end{lstlisting}
+Two structural facts are built into this body, and both are load-bearing for
+capacitance specifically. First, the grid of entries is a \texttt{map} over family
+pairs with no state threaded between them---the embarrassingly parallel pattern of
+\cref{ch:reductions}: no entry needs another's value. Second, the matrix is
+\emph{symmetric by construction}. Because $\Kop$ is symmetric,
+$V_j^{\!\top}\Kop V_i = V_i^{\!\top}\Kop V_j$, so the verb computes only the upper
+triangle and mirrors the lower (\code{symmetric\_from\_upper}). For an $n$-conductor
+problem this is $\binom{n}{2}+n$ bilinear evaluations rather than $n^2$---the
+symmetry is exploited, not merely observed (\cref{fig:es-gram}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the symmetric Gram grid
+  \foreach \i in {0,1,2}{
+    \foreach \j in {0,1,2}{
+      \node[draw=simGray, semithick,
+        fill={\ifnum\i=\j simBgRust\else simBgBlue\fi},
+        minimum size=8mm, inner sep=0pt]
+        (g\i\j) at (\j*0.84, -\i*0.84) {};}}
+  % labels on entries
+  \node[font=\scriptsize] at (0,0)        {$C_{11}$};
+  \node[font=\scriptsize] at (0.84,-0.84) {$C_{22}$};
+  \node[font=\scriptsize] at (1.68,-1.68) {$C_{33}$};
+  \node[font=\scriptsize, simBlue] at (0.84,0)    {$C_{12}$};
+  \node[font=\scriptsize, simBlue] at (0,-0.84)   {$C_{21}$};
+  % mirror line
+  \draw[densely dashed, simRust, semithick] (-0.55,0.55) -- (2.23,-2.23);
+  \node[font=\scriptsize, text=simRust] at (2.0,0.4) {mirror};
+  % computed-half brace
+  \node[font=\scriptsize, align=center, text=simBlue] at (3.6,-0.1)
+    {upper triangle\\ \emph{computed}:\\ $V_j^{\!\top}\Kop V_i$};
+  \node[font=\scriptsize, align=center, text=simRust] at (3.6,-1.7)
+    {lower triangle\\ \emph{mirrored}:\\ $C_{ji}=C_{ij}$};
+  % diagonal = energy callout
+  \node[font=\scriptsize, align=center, text=simRust] at (1.0,-2.7)
+    {diagonal $=$ twice the stored field energy:\ $C_{ii}=V_i^{\!\top}\Kop V_i = 2U_e$};
+\end{tikzpicture}
+\caption[The capacitance Gram]{The capacitance matrix as a symmetric Gram. Each
+entry is the operator-weighted bilinear form $C_{ij}=V_j^{\!\top}\Kop V_i$ of two
+solved potential fields. The diagonal (rust) is a \emph{self}-pairing,
+$C_{ii}=V_i^{\!\top}\Kop V_i$, which equals \emph{twice} the field energy stored
+when conductor $i$ alone is at unit voltage---the self-capacitance. The
+off-diagonal (blue) is a \emph{cross}-pairing of two different fields, the mutual
+capacitance. Because $\Kop$ is symmetric, $C_{ij}=C_{ji}$: only the upper triangle
+is computed and the lower is mirrored across the dashed diagonal. The symmetry is
+structural, a consequence of the symmetric energy operator, not a coincidence to be
+checked afterward.}
+\label{fig:es-gram}
+\end{figure}
+
+\subsection{Self versus mutual; the energy diagonal}
+
+The two halves of the matrix carry two distinct physical meanings.
+
+The \emph{diagonal} $C_{ii}=V_i^{\!\top}\Kop V_i$ is a self-pairing. Applying the
+energy operator $\Kop$ to the field $V_i$ and pairing the result back with $V_i$
+yields exactly twice the electric field energy stored when conductor $i$ alone is
+held at unit voltage. This is the \emph{energy form} of capacitance,
+\begin{equation}
+  C_{ii} \;=\; \frac{2U_e}{V_i^2}\Bigg|_{V_i=1} \;=\; 2U_e ,
+  \qquad U_e=\tfrac12\!\int_\dom \varepsilon\abs{\vE}^2\dV ,
+  \label{eq:cap-energy}
+\end{equation}
+the relation \cref{ch:maxwell} promised (eq.~\eqref{eq:energy-density}, $C=2U/V^2$),
+specialized to the unit voltage we excite with. It is the same number a
+field-energy integration would produce---which is exactly the cross-check of
+Worked example~\ref{wex:es-energy} below. (This energy formulation is the one
+Palace's driver actually computes, following the COMSOL AC/DC manual's
+$C_{ii}=2U_e/V_i^2$ recipe.)
+
+The \emph{off-diagonal} $C_{ij}=V_j^{\!\top}\Kop V_i$ is a cross-pairing of two
+different fields, the \emph{mutual} capacitance: the charge induced on conductor
+$i$ by a unit voltage on conductor $j$. A robust and slightly surprising fact is
+that the off-diagonal of a Maxwell capacitance matrix is always \emph{negative}.
+Raising conductor $j$'s voltage draws charge of the \emph{opposite} sign onto a
+neighbouring grounded conductor through their shared field, so in
+$q_i=C_{ii}V_i+\sum_{j\neq i}C_{ij}V_j$ the coupling term $C_{ij}V_j$ must reduce
+$q_i$ as $V_j$ rises---hence $C_{ij}<0$. The matrix is symmetric, $C_{ij}=C_{ji}$,
+a reciprocity the Gram construction makes automatic: the charge conductor $j$
+induces on conductor $i$ per volt equals the charge $i$ induces on $j$ per volt,
+because the energy operator is symmetric.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % a 3x3 matrix with self (diag) vs mutual (off-diag) highlighted
+  \matrix[matrix of math nodes, left delimiter={(}, right delimiter={)},
+    nodes={minimum size=8mm, anchor=center},
+    column sep=2pt, row sep=2pt] (C) at (0,0)
+  {
+    {\color{simRust}C_{11}} & {\color{simBlue}C_{12}} & {\color{simBlue}C_{13}} \\
+    {\color{simBlue}C_{21}} & {\color{simRust}C_{22}} & {\color{simBlue}C_{23}} \\
+    {\color{simBlue}C_{31}} & {\color{simBlue}C_{32}} & {\color{simRust}C_{33}} \\
+  };
+  % annotations
+  \node[font=\scriptsize, text=simRust, align=left, anchor=west] at (2.3,0.85)
+    {\textbf{diagonal} $C_{ii}>0$:\\ \emph{self}-capacitance\\ ($=2U_e$, the stored energy)};
+  \node[font=\scriptsize, text=simBlue, align=left, anchor=west] at (2.3,-0.7)
+    {\textbf{off-diagonal} $C_{ij}<0$:\\ \emph{mutual} capacitance\\ ($C_{ij}=C_{ji}$, reciprocity)};
+\end{tikzpicture}
+\caption[Self versus mutual capacitance]{The structure of the Maxwell capacitance
+matrix. The \emph{diagonal} entries (rust) are the self-capacitances; each is
+positive and equals twice the field energy stored with that conductor alone at unit
+voltage. The \emph{off-diagonal} entries (blue) are the mutual capacitances; each is
+\emph{negative}---a unit voltage on conductor $j$ induces opposite-sign charge on
+conductor $i$---and the matrix is symmetric, $C_{ij}=C_{ji}$, by the reciprocity the
+symmetric Gram construction guarantees. Inverting $\mat{C}$ gives the alternate
+\emph{Maxwell} form relating the conductor potentials to their charges,
+$\mathbf v=\mat{C}^{-1}\mathbf q$.}
+\label{fig:es-selfmutual}
+\end{figure}
+
+\begin{keyidea}
+The capacitance matrix is the symmetric Gram reduction
+$C_{ij}=V_j^{\!\top}\Kop V_i$ of the per-terminal potential family against the
+energy operator $\Kop$, with unit weight. Its diagonal is twice the stored field
+energy (self-capacitance, always positive); its off-diagonal is the mutual
+capacitance (always negative); and it is symmetric by construction because $\Kop$
+is. Capacitance and inductance (\cref{ch:magnetostatics}) call the \emph{same}
+verb, \code{gram\_reduce}, and differ only in the weight $w$---one verb, two
+products.
+\end{keyidea}
+
+\subsection{The product, and its inverse}
+
+The verb returns the $n\times n$ matrix $\mat{C}$. This is the physical product the
+user ran the analysis to compute. Palace additionally forms the inverse
+$\mat{C}^{-1}$ by a dense LAPACK factorization---a small, cheap operation on the
+$n\times n$ result, where $n$ is the handful of conductors, not the millions of
+mesh degrees of freedom. The inverse is the \emph{other} Maxwell form: where
+$\mathbf q=\mat{C}\,\mathbf v$ gives charges from voltages, $\mathbf
+v=\mat{C}^{-1}\mathbf q$ gives the voltages that a prescribed set of charges would
+induce. The inversion is a downstream consumer of the reduction's output, not part
+of the Gram reduction itself.
+
+\section{Field post-processing}
+\label{sec:es-fields}
+
+Before assembling the whole pipeline, we account for one more thing the analysis
+produces: the fields themselves. The capacitance matrix is the headline number, but
+each solved potential $V_j$ also yields a visualizable electric field and a stored
+energy, and these are computed as cheap post-processes of the family.
+
+The electric field of excitation $j$ is the (negative) gradient of its potential,
+\begin{equation}
+  \vE_j \;=\; -\Grad V_j ,
+  \label{eq:es-Efield}
+\end{equation}
+computed by applying the discrete gradient operator to the solved nodal potential
+(the same $\Grad$ matrix the assembly produced). The energy stored in that field is
+\begin{equation}
+  U_e^{(j)} \;=\; \tfrac12\!\int_\dom \varepsilon\,\abs{\vE_j}^2 \dV
+            \;=\; \tfrac12\,V_j^{\!\top}\Kop V_j ,
+  \label{eq:es-energy}
+\end{equation}
+and the second equality is the bridge that makes the diagonal of $\mat{C}$ an energy:
+the field-energy integral is \emph{exactly} half the Gram diagonal entry $C_{jj}$.
+This is no coincidence---the energy operator $\Kop$ is, by construction
+(\cref{ch:maxwell}, eq.~\eqref{eq:energy-density}), the discrete quadratic form
+whose value on a field is twice its stored energy. The same observation lets the
+\emph{domain-energy} reduction of \cref{ch:reductions} report \emph{where} the energy
+sits---what fraction lives in each dielectric region (the participation factors of
+\cref{ch:maxwell}, \S\ref{sec:Q})---by restricting the energy operator to each
+domain. The energy is also the thread back to Poynting's theorem (\cref{ch:maxwell},
+\S\ref{sec:energy}): in the static case the Poynting flux is zero and all the energy
+is the stored electric energy \cref{eq:es-energy}, the term that the capacitance
+reports.
+
+\section{The anchor: the whole pipeline, and what it anchors}
+\label{sec:es-anchor}
+
+We have now traced every stage. It is time to stand back and see the analysis
+whole, because its \emph{shape}---not its electrostatics---is what the rest of
+Part~V is built on.
+
+\subsection{The pipeline in one line}
+
+The three stages compose into a single expression. At the framework level the whole
+electrostatic feature is
+\begin{lstlisting}[style=l4style]
+electrostatic = gram_reduce . solve_family . fe_assemble
+\end{lstlisting}
+read right to left: \code{fe\_assemble} builds the operator once, \code{solve\_family}
+maps the family of solves over it, and \code{gram\_reduce} collapses the solved
+family to the capacitance matrix. Spelled out with the data flowing through it,
+\begin{lstlisting}[style=l4style]
+-- inputs = config; output = the capacitance matrix (the physical product)
+electrostatic :: ElectrostaticConfig -> CapacitanceMatrix
+electrostatic cfg =
+  let space = h1_space cfg                          -- the H1 finite-element space
+      k     = fe_assemble space [ diffusion (permittivity cfg) ]  -- (1) assemble K ONCE
+      rhss  = [ excitation cfg idx | idx <- terminal_sources cfg ] -- per-terminal RHS family
+      vs    = solve_family k rhss                    -- (2) fixed-operator per-terminal map
+  in  gram_reduce k vs (\i j -> 1)                   -- (3) C_ij = V_j^T K V_i, w = 1
+\end{lstlisting}
+\Cref{fig:es-pipeline} draws it as a labeled diagram. This figure is the one to
+remember: every later modality chapter is, quite literally, a redrawing of it with
+one or two boxes replaced.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[node distance=7mm and 13mm, font=\footnotesize]
+  % the pipeline, left to right
+  \node[data, align=center, text width=20mm] (cfg)
+    {config\\[1pt]\footnotesize $\varepsilon$, mesh,\\terminals};
+  \node[stage, right=of cfg, align=center, text width=22mm] (asm)
+    {\textbf{assemble}\\[1pt]\footnotesize \code{fe\_assemble}\\(once)};
+  \node[stage, right=of asm, align=center, text width=24mm, fill=simBgGreen, draw=simGreen]
+    (solve) {\textbf{solve}\\[1pt]\footnotesize \code{solve\_family}\\(per terminal)};
+  \node[stage, right=of solve, align=center, text width=22mm, fill=simBgGold, draw=simGold]
+    (red) {\textbf{reduce}\\[1pt]\footnotesize \code{gram\_reduce}\\($w{=}1$)};
+  \node[product, right=of red, align=center, text width=18mm] (prod)
+    {$\mat{C}$\\[1pt]\footnotesize capacitance\\matrix};
+  % flow edges with the carried data labelled
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{$\Kop$} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{$\{V_j\}$} (red);
+  \draw[flow] (red) -- (prod);
+  % the shared-operator capture: K also feeds the reduction
+  \draw[depedge, shorten >=1pt] (asm.south) ++(0,-1mm)
+    .. controls +(0,-9mm) and +(0,-9mm) .. (red.south)
+    node[midway, below, font=\scriptsize, text=simBlue]
+      {the \emph{same} $\Kop$ weights the Gram};
+  % corner / shape annotations under each stage
+  \node[font=\scriptsize\itshape, text=simGreen, below=10mm of solve, align=center]
+    {fixed-operator map\\(\cref{ch:situating}, corner 1)};
+  \node[font=\scriptsize\itshape, text=simGold, above=2mm of red, align=center]
+    {rank-2 symmetric Gram};
+\end{tikzpicture}
+\caption[The electrostatic pipeline---the anchor diagram]{The complete
+electrostatic pipeline, $\texttt{electrostatic} = \code{gram\_reduce}\circ
+\code{solve\_family}\circ\code{fe\_assemble}$. A configuration of permittivity,
+mesh, and terminals enters; \code{fe\_assemble} builds the stiffness operator
+$\Kop$ \emph{once}; \code{solve\_family} maps the per-terminal solves over that
+fixed operator (the fixed-operator corner of \cref{ch:situating}), producing the
+potential family $\{V_j\}$; and \code{gram\_reduce} pairs that family against
+$\Kop$ into the capacitance matrix $\mat{C}$ (the rank-2 symmetric Gram). The blue
+back-edge marks a feature special to this analysis: the \emph{same} operator
+$\Kop$ that drove the solves also weights the reduction. \textbf{This diagram is
+the anchor.} Every other analysis in Part~V is this pipeline with the FE space, the
+solve corner, and/or the reduction swapped---and the swaps are small and
+well-localized.}
+\label{fig:es-pipeline}
+\end{figure}
+
+\subsection{Every other analysis is this, with one stage swapped}
+
+Here is the payoff that earns this chapter its length. The electrostatic pipeline
+of \cref{fig:es-pipeline} is the \emph{template} for all six analyses. Each of the
+others is obtained by swapping one or two boxes---and nothing else:
+
+\begin{itemize}
+  \item \textbf{Magnetostatics} (\cref{ch:magnetostatics}) swaps the
+  \emph{function space} ($\Hone\to\Hcurl$, scalar potential $\to$ vector potential)
+  and the \emph{Gram weight} ($w=1\to w=1/(I_iI_j)$, the current normalization). The
+  solve corner is unchanged---it is still a fixed-operator map---and the reduction
+  is still \code{gram\_reduce}. Two cells move; the skeleton is identical. It is the
+  closest sibling, almost line for line the same analysis.
+  \item \textbf{The driven analysis} (\cref{ch:driven}) keeps the map but swaps the
+  \emph{solve corner} from fixed to operator-varying: the system operator
+  $\mat{A}(\omega)=\Kop+i\omega\Cop-\omega^2\Mop$ depends on frequency, so it is
+  rebuilt \emph{inside} the sweep---the \code{SetOperators} call moves \emph{into}
+  the loop, the exact negation of \S\ref{sec:es-assemble}'s hoist. The reduction
+  also swaps, from the symmetric Gram to the port-projection
+  (\cref{ch:reductions}).
+  \item \textbf{The eigenmode analysis} (\cref{ch:eigenmodes}) swaps the
+  \emph{solve corner} for the opaque black box: there is no loop we write at all---the
+  assembled pencil $(\Kop,\Mop)$ goes to a library eigensolver with one call. The
+  reduction swaps to the rank-1 $(f,Q)$ table.
+  \item \textbf{The transient analysis} (\cref{ch:transient}) swaps the
+  \emph{map for a fold}: each time step begins from the state the previous step
+  produced, so the independent family becomes a chained, sequential evolution.
+  \item \textbf{The boundary-mode analysis} (\cref{ch:waveports}) is the eigenmode
+  swap, performed on a two-dimensional cross-section instead of the full volume.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\caption[The modalities as swaps of the anchor]{Every Part~V modality as a swap of
+the electrostatic anchor (\cref{fig:es-pipeline}). The columns are the stages of the
+skeleton; a dash means ``unchanged from electrostatics.'' Reading down a column shows
+which stage each analysis perturbs; reading across a row shows how few cells move.
+Magnetostatics is the closest sibling (space and weight only); the others each swap
+the solve corner, and most also the reduction. This table is the map of Part~V.}
+\label{tab:es-swaps}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Analysis & FE space & Assemble & Solve corner & Reduction \\
+\midrule
+\textbf{Electrostatic} (anchor) & $\Hone$ & $\Kop$ once & fixed-operator map & Gram, $w{=}1$ \\
+Magnetostatic & $\Hcurl$ & --- & --- & Gram, $w{=}\tfrac{1}{I_iI_j}$ \\
+Driven & $\Hcurl$ & $\mat{A}(\omega)$ in loop & operator-varying map & projection \\
+Eigenmode & $\Hcurl$ & pencil once & opaque black box & table $(f,Q)$ \\
+Transient & $\Hcurl$ & --- & state-threaded fold & table (history) \\
+Boundary mode & $\Hcurl{\oplus}\Hone$ & 2-D pencil & opaque black box & table (modes) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:es-swaps} lays the swaps out as a table. The dashes are the point: most
+cells of most rows are ``unchanged from electrostatics.'' This is why the book can
+afford to teach electrostatics once, here, in complete detail, and then present
+each remaining modality as a short, well-localized set of differences from it. The
+full end-to-end trace---this chapter's worked example below, but on a real
+three-dimensional device---is revisited as the capstone of Part~V in
+\cref{ch:fulltrace}, where we run the entire pipeline against actual machinery and
+check the answer.
+
+\begin{keyidea}
+The electrostatic pipeline $\code{gram\_reduce}\circ\code{solve\_family}\circ
+\code{fe\_assemble}$ is the \textbf{anchor} for all of Part~V: assemble the operator
+\emph{once}, \texttt{map} the solve over the excitation family (the fixed-operator
+corner), and Gram-reduce the solved family to the product. Every other analysis is
+this template with the FE space, the solve corner, and/or the reduction swapped---
+magnetostatics swaps the space and the Gram weight, the driven analysis swaps to an
+operator-varying map and a projection, eigenmode swaps the solve to a black box,
+transient swaps the map for a fold. Learn this pipeline and you have learned the
+spine of every analysis Palace runs.
+\end{keyidea}
+
+\section{Two worked examples}
+\label{sec:es-worked}
+
+The pipeline is general; we now run it end to end on a problem small enough to do by
+hand. The first example traces the whole analysis---assemble, solve the two unit
+excitations, Gram-reduce, mirror, interpret---and recovers the textbook
+parallel-plate formula. The second checks that the Gram diagonal really is the field
+energy, closing the loop on \cref{eq:es-energy}.
+
+\begin{workedexample}{A two-conductor capacitance, end to end}{es-twocond}
+Two conductors form a parallel-plate-like capacitor: an upper plate (conductor~1)
+and a lower plate (conductor~2), with a uniform dielectric between them. We discretize
+the gap so coarsely that the free potential reduces to a \emph{single} interior
+degree of freedom $u$---the potential at the midplane---which is all we need to see
+every stage of the pipeline turn.
+
+\medskip
+\emph{Assemble (once).} On this one-degree-of-freedom mesh the $\varepsilon$-weighted
+stiffness form \cref{eq:es-bilinear-ch39} assembles, before elimination, into a
+$3\times3$ matrix over the nodes (plate~1, midplane, plate~2). Writing
+$g=\varepsilon A/(L/2)$ for the conductance of each half-gap (plate area $A$,
+half-gap $L/2$), the unconstrained stiffness is
+\[
+  \Kop_{\text{full}} =
+  \begin{pmatrix} g & -g & 0 \\ -g & 2g & -g \\ 0 & -g & g \end{pmatrix}.
+\]
+The plate nodes are Dirichlet (essential) degrees of freedom; eliminating them
+leaves the single free interior unknown $u$ with the scalar constrained operator
+$\Kop=2g$ and a right-hand side built from the prescribed plate voltages. This is
+the assemble stage, run \emph{once}; the same $\Kop=2g$ serves both solves below.
+
+\medskip
+\emph{Solve the family (fixed-operator map).} Two unit excitations, two solves of
+$\Kop u=b$ with the \emph{same} $\Kop=2g$:
+\begin{itemize}[nosep]
+  \item \textbf{Excitation 1:} plate~1 at $1$, plate~2 at $0$. Elimination gives the
+  right-hand side $b_1=g\cdot1+g\cdot0=g$, so $u=b_1/\Kop=g/(2g)=\tfrac12$. The solved
+  field $V_1$ has plate~1 at $1$, the midplane at $\tfrac12$, plate~2 at $0$---a linear
+  ramp, the discrete image of the parallel-plate solution of \cref{wex:plates1d}.
+  \item \textbf{Excitation 2:} plate~2 at $1$, plate~1 at $0$. By symmetry $u=\tfrac12$
+  again, and $V_2$ ramps the other way: plate~2 at $1$, midplane at $\tfrac12$,
+  plate~1 at $0$.
+\end{itemize}
+The two solves reused one operator; neither needed the other. That is the
+fixed-operator map in miniature.
+
+\medskip
+\emph{Reduce (symmetric Gram).} Now form $C_{ij}=V_j^{\!\top}\Kop_{\text{full}}V_i$
+on the full nodal fields (the energy operator pairs over all nodes). With
+$V_1=(1,\tfrac12,0)$ and $V_2=(0,\tfrac12,1)$ we compute the upper triangle:
+\[
+  C_{11}=V_1^{\!\top}\Kop_{\text{full}}V_1
+       = g\!\left[(1{-}\tfrac12)^2+(\tfrac12{-}0)^2\right] = g\cdot\tfrac12 = \tfrac{g}{2},
+\]
+and by the same geometry $C_{22}=\tfrac{g}{2}$. The off-diagonal is
+\[
+  C_{12}=V_2^{\!\top}\Kop_{\text{full}}V_1
+       = g\bigl[(0{-}\tfrac12)(1{-}\tfrac12)+(\tfrac12{-}1)(\tfrac12{-}0)\bigr]
+       = g\bigl[-\tfrac14-\tfrac14\bigr] = -\tfrac{g}{2}.
+\]
+We do \emph{not} recompute $C_{21}$: the symmetric Gram mirrors it,
+$C_{21}=C_{12}=-\tfrac{g}{2}$. Assembling,
+\[
+  \mat{C} =
+  \begin{pmatrix} \tfrac{g}{2} & -\tfrac{g}{2} \\[2pt] -\tfrac{g}{2} & \tfrac{g}{2} \end{pmatrix}
+  = \frac{g}{2}\begin{pmatrix} 1 & -1 \\ -1 & 1 \end{pmatrix},
+  \qquad g=\frac{\varepsilon A}{L/2}=\frac{2\varepsilon A}{L}.
+\]
+
+\medskip
+\emph{Interpret.} The off-diagonal is negative, as every Maxwell capacitance matrix
+demands: raising plate~2 induces opposite-sign charge on plate~1. The matrix is
+symmetric, $C_{12}=C_{21}$, by reciprocity. And the physically meaningful
+two-terminal capacitance---the charge that flows between the plates per volt of
+\emph{difference}---is read from the matrix as $C_{\text{cap}}=-C_{12}=g/2=\varepsilon
+A/L$, recovering the textbook parallel-plate result $C=\varepsilon A/L$ of
+\cref{wex:plates1d}. The whole pipeline---assemble once, solve the two excitations,
+Gram-reduce, mirror---has run in a page of arithmetic and produced the right answer.
+On a fine three-dimensional mesh the only thing that changes is that the solves are
+millions of degrees of freedom handled by CG (\cref{ch:cg}) instead of one division;
+the \emph{structure} is exactly what we just did.
+\end{workedexample}
+
+\begin{workedexample}{The energy form agrees with the Gram diagonal}{es-energy}
+We check the claim of \cref{eq:es-energy}: the diagonal Gram entry $C_{11}$ equals
+twice the stored field energy of excitation~1, computed independently from the field.
+
+\medskip
+\emph{The Gram diagonal.} From \cref{wex:es-twocond}, $C_{11}=g/2$ with $g=2\varepsilon
+A/L$, so $C_{11}=\varepsilon A/L$.
+
+\emph{The field energy, computed directly.} Excitation~1 produced the field $V_1$
+ramping linearly from $1$ at plate~1 to $0$ at plate~2 across the gap of width $L$,
+so its electric field is uniform, $\vE_1=-\Grad V_1$ with magnitude
+$\abs{\vE_1}=1/L$ (a unit potential drop over a distance $L$). The stored electric
+energy is the energy density $\tfrac12\varepsilon\abs{\vE_1}^2$ integrated over the
+gap volume $A\cdot L$:
+\[
+  U_e^{(1)} = \tfrac12\!\int_\dom \varepsilon\abs{\vE_1}^2\dV
+            = \tfrac12\,\varepsilon\,\frac{1}{L^2}\,(A\,L)
+            = \frac{\varepsilon A}{2L}.
+\]
+
+\emph{Compare.} Twice the energy is $2U_e^{(1)}=\varepsilon A/L$, which is
+\emph{exactly} $C_{11}$. The Gram diagonal and the field-energy integral agree, as
+\cref{eq:es-energy} promised:
+\[
+  C_{11} \;=\; V_1^{\!\top}\Kop V_1 \;=\; 2U_e^{(1)} \;=\; \frac{\varepsilon A}{L}.
+\]
+This is not a numerical coincidence. The energy operator $\Kop$ \emph{is}, by
+construction, the discrete quadratic form whose value on a field is twice its stored
+energy (\cref{ch:maxwell}, eq.~\eqref{eq:energy-density}); so the self-pairing
+$V_i^{\!\top}\Kop V_i$ and the energy integral $2U_e$ are two evaluations of the same
+quadratic form. The agreement is the reason the diagonal of the capacitance matrix
+\emph{is} a capacitance: it measures the field energy a conductor stores per unit
+voltage, which is exactly what capacitance means.
+\end{workedexample}
+
+\summarysection
+The electrostatic analysis computes the capacitance matrix $\mat{C}$ of a system of
+$n$ conductors in a dielectric. It exploits linearity through the \emph{method of
+unit excitations}: hold conductor $j$ at one volt, ground the rest, solve the Laplace
+problem $-\Div(\varepsilon\Grad V_j)=0$ for the potential, and repeat for each
+conductor, producing a \emph{family} $\{V_1,\dots,V_n\}$ of potential fields. The
+pipeline runs the skeleton of \cref{ch:situating} in its simplest form. \emph{Assemble}
+($\S\ref{sec:es-assemble}$): the $\varepsilon$-weighted stiffness operator $\Kop$ on
+the scalar space $\Hone$, with the terminal voltages eliminated as essential boundary
+conditions, built \emph{once} and held---the load-bearing hoist. \emph{Solve}
+($\S\ref{sec:es-solve}$): the fixed-operator map \code{solve\_family}, $n$ independent
+preconditioned-CG solves $\Kop V_j=\vb_j$ reusing the one operator---the defining
+witness of the first solve corner. \emph{Reduce} ($\S\ref{sec:es-reduce}$): the
+symmetric Gram \code{gram\_reduce} with unit weight, $C_{ij}=V_j^{\!\top}\Kop V_i$,
+whose diagonal is twice the stored field energy (self-capacitance, positive) and whose
+off-diagonal is the mutual capacitance (negative), symmetric by construction. The whole
+feature is the one-line composition
+$\texttt{electrostatic}=\code{gram\_reduce}\circ\code{solve\_family}\circ
+\code{fe\_assemble}$. This pipeline is the \textbf{anchor} of Part~V: every other
+modality is this diagram (\cref{fig:es-pipeline}) with the FE space, the solve corner,
+and/or the reduction swapped (\cref{tab:es-swaps}).
+
+\furtherreading
+For the electrostatics itself---capacitance, the energy method $C=2U/V^2$, and the
+sign and reciprocity of the Maxwell capacitance matrix---Griffiths~\citep{griffiths2017}
+is the standard undergraduate source, and Jin's finite-element electromagnetics
+text~\citep{jin2014} treats the discretization, the $\Hone$ stiffness assembly, and the
+energy-form capacitance extraction in the exact form Palace uses. Pozar~\citep{pozar2011}
+places the capacitance matrix in its microwave-engineering context, alongside the
+inductance matrix it pairs with (\cref{ch:magnetostatics}) and the S-parameters of the
+driven analysis (\cref{ch:driven}). The fixed-operator solve corner and the symmetric
+Gram reduction are this book's own framing, developed in \cref{ch:situating} and
+\cref{ch:reductions}; the numerical engine behind each element solve is the conjugate
+gradient method of \cref{ch:cg} with the preconditioners of \cref{ch:precond}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Why $n$ solves, not $n^2$.} The capacitance matrix has $n^2$ entries.
+  Explain, using the linearity of $\mathbf q=\mat{C}\,\mathbf v$, why the analysis
+  needs only $n$ solves to fill them all. What is each solve's right-hand side, and
+  which column of $\mat{C}$ does it produce?
+  \item \textbf{The hoist.} Identify the single line of the pipeline whose position
+  (outside versus inside the terminal loop) is the structural signature of the
+  fixed-operator corner. What goes wrong---in \emph{cost}, and separately in
+  \emph{correctness of the abstraction}---if it is moved inside? (Contrast with the
+  driven analysis of \cref{ch:driven}, where it belongs inside.)
+  \item \textbf{Mirror, don't recompute.} A four-conductor problem needs the full
+  $4\times4$ matrix $\mat{C}$. How many distinct bilinear evaluations
+  $V_j^{\!\top}\Kop V_i$ does \code{gram\_reduce} actually perform, and which entries
+  does \code{symmetric\_from\_upper} fill instead? What property of $\Kop$ licenses the
+  mirroring?
+  \item \textbf{Sign of the off-diagonal.} Using $q_i=C_{ii}V_i+\sum_{j\neq
+  i}C_{ij}V_j$ and the physical picture of induced charge, argue that every
+  off-diagonal entry of a Maxwell capacitance matrix is negative. Check your argument
+  against the $\mat{C}$ of \cref{wex:es-twocond}.
+  \item \textbf{The energy diagonal.} Redo \cref{wex:es-energy} for excitation~2:
+  compute the field energy $U_e^{(2)}$ of $V_2$ directly and confirm it equals
+  $\tfrac12 C_{22}$. Why must $C_{11}=C_{22}$ for this symmetric two-plate geometry?
+  \item \textbf{Recover $C=\varepsilon A/d$.} In \cref{wex:es-twocond} the
+  two-terminal capacitance came out $-C_{12}=\varepsilon A/L$. Explain why the
+  physical between-plates capacitance is $-C_{12}$ (the negative of the mutual entry)
+  rather than a diagonal entry, and relate this to the difference between the
+  $\mat{C}$ matrix and the elementary single-number capacitor formula.
+  \item \textbf{One stage swapped.} Using \cref{tab:es-swaps}, describe the
+  magnetostatic analysis (\cref{ch:magnetostatics}) as ``the electrostatic analysis
+  with these stages changed.'' Exactly which cells move, and which stay? Then do the
+  same for the eigenmode analysis (\cref{ch:eigenmodes})---which cell is the
+  most radical swap, and why?
+  \item \textbf{The composition.} Write out the meaning of
+  $\texttt{electrostatic}=\code{gram\_reduce}\circ\code{solve\_family}\circ
+  \code{fe\_assemble}$ as data flowing left to right: name the type of the value
+  passed from each stage to the next (config, operator, field family, matrix), and
+  identify the one value---the operator $\Kop$---that is consumed by \emph{two}
+  stages rather than one. Why does that shared consumption appear as the back-edge in
+  \cref{fig:es-pipeline}?
+\end{enumerate}

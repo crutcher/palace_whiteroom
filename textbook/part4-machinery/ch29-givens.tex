@@ -1,0 +1,803 @@
+\chapter{The Least-Squares Core: Givens Rotations and the Running QR}
+\label{ch:givens}
+
+% local vector macros for the running-QR right-hand side (g) and Hessenberg column (h)
+\providecommand{\vg}{\mathbf{g}}
+\providecommand{\vh}{\mathbf{h}}
+
+\chapterorient{GMRES, the engine of \cref{ch:gmres}, leaves a small chore at the
+end of every step: minimize $\norm{\beta\,\vec e_1 - \bar{\mat H}_m\vy}$ over a tiny
+least-squares problem whose matrix grows by one column each iteration. This chapter
+is about that chore---and about the surprisingly elegant way the solver does it. We
+do not re-solve the least-squares problem from scratch at each step; we maintain a
+\emph{running} QR factorization, updated one column at a time by a stream of $2\times2$
+plane rotations. The stream is a fold over the arriving columns, in the exact sense of
+\cref{ch:combinators}. And it has a gift: after the rotation hits the right-hand side,
+the GMRES residual norm is sitting there, already computed, for free. No
+$\mat A\vx_m$, no residual evaluation---a unitary byproduct of triangularizing the
+matrix. By the end you will be able to generate a Givens rotation by hand, run the
+stream on a small Hessenberg, read the residual off one entry, and back-solve for the
+answer: the entire inner loop of GMRES, made concrete.}
+
+\section{The chore GMRES leaves behind}
+\label{sec:gv-setup}
+
+Recall the shape of GMRES from \cref{ch:gmres}. At step $m$ the Arnoldi process of
+\cref{ch:orthog} has built an orthonormal basis $\mat V_m = [\vv_1,\dots,\vv_m]$ for
+the Krylov subspace and, as a byproduct of orthogonalizing each new direction, an
+$(m{+}1)\times m$ matrix $\bar{\mat H}_m$ that records the orthogonalization
+coefficients. This matrix is \emph{upper-Hessenberg}: upper-triangular except for a
+single nonzero sub-diagonal, the band of entries $h_{k+1,k}$ just below the main
+diagonal. GMRES then forms its iterate as $\vx_m = \vx_0 + \mat V_m\vy$, choosing the
+coordinate vector $\vy\in\Real^m$ that minimizes the residual. Because Arnoldi makes
+the residual norm equal to a small projected quantity, that minimization collapses to
+\begin{equation}
+\label{eq:gv-lsq}
+  \min_{\vy\in\Real^m}\ \norm{\beta\,\vec e_1 - \bar{\mat H}_m\,\vy},
+\end{equation}
+where $\beta = \norm{\vr_0}$ is the initial residual norm and $\vec e_1$ is the first
+standard basis vector. This is a \emph{least-squares} problem---more equations
+($m{+}1$) than unknowns ($m$)---and it is \emph{small}: its size is the iteration
+count, never the dimension $N$ of the field. A GMRES run that converges in 40 steps
+solves a $41\times 40$ least-squares problem, whatever the millions of unknowns in
+$\vx$.
+
+\Cref{eq:gv-lsq} is the chore. We could, at every step, assemble the current
+$\bar{\mat H}_m$, factor it afresh, and solve. That is correct and wasteful: the
+matrix at step $m{+}1$ is the matrix at step $m$ with one column glued on the right
+and one row glued on the bottom; almost all the work of factoring it was already done
+last step. The professional move is to maintain a factorization \emph{incrementally},
+spending only the cost of the one new column each step. That incremental
+factorization is the subject of this chapter, and the tool that builds it is the
+plane rotation.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the Hessenberg with one column arriving and one sub-diagonal to kill
+  \def\cw{0.62} \def\rh{0.52}
+  % grid 5 rows x 4 cols
+  \foreach \c in {0,1,2,3}{
+    \foreach \r in {0,...,4}{
+      \draw[simGray!35] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);
+    }
+  }
+  % triangular block already done (cols 0..2): shade upper-tri
+  \foreach \c/\maxr in {0/1,1/2,2/3}{
+    \foreach \r in {0,...,\maxr}{
+      \fill[simBgBlue] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);
+    }
+  }
+  % the arriving column (col 3): shade gold, full height down to its sub-diagonal r=4
+  \foreach \r in {0,...,4}{
+    \fill[simBgGold] (3*\cw,-\r*\rh) rectangle ++(\cw,-\rh);
+  }
+  % redraw gridlines over fills
+  \foreach \c in {0,1,2,3}{\foreach \r in {0,...,4}{
+      \draw[simGray!35] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);}}
+  % mark the sub-diagonal entry to be annihilated in the new column: (row 4, col 3)
+  \draw[simRust, very thick] (3*\cw,-4*\rh) rectangle ++(\cw,-\rh);
+  \node[font=\scriptsize, text=simRust] at (3*\cw+0.5*\cw,-4*\rh-0.5*\rh) {$h_{j+1,j}$};
+  \node[font=\scriptsize] at (3*\cw+0.5*\cw,-3*\rh-0.5*\rh) {$h_{j,j}$};
+  % bracket labels
+  \node[font=\scriptsize, text=simBlue, align=center] at (1*\cw,0.55) {already triangular\\(cols $0..j{-}1$)};
+  \node[font=\scriptsize, text=simGold!70!black, align=center] at (3*\cw+0.5*\cw,0.55) {new\\column $j$};
+  % the rotation arrow: zero the rust cell against the one above it
+  \draw[-{Stealth[length=2mm]}, simRust, thick]
+    (3*\cw+\cw+0.15,-4*\rh-0.5*\rh) .. controls +(0.7,0.2) and +(0.7,-0.2) ..
+    (3*\cw+\cw+0.15,-3*\rh-0.5*\rh);
+  \node[font=\scriptsize, text=simRust, anchor=west] at (3*\cw+\cw+0.55,-3.5*\rh-0.5*\rh)
+    {$G_j$ rotates};
+  \node[font=\scriptsize, text=simRust, anchor=west] at (3*\cw+\cw+0.55,-4.0*\rh-0.5*\rh)
+    {$h_{j+1,j}\!\to\!0$};
+\end{tikzpicture}
+\caption[A Givens rotation zeroing one sub-diagonal entry]{The geometry of one step.
+The upper-Hessenberg matrix $\bar{\mat H}_m$ is triangular in its leading columns
+(blue), with a single nonzero sub-diagonal. A new column $j$ arrives from Arnoldi
+(gold) carrying one fresh sub-diagonal entry $h_{j+1,j}$ (rust outline). A single
+$2\times2$ plane rotation $G_j$, mixing rows $j$ and $j{+}1$, annihilates that entry
+against the diagonal above it---completing the triangularization of column $j$. One
+rotation, one sub-diagonal entry: this is the atom the rest of the chapter assembles
+into a stream.}
+\label{fig:gv-hessenberg}
+\end{figure}
+
+\section{Givens rotations: zeroing one entry at a time}
+\label{sec:gv-rotations}
+
+A \emph{Givens rotation}, or plane rotation, is a $2\times2$ orthogonal matrix
+\begin{equation}
+\label{eq:gv-matrix}
+  G(c,s) = \begin{pmatrix} c & s \\ -s & c \end{pmatrix},
+  \qquad c^2 + s^2 = 1,
+\end{equation}
+that rotates the plane by the angle whose cosine is $c$ and sine is $s$. Its single
+job in this chapter is surgical: given a 2-vector $\begin{psmallmatrix} a \\ b
+\end{psmallmatrix}$, choose $c$ and $s$ so that applying $G$ sends the second
+component to zero,
+\begin{equation}
+\label{eq:gv-goal}
+  \begin{pmatrix} c & s \\ -s & c \end{pmatrix}
+  \begin{pmatrix} a \\ b \end{pmatrix}
+  = \begin{pmatrix} r \\ 0 \end{pmatrix}.
+\end{equation}
+Because $G$ is orthogonal it preserves length, so the surviving first component must
+carry the whole norm: $r = \sqrt{a^2 + b^2}$. That single observation \emph{is} the
+construction. The bottom row of \cref{eq:gv-goal} reads $-s\,a + c\,b = 0$, and
+together with $r = \sqrt{a^2+b^2}$ the top row reads $c\,a + s\,b = r$. Solving the
+pair gives the rotation coefficients directly.
+
+\begin{lemma}[Givens generation]
+\label{lem:gv-generate}
+For a real 2-vector $(a,b)$ with $r = \sqrt{a^2 + b^2} > 0$, the rotation $G(c,s)$
+with
+\begin{equation}
+\label{eq:gv-cs}
+  c = \frac{a}{r}, \qquad s = \frac{b}{r}
+\end{equation}
+satisfies $G(c,s)\begin{psmallmatrix} a \\ b \end{psmallmatrix} =
+\begin{psmallmatrix} r \\ 0 \end{psmallmatrix}$, and $c^2 + s^2 = 1$.
+\end{lemma}
+
+\begin{proof}
+The orthogonality identity is immediate: $c^2 + s^2 = (a^2 + b^2)/r^2 = 1$. For the
+action, compute both rows. The top row gives $c\,a + s\,b = (a^2 + b^2)/r = r^2/r = r$.
+The bottom row gives $-s\,a + c\,b = (-b\,a + a\,b)/r = 0$. Hence the image is exactly
+$(r,0)^{\!\top}$.
+\end{proof}
+
+We call the construction of $(c,s)$ from $(a,b)$ the verb \code{givens\_generate}, and
+the in-place action of a stored $(c,s)$ on a pair of scalars the verb
+\code{givens\_apply}. The two are the entire kernel; everything later in the chapter is
+a way of \emph{scheduling} calls to them.
+
+\begin{lstlisting}[style=l4style]
+givens_generate :: (a: Scalar, b: Scalar) -> (c: Real, s: Scalar)
+givens_apply    :: (c: Real, s: Scalar) -> ((dx: Scalar, dy: Scalar) -> (Scalar, Scalar))
+givens_apply c s (dx, dy) = (c*dx + s*dy, -conj s * dx + c*dy)
+\end{lstlisting}
+
+The action of \code{givens\_apply} is the general orthogonal update $\begin{psmallmatrix}
+dx' \\ dy' \end{psmallmatrix} = \begin{psmallmatrix} c & s \\ -\bar s & c
+\end{psmallmatrix}\begin{psmallmatrix} dx \\ dy \end{psmallmatrix}$, which over the
+reals is \cref{eq:gv-matrix} exactly; the conjugate $\bar s$ appears only in the
+complex case, of which more below. Note the \emph{closure-returning} signature of
+\code{givens\_apply}: it takes the rotation $(c,s)$ and \emph{returns a function} of the
+pair, written with the paren-grouping of \cref{ch:combinators}. This is deliberate. A
+generated rotation is applied many times---to its own column, to later columns, to the
+right-hand side---so it is natural to read \code{givens\_apply}~$c$~$s$ as ``the
+operator that rotates a pair,'' a first-class value stored and reused.
+
+\begin{notationbox}
+Throughout this chapter $(c,s)$ is one stored rotation; $a$ and $b$ are the two
+components of the 2-vector it is built to annihilate (here $a$ is the diagonal, $b$ the
+sub-diagonal entry to be zeroed); $r = \sqrt{a^2+b^2}$ is the surviving norm. We index
+the rotation generated at Arnoldi step $j$ as $(c_j, s_j)$, and we write a generic
+applied pair as $(dx, dy)$. The cosine $c$ is always real; the sine $s$ is real for a
+real system and complex for a complex one.
+\end{notationbox}
+
+\subsection{The stable formula}
+\label{sec:gv-stable}
+
+\Cref{eq:gv-cs} is correct but dangerous to compute literally. Forming $r =
+\sqrt{a^2 + b^2}$ squares each component, and if $a$ or $b$ is larger than the square
+root of the floating-point overflow threshold---around $10^{154}$ in double
+precision---the intermediate $a^2$ overflows to infinity even though $r$ itself is a
+perfectly representable number. The symmetric failure happens for tiny values, which
+underflow to zero. Production libraries therefore never square before scaling. They
+factor out the larger component first:
+\begin{equation}
+\label{eq:gv-scaled}
+  t = \frac{\min(\abs a,\abs b)}{\max(\abs a,\abs b)}, \qquad
+  r = \max(\abs a,\abs b)\,\sqrt{1 + t^2},
+\end{equation}
+so the square root sees an argument between $1$ and $2$ and the division $t$ is between
+$0$ and $1$. Mathematically this is identical to $r = \sqrt{a^2+b^2}$; numerically it
+never overflows unless the true answer does. Palace follows the LAPACK convention
+(the algorithm of Bindel, Demmel, Kahan, and Marques), computing $c = \abs a / r$ and
+fixing the sign of $r$ to match $a$ so that the diagonal stays positive. We treat the
+scaling as a \emph{load-bearing numerical detail}, not a transparent rewrite of
+\cref{eq:gv-cs}: it changes which inputs the algorithm survives, and the precise scaled
+form is recorded in \cref{app:numerics}.
+
+\begin{pitfall}
+Do not implement \cref{eq:gv-cs} as written. The literal formula
+$r=\sqrt{a^2+b^2}$ overflows for large inputs and underflows for small ones, returning
+$\infty$ or $0$ where the scaled form \eqref{eq:gv-scaled} returns the right finite
+$r$. This is not a micro-optimization; it is a correctness fix at the edges of the
+floating-point range, and it is exactly the kind of ``load-bearing numerical trick''
+\cref{ch:bigidea} warned must be preserved as part of the algorithm rather than
+abstracted away.
+\end{pitfall}
+
+\begin{workedexample}{Generating a Givens rotation by hand}{gv-generate}
+Build the rotation that annihilates the second component of $(a,b) = (3,4)$, and check
+its action.
+
+\emph{The norm.} $r = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$. (The
+$(3,4,5)$ triangle keeps the arithmetic clean.)
+
+\emph{The coefficients.} By \cref{eq:gv-cs},
+\[
+  c = \frac{a}{r} = \frac{3}{5} = 0.6, \qquad
+  s = \frac{b}{r} = \frac{4}{5} = 0.8.
+\]
+Sanity check the orthogonality identity: $c^2 + s^2 = 0.36 + 0.64 = 1$. Good---this is
+a genuine rotation.
+
+\emph{The action.} Apply $G(0.6,0.8)$ to $(3,4)$ using \code{givens\_apply}:
+\[
+  \begin{pmatrix} 0.6 & 0.8 \\ -0.8 & 0.6 \end{pmatrix}
+  \begin{pmatrix} 3 \\ 4 \end{pmatrix}
+  = \begin{pmatrix} 0.6\cdot 3 + 0.8\cdot 4 \\ -0.8\cdot 3 + 0.6\cdot 4 \end{pmatrix}
+  = \begin{pmatrix} 1.8 + 3.2 \\ -2.4 + 2.4 \end{pmatrix}
+  = \begin{pmatrix} 5 \\ 0 \end{pmatrix}.
+\]
+The second component is exactly zero and the first is exactly $r = 5$: the whole length
+of the original 2-vector survived in the surviving component, as orthogonality
+demands. The scaled formula \eqref{eq:gv-scaled} would compute the same $(c,s)=(0.6,0.8)$
+via $\max=4$, $t = 3/4$, $r = 4\sqrt{1 + 9/16} = 4\cdot(5/4) = 5$---identical answer,
+no squaring of large numbers.
+\end{workedexample}
+
+\subsection{The complex case, briefly}
+\label{sec:gv-complex}
+
+For a complex linear system the Hessenberg entries are complex, and the rotation must
+preserve the Hermitian (conjugate) norm. The convention Palace and LAPACK use keeps the
+cosine $c$ \emph{real} and lets the sine $s$ be complex, with the unitarity identity
+becoming $c^2 + \abs s^2 = 1$. The action of \code{givens\_apply} carries the conjugate
+in the lower row, $dy' = -\bar s\,dx + c\,dy$, which is why we wrote it that way above.
+Nothing structural changes: the generation still produces a $(c,s)$ that zeros the
+sub-diagonal, the stream still triangularizes, and the residual still reads off the
+right-hand side. The real-cosine convention is a tidy bookkeeping choice---the rotation
+register $c$ is one real number per step, $s$ one complex number---and we will not dwell
+on it. The driven and eigenmode analyses (\cref{part:modalities}) supply the complex
+systems that exercise it.
+
+\section{The running QR stream}
+\label{sec:gv-stream}
+
+Now we schedule the rotations. The factorization we maintain is $\bar{\mat H}_m =
+\mat Q_m \bar{\mat R}_m$, where $\mat Q_m$ is the accumulated product of all the plane
+rotations and $\bar{\mat R}_m$ is upper-triangular. We never form $\mat Q_m$ as a
+matrix; we store only the list of rotation pairs $(c_0,s_0),(c_1,s_1),\dots$, which is
+all of $O(m)$ scalars. Each Arnoldi step delivers one new Hessenberg column, and the
+stream processes it in four sub-steps.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[(i) Replay.] The new column $\vh = \bar{\mat H}_m[:,j]$ arrives in the
+  \emph{original} (un-rotated) frame. The previous columns were triangularized by the
+  stored rotations $(c_0,s_0),\dots,(c_{j-1},s_{j-1})$; to bring the new column into the
+  same frame we replay all of them, in order, against its entries:
+  for $k=0,1,\dots,j{-}1$, apply $(c_k,s_k)$ to the pair $(h_k,h_{k+1})$.
+  \item[(ii) Generate.] After replay, the entry $h_{j+1}$ on the sub-diagonal is the
+  one fresh nonzero below the diagonal. Generate the new rotation $(c_j,s_j) =
+  \code{givens\_generate}(h_j, h_{j+1})$ to annihilate it (\cref{lem:gv-generate}).
+  \item[(iii) Apply to the column.] Apply the freshly generated $(c_j,s_j)$ to its own
+  pair $(h_j, h_{j+1})$. This sets $h_{j+1} \gets 0$ and $h_j \gets r$: column $j$ is
+  now upper-triangular, and $\bar{\mat R}_m$ has grown by a column.
+  \item[(iv) Apply to the right-hand side.] Apply the \emph{same} $(c_j,s_j)$ to the
+  right-hand-side pair $(g_j, g_{j+1})$, where $\vg$ began life as $\beta\,\vec e_1$.
+  This is the step that pays the dividend, and \cref{sec:gv-residual} collects it.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  \node[data, minimum width=18mm] (col) at (-0.2,0) {new column\\$\vh = \bar{\mat H}[:,j]$};
+  \node[opbox, minimum width=20mm, right=8mm of col] (replay)
+    {(i) \textbf{replay}\\\scriptsize $(c_0,s_0)\dots(c_{j-1},s_{j-1})$};
+  \node[opbox, minimum width=20mm, right=7mm of replay, fill=simBgGold, draw=simGold] (gen)
+    {(ii) \textbf{generate}\\\scriptsize $(c_j,s_j)$};
+  \node[opbox, minimum width=18mm, below=9mm of gen] (apcol)
+    {(iii) \textbf{apply}\\\scriptsize to column $\to \bar{\mat R}$};
+  \node[opbox, minimum width=18mm, left=10mm of apcol] (aprhs)
+    {(iv) \textbf{apply-rhs}\\\scriptsize to $\vg=\beta\vec e_1$};
+  \node[product, minimum width=16mm, left=9mm of aprhs] (res)
+    {residual\\$|g_{j+1}|$};
+  \draw[flow] (col) -- (replay);
+  \draw[flow] (replay) -- (gen);
+  \draw[flow] (gen.south) -- (apcol.north);
+  \draw[flow] (gen.south) .. controls +(0,-0.9) and +(0,0.9) .. (aprhs.north);
+  \draw[flow] (aprhs) -- (res);
+  % store-and-grow note for the new rotation
+  \node[font=\scriptsize\itshape, text=simGreen, align=center] at (gen.north)[yshift=6mm]
+    {append $(c_j,s_j)$\\to the stored list};
+  \draw[refedge, simGreen] (gen.north) -- ++(0,4mm);
+\end{tikzpicture}
+\caption[The running-QR stream as a four-step pipeline]{The four sub-steps the stream
+runs on each arriving Hessenberg column. \emph{Replay} (i) applies all stored rotations
+to the new column, bringing it into the triangularized frame; \emph{generate} (ii)
+produces one new rotation to kill the fresh sub-diagonal entry and appends it to the
+stored list; \emph{apply} (iii) uses it to triangularize the column, growing
+$\bar{\mat R}$; \emph{apply-rhs} (iv) uses the same rotation on the right-hand side
+$\vg$, and the new last entry $|g_{j+1}|$ is the residual norm (\cref{sec:gv-residual}).
+The pipeline runs once per Arnoldi step and the stored list grows by one rotation each
+time.}
+\label{fig:gv-pipeline}
+\end{figure}
+
+\begin{lstlisting}[style=l4style]
+-- one column of the running QR (Arnoldi step j); see Figure (the four-step pipeline)
+ls_update_column :: LsqState -> (h: HessCol) -> LsqState
+ls_update_column st h =
+  let h1       = foldl replayOne h (zip st.cs st.sn)      -- (i) replay stored 0..j-1
+      (cj, sj) = givens_generate (h1 !! j) (h1 !! (j+1))  -- (ii) generate new rotation
+      h2       = givens_apply cj sj (h1 !! j, h1 !! (j+1)) -- (iii) triangularize column j
+      g'       = applyRhs cj sj st.g                       -- (iv) rotate the RHS pair
+  in st { R = st.R `appendCol` h2          -- R grows by a column
+        , cs = st.cs ++ [cj], sn = st.sn ++ [sj]  -- rotation list grows by one
+        , g  = g'                          -- residual now lives in g'[j+1]
+        }
+  where replayOne col (ck, sk) = ...   -- givens_apply on pair (k, k+1)
+\end{lstlisting}
+
+\subsection{The stream is a fold over columns}
+\label{sec:gv-fold}
+
+Look at the signature of \code{ls\_update\_column}: it takes a state and a column and
+returns a new state. That is exactly the shape of a fold step from \cref{ch:combinators}.
+The whole running QR is
+\begin{equation}
+\label{eq:gv-fold}
+\begin{aligned}
+  \code{running\_qr}\ st_0\ [\vh_0, \dots, \vh_{m-1}]
+  \;=\;\ &\code{foldl}\ \code{ls\_update\_column}\ st_0\\
+  &[\vh_0, \vh_1, \dots, \vh_{m-1}],
+\end{aligned}
+\end{equation}
+a left fold of \code{ls\_update\_column} over the stream of Hessenberg columns, with the
+carry $st$ holding the triangular factor $\bar{\mat R}$, the growing rotation list
+$(\code{cs},\code{sn})$, and the rotated right-hand side $\vg$. This is not a metaphor.
+The carry threads strictly forward---column $j$ cannot be processed before column
+$j{-}1$, because the replay sub-step (i) needs all the rotations the earlier columns
+generated---so by the analysis of \cref{ch:combinators} the stream is an
+\emph{intrinsically sequential} fold, not a parallel map. The rotation list is the part
+of the carry that grows: one $(c_j,s_j)$ appended per step, so after $m$ columns the
+carry holds $m$ rotations (\cref{fig:gv-growing}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % three successive states of the carry, rotation list growing
+  \foreach \step/\x/\n in {0/0/1, 1/4.2/2, 2/8.4/3}{
+    \node[font=\scriptsize\bfseries, text=simBlue] at (\x+0.6,2.0) {after column $\step$};
+    % stored rotation list as stacked cells
+    \foreach \i in {0,...,\numexpr\n-1\relax}{
+      \node[opbox, minimum width=14mm, minimum height=5mm] at (\x+0.6,1.4-0.62*\i)
+        {$(c_{\i},s_{\i})$};
+    }
+  }
+  % arrows between states: one column arrives, one rotation appended
+  \draw[flow] (1.7,0.9) -- node[above,font=\scriptsize]{$\vh_1$} node[below,font=\scriptsize,text=simGreen]{$+\,(c_1,s_1)$} (3.0,0.9);
+  \draw[flow] (5.9,0.9) -- node[above,font=\scriptsize]{$\vh_2$} node[below,font=\scriptsize,text=simGreen]{$+\,(c_2,s_2)$} (7.2,0.9);
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (4.8,-1.2)
+    {each Arnoldi column appends exactly one rotation to the carry:\\the fold's accumulator
+     grows by one cell per step};
+\end{tikzpicture}
+\caption[The rotation list grows per Arnoldi column]{The stored rotation list is the
+growing part of the fold's carry. Each Arnoldi column drives one
+\code{ls\_update\_column} step, which appends exactly one new pair $(c_j,s_j)$ to the
+list. After processing $m$ columns the carry holds $m$ rotations---an $O(m)$ store, far
+cheaper than the explicit $\mat Q_m$ it stands in for. Because step $j$ replays all
+earlier rotations, the list \emph{must} be threaded forward: this is a fold, not a map.}
+\label{fig:gv-growing}
+\end{figure}
+
+\begin{pitfall}
+The replay must come \emph{before} the generate, and the order of the replayed
+rotations matters: $(c_0,s_0)$ then $(c_1,s_1)$ then $\dots$, never permuted. Plane
+rotations do not commute---each one is built in the frame the previous ones
+established---so applying them out of order, or generating the new rotation against an
+un-replayed column, triangularizes against the wrong diagonal and silently corrupts
+$\bar{\mat R}$. This is the running QR's load-bearing invariant: \emph{replay all stored
+rotations in order, then generate.} It is the reason the carry is threaded forward and
+the reason the stream is a fold rather than a map.
+\end{pitfall}
+
+\section{The residual, for free}
+\label{sec:gv-residual}
+
+Here is the payoff that makes the whole construction worth building. After sub-step
+(iv)---applying the new rotation to the right-hand side $\vg$---the magnitude of the
+\emph{new last entry} of $\vg$ is exactly the GMRES residual norm:
+\begin{equation}
+\label{eq:gv-free}
+  \norm{\beta\,\vec e_1 - \bar{\mat H}_m\,\vy_m}
+  \;=\; \abs{g_{j+1}},
+\end{equation}
+where $\vy_m$ is the (not-yet-computed) least-squares minimizer. We get the residual
+without forming $\vy_m$, without forming the iterate $\vx_m = \vx_0 + \mat V_m\vy_m$,
+and---most importantly---without the expensive matrix--vector product $\mat A\vx_m$ that
+a literal residual evaluation would demand. The convergence test of GMRES is therefore a
+single absolute value of a scalar the stream already computed.
+
+Why is \cref{eq:gv-free} true? Because every rotation is orthogonal, and orthogonal maps
+preserve length. Let $\mat Q_m$ be the accumulated rotation product, so that $\mat Q_m
+\bar{\mat H}_m = \bar{\mat R}_m$ is upper-triangular and $\vg = \mat Q_m(\beta\,\vec
+e_1)$. The least-squares residual is invariant under the orthogonal $\mat Q_m$:
+\begin{equation}
+\label{eq:gv-residual-derivation}
+  \norm{\beta\,\vec e_1 - \bar{\mat H}_m\vy}
+  = \norm{\mat Q_m\!\left(\beta\,\vec e_1 - \bar{\mat H}_m\vy\right)}
+  = \norm{\vg - \bar{\mat R}_m\vy}.
+\end{equation}
+Now $\bar{\mat R}_m$ is $(m{+}1)\times m$ and upper-triangular: its last row is entirely
+zero. So whatever $\vy$ we pick, the bottom equation $0 = g_{j+1} - 0$ can never be
+satisfied, and the best we can do is zero out the top $m$ rows (which a nonsingular
+triangular solve does exactly), leaving the residual equal to the one unkillable
+entry $\abs{g_{j+1}}$. Splitting the norm into the part a triangular solve can zero and
+the part it cannot:
+\begin{equation}
+\label{eq:gv-split}
+  \norm{\vg - \bar{\mat R}_m\vy}^2
+  = \underbrace{\norm{\vg_{0:m} - \mat R_m\vy}^2}_{\text{drive to }0\text{ by back-solve}}
+  + \underbrace{\abs{g_{j+1}}^2}_{\text{the residual}}.
+\end{equation}
+The minimizer kills the first term, and the second term---the magnitude of the rotated
+right-hand side's tail---is the residual. That is \cref{eq:gv-free}. The rotation stream,
+built to triangularize the matrix, drags the right-hand side along and concentrates the
+entire un-fittable residual into one entry, where we can read it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the rotated RHS vector g, last entry highlighted as the residual
+  \def\rh{0.5}
+  \node[font=\scriptsize\bfseries, text=simBlue] at (-1.6,0.3) {$\vg = \mat Q_m(\beta\vec e_1)$};
+  \foreach \i/\lbl in {0/{g_0},1/{g_1},2/{\vdots},3/{g_m}}{
+    \draw[simGray!45] (0,-\i*\rh) rectangle ++(0.9,-\rh);
+    \node[font=\scriptsize] at (0.45,-\i*\rh-0.5*\rh) {$\lbl$};
+  }
+  % the residual entry g_{j+1}
+  \draw[simRust, very thick] (0,-4*\rh) rectangle ++(0.9,-\rh);
+  \fill[simBgRust] (0,-4*\rh) rectangle ++(0.9,-\rh);
+  \draw[simRust, very thick] (0,-4*\rh) rectangle ++(0.9,-\rh);
+  \node[font=\scriptsize, text=simRust] at (0.45,-4*\rh-0.5*\rh) {$g_{j+1}$};
+  % brace + label
+  \draw[decorate, decoration={brace, amplitude=4pt}, simBlue]
+    (1.05,-0) -- (1.05,-4*\rh) node[midway, right=3pt, font=\scriptsize, text=simBlue, align=left]
+    {fitted part:\\driven to $0$\\by back-solve};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simRust]
+    (-0.05,-4*\rh) -- (-0.05,-5*\rh);
+  \node[font=\scriptsize, text=simRust, anchor=east, align=right] at (-0.15,-4.5*\rh)
+    {the residual\\$\norm{\vr_m} = |g_{j+1}|$\\\emph{free!}};
+  % the "no Ax needed" annotation
+  \node[extern, minimum width=30mm, align=center] at (5.0,-1.0)
+    {\textbf{not computed:}\\$\vx_m = \vx_0+\mat V_m\vy_m$\\$\mat A\vx_m$, \;$\vb - \mat A\vx_m$};
+  \draw[-{Stealth[length=2mm]}, simGray, densely dotted] (4.0,-2.6) -- (1.4,-2.3);
+  \node[font=\scriptsize\itshape, text=simGray] at (4.6,-2.8) {avoided every step};
+\end{tikzpicture}
+\caption[The residual is a free byproduct]{Reading the residual off the rotated
+right-hand side. After the rotation stream acts on $\vg = \mat Q_m(\beta\vec e_1)$, the
+upper $m$ entries are the fittable part---a back-solve can drive $\norm{\vg_{0:m} -
+\mat R_m\vy}$ to zero---and the single last entry $g_{j+1}$ (rust) is the part no
+choice of $\vy$ can fit. Its magnitude \emph{is} the GMRES residual norm, by
+\cref{eq:gv-split}. The expensive alternative on the right---forming the iterate
+$\vx_m$, multiplying by $\mat A$, and subtracting from $\vb$---is never needed at all.
+The residual is a unitary byproduct of triangularizing the matrix.}
+\label{fig:gv-residual}
+\end{figure}
+
+\begin{keyidea}
+The least-squares residual is a \emph{free byproduct} of the running QR. Each plane
+rotation is orthogonal, so applying the rotation stream to the right-hand side $\beta\,
+\vec e_1$ preserves its norm and concentrates the entire un-fittable component into one
+entry. After the right-hand-side update, the magnitude of that entry, $\abs{g_{j+1}}$,
+\emph{is} the GMRES residual norm $\norm{\beta\,\vec e_1 - \bar{\mat H}_m\vy_m}$---no
+iterate $\vx_m$ formed, no matrix--vector product $\mat A\vx_m$ computed, no residual
+evaluated. This is why GMRES can monitor convergence at essentially zero cost: the
+quantity the convergence test needs falls out of the triangularization the solver was
+already doing.
+\end{keyidea}
+
+\section{The back-solve: the terminal consumer}
+\label{sec:gv-backsolve}
+
+The stream runs every Arnoldi step, cheaply, and tells us when to stop. But it never
+forms the answer. When we finally want the actual coordinate vector $\vy_m$---at
+convergence, or at a restart boundary where GMRES discards the basis and begins
+again---we run the \emph{back-solve} once. The triangularized matrix has made this easy:
+$\mat R_m$ (the leading $m\times m$ block of $\bar{\mat R}_m$) is upper-triangular, so
+$\mat R_m\vy = \vg_{0:m}$ is solved by back-substitution, bottom row up:
+\begin{equation}
+\label{eq:gv-backsub}
+  y_i = \frac{1}{R_{ii}}\!\left(g_i - \sum_{k>i} R_{ik}\,y_k\right),
+  \qquad i = m{-}1, m{-}2, \dots, 0.
+\end{equation}
+Each $y_i$ uses only the $y_k$ already computed below it; the last unknown $y_{m-1} =
+g_{m-1}/R_{m-1,m-1}$ comes first and the rest follow upward. This is an $O(m^2)$ scalar
+solve on the small dense triangle---trivial beside one field-sized matrix--vector
+product. Once $\vy_m$ is in hand, the iterate correction is reconstructed against the
+Arnoldi basis,
+\begin{equation}
+\label{eq:gv-reconstruct}
+  \vx_m = \vx_0 + \mat V_m\,\vy_m = \vx_0 + \sum_{k=0}^{m-1} y_k\,\vv_k,
+\end{equation}
+a single \code{linear\_combination} (\cref{ch:combinators}) over the basis vectors. For
+flexible GMRES (FGMRES), the only change is the basis: the correction is reconstructed
+against the preconditioned basis $\mat Z_m$ rather than $\mat V_m$, so
+$\vx_m = \vx_0 + \mat Z_m\vy_m$. The running-QR stream, the rotations, and the
+back-solve are bit-for-bit identical between GMRES and FGMRES; only the basis the final
+sum reads differs.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % upper-triangular R with back-substitution sweep arrow
+  \def\cw{0.66} \def\rh{0.56}
+  \foreach \c in {0,1,2,3}{\foreach \r in {0,...,3}{
+      \draw[simGray!30] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);}}
+  % shade upper triangle
+  \foreach \c/\minr in {0/0,1/0,2/0,3/0}{
+    \foreach \r in {0,...,\c}{
+      \fill[simBgBlue] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);}}
+  \foreach \c in {0,1,2,3}{\foreach \r in {0,...,3}{
+      \draw[simGray!30] (\c*\cw,-\r*\rh) rectangle ++(\cw,-\rh);}}
+  % diagonal entries
+  \foreach \i in {0,1,2,3}{\node[font=\scriptsize] at (\i*\cw+0.5*\cw,-\i*\rh-0.5*\rh) {$R_{\i\i}$};}
+  \node[font=\scriptsize, text=simGray] at (2.2*\cw,0.30) {$\mat R_m$ (upper-tri)};
+  % RHS vector g
+  \node[font=\scriptsize] at (4.7*\cw,0.30) {$\vg_{0:m}$};
+  \foreach \r in {0,1,2,3}{
+    \draw[simGray!45] (4.4*\cw,-\r*\rh) rectangle ++(0.8*\cw,-\rh);
+    \node[font=\scriptsize] at (4.8*\cw,-\r*\rh-0.5*\rh) {$g_{\r}$};}
+  % y vector
+  \node[font=\scriptsize] at (6.2*\cw,0.30) {$\vy$};
+  \foreach \r in {0,1,2,3}{
+    \draw[simGreen!50] (5.9*\cw,-\r*\rh) rectangle ++(0.8*\cw,-\rh);
+    \node[font=\scriptsize, text=simGreen] at (6.3*\cw,-\r*\rh-0.5*\rh) {$y_{\r}$};}
+  % the bottom-up sweep arrow
+  \draw[-{Stealth[length=2.4mm]}, simRust, very thick] (6.3*\cw,-3.7*\rh) -- (6.3*\cw,-0.2*\rh);
+  \node[font=\scriptsize, text=simRust, anchor=west, align=left] at (7.0*\cw,-2*\rh)
+    {back-substitute\\\emph{bottom row up}:\\$y_{m-1}$ first,\\then sweep up};
+\end{tikzpicture}
+\caption[The back-solve as the terminal consumer]{The back-solve, run once at
+convergence or restart. The triangularized $\mat R_m$ (left, upper-triangular) and the
+fitted part $\vg_{0:m}$ of the rotated right-hand side feed a back-substitution
+(\cref{eq:gv-backsub}) that sweeps from the bottom row upward, computing $y_{m-1}$
+first and each higher $y_i$ from the ones already found. The result $\vy$ (green)
+reconstructs the iterate $\vx_m = \vx_0 + \mat V_m\vy$ via one
+\code{linear\_combination}. This is the stream's terminal \emph{consumer}: it runs
+once per restart cycle, not once per step.}
+\label{fig:gv-backsolve}
+\end{figure}
+
+\subsection{Producer and consumer: two cadences}
+\label{sec:gv-producer-consumer}
+
+The chapter's architecture is a clean split between a streaming \emph{producer} and a
+terminal \emph{consumer}, and the two run at different cadences. The producer is the
+running-QR stream of \cref{sec:gv-stream}: it fires \emph{every Arnoldi step}, consuming
+one column, appending one rotation, and emitting one residual scalar. The consumer is the
+back-solve of \cref{sec:gv-backsolve}: it fires \emph{once per restart cycle}, at the
+moment we actually want the answer. \Cref{fig:gv-prodcons} draws the two cadences
+side by side.
+
+This split is not incidental; it is why the running QR is worth maintaining. If we
+solved the least-squares problem from scratch each step, every step would pay the
+back-solve cost \emph{and} the re-factorization cost. By streaming the factorization and
+deferring the back-solve, each step pays only the cheap incremental rotation
+work---which also happens to hand us the residual for free---and the one back-solve is
+amortized over the whole restart cycle. The producer monitors; the consumer materializes;
+and the convergence test that decides when to call the consumer reads the producer's free
+byproduct.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % producer: a chain of per-step stream updates, each emitting beta
+  \node[font=\small\bfseries, text=simGreen] at (3.0,2.3) {producer: the stream (every step)};
+  \foreach \j/\x in {0/0,1/2.0,2/4.0,3/6.0}{
+    \node[opbox, minimum width=15mm, fill=simBgGreen, draw=simGreen] (u\j) at (\x,1.3)
+      {step \j};
+    \node[font=\scriptsize, text=simRust] at (\x,0.55) {$|g_{j{+}1}|$};
+    \draw[-{Stealth[length=1.6mm]}, simRust] (\x,1.0) -- (\x,0.75);
+  }
+  \foreach \j/\jn in {0/1,1/2,2/3}{
+    \draw[flow, simGreen] (u\j.east) -- (u\jn.west);}
+  \node[font=\scriptsize\itshape, text=simGreen, anchor=west] at (6.9,1.3) {$\dots$};
+  % the convergence test reading the byproduct
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (3.0,0.05)
+    {convergence test reads $|g_{j+1}|$ at every step (free)};
+  % consumer: the back-solve, fired once
+  \node[font=\small\bfseries, text=simBlue] at (3.0,-1.2) {consumer: the back-solve (once at restart)};
+  \node[product, minimum width=24mm] (bs) at (3.0,-2.1)
+    {back-solve $\to \vy_m \to \vx_m$};
+  \draw[-{Stealth[length=2mm]}, simBlue, densely dashed] (u3.south) .. controls +(0,-1.3) and +(1.5,1.0) .. (bs.east)
+    node[midway, right, font=\scriptsize, text=simBlue] {fire \emph{once}};
+\end{tikzpicture}
+\caption[Producer versus consumer: two cadences]{The two cadences of the least-squares
+core. The \emph{producer} (top, green) is the running-QR stream: it runs once per
+Arnoldi step, threading the rotation list forward and emitting the residual $|g_{j+1}|$
+each step, which the convergence test reads for free. The \emph{consumer} (bottom, blue)
+is the back-solve: it fires \emph{once}, at convergence or a restart boundary, to
+materialize $\vy_m$ and reconstruct the iterate $\vx_m$. Streaming the factorization and
+deferring the back-solve is the whole reason the running QR beats re-solving from
+scratch: the per-step cost is cheap, and the one expensive consumer is amortized.}
+\label{fig:gv-prodcons}
+\end{figure}
+
+\section{The whole inner solve, worked}
+\label{sec:gv-worked}
+
+We now run the entire machine on a concrete small problem: two stream steps, the
+residual read off for free, and a back-solve for the answer. This is the GMRES inner
+solve in miniature.
+
+\begin{workedexample}{Streaming QR on a $3\times2$ Hessenberg, with the free residual}{gv-stream}
+Take $\beta = 5$ and the $3\times2$ upper-Hessenberg matrix that Arnoldi might have
+produced after two steps:
+\[
+  \bar{\mat H}_2 = \begin{pmatrix} 3 & 1 \\ 4 & 5 \\ 0 & 12 \end{pmatrix},
+  \qquad \vg^{(0)} = \beta\,\vec e_1 = \begin{pmatrix} 5 \\ 0 \\ 0 \end{pmatrix}.
+\]
+We want $\min_\vy\norm{\beta\vec e_1 - \bar{\mat H}_2\vy}$, and we want the residual for
+free along the way.
+
+\medskip\emph{Step 0 --- the first column} $\vh_0 = (3,4,0)^{\!\top}$.
+There are no stored rotations yet, so the \emph{replay} sub-step is empty. \emph{Generate}
+from the pair $(h_0, h_1) = (3,4)$: this is exactly \cref{wex:gv-generate}, giving
+$(c_0, s_0) = (0.6, 0.8)$ and $r = 5$. \emph{Apply} to the column zeros the
+sub-diagonal: $(3,4)\mapsto(5,0)$, so column 0 of $\mat R$ is $R_{00} = 5$. \emph{Apply
+to the RHS} pair $(g_0, g_1) = (5,0)$:
+\[
+  \begin{pmatrix} 0.6 & 0.8 \\ -0.8 & 0.6 \end{pmatrix}\!\begin{pmatrix} 5 \\ 0 \end{pmatrix}
+  = \begin{pmatrix} 3 \\ -4 \end{pmatrix},
+  \quad\text{so}\quad \vg^{(1)} = (3,\,-4,\,0)^{\!\top}.
+\]
+The residual after one step is $\abs{g_1} = \abs{-4} = 4$. (Not yet converged; carry on.)
+
+\medskip\emph{Step 1 --- the second column} $\vh_1 = (1,5,12)^{\!\top}$.
+Now there \emph{is} a stored rotation, so we \emph{replay} $(c_0,s_0) = (0.6,0.8)$ on the
+top pair $(h_0, h_1) = (1,5)$:
+\[
+  \begin{pmatrix} 0.6 & 0.8 \\ -0.8 & 0.6 \end{pmatrix}\!\begin{pmatrix} 1 \\ 5 \end{pmatrix}
+  = \begin{pmatrix} 0.6 + 4 \\ -0.8 + 3 \end{pmatrix}
+  = \begin{pmatrix} 4.6 \\ 2.2 \end{pmatrix},
+\]
+leaving the replayed column $(4.6,\,2.2,\,12)^{\!\top}$ (the bottom entry $12$ is
+untouched by the replay---rotation 0 only mixes rows 0 and 1). The off-diagonal
+$R_{01} = 4.6$ is now fixed. \emph{Generate} from the new sub-diagonal pair
+$(h_1, h_2) = (2.2, 12)$:
+\[
+\begin{aligned}
+  r &= \sqrt{2.2^2 + 12^2} = \sqrt{4.84 + 144} = \sqrt{148.84} = 12.2,\\
+  c_1 &= \frac{2.2}{12.2} \approx 0.1803,\qquad s_1 = \frac{12}{12.2} \approx 0.9836.
+\end{aligned}
+\]
+\emph{Apply} to the column zeros the sub-diagonal: $(2.2,12)\mapsto(12.2,0)$, so
+$R_{11} = 12.2$. \emph{Apply to the RHS} pair $(g_1, g_2) = (-4, 0)$:
+\[
+  \begin{pmatrix} c_1 & s_1 \\ -s_1 & c_1 \end{pmatrix}\!\begin{pmatrix} -4 \\ 0 \end{pmatrix}
+  = \begin{pmatrix} 0.1803\cdot(-4) \\ -0.9836\cdot(-4) \end{pmatrix}
+  \approx \begin{pmatrix} -0.721 \\ 3.934 \end{pmatrix},
+\]
+so $\vg^{(2)} \approx (3,\,-0.721,\,3.934)^{\!\top}$.
+
+\medskip\emph{Read the residual, free.} The new last entry is
+$\abs{g_2} \approx 3.934$. By \cref{eq:gv-free} this \emph{is} the least-squares
+residual norm $\min_\vy\norm{\beta\vec e_1 - \bar{\mat H}_2\vy}$---and we have computed
+no iterate and no $\mat A\vx$. (Cross-check: the rotations are unitary, so the norm of
+$\vg$ is preserved: $\norm{\vg^{(2)}}^2 \approx 3^2 + 0.721^2 + 3.934^2 \approx 9 +
+0.520 + 15.48 = 25.0 = \beta^2$. The length is conserved, as it must be.)
+
+\medskip\emph{Back-solve for} $\vy$. The fitted part is the $2\times2$ triangular system
+\[
+  \mat R_2 = \begin{pmatrix} 5 & 4.6 \\ 0 & 12.2 \end{pmatrix},
+  \qquad \vg_{0:2} = \begin{pmatrix} 3 \\ -0.721 \end{pmatrix}.
+\]
+Back-substitute bottom-up (\cref{eq:gv-backsub}). The last unknown first:
+\[
+  y_1 = \frac{g_1}{R_{11}} = \frac{-0.721}{12.2} \approx -0.0591.
+\]
+Then sweep up:
+\[
+  y_0 = \frac{1}{R_{00}}\big(g_0 - R_{01}\,y_1\big)
+      = \frac{1}{5}\big(3 - 4.6\cdot(-0.0591)\big)
+      = \frac{1}{5}\big(3 + 0.272\big) \approx 0.654.
+\]
+So $\vy_2 \approx (0.654,\,-0.0591)^{\!\top}$, and the GMRES iterate is $\vx_2 = \vx_0 +
+y_0\,\vv_1 + y_1\,\vv_2$---one \code{linear\_combination} over the two Arnoldi basis
+vectors. The residual we read off for free, $\approx 3.934$, is the norm we would
+measure if we formed that $\vx_2$ and computed $\norm{\vb - \mat A\vx_2}$---but we never
+had to.
+\end{workedexample}
+
+\Cref{wex:gv-stream} is the entire GMRES inner solve at $m=2$: two stream steps building
+$\mat R$ one column at a time, the residual read off the rotated right-hand side without
+any field-sized work, and a single back-solve producing the coordinates. Scale $m$ from
+$2$ to $40$ and nothing changes but the size of the small triangle; the cost of the
+field-sized operations---the Arnoldi matrix--vector products of \cref{ch:orthog}---lives
+entirely outside this chapter.
+
+\section{Where this sits in the machine}
+\label{sec:gv-context}
+
+It is worth placing the running QR in the larger GMRES picture one last time. The Arnoldi
+process of \cref{ch:orthog} is the \emph{expensive} part: each step does a field-sized
+matrix--vector product $\mat A\vv_k$ and orthogonalizes against the basis, both $O(N)$ or
+worse. The least-squares core of this chapter is the \emph{cheap} part: it works only on
+the small dense Hessenberg and the small right-hand side, $O(m)$ scalars per step. The two
+interlock once per iteration---Arnoldi hands the running QR a new column, the running QR
+hands back a residual norm that decides whether Arnoldi runs again---and at the end the
+back-solve crosses back into field space exactly once, to reconstruct $\vx_m$ from the
+basis. The producer monitors cheaply; the consumer materializes rarely; and the residual,
+the one quantity GMRES most needs and would otherwise pay dearly for, falls out of the
+factorization for nothing. That free residual is the elegant heart of the method, and it
+is why GMRES, despite its appetite for memory, remains the workhorse of \cref{ch:gmres}.
+
+\summarysection
+GMRES needs, at each step $m$, the solution of a small upper-Hessenberg least-squares
+problem $\min_\vy\norm{\beta\,\vec e_1 - \bar{\mat H}_m\vy}$. Rather than re-factor from
+scratch, the solver maintains a \emph{running QR} factorization, updated one column at a
+time by a stream of $2\times2$ Givens (plane) rotations. A Givens rotation $G(c,s)$ with
+$c = a/r$, $s = b/r$, $r = \sqrt{a^2+b^2}$ zeros one sub-diagonal entry; production code
+computes $r$ by the scaled, overflow-safe formula. The stream processes each arriving
+column in four sub-steps---\emph{replay} the stored rotations, \emph{generate} a new one,
+\emph{apply} it to the column, \emph{apply} it to the right-hand side---and is exactly a
+\code{foldl} over columns, with the rotation list as the growing carry; the replay must
+precede the generate, because plane rotations do not commute. The decisive payoff: after
+the right-hand-side update, the magnitude of its new last entry $\abs{g_{j+1}}$ \emph{is}
+the GMRES residual norm, a free byproduct of unitarity---no iterate, no $\mat A\vx$, no
+residual evaluation. The back-solve, run once per restart cycle, solves the small
+triangular system by back-substitution and reconstructs $\vx_m = \vx_0 + \mat V_m\vy$
+(or $\mat Z_m\vy$ for FGMRES) by one \code{linear\_combination}. The stream is a
+streaming producer running every step; the back-solve is a terminal consumer running
+once.
+
+\furtherreading
+The running-QR-via-Givens implementation of GMRES is treated in
+Saad~\citep{saad2003}, \S6.5.3, which is the closest reference to the stream as Palace
+realizes it, including the free residual. The Givens rotation itself, its stable
+generation, and its use in QR factorization are in Golub \& Van
+Loan~\citep{golubvanloan2013}, \S5.1 (rotations) and \S5.2 (QR); the overflow-safe scaled
+generation follows the LAPACK convention discussed there. Trefethen \&
+Bau~\citep{trefethenbau1997}, Lectures 10 and 35, give an unusually clear geometric
+account of orthogonal triangularization and of GMRES as residual minimization over a
+Krylov subspace. The complex-arithmetic conventions and the precise scaled formula are
+collected in \cref{app:numerics}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \emph{Generate by hand.} Compute the Givens rotation $(c,s)$ that zeros the
+  second component of $(a,b) = (5,12)$. Give $r$, $c$, $s$, verify $c^2+s^2=1$, and check
+  that applying $G(c,s)$ to $(5,12)$ yields $(13,0)$.
+  \item \emph{Orthogonality preserves length.} Show directly from \cref{eq:gv-matrix}
+  that $G(c,s)$ is orthogonal ($G^{\!\top}G = I$) whenever $c^2+s^2=1$, and conclude that
+  $\norm{G\vu} = \norm{\vu}$ for every 2-vector $\vu$. Where in the chapter is this fact
+  the reason the residual is free?
+  \item \emph{Why scale.} In double precision the overflow threshold is about
+  $1.8\times10^{308}$. Take $a = b = 10^{200}$. Show that the literal $r=\sqrt{a^2+b^2}$
+  overflows (compute $a^2$), while the scaled formula \eqref{eq:gv-scaled} returns the
+  correct finite $r = 10^{200}\sqrt2$. By how large a factor does $a^2$ exceed the
+  threshold?
+  \item \emph{Replay order matters.} In \cref{wex:gv-stream}, redo step 1 but
+  \emph{skip} the replay of $(c_0,s_0)$ and generate the new rotation directly from the
+  raw column $(1,5,12)$. Show that the resulting $\mat R$ is no longer the QR factor of
+  $\bar{\mat H}_2$ (e.g.\ the residual you would read off no longer matches the true
+  least-squares residual). Explain in one sentence which load-bearing invariant you
+  violated.
+  \item \emph{Read the residual.} A GMRES run reports, after its rotation stream at step
+  $m$, a rotated right-hand side whose last entry is $g_{m} = -1.5\times10^{-7}$ with
+  $\beta = 2.0$. What is the current relative residual $\norm{\vr_m}/\norm{\vb}$
+  (assume $\vx_0=0$ so $\beta=\norm{\vb}$)? Would a tolerance of $10^{-6}$ declare
+  convergence? Note that you answered this without forming $\vx_m$.
+  \item \emph{Back-solve.} Given $\mat R_2 = \begin{psmallmatrix} 2 & 1 \\ 0 & 4
+  \end{psmallmatrix}$ and the fitted right-hand side $\vg_{0:2} = (6, 8)^{\!\top}$, solve
+  $\mat R_2\vy = \vg_{0:2}$ by the back-substitution of \cref{eq:gv-backsub}. Which
+  unknown do you compute first, and why?
+  \item \emph{The fold made explicit.} Write \code{ls\_update\_column} as a fold step
+  $st' = \code{step}(st, \vh)$ and identify, for the running QR, (a) the carry $st$,
+  (b) the per-element input $\vh$, and (c) the part of the carry that \emph{grows} with
+  each step. Why does the presence of the replay sub-step force this to be a
+  \code{foldl} (a chain) rather than a \code{map} (an independent fan-out)? Refer to the
+  map/fold split of \cref{ch:combinators}.
+  \item \emph{Producer versus consumer.} The stream runs every Arnoldi step and the
+  back-solve runs once per restart cycle. If a GMRES run takes $40$ steps before a
+  restart, how many times does each fire? Explain why moving the back-solve inside the
+  per-step loop (so it fires every step) would be correct but wasteful, and estimate the
+  factor of extra back-solve work it would incur.
+\end{enumerate}

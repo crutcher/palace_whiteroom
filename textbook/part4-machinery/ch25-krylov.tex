@@ -1,0 +1,1094 @@
+\chapter{Sparse Linear Systems and Krylov Subspaces}
+\label{ch:krylov}
+
+\chapterorient{Part~II handed us a linear system: discretize the weak form and
+out comes $\mat{A}\vx=\vb$, with $\mat{A}$ enormous and almost entirely zeros.
+Part~III handed us the machinery to run a loop without mutating anything, and the
+insight that a solver is just an operator you apply. This chapter is where the two
+meet. We ask why nobody solves a system this large by Gaussian elimination, why
+the winning strategy instead builds the answer out of repeated \emph{applications}
+of the operator---and why that is exactly the one thing the matrix-free operator of
+\cref{ch:matrixfree} knows how to do. We meet the \emph{Krylov subspace}, the
+nested ladder of approximations every method in Part~IV climbs; we isolate the
+single \emph{step kernel} every Krylov method shares---one operator apply, a few
+inner products, a few vector updates---and we read the whole solve as an
+\code{iterate\_while} fold (\cref{ch:fold}) that produces a constructed operator
+(\cref{ch:operators}): an approximate inverse you hold and apply. By the end you
+will be able to place CG, GMRES, and their kin as specializations of one kernel,
+and to say precisely which laws a solve obeys and which it deliberately does not.}
+
+\section{The system Part~II built}
+\label{sec:krylov-system}
+
+Every analysis in this book passes through the same middle stage. Assembly
+(\cref{ch:assembly,ch:galerkin}) turns the continuous weak form into a discrete
+linear system
+\[
+  \mat{A}\,\vx \;=\; \vb,
+\]
+where $\vx\in\Real^N$ is the vector of unknown degree-of-freedom coefficients,
+$\vb\in\Real^N$ is the discretized right-hand side, and $\mat{A}\in\Real^{N\times
+N}$ is the assembled operator---the stiffness $\Kop$, the mass $\Mop$, or some
+combination built from them. For the electrostatic and magnetostatic analyses
+$\mat{A}$ is the symmetric positive-definite stiffness operator; for the driven
+analysis it is the complex shifted system $\Kop+i\omega\Cop-\omega^2\Mop$; for a
+single implicit time step of the transient analysis it is again an SPD combination.
+In every case the \emph{shape} of the problem is the same: a large square system
+to be solved for $\vx$.
+
+Two features of this system govern everything that follows, and both come straight
+from the finite-element construction of Part~II.
+
+\paragraph{It is large.} $N$ is the number of degrees of freedom in the
+discretization, and for a three-dimensional device meshed finely enough to
+resolve the fields, $N$ runs from the hundreds of thousands into the tens of
+millions. A production electromagnetic simulation routinely solves systems with
+$N>10^6$. The matrix $\mat{A}$, if we wrote out all its entries, would be an
+$N\times N$ array---$10^{12}$ numbers at $N=10^6$. We will see in a moment that we
+never write it out.
+
+\paragraph{It is sparse.} Here is the saving grace. The basis functions of the
+finite-element method have \emph{local support}: each one is nonzero only on the
+handful of mesh elements touching its node (\cref{ch:refelement}). The matrix entry
+$A_{ij}=a(\phi_j,\phi_i)$ is an integral of a product of basis functions $i$ and
+$j$, and that integral is zero unless the supports of $\phi_i$ and $\phi_j$
+\emph{overlap}---unless nodes $i$ and $j$ share an element. Almost no two nodes do.
+So almost every entry of $\mat{A}$ is exactly zero. Each row has only a small,
+bounded number of nonzeros---a couple of dozen, independent of $N$---set by how
+many neighbors a node has, not by how big the mesh is.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.62\linewidth, height=0.62\linewidth,
+  title={\footnotesize sparsity pattern of $\mat{A}$ ($N=36$, from local support)},
+  title style={yshift=-1mm},
+  xmin=-0.5, xmax=35.5, ymin=-0.5, ymax=35.5,
+  y dir=reverse, axis equal image,
+  xtick=\empty, ytick=\empty,
+  axis line style={simGray},
+  xlabel={\footnotesize column $j$ (node)}, ylabel={\footnotesize row $i$ (node)},
+  label style={font=\footnotesize},
+]
+% banded + local-support sparsity for a 6x6 grid laplacian-like stencil
+\addplot[only marks, mark=square*, mark size=1.7pt, simBlue] coordinates {
+  (0,0)(1,0)(6,0)
+  (0,1)(1,1)(2,1)(7,1)
+  (1,2)(2,2)(3,2)(8,2)
+  (2,3)(3,3)(4,3)(9,3)
+  (3,4)(4,4)(5,4)(10,4)
+  (4,5)(5,5)(11,5)
+  (0,6)(6,6)(7,6)(12,6)
+  (1,7)(6,7)(7,7)(8,7)(13,7)
+  (2,8)(7,8)(8,8)(9,8)(14,8)
+  (3,9)(8,9)(9,9)(10,9)(15,9)
+  (4,10)(9,10)(10,10)(11,10)(16,10)
+  (5,11)(10,11)(11,11)(17,11)
+  (6,12)(12,12)(13,12)(18,12)
+  (7,13)(12,13)(13,13)(14,13)(19,13)
+  (8,14)(13,14)(14,14)(15,14)(20,14)
+  (9,15)(14,15)(15,15)(16,15)(21,15)
+  (10,16)(15,16)(16,16)(17,16)(22,16)
+  (11,17)(16,17)(17,17)(23,17)
+  (12,18)(18,18)(19,18)(24,18)
+  (13,19)(18,19)(19,19)(20,19)(25,19)
+  (14,20)(19,20)(20,20)(21,20)(26,20)
+  (15,21)(20,21)(21,21)(22,21)(27,21)
+  (16,22)(21,22)(22,22)(23,22)(28,22)
+  (17,23)(22,23)(23,23)(29,23)
+  (18,24)(24,24)(25,24)(30,24)
+  (19,25)(24,25)(25,25)(26,25)(31,25)
+  (20,26)(25,26)(26,26)(27,26)(32,26)
+  (21,27)(26,27)(27,27)(28,27)(33,27)
+  (22,28)(27,28)(28,28)(29,28)(34,28)
+  (23,29)(28,29)(29,29)(35,29)
+  (24,30)(30,30)(31,30)
+  (25,31)(30,31)(31,31)(32,31)
+  (26,32)(31,32)(32,32)(33,32)
+  (27,33)(32,33)(33,33)(34,33)
+  (28,34)(33,34)(34,34)(35,34)
+  (29,35)(34,35)(35,35)
+};
+\end{axis}
+\end{tikzpicture}
+\caption[Sparsity from local support]{The sparsity pattern of the assembled
+operator $\mat{A}$ for a small structured mesh (each marked cell is a nonzero
+entry; blanks are exact zeros). The pattern is a direct fingerprint of the mesh
+connectivity: $A_{ij}\neq0$ only when basis functions $i$ and $j$ share an
+element, which happens only for neighboring nodes (\cref{ch:refelement}). The
+diagonal and a few near-diagonal bands carry the weight; the vast off-diagonal
+plain is zero. Each row holds a bounded number of nonzeros regardless of $N$, so
+the count of stored numbers grows like $O(N)$, not $O(N^2)$. This single
+structural fact is what makes solving a million-unknown system possible at all.}
+\label{fig:krylov-sparsity}
+\end{figure}
+
+\Cref{fig:krylov-sparsity} draws the pattern for a small structured mesh. The
+nonzeros cluster on the diagonal and a few neighboring bands---the fingerprint of
+the mesh's connectivity---and everything else is blank. The number of \emph{stored}
+numbers is the number of nonzeros, which is $O(N)$: a constant number per row,
+times $N$ rows. A million-unknown operator that would need $10^{12}$ entries dense
+needs only a few times $10^7$ stored sparse. Sparsity is the only reason a problem
+this large is tractable at all.
+
+\begin{physicsbox}
+The sparsity is not an accident of clever bookkeeping---it is the discrete shadow
+of \emph{locality} in the physics. Maxwell's equations are local: the field at a
+point is coupled directly only to the field in its immediate neighborhood, through
+derivatives. The finite-element basis inherits that locality as compact support,
+and the assembled operator inherits it as sparsity. A dense row in $\mat{A}$ would
+mean a degree of freedom coupled directly to every other---a nonlocal physics the
+weak form does not have. Sparsity is locality, written as a matrix.
+\end{physicsbox}
+
+\section{Why not just factor it?}
+\label{sec:krylov-direct}
+
+A first linear-algebra course solves $\mat{A}\vx=\vb$ by \emph{Gaussian
+elimination}: reduce $\mat{A}$ to triangular form by row operations, then back-
+substitute. Packaged as a reusable object this is the $LU$ factorization,
+$\mat{A}=LU$ with $L$ lower- and $U$ upper-triangular; for the SPD systems of
+electrostatics it specializes to the Cholesky factorization $\mat{A}=LL^{\mathsf
+T}$. Once $L$ and $U$ are in hand, each solve is two cheap triangular sweeps. These
+are the \emph{direct} methods: in exact arithmetic they produce the exact solution
+in a finite, predetermined number of operations. Why not simply use one?
+
+The answer is \emph{fill-in}, and it is the central fact that pushes large
+finite-element solves away from direct methods. When elimination clears the entries
+below a pivot, it adds multiples of the pivot row to the rows beneath. Those
+additions create nonzeros where $\mat{A}$ had exact zeros: an entry $A_{ij}=0$ that
+sits ``downstream'' of two nonzeros in the same elimination step becomes nonzero in
+$U$. The factors $L$ and $U$ are therefore \emph{denser} than $\mat{A}$---often
+dramatically so. A matrix with $O(N)$ nonzeros can have factors with
+$O(N^{4/3})$, $O(N^{3/2})$, or worse nonzeros in three dimensions, and the
+factorization work climbs faster still. For a 3-D mesh, sparse Cholesky typically
+costs about $O(N^2)$ arithmetic and produces factors of about $O(N^{4/3})$
+nonzeros---and a dense factorization, ignoring sparsity entirely, costs the
+textbook $O(N^3)$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.86\linewidth, height=62mm,
+  xlabel={problem size $N$ (degrees of freedom)},
+  ylabel={work (arithmetic operations)},
+  xmode=log, ymode=log,
+  xmin=1e3, xmax=1e7, ymin=1e3, ymax=1e15,
+  xtick={1e3,1e4,1e5,1e6,1e7},
+  ytick={1e3,1e6,1e9,1e12,1e15},
+  legend pos=north west, legend cell align=left,
+  grid=both, grid style={simGray!18},
+  tick label style={font=\footnotesize}, label style={font=\small},
+  legend style={font=\footnotesize},
+]
+% dense direct  O(N^3)
+\addplot[simRust, very thick, mark=*, mark size=1.4pt, domain=1e3:1e7, samples=20]
+  {x^3};
+\addlegendentry{dense direct $\;O(N^3)$}
+% sparse direct  ~ O(N^2)  (3-D fill-in)
+\addplot[simGold, very thick, dashed, mark=triangle*, mark size=1.8pt, domain=1e3:1e7, samples=20]
+  {x^2};
+\addlegendentry{sparse direct $\;\sim O(N^2)$ (3-D)}
+% iterative  preconditioned ~ near-linear
+\addplot[simBlue, very thick, mark=square*, mark size=1.6pt, domain=1e3:1e7, samples=20]
+  {60*x^1.16};
+\addlegendentry{iterative (preconditioned) $\;\sim O(N^{1.16})$}
+\end{axis}
+\end{tikzpicture}
+\caption[Direct versus iterative cost]{Work versus problem size $N$, on log--log
+axes, for the three strategies. A \emph{dense} direct solve costs $O(N^3)$ and is
+out of the question past a few thousand unknowns. A \emph{sparse} direct solve
+exploits the sparsity of \cref{fig:krylov-sparsity} but still pays for fill-in,
+costing about $O(N^2)$ in 3-D---tractable to perhaps $10^5$ unknowns, then
+prohibitive. A well-\emph{preconditioned iterative} solve (Part~IV's subject)
+costs close to $O(N)$ per solve: a bounded number of iterations, each doing $O(N)$
+work through one sparse operator apply. The curves cross early; beyond a modest
+size the iterative method is not merely faster, it is the only one that finishes.}
+\label{fig:krylov-cost}
+\end{figure}
+
+\Cref{fig:krylov-cost} plots the three regimes. The dense $O(N^3)$ curve leaves
+the chart almost immediately. Sparse direct, at roughly $O(N^2)$ in three
+dimensions, survives to perhaps $10^5$ unknowns before fill-in makes both its
+memory and its arithmetic unaffordable. The iterative curve---the subject of the
+rest of Part~IV---grows close to linearly in $N$ when the iteration is well
+preconditioned (\cref{ch:precond,ch:multigrid}): a bounded number of steps, each
+costing one sparse operator apply at $O(N)$. The crossover comes early, and on the
+far side of it the iterative method is not just the faster choice; for a
+ten-million-unknown 3-D solve it is the \emph{only} choice that fits in memory and
+finishes in time.
+
+\begin{notationbox}
+Direct methods are not banished from the simulator. They reappear, deliberately,
+as \emph{components inside} iterative solves: a sparse direct factorization makes an
+excellent preconditioner on a coarse problem (\cref{ch:precond}), and the coarsest
+level of a multigrid hierarchy is often solved directly (\cref{ch:multigrid}). The
+claim of this section is narrower and sharper: do not solve the \emph{full}
+fine-scale system directly. Use a direct method only where the problem has been
+made small enough that fill-in no longer bites.
+\end{notationbox}
+
+\subsection{What an iterative method asks of the operator}
+\label{sec:krylov-action}
+
+There is a second reason the iterative route wins, and it is the one that ties this
+chapter back to \cref{ch:matrixfree}. A direct method must \emph{read the entries}
+of $\mat{A}$: elimination operates on $A_{ij}$ one at a time. An iterative method
+does not. Look ahead to any solver in Part~IV---conjugate gradients
+(\cref{ch:cg}), GMRES (\cref{ch:gmres})---and watch what it does with $\mat{A}$. It
+forms inner products of vectors, it takes linear combinations of vectors, it
+checks norms. The \emph{only} way it ever touches $\mat{A}$ is through one
+operation: given a vector $\vv$, produce the vector $\mat{A}\vv$. It never asks for
+an entry $A_{ij}$, never asks for a row or a column, never inspects the sparsity
+pattern. It needs the operator's \emph{action}, and nothing else:
+\[
+  \vv \;\longmapsto\; \mat{A}\vv .
+\]
+
+This is precisely the interface \cref{ch:matrixfree} built. The matrix-free
+operator never stores $\mat{A}$; it computes $\mat{A}\vv$ on demand as a short
+chain of element-local tensor contractions---gather, evaluate, weight, integrate,
+scatter. An iterative solver is the perfect consumer of that interface: it asks for
+$\mat{A}\vv$, the matrix-free operator computes it, and neither ever needs the
+assembled array to exist. The two ideas were built for each other. A direct method
+\emph{cannot} use a matrix-free operator---it needs the entries elimination
+operates on---which is one more reason direct methods do not scale to the
+matrix-free, high-order, accelerator-bound regime this book targets.
+
+\begin{keyidea}
+An iterative solver needs only the operator's \emph{action}, $\vv\mapsto\mat{A}\vv$
+(and, with preconditioning, $\vr\mapsto\mat{M}^{-1}\vr$)---never the entries of
+$\mat{A}$. This is the licence for the whole of Part~IV. It means the solver
+composes directly with the matrix-free operator of \cref{ch:matrixfree}, which
+supplies exactly that action and never forms the matrix; and it is why the cost of
+a solve is counted in \emph{operator applies}, the one expensive thing each step
+does. \emph{One apply per step} is the cost invariant the rest of the chapter makes
+precise.
+\end{keyidea}
+
+\section{The Krylov subspace}
+\label{sec:krylov-subspace}
+
+If all we may do is apply $\mat{A}$ to vectors, what can we build? Start from the
+right-hand side $\vb$ (or, more generally, from the initial residual
+$\vr_0=\vb-\mat{A}\vx_0$). Apply $\mat{A}$ and you get $\mat{A}\vb$. Apply again:
+$\mat{A}^2\vb$. Each application is one matrix-free action; after $m-1$ of them you
+hold the family
+\[
+  \vb,\quad \mat{A}\vb,\quad \mat{A}^2\vb,\quad \dots,\quad \mat{A}^{m-1}\vb .
+\]
+The space these vectors span is the \emph{Krylov subspace} of dimension $m$.
+
+\begin{definition}[Krylov subspace]
+\label{def:krylov}
+For a square operator $\mat{A}\in\Real^{N\times N}$ and a nonzero vector
+$\vb\in\Real^N$, the $m$-th \emph{Krylov subspace} is
+\[
+  \mathcal{K}_m(\mat{A},\vb)
+   \;=\; \operatorname{span}\bigl\{\,\vb,\ \mat{A}\vb,\ \mat{A}^2\vb,\ \dots,\
+   \mat{A}^{m-1}\vb\,\bigr\}
+   \;\subseteq\; \Real^N .
+\]
+The spanning vectors $\vb,\mat{A}\vb,\dots$ are the \emph{Krylov sequence}; each
+new one costs exactly one application of the operator's action.
+\end{definition}
+
+A Krylov method builds its approximate solution \emph{out of} this subspace. At
+step $m$ it picks the vector $\vx_m\in\vx_0+\mathcal{K}_m(\mat{A},\vr_0)$ that is
+``best'' by some criterion the particular method chooses---minimizing the residual
+norm (GMRES, \cref{ch:gmres}), minimizing the $\mat{A}$-norm of the error (CG,
+\cref{ch:cg}). The subspaces nest,
+\[
+  \mathcal{K}_1 \subseteq \mathcal{K}_2 \subseteq \mathcal{K}_3 \subseteq \cdots,
+\]
+because each is the previous one plus one more power of $\mat{A}$. So the
+approximation can only improve as $m$ grows: a best-in-$\mathcal{K}_{m+1}$ vector
+is at least as good as the best-in-$\mathcal{K}_m$ vector, since the smaller
+subspace sits inside the larger. The method climbs this ladder of nested
+subspaces, one operator apply per rung, until the residual is small enough to stop.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % nested subspaces as nested ellipses, with the true solution as a star
+  \draw[draw=simBlue, fill=simBgBlue, thick] (0,0) ellipse (4.1 and 2.5);
+  \draw[draw=simTeal, fill=simBgGreen, thick] (-0.5,-0.1) ellipse (2.9 and 1.75);
+  \draw[draw=simGold, fill=simBgGold, thick] (-1.0,-0.15) ellipse (1.7 and 1.05);
+  % labels for the subspaces
+  \node[font=\scriptsize\bfseries, simGold!70!black] at (-1.0,-0.15) {$\mathcal{K}_1$};
+  \node[font=\scriptsize\bfseries, simTeal] at (1.35,0.95) {$\mathcal{K}_2$};
+  \node[font=\scriptsize\bfseries, simBlue] at (3.0,1.85) {$\mathcal{K}_3$};
+  \node[font=\scriptsize, simGray] at (4.55,2.3) {$\Real^N$};
+  % the true solution
+  \node[star, star points=5, star point ratio=2.3, draw=simRust, fill=simRust,
+        inner sep=1.3pt] (sol) at (2.0,-1.4) {};
+  \node[font=\scriptsize\bfseries, simRust, right=1mm of sol] {$\vx^\star$ (true solution)};
+  % the iterates marching toward it
+  \node[circle, fill=simInk, inner sep=1.2pt] (x1) at (-1.0,-0.15) {};
+  \node[circle, fill=simInk, inner sep=1.2pt] (x2) at (0.5,-0.55) {};
+  \node[circle, fill=simInk, inner sep=1.2pt] (x3) at (1.5,-1.05) {};
+  \node[font=\scriptsize, simInk, above left=0mm and 0mm of x1] {$\vx_1$};
+  \node[font=\scriptsize, simInk, above=0mm of x2] {$\vx_2$};
+  \node[font=\scriptsize, simInk, above right=0mm and 0mm of x3] {$\vx_3$};
+  \draw[flow, shorten >=2pt, shorten <=2pt] (x1)--(x2);
+  \draw[flow, shorten >=2pt, shorten <=2pt] (x2)--(x3);
+  \draw[flow, densely dashed, simRust, shorten >=2pt, shorten <=2pt] (x3)--(sol);
+\end{tikzpicture}
+\caption[The nested Krylov subspaces]{The Krylov subspaces nest,
+$\mathcal{K}_1\subseteq\mathcal{K}_2\subseteq\mathcal{K}_3\subseteq\cdots$, each
+adding one more power of $\mat{A}$ to the span and so growing by (at most) one
+dimension per step. Each costs one operator apply to extend. The method's iterate
+$\vx_m$ is the best approximation to the true solution $\vx^\star$ available within
+$\vx_0+\mathcal{K}_m$; because the subspaces grow, the iterates can only improve,
+marching toward $\vx^\star$ as the ladder climbs. In exact arithmetic the ladder
+reaches $\vx^\star$ exactly once $\mathcal{K}_m$ is large enough to contain
+it---at the latest when $m$ equals the degree of $\mat{A}$'s minimal polynomial
+(\cref{sec:krylov-poly}).}
+\label{fig:krylov-nested}
+\end{figure}
+
+\Cref{fig:krylov-nested} draws the picture: nested subspaces, and inside them a
+sequence of iterates marching toward the true solution $\vx^\star$. The whole of
+Part~IV is variations on how to choose the best iterate in each subspace and how to
+do it cheaply; this section is about why the subspace contains a good answer at all.
+
+\subsection{Why powers of \texorpdfstring{$\mat{A}$}{A} capture the solution}
+\label{sec:krylov-poly}
+
+It is not obvious that repeatedly applying $\mat{A}$ should march toward
+$\mat{A}^{-1}\vb$---applying $\mat{A}$ looks like the opposite of inverting it. The
+reason it works is a fact about polynomials in $\mat{A}$, and it is worth seeing
+because it explains both why Krylov methods converge \emph{and} how fast.
+
+Notice first that any vector in $\mathcal{K}_m(\mat{A},\vb)$ is, by definition, a
+linear combination of $\vb,\mat{A}\vb,\dots,\mat{A}^{m-1}\vb$---that is, it is
+$q(\mat{A})\,\vb$ for some polynomial $q$ of degree at most $m-1$:
+\[
+  \vx_m \in \mathcal{K}_m
+  \quad\Longleftrightarrow\quad
+  \vx_m = q(\mat{A})\,\vb
+  \ \text{ for some } q \text{ with } \deg q \le m-1 .
+\]
+So ``find the best iterate in $\mathcal{K}_m$'' is the same as ``find the best
+degree-$(m-1)$ polynomial $q$ such that $q(\mat{A})\vb\approx\mat{A}^{-1}\vb$.''
+Krylov methods are, under the hood, polynomial approximations of the inverse.
+
+Now the key fact. Every square matrix satisfies a \emph{minimal polynomial}: there
+is a polynomial $p$ of some degree $d\le N$ with $p(\mat{A})=0$. Write
+$p(t)=c_0+c_1t+\dots+c_d t^d$ with $c_0\neq0$ (true when $\mat{A}$ is invertible).
+From $p(\mat{A})=0$ we can solve for the identity:
+\[
+  c_0 I = -\bigl(c_1\mat{A}+\dots+c_d\mat{A}^d\bigr)
+  \;\Longrightarrow\;
+  I = -\tfrac{1}{c_0}\bigl(c_1\mat{A}+\dots+c_d\mat{A}^d\bigr),
+\]
+and multiplying by $\mat{A}^{-1}$ gives the inverse as a \emph{polynomial in
+$\mat{A}$ of degree $d-1$}:
+\[
+  \mat{A}^{-1} \;=\; -\tfrac{1}{c_0}\bigl(c_1 I + c_2\mat{A} + \dots + c_d\mat{A}^{d-1}\bigr).
+\]
+Therefore $\mat{A}^{-1}\vb=-\tfrac{1}{c_0}(c_1\vb+c_2\mat{A}\vb+\dots+c_d\mat{A}^{d-1}\vb)$
+is exactly a vector in $\mathcal{K}_d(\mat{A},\vb)$. The true solution \emph{lives
+inside} a Krylov subspace of dimension $d\le N$. A Krylov method that picks the
+best iterate in each $\mathcal{K}_m$ therefore reaches the exact solution by step
+$d$ at the latest---in exact arithmetic, a finite procedure, no worse than $N$
+steps.
+
+\begin{keyidea}
+A vector in $\mathcal{K}_m(\mat{A},\vb)$ is exactly $q(\mat{A})\vb$ for a polynomial
+$q$ of degree $<m$, so a Krylov method is a polynomial approximation of
+$\mat{A}^{-1}$. The minimal polynomial guarantees $\mat{A}^{-1}\vb$ itself lies in
+$\mathcal{K}_d$ for some $d\le N$: \emph{in exact arithmetic a Krylov method
+terminates with the exact solution in at most $N$ steps}. But $N$ steps would be no
+bargain---the method is useful only because it gets \emph{close} far sooner, and how
+soon is governed by the spectrum of $\mat{A}$ (\cref{sec:krylov-convergence}).
+\end{keyidea}
+
+\subsection{Conditioning and the speed of convergence}
+\label{sec:krylov-convergence}
+
+The polynomial picture also tells us how \emph{fast} a Krylov method converges,
+and the answer is the bridge to preconditioning. The error after $m$ steps is
+controlled by how small a degree-$m$ polynomial $q$ (with $q(0)=1$, the
+normalization the residual forces) can be made on the \emph{eigenvalues} of
+$\mat{A}$. Roughly: the residual at step $m$ is bounded by
+\[
+  \frac{\norm{\vr_m}}{\norm{\vr_0}}
+   \;\le\; \min_{\substack{q,\ \deg q\le m \\ q(0)=1}}\ \max_{\lambda\in\sigma(\mat{A})}\ \abs{q(\lambda)},
+\]
+where $\sigma(\mat{A})$ is the set of eigenvalues. Convergence is fast exactly when
+a low-degree polynomial, pinned to $1$ at the origin, can be made small on the
+whole spectrum.
+
+The consequence is the single most important rule of thumb in iterative solving:
+\emph{a clustered spectrum converges fast; a spread-out spectrum converges slowly.}
+If all the eigenvalues huddle in a tight cluster away from zero, a low-degree
+polynomial can dip small across the whole cluster, and a few steps suffice. If the
+eigenvalues are spread over a wide range---if the \emph{condition number}
+$\kappa=\lambda_{\max}/\lambda_{\min}$ is large---then no low-degree polynomial can
+be small everywhere at once, and convergence crawls. For SPD systems the classic
+bound makes this quantitative: CG reduces the error by a factor that improves like
+$1-2/\sqrt{\kappa}$ per step, so the iteration count scales like $\sqrt{\kappa}$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.86\linewidth, height=60mm,
+  xlabel={iteration $m$},
+  ylabel={relative residual $\norm{\vr_m}/\norm{\vr_0}$},
+  ymode=log,
+  xmin=0, xmax=60, ymin=1e-10, ymax=2,
+  xtick={0,10,20,30,40,50,60},
+  ytick={1e0,1e-2,1e-4,1e-6,1e-8,1e-10},
+  legend pos=north east, legend cell align=left,
+  grid=both, grid style={simGray!18},
+  tick label style={font=\footnotesize}, label style={font=\small},
+  legend style={font=\footnotesize},
+]
+% clustered spectrum: fast linear-on-log decay
+\addplot[simBlue, very thick, mark=square*, mark size=1.3pt, domain=0:18, samples=19]
+  {exp(-1.15*x)};
+\addlegendentry{clustered spectrum (small $\kappa$)}
+% spread spectrum: slow decay
+\addplot[simRust, very thick, mark=*, mark size=1.3pt, domain=0:60, samples=31]
+  {exp(-0.35*x)};
+\addlegendentry{spread spectrum (large $\kappa$)}
+% tolerance line
+\addplot[simGray, densely dashed, domain=0:60, samples=2] {1e-8};
+\addlegendentry{tolerance}
+\end{axis}
+\end{tikzpicture}
+\caption[Convergence depends on the spectrum]{The relative residual versus
+iteration count for two systems of the same size, on a log scale (a straight line
+is geometric decay). When the eigenvalues of $\mat{A}$ are \emph{clustered}
+(condition number small), a low-degree polynomial is small across the whole
+spectrum and the residual plunges---tolerance reached in a handful of steps.
+When the spectrum is \emph{spread} (condition number large), no low-degree
+polynomial can be small everywhere at once and the residual crawls down, taking
+many times as many steps to cross the same tolerance. Preconditioning
+(\cref{ch:precond}) is precisely the art of replacing $\mat{A}$ with an
+equivalent system whose spectrum is clustered---of moving a problem from the slow
+curve onto the fast one.}
+\label{fig:krylov-convergence}
+\end{figure}
+
+\Cref{fig:krylov-convergence} shows the two regimes: the same tolerance, reached in
+a handful of steps on a clustered spectrum and only after a long crawl on a spread
+one. This is why the bare Krylov method of this chapter is never the whole story.
+The method itself is fixed; what we can change is the \emph{spectrum} of the system
+it sees. \emph{Preconditioning} (\cref{ch:precond,ch:multigrid}) replaces
+$\mat{A}\vx=\vb$ with an equivalent system $\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$
+whose operator $\mat{M}^{-1}\mat{A}$ has a clustered spectrum---moving the problem
+from the slow curve onto the fast one. The Krylov method supplies the iteration;
+the preconditioner supplies the conditioning; and together they reach close to
+$O(N)$ work. That is the whole arc of Part~IV, and this chapter is its foundation.
+
+\section{The shared step kernel}
+\label{sec:krylov-kernel}
+
+We turn now from \emph{why} Krylov methods work to \emph{what} they all do, step by
+step. Here is the observation that organizes the rest of Part~IV: every Krylov
+method---CG, GMRES, FGMRES, MINRES, BiCGStab---has an inner step of the \emph{same
+shape}. Strip away the method-specific algebra and the per-step kernel is always
+the same five-part sequence:
+\begin{enumerate}[nosep]
+  \item \textbf{one operator apply}: form $\mat{A}\vp$ (the matrix-free action,
+  \cref{ch:matrixfree})---and, if preconditioned, one preconditioner apply
+  $\mat{M}^{-1}\vr$;
+  \item \textbf{a few inner products and norms}: $\inner{\cdot}{\cdot}$ and
+  $\norm{\cdot}$ to form the step's scalar coefficients and measure the residual;
+  \item \textbf{a few vector updates} (\emph{axpy}): $\vy\leftarrow\alpha\vx+\vy$,
+  combining vectors with the freshly computed scalars;
+  \item \textbf{an orthogonalization} (for the basis-building methods): make the new
+  direction orthogonal to the previous ones (\cref{ch:orthog});
+  \item \textbf{a state update}: fold the new iterate, residual, and scalars into
+  the carry, and record the residual norm for the convergence test.
+\end{enumerate}
+We call this kernel \code{krylov\_step}. A particular method---CG, GMRES---is a
+particular \emph{specialization} of it: a choice of which scalars, which updates,
+whether the orthogonalization stage runs. But the skeleton is fixed, and one fact
+about it is load-bearing.
+
+\begin{keyidea}
+Every Krylov method shares one step kernel, \code{krylov\_step}: one operator apply,
+a few inner products and norms, a few \emph{axpy} updates, an optional
+orthogonalization, and a state update. A specific method is a specialization---it
+binds the scalars and the updates---but the shape is invariant. The \emph{cost
+invariant} is the heart of it: \emph{exactly one operator apply per step}. Since the
+apply is the one expensive operation (it touches all $N$ unknowns through the sparse
+operator; everything else is cheap vector arithmetic), counting applies counts the
+cost of the solve, and ``one apply per step'' is the budget every Krylov method
+spends.
+\end{keyidea}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 10mm]
+  % input carry
+  \node[data, text width=20mm] (in) {carry $K$\\\footnotesize $\vx,\vr,\vp,\dots$};
+  % stage 1: operator apply (the one expensive op)
+  \node[stage, right=of in, text width=20mm, fill=simBgRust, draw=simRust] (apply)
+    {\footnotesize \textbf{apply}\\$\vw=\mat{A}\vp$\\\scriptsize the one $O(N)$ op};
+  % stage 2: inner products
+  \node[opbox, right=of apply, text width=20mm] (dots)
+    {\footnotesize \textbf{dots/norms}\\$\inner{\vp}{\vw},\ \norm{\vr}$};
+  % stage 3: orthogonalization (optional)
+  \node[extern, right=of dots, text width=20mm] (orth)
+    {\footnotesize \textbf{orthog.}\\\scriptsize (GMRES only)};
+  % stage 4: axpy updates
+  \node[opbox, right=of orth, text width=20mm] (axpy)
+    {\footnotesize \textbf{updates}\\\scriptsize \emph{axpy}: $\vx,\vr,\vp$};
+  % output carry
+  \node[data, right=of axpy, text width=20mm] (out) {carry $K'$\\\footnotesize $+$ residual};
+  \draw[flow] (in) -- (apply);
+  \draw[flow] (apply) -- node[above,font=\scriptsize]{$\vw$} (dots);
+  \draw[flow] (dots) -- node[above,font=\scriptsize]{scalars} (orth);
+  \draw[flow] (orth) -- (axpy);
+  \draw[flow] (axpy) -- (out);
+  % residual peels off downward for the convergence test
+  \node[product, below=10mm of axpy, text width=24mm] (res)
+    {\footnotesize residual norm\\\scriptsize $\to$ convergence test};
+  \draw[refedge] (axpy.south) -- (res.north);
+  % the cost-invariant brace under the apply
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simRust]
+    ([yshift=-2mm]apply.south west) -- ([yshift=-2mm]apply.south east)
+    node[midway, below=4pt, font=\scriptsize, simRust, align=center]
+    {one apply\\per step};
+\end{tikzpicture}
+\caption[The shared Krylov step kernel]{The kernel \code{krylov\_step} every Krylov
+method shares, as a dataflow. A carry $K$ (the working vectors $\vx,\vr,\vp$ and
+scalars) enters; the \textbf{one operator apply} $\vw=\mat{A}\vp$ (rust, the single
+$O(N)$ operation) runs once; a few \textbf{inner products and norms} form the step's
+scalars; the basis-building methods run an \textbf{orthogonalization}
+(\cref{ch:orthog}; absent in CG, dashed); a few \emph{axpy} \textbf{updates} combine
+vectors with the new scalars into the next carry $K'$; and the residual norm peels
+off for the convergence test. The method (CG, GMRES, \dots) chooses the scalars and
+which updates run; the \emph{shape}---and the one-apply-per-step cost---is fixed.}
+\label{fig:krylov-kernel}
+\end{figure}
+
+\Cref{fig:krylov-kernel} draws the kernel as a dataflow. Note what is and is not
+expensive. The operator apply touches all $N$ unknowns through the sparse operator;
+it is the $O(N)$ operation, and it is the only one. The inner products and norms are
+$O(N)$ reductions but with tiny constants; the \emph{axpy} updates are $O(N)$
+elementwise; the orthogonalization, when present, costs a handful of inner products
+against the existing basis. Everything but the apply is cheap vector arithmetic. So
+the apply is the currency in which we price a solve, and the kernel spends exactly
+one unit of it per step. When the apply is matrix-free (\cref{ch:matrixfree}), that
+one apply is itself a chain of element-local contractions---but it is still one
+apply, and the cost invariant holds.
+
+\section{The solver as a fold, and as an operator}
+\label{sec:krylov-fold}
+
+We have the kernel; now we wrap a loop around it. The outer structure of a Krylov
+solve is exactly the \code{iterate\_while} fold of \cref{ch:fold}: carry the
+solver's working state forward, take one \code{krylov\_step} per pass, test a
+convergence predicate, stop when the residual is small enough. There is nothing new
+to invent---the solver is a textbook instance of the combinator the framework
+already built.
+
+Recall the kernel signature from the framework: the value-threaded Krylov step
+maps a carry to the next carry plus a demand-prunable readout,
+\begin{lstlisting}[style=l4style]
+-- one step: thread the working bundle K, the persistent state s; report extras
+krylov_step :: (op, K, s) -> (K', s', outputs)
+\end{lstlisting}
+where \code{op} is the construction-bound operator data (the system operator and
+preconditioner, frozen in; \cref{ch:operators}), \code{K} is the iterate bundle
+(the working vectors and scalars), \code{s} is the persistent solver state (the
+iteration counter, the converged flag, the residual proxy), and \code{outputs} is
+the per-step readout (typically the residual norm) that the trajectory collects.
+Folding this kernel with \code{iterate\_while} is the entire outer loop:
+\begin{lstlisting}[style=l4style]
+-- the Krylov solve IS a fold of the step kernel (schematically)
+solve op K0 s0 =
+  iterate_while
+    { K: K0, s: s0 }                              -- initial carry
+    (\c -> not c.s.converged && c.s.it < max_it)  -- predicate: pure on the carry
+    (\c -> let (K', s', outs) = krylov_step op c.K c.s
+           in { state: { K: K', s: s' }, residual_norm: outs.residual_norm })
+\end{lstlisting}
+The predicate reads only the carry---the converged flag and iteration count it
+carries---exactly as the predicate rule of \cref{sec:predicaterule} demands; the
+residual the step computes is folded into the carry's \code{s} so the \emph{next}
+pass's predicate can read it. The per-step residual norm rides out in the extras and
+into the trajectory, where a convergence monitor reads it when asked---and, by
+demand-driven pruning (\cref{sec:pruning}), is not computed at all when nothing
+reads it. The solver is a fold, and it inherits every property the fold has.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  % carry spine threading SimState + Krylov bundle
+  \node[data, minimum width=16mm, align=center] (c0) at (0,0) {$K_0,s_0$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+        font=\scriptsize] (p0) at (2.1,0) {conv.?};
+  \node[opbox, minimum width=18mm] (st0) at (4.3,0) {\code{krylov\_step}};
+  \node[data, minimum width=16mm, align=center] (c1) at (6.6,0) {$K_1,s_1$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+        font=\scriptsize] (p1) at (8.7,0) {conv.?};
+  \node[opbox, minimum width=18mm] (st1) at (10.9,0) {\code{krylov\_step}};
+  \node[font=\scriptsize, simGray] (more) at (12.6,0) {$\cdots$};
+  \draw[flow] (c0)--(p0);
+  \draw[flow] (p0)-- node[above,font=\scriptsize]{no} (st0);
+  \draw[flow] (st0)-- node[above,font=\scriptsize]{\code{.state}} (c1);
+  \draw[flow] (c1)--(p1);
+  \draw[flow] (p1)-- node[above,font=\scriptsize]{no} (st1);
+  \draw[flow] (st1)-- (more);
+  % converged exits down to the result
+  \node[product, minimum width=22mm] (fin) at (8.7,-2.2)
+    {\code{SolveResult}: $\vx$, converged};
+  \draw[backflow] (p0.south) |- (fin.west);
+  \draw[backflow] (p1.south) -- (fin.north);
+  % residual trajectory peels downward
+  \node[data, fill=simBgGold, draw=simGold, minimum width=40mm] (traj) at (7.7,-1.2)
+    {residual history $[\,r_0,\,r_1,\,\dots\,]$ (pruned if unread)};
+  \draw[refedge] (st0.south) -- (st0.south|-traj.north);
+  \draw[refedge] (st1.south) -- (st1.south|-traj.north);
+\end{tikzpicture}
+\caption[A Krylov solve as an \texttt{iterate\_while} fold]{The outer loop of a
+Krylov solve is the \code{iterate\_while} fold of \cref{ch:fold}. The carry
+threads the solver's state---the iterate bundle $K$ (working vectors and scalars)
+and the persistent state $s$ (iteration counter, converged flag, residual
+proxy)---forward along the top. Before each pass the predicate tests convergence
+on the \emph{current carry} (the \texttt{while} convention, \cref{sec:predicaterule});
+on ``not converged'' a single \code{krylov\_step} runs, emitting the next carry. The
+per-step residual peels downward into the trajectory, where a monitor reads it---or,
+unread, it is pruned (\cref{sec:pruning}). The first ``converged'' exits the loop,
+surfacing the iterate $\vx$ as the \code{SolveResult}. Compare \cref{fig:threaded}:
+this is that figure with ``step'' the Krylov kernel and the carry the solver state.}
+\label{fig:krylov-iterwhile}
+\end{figure}
+
+\Cref{fig:krylov-iterwhile} draws the fold for the Krylov solve specifically---the
+threaded-carry picture of \cref{ch:fold}, with \code{krylov\_step} in the step box
+and the residual history peeling off as the trajectory. The state-threaded picture
+also explains why the carry splits in two (\cref{ch:strata}): the persistent
+state $s$ (counter, flags, the externally visible iterate) is one stratum, and the
+ephemeral iterate bundle $K$ (the workspace vectors, reborn at each restart of a
+restarted method) is another. The fold threads both; their different lifetimes are
+why GMRES's restart logic wraps an \emph{outer} loop around the inner fold rather
+than flattening the two (a fold-merge the non-laws of \cref{sec:laws} forbid, and
+which \cref{ch:gmres} respects).
+
+\subsection{The whole solve is a constructed operator}
+\label{sec:krylov-operator}
+
+Step back from the loop and look at the solve as a single object. It takes a
+right-hand side $\vb$ and returns an approximate solution $\vx\approx\mat{A}^{-1}\vb$.
+That is the signature of an \emph{operator}: vector in, vector out. The entire
+Krylov solve is a \emph{constructed operator} in the exact sense of
+\cref{ch:operators}---built once with its system operator, preconditioner,
+tolerances, and iteration budget baked into immutable internal state, then applied to
+a right-hand side as a pure function. We met this as \code{ksp\_solve}; here is its
+signature.
+
+\begin{lstlisting}[style=l4style]
+-- the solver is a constructed operator: an approximate inverse you apply
+ksp_solve :: (K: Solver[A], b: Tensor[N]) -> SolveResult[N]
+
+SolveResult[N] = {
+  x          : Tensor[N],   -- approximate solution to A . x = b
+  converged  : Bool,        -- did the convergence test pass?
+  iterations : Int,         -- inner Krylov iterations consumed
+  initial_res: Real,        -- initial residual norm
+  final_res  : Real         -- final residual norm
+}
+\end{lstlisting}
+
+The construction-bound value \code{K} carries the system operator \code{A}, an
+optional preconditioner, and the convergence-control parameters; \emph{all} the
+per-method choices---CG versus GMRES versus FGMRES, preconditioner side,
+orthogonalization method---are absorbed into \code{K} at construction
+(\cref{ch:operators}), so the per-call surface $(K,\vb)$ is variant-free. The solve
+is the constructed-operator pattern of \cref{ch:operators} in its most consequential
+instance: $\code{ksp\_solve}(K,\cdot)$ is an \emph{approximate inverse} you hold and
+apply, indistinguishable in form from applying $\mat{A}$ itself. This is exactly the
+\emph{solver-as-operator} move that lets one GMRES drive any preconditioner
+(\cref{ch:operators}): the preconditioner is just another \code{apply}-shaped value
+the kernel calls.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % construction inputs (build-time)
+  \node[data, align=left, text width=26mm] (cfg)
+    {operator $\mat{A}$\\preconditioner\\tolerances,\\iteration cap};
+  \node[stage, minimum width=24mm, minimum height=14mm, right=12mm of cfg] (con)
+    {\textbf{construct}\\[1pt]\footnotesize freeze config,\\absorb method};
+  \draw[flow] (cfg) -- node[above,font=\scriptsize]{once} (con);
+  % the opaque solver-operator value
+  \node[draw=simBlue, fill=simBgBlue, very thick, rounded corners=3pt,
+        minimum width=26mm, minimum height=20mm, right=12mm of con] (op) {};
+  \node[font=\ttfamily\scriptsize, simInk] at (op.north) [yshift=-3.4mm]
+    {ksp\_solve};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (op.center)
+    {$\approx\mat{A}^{-1}$\\(frozen:\\$\mat{A}$, pc,\\tols)};
+  \draw[flow] (con) -- (op);
+  % many applies out
+  \foreach \y/\lbl in {1.0/a, 0.0/b, -1.0/c}{
+    \node[draw=simTeal, fill=simBgGreen, semithick, rounded corners=2pt,
+          minimum width=20mm, minimum height=6mm] (ap\lbl) at ($(op.east)+(2.9,\y)$)
+          {\footnotesize\ttfamily ksp\_solve(K, b)};
+    \draw[flow] (op.east) -- (ap\lbl.west);
+  }
+  \node[font=\scriptsize\itshape, simGray] at ($(op.east)+(2.9,-1.7)$)
+    {many RHS, each a fold inside};
+  % band labels
+  \node[font=\scriptsize\bfseries, simRust] at ($(con)+(0,-1.5)$) {build-time};
+  \node[font=\scriptsize\bfseries, simGreen] at ($(op.east)+(2.9,1.7)$) {run-time};
+\end{tikzpicture}
+\caption[The solve as a constructed operator]{The whole Krylov solve is a
+constructed operator (\cref{ch:operators}). \emph{Construction} (left, build-time,
+once) freezes the system operator $\mat{A}$, the preconditioner, and the
+convergence-control parameters into an opaque value \code{K}, absorbing the choice
+of method along the way. \emph{Application} (right, run-time, many times) feeds a
+right-hand side $\vb$ and runs the \code{iterate\_while} fold of
+\cref{fig:krylov-iterwhile} inside, returning $\vx\approx\mat{A}^{-1}\vb$. The
+solve wears the same \code{apply} interface as the operator it inverts: it is an
+\emph{approximate inverse you apply}, and the fixed-operator map of
+\cref{ch:situating} (electrostatics solving against many right-hand sides) is
+exactly this operator applied repeatedly with $\mat{A}$ hoisted out of the loop.}
+\label{fig:krylov-ksp}
+\end{figure}
+
+\Cref{fig:krylov-ksp} draws it: build once, apply many. This is also the resolution
+of the fixed-operator map from \cref{ch:situating}. Electrostatics solves
+$\Kop\vx_i=\vb_i$ for many right-hand sides against \emph{one} operator; in this
+language, it constructs \code{ksp\_solve} once with $\Kop$ frozen in and applies it to
+each $\vb_i$, hoisting the expensive construction out of the loop. The constructed
+operator \emph{is} the hoist.
+
+\subsection{What the solve guarantees---and what it deliberately does not}
+\label{sec:krylov-laws}
+
+Because the solve is an approximate inverse, it obeys the laws an inverse obeys---in
+the limit of a tight tolerance---and, just as importantly, it pointedly fails to
+obey several laws an \emph{exact} inverse would. Knowing both is what keeps a caller
+from trusting a guarantee the solve does not make. The laws below hold modulo the
+convergence tolerance (equalities in the limit $\text{rel\_tol}\to0$,
+$\text{max\_it}\to\infty$, treating $K$ as the formal map $\vb\mapsto\mat{A}^{-1}\vb$).
+
+\begin{description}[style=nextline, leftmargin=1.4em]
+  \item[Linearity in the right-hand side.] $\code{ksp\_solve}(K,\alpha\vb_1+\beta\vb_2).\vx
+  \approx \alpha\,\code{ksp\_solve}(K,\vb_1).\vx + \beta\,\code{ksp\_solve}(K,\vb_2).\vx$.
+  This is the linearity of $\mat{A}^{-1}$, exact in the formal limit and approximate
+  at finite tolerance (the gap bounded by the condition number). The
+  \emph{statistics} fields are not linear: different right-hand sides take different
+  iteration counts and produce different residual histories.
+  \item[Near-inverse on the right-hand side.] $\code{ksp\_solve}(K,\mat{A}\vx).\vx
+  \approx \vx$: applying the solve to $\mat{A}\vx$ recovers $\vx$ to within the
+  tolerance. This is the defining property---the solve is an approximate
+  $\mat{A}^{-1}$.
+  \item[Zero right-hand side gives zero.] $\code{ksp\_solve}(K,\mathbf{0}).\vx=\mathbf{0}$,
+  exactly, not merely modulo tolerance (the iteration short-circuits on a zero
+  initial residual).
+\end{description}
+
+Now the non-laws---the guarantees the solve refuses to make, every one of them
+load-bearing in the sense of \cref{ch:bigidea}.
+
+\begin{pitfall}
+A Krylov solve is \emph{not} a bit-exact, deterministic function of $(K,\vb)$. Three
+distinct sources of non-determinism are deliberate and must not be ``optimized
+away.''
+\begin{itemize}[nosep]
+  \item \textbf{Reduction-order non-determinism.} The inner products and norms of the
+  kernel are floating-point reductions, and floating-point addition is not
+  associative. Reordering a reduction tree (as a parallel backend will) changes the
+  bit-level scalars, hence the bit-level iterate count and the bit-level $\vx$. The
+  mathematical solution is unchanged; its floating-point realization is not.
+  \item \textbf{Orthogonalization-variant non-determinism.} For the basis-building
+  methods, the orthogonalization choice (modified versus classical Gram--Schmidt,
+  \cref{ch:orthog}) changes the per-step arithmetic and so the bit-level trajectory.
+  Same answer, different bits.
+  \item \textbf{Initial-guess non-determinism.} A warm start and a cold start take
+  different paths through the Krylov subspaces and converge to bit-different $\vx$
+  in different iteration counts. The mathematical solution is the same.
+\end{itemize}
+And the solve does \emph{not} compose exactly with the operator: $\mat{A}\,
+\code{ksp\_solve}(K,\vb).\vx=\vb$ holds only \emph{approximately}, within the
+tolerance, never exactly at finite precision. An algorithm that assumes the residual
+is exactly zero after a solve---some iterative-refinement schemes do---must guard.
+\emph{Convergence depends on conditioning, not on exactness}; the solve is a
+controlled approximation, and its non-determinism is the honest price of running it
+on a parallel, finite-precision machine.
+\end{pitfall}
+
+These non-laws are not defects to be apologized for; they are the truthful contract.
+A Krylov solve is a controlled approximation whose accuracy you dial with a
+tolerance and whose speed you buy with conditioning. Pretending it is an exact,
+deterministic inverse would be convenient and false---and would silently corrupt any
+caller that leaned on the pretense.
+
+\section{Worked examples}
+\label{sec:krylov-wex}
+
+\begin{workedexample}{Building $\mathcal{K}_3(\mat{A},\vb)$ for a $3\times3$ SPD
+system}{krylovsub}
+We build a Krylov subspace explicitly and watch the solution appear inside it. Take
+the small SPD matrix and right-hand side
+\[
+  \mat{A}=\begin{pmatrix}2&1&0\\1&2&1\\0&1&2\end{pmatrix},
+  \qquad
+  \vb=\begin{pmatrix}1\\0\\0\end{pmatrix}.
+\]
+$\mat{A}$ is symmetric, and its eigenvalues are $2-\sqrt2,\,2,\,2+\sqrt2$, all
+positive, so it is SPD---the setting CG (\cref{ch:cg}) will live in.
+
+\textbf{Build the Krylov sequence.} Each new vector is one operator apply on the
+last. Starting from $\vb$:
+\[
+  \vb=\begin{pmatrix}1\\0\\0\end{pmatrix},\qquad
+  \mat{A}\vb=\begin{pmatrix}2\\1\\0\end{pmatrix},\qquad
+  \mat{A}^2\vb=\mat{A}(\mat{A}\vb)=\begin{pmatrix}5\\4\\1\end{pmatrix}.
+\]
+(Check the last: $\mat{A}(2,1,0)^{\mathsf T}=(2\!\cdot\!2+1,\ 2+2,\ 1)^{\mathsf
+T}=(5,4,1)^{\mathsf T}$.) Two operator applies built the three spanning vectors. The
+three Krylov subspaces are
+\[
+  \mathcal{K}_1=\operatorname{span}\{\vb\},\quad
+  \mathcal{K}_2=\operatorname{span}\{\vb,\mat{A}\vb\},\quad
+  \mathcal{K}_3=\operatorname{span}\{\vb,\mat{A}\vb,\mat{A}^2\vb\}.
+\]
+
+\tcblower
+\textbf{Are the three vectors independent?} Stack them as columns and take the
+determinant:
+\[
+  \det\!\begin{pmatrix}1&2&5\\0&1&4\\0&0&1\end{pmatrix}=1\neq0 .
+\]
+The matrix is upper-triangular with unit diagonal, so the three vectors are linearly
+independent: $\mathcal{K}_3=\Real^3$, the whole space. The nesting
+$\mathcal{K}_1\subsetneq\mathcal{K}_2\subsetneq\mathcal{K}_3$ is strict, one new
+dimension per apply.
+
+\textbf{The solution lives in $\mathcal{K}_3$.} Solve $\mat{A}\vx=\vb$ directly for the
+target. With $\det\mat{A}=2(4-1)-1(2-0)=4$, the solution is
+\[
+  \vx^\star=\mat{A}^{-1}\vb=\tfrac14\begin{pmatrix}3\\-2\\1\end{pmatrix}
+   =\begin{pmatrix}0.75\\-0.5\\0.25\end{pmatrix}.
+\]
+Since $\mathcal{K}_3=\Real^3$, $\vx^\star$ is certainly in $\mathcal{K}_3$---and we can
+exhibit it as a polynomial in $\mat{A}$ applied to $\vb$, the form
+\cref{sec:krylov-poly} promised. Seek $\vx^\star=c_0\vb+c_1\mat{A}\vb+c_2\mat{A}^2\vb$:
+\[
+  c_0\begin{pmatrix}1\\0\\0\end{pmatrix}
+  +c_1\begin{pmatrix}2\\1\\0\end{pmatrix}
+  +c_2\begin{pmatrix}5\\4\\1\end{pmatrix}
+  =\begin{pmatrix}0.75\\-0.5\\0.25\end{pmatrix}.
+\]
+The bottom row gives $c_2=0.25$; the middle row $c_1+4c_2=-0.5$ gives $c_1=-1.5$; the
+top row $c_0+2c_1+5c_2=0.75$ gives $c_0=0.75+3-1.25=2.5$. So
+\[
+  \vx^\star=\bigl(2.5\,I-1.5\,\mat{A}+0.25\,\mat{A}^2\bigr)\vb
+  = q(\mat{A})\,\vb,\quad q(t)=0.25t^2-1.5t+2.5 .
+\]
+The exact inverse-times-$\vb$ is a degree-2 polynomial in $\mat{A}$ applied to
+$\vb$---exactly the minimal-polynomial mechanism of \cref{sec:krylov-poly}, here with
+$d=3$ (so degree $d-1=2$). A Krylov method on this system reaches the exact answer in
+at most $3$ steps; CG, minimizing the error over each $\mathcal{K}_m$, would land on
+$\vx^\star$ by step $3$ in exact arithmetic---and, because the spectrum is tightly
+clustered around $2$, would be very close well before that. The subspace built from
+nothing but operator applies contains the solution, and we found the coefficients
+that pick it out.
+\end{workedexample}
+
+\begin{workedexample}{Costing one Krylov step against a direct factorization}{krylovcost}
+We make the cost invariant concrete by pricing one step of a Krylov method and
+comparing it to a sparse direct factorization, on a system the size a real solve
+faces. Take a 3-D finite-element operator with $N=10^6$ unknowns and a bounded
+$\nu=27$ nonzeros per row (a typical low-order stencil), so $\mat{A}$ has about
+$\nu N=2.7\times10^7$ nonzeros.
+
+\textbf{Cost of one Krylov step.} The kernel of \cref{sec:krylov-kernel} does, per
+step:
+\begin{itemize}[nosep]
+  \item \emph{one operator apply} $\vw=\mat{A}\vp$. A sparse apply touches each
+  nonzero once: $\approx\nu N=2.7\times10^7$ multiply--adds. This is the dominant
+  cost.
+  \item \emph{a couple of inner products / norms}, e.g.\ $\inner{\vp}{\vw}$ and
+  $\norm{\vr}$: each $N$ multiply--adds, so $\approx 2N=2\times10^6$.
+  \item \emph{a couple of \emph{axpy} updates}, e.g.\ $\vx\leftarrow\vx+\alpha\vp$ and
+  $\vr\leftarrow\vr-\alpha\vw$: each $N$ multiply--adds, so $\approx 2N=2\times10^6$.
+\end{itemize}
+Total: about $\nu N+4N=(27+4)\times10^6\approx 3.1\times10^7$ operations, and the apply
+is $\approx87\%$ of it. The step is $O(N)$, and it is one apply plus small change.
+
+\tcblower
+\textbf{Cost of a sparse direct factorization.} A sparse Cholesky on a 3-D mesh costs
+about $O(N^2)$ arithmetic, with the fill-in of \cref{sec:krylov-direct} producing
+factors of about $O(N^{4/3})$ nonzeros. Even taking a generous constant, the
+factorization work at $N=10^6$ is on the order of $10^{12}$ operations or more---and
+the factors need on the order of $N^{4/3}=10^8$ stored nonzeros, several times the
+$2.7\times10^7$ of $\mat{A}$ itself, before they are even applied.
+
+\textbf{The comparison.} Put the two side by side:
+\[
+  \underbrace{3.1\times10^7}_{\text{one Krylov step}}
+  \qquad\text{versus}\qquad
+  \underbrace{\sim 10^{12}}_{\text{one direct factorization}} .
+\]
+The factorization costs as much as roughly $10^{12}/(3.1\times10^7)\approx3\times10^4$
+Krylov steps. So a preconditioned Krylov solve that converges in, say, a few hundred
+steps wins by orders of magnitude---\emph{and} never forms a matrix, since each of
+those steps needs only the matrix-free apply (\cref{ch:matrixfree}), while the
+factorization needs the entries and pays the fill-in to store its denser factors.
+
+\textbf{The reading.} The whole economics of large-scale solving is in this
+comparison. A direct method pays a huge one-time $O(N^2)$ cost and then solves
+cheaply; an iterative method pays a small $O(N)$ cost per step and bets that a
+bounded number of steps suffice. For a million-unknown 3-D system, the bet pays:
+the per-step cost is dominated by one sparse apply, the apply can be matrix-free,
+and a good preconditioner (\cref{ch:precond}) keeps the step count bounded. ``One
+apply per step,'' costed out, is why Part~IV exists.
+\end{workedexample}
+
+\section{The map of Part~IV}
+\label{sec:krylov-map}
+
+This chapter laid the shared foundation; the rest of Part~IV fills in the
+specializations and the machinery that makes them fast. Here is the road ahead, each
+piece a refinement of something built in this chapter.
+
+\begin{description}[style=nextline, leftmargin=1.4em]
+  \item[Conjugate gradients (\cref{ch:cg}).] The Krylov method for SPD systems---
+  electrostatics, magnetostatics, implicit time steps. It specializes
+  \code{krylov\_step} with a short two-term recurrence (\cref{ch:fold}'s
+  \code{iterate\_while\_with\_prev}) and no explicit orthogonalization, minimizing
+  the error in the $\mat{A}$-norm. One apply per step.
+  \item[GMRES and FGMRES (\cref{ch:gmres}).] The Krylov method for general
+  (nonsymmetric, complex) systems---the driven analysis. It builds an explicit
+  orthonormal Krylov basis and minimizes the residual norm over it, which forces the
+  orthogonalization stage and an outer restart loop. FGMRES threads a second basis to
+  carry a per-step (flexible) preconditioner, exactly the per-step variant that
+  \cref{ch:operators}'s decision rule routes into the state.
+  \item[Orthogonalization (\cref{ch:orthog}).] The stage GMRES needs: making each new
+  basis vector orthogonal to the previous ones, and the modified-versus-classical
+  Gram--Schmidt choice that is the orthogonalization-variant non-law of
+  \cref{sec:krylov-laws}.
+  \item[The least-squares core (\cref{ch:givens}).] How GMRES actually picks the
+  minimizing iterate inside its basis: a small dense least-squares problem solved
+  incrementally with Givens rotations as the basis grows.
+  \item[Preconditioning and multigrid (\cref{ch:precond,ch:multigrid}).] The
+  conditioning half of the story---replacing $\mat{A}$ with an equivalent
+  better-conditioned system so the spectrum clusters (\cref{fig:krylov-convergence})
+  and the step count drops. The preconditioner is itself a constructed operator
+  (\cref{ch:operators}) the kernel applies; multigrid is the most powerful one, an
+  approximate inverse built from a hierarchy of meshes.
+\end{description}
+
+Every one of these is a setting of the kernel and the fold built here, or a piece of
+machinery that feeds them. Learn the Krylov subspace, the one-apply-per-step kernel,
+and the solve-as-fold-as-operator reading, and the rest of Part~IV is
+specialization.
+
+\summarysection
+Discretization (Part~II) produces a large \emph{sparse} linear system
+$\mat{A}\vx=\vb$: $\mat{A}$ has $N$ up to the tens of millions but only $O(N)$
+nonzeros, because the finite-element basis has local support and locality is
+sparsity. \emph{Direct} methods (Gaussian elimination, $LU$/Cholesky) are too
+expensive at scale---fill-in makes the factors far denser than $\mat{A}$, costing
+about $O(N^2)$ in 3-D and $O(N^3)$ dense---and they need the matrix entries, which a
+matrix-free operator does not provide. \emph{Iterative} methods win because they need
+only the operator's \emph{action} $\vv\mapsto\mat{A}\vv$, the exact interface
+\cref{ch:matrixfree} supplies, and cost close to $O(N)$ when well preconditioned. A
+\emph{Krylov subspace} $\mathcal{K}_m(\mat{A},\vb)=\operatorname{span}\{\vb,\mat{A}\vb,
+\dots,\mat{A}^{m-1}\vb\}$ is built from nothing but repeated applies; its nested
+ladder contains better and better approximations, and the minimal polynomial puts the
+exact solution in $\mathcal{K}_d$ for some $d\le N$ (so Krylov terminates in $\le N$
+steps in exact arithmetic). Convergence speed is governed by the spectrum: a
+\emph{clustered} spectrum converges fast, a \emph{spread} one slowly---which is why
+preconditioning exists. Every Krylov method shares one \emph{step kernel}
+\code{krylov\_step}: one operator apply, a few inner products and norms, a few
+\emph{axpy} updates, an optional orthogonalization, a state update---with the cost
+invariant of \emph{exactly one apply per step}. The outer loop is the
+\code{iterate\_while} fold of \cref{ch:fold}, and the whole solve is a
+\emph{constructed operator} (\cref{ch:operators}), \code{ksp\_solve}: an approximate
+inverse you build once and apply, obeying linearity and the near-inverse law modulo
+tolerance, and deliberately \emph{not} obeying bit-determinism across reduction
+order, orthogonalization, or initial guess---a controlled approximation whose
+accuracy is a tolerance and whose speed is conditioning. Part~IV specializes this
+foundation: CG (\cref{ch:cg}), GMRES/FGMRES (\cref{ch:gmres}), orthogonalization
+(\cref{ch:orthog}), the least-squares core (\cref{ch:givens}), and preconditioning
+and multigrid (\cref{ch:precond,ch:multigrid}).
+
+\furtherreading
+The standard reference for iterative methods on sparse systems is
+Saad~\citep{saad2003}; its early chapters develop the Krylov subspace, the
+polynomial view, and the spectrum-driven convergence bounds at exactly the level of
+this chapter, and the later chapters are the canonical source for the CG and GMRES
+specializations of \cref{ch:cg,ch:gmres} and for preconditioning
+(\cref{ch:precond}). For the numerical-linear-algebra foundations---why fill-in
+makes direct methods scale poorly, the conditioning and floating-point subtleties
+behind the non-laws of \cref{sec:krylov-laws}---Golub and Van
+Loan~\citep{golubvanloan2013} is the comprehensive reference. Trefethen and
+Bau~\citep{trefethenbau1997} give the most readable account of the
+polynomial-approximation picture of Krylov convergence (their lectures on the
+Arnoldi and CG processes are especially clear on why a clustered spectrum converges
+fast), and are an ideal companion to this chapter's
+\cref{sec:krylov-poly,sec:krylov-convergence}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Sparsity counts.} A 3-D finite-element operator has $N=4\times10^6$
+  unknowns and an average of $\nu=30$ nonzeros per row. (a) How many numbers does the
+  sparse operator store? (b) How many would the dense $N\times N$ array hold? (c) By
+  what factor does sparsity reduce the storage? (d) In one sentence, tie the bounded
+  $\nu$ back to the local support of the basis functions (\cref{ch:refelement}).
+  \item \textbf{Why not factor.} Using \cref{fig:krylov-cost}, estimate the ratio of
+  work between a dense direct solve ($O(N^3)$) and a near-linear iterative solve
+  ($\approx O(N)$) at $N=10^5$ and again at $N=10^7$. By what factor does the
+  iterative advantage grow as $N$ goes up by $100\times$? Explain in terms of the
+  exponents why the gap widens.
+  \item \textbf{Build a Krylov subspace.} For
+  $\mat{A}=\bigl(\begin{smallmatrix}3&1\\1&3\end{smallmatrix}\bigr)$ and
+  $\vb=(1,1)^{\mathsf T}$: (a) compute $\mat{A}\vb$; (b) is $\mathcal{K}_2(\mat{A},\vb)
+  =\operatorname{span}\{\vb,\mat{A}\vb\}$ all of $\Real^2$, or does it collapse?
+  (c) Solve $\mat{A}\vx=\vb$ directly and find scalars $c_0,c_1$ with
+  $\vx=c_0\vb+c_1\mat{A}\vb$, exhibiting $\vx=q(\mat{A})\vb$. (d) Why does the collapse
+  in (b) mean a Krylov method finishes in \emph{one} step here? (Hint: $\vb$ is an
+  eigenvector.)
+  \item \textbf{The polynomial view.} \Cref{sec:krylov-poly} shows
+  $\mat{A}^{-1}=q(\mat{A})$ for a polynomial $q$ of degree $d-1$, where $d$ is the
+  degree of the minimal polynomial. If $\mat{A}$ has only $3$ distinct eigenvalues
+  (each possibly repeated), what is the most steps a Krylov method that finds the best
+  iterate in each $\mathcal{K}_m$ can need, in exact arithmetic, regardless of $N$?
+  Why does the \emph{number of distinct eigenvalues}, not $N$, set the bound?
+  \item \textbf{Conditioning and speed.} Two SPD systems have condition numbers
+  $\kappa_1=100$ and $\kappa_2=10^4$. Using the CG rule of thumb that the iteration
+  count scales like $\sqrt{\kappa}$, estimate the ratio of step counts to reach a
+  fixed tolerance. If a preconditioner clusters the spectrum of the second system so
+  its effective condition number drops to $100$, what happens to its step count?
+  Relate your answer to \cref{fig:krylov-convergence}.
+  \item \textbf{One apply per step.} Reread \cref{wex:krylovcost}. (a) For
+  $N=10^6$ and $\nu=27$, what fraction of one Krylov step's arithmetic is the operator
+  apply? (b) Suppose a colleague proposes computing \emph{two} extra inner products per
+  step for a fancier convergence test. By what percentage does that raise the per-step
+  cost, and why is it nonetheless usually a bad trade if it does not reduce the step
+  count? (c) Why does the cost invariant ``one apply per step'' survive unchanged when
+  the apply is matrix-free (\cref{ch:matrixfree})?
+  \item \textbf{The solve is a fold.} Write the convergence predicate of a Krylov
+  solve that stops when either the relative residual drops below $10^{-8}$ or the
+  iteration count reaches $500$, as a pure function of the carry (cf.\
+  \cref{sec:krylov-fold} and the predicate rule of \cref{sec:predicaterule}). Which
+  fields must the carry contain for this predicate to be expressible, and why can the
+  predicate \emph{not} read the residual the current step just produced as an extra?
+  \item \textbf{The solve is an operator.} The driven analysis (\cref{ch:situating})
+  rebuilds its operator $\mat{A}(\omega)$ at every frequency, while electrostatics
+  reuses one operator across many right-hand sides. Using
+  \cref{fig:krylov-ksp} and the constructed-operator pattern of \cref{ch:operators},
+  explain which analysis can hoist the \code{ksp\_solve} construction out of its loop
+  and which cannot, and why the difference is one of \emph{kind}, not degree.
+  \item \textbf{The non-laws.} A caller writes an iterative-refinement loop that
+  assumes $\mat{A}\,\code{ksp\_solve}(K,\vb).\vx=\vb$ \emph{exactly} after a solve.
+  (a) Which non-law of \cref{sec:krylov-laws} does this violate? (b) What goes wrong,
+  concretely, if the assumption is false by a quantity near the tolerance? (c) Name
+  the three bit-level non-determinism sources a Krylov solve carries, and for each,
+  state whether it changes the \emph{mathematical} solution or only its
+  floating-point realization.
+\end{enumerate}

@@ -1,0 +1,128 @@
+\chapter*{A notation primer}
+\addcontentsline{toc}{chapter}{A notation primer}
+\markboth{A notation primer}{A notation primer}
+
+Two notations run through this book: ordinary mathematics, set in the usual way,
+and a \emph{pseudo-language} in which we write the simulator's algorithms. This
+short chapter teaches you to read both. You do not need to memorize anything
+here; treat it as a reference and come back when a symbol is unfamiliar.
+
+\section*{Reading the pseudo-language}
+
+The algorithms in this book are written in a small, deliberately readable
+notation borrowed from typed functional programming. It is not a language you
+will run; it is a language you will \emph{read}, the way a physicist reads a
+Feynman diagram. It always appears in a shaded, monospaced box, like this:
+
+\begin{lstlisting}[style=l4style]
+-- a function's TYPE: "given a scalar and two tensors, return a tensor"
+axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]
+
+-- its DEFINITION: y' = a*x + y  (computed as a fresh value, nothing overwritten)
+axpy a x y = a .* x .+ y
+\end{lstlisting}
+
+A handful of conventions cover almost everything:
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[\code{f :: A -> B}] is a \emph{type signature}: ``\code{f} is a function
+  taking an \code{A} and producing a \code{B}.'' The arrow \code{->} reads
+  ``maps to.''
+  \item[Currying.] A function of several arguments is written
+  \code{f :: A -> B -> C}, read ``given an \code{A}, then a \code{B}, produce a
+  \code{C}.'' Arguments are supplied one at a time, separated by spaces:
+  \code{f x y}. This lets us supply some arguments now and the rest later---the
+  basis of ``build once, apply many times.''
+  \item[Records] are bundles of named fields, written in braces:
+  \lstinline[style=l4style]|{ x: Tensor[N], it: Int, converged: Bool }|. A field
+  is read with a dot, \code{s.x}. A record is \emph{updated} by making a fresh
+  copy with one field changed: \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|
+  means ``\code{s} again, but with \code{it} increased by one.'' The original
+  \code{s} is untouched.
+  \item[Lists] are written \code{[a, b, c]}; a \emph{list comprehension}
+  \code{[ f x | x <- xs ]} reads ``the list of \code{f x} for each \code{x} in
+  \code{xs}.''
+  \item[\code{foldl}, \code{foldr}, \code{map}] are the standard
+  \emph{combinators}: \code{map f xs} applies \code{f} to every element;
+  \code{foldl f z xs} threads an accumulator left to right through the list.
+  These three, and one loop combinator we introduce in \cref{ch:fold}, express
+  every iteration in the book.
+  \item[\code{do} blocks] sequence a computation top to bottom, like imperative
+  code:
+\begin{lstlisting}[style=l4style]
+do  Ax  <- apply A x        -- name an intermediate result
+    a   <- dot Ax x
+    modify (\s -> { ...s, it: s.it + 1 })   -- the one place state changes
+    return a
+\end{lstlisting}
+  We use \code{do} blocks only where a computation threads evolving state; the
+  rest is plain function application. The full meaning of \code{do} and
+  \code{modify} is built carefully in \cref{ch:monad}---for now, read a
+  \code{do} block as ``these steps, in order.''
+\end{description}
+
+\begin{notationbox}
+The pseudo-language is set in a \emph{box}, never inside a mathematical formula.
+This is a real convention, not a stylistic one: the notation reuses symbols
+(such as the \texttt{\$} sign in shape expressions) that would clash with
+mathematics typesetting. When you see a shaded box, you are reading code; when
+you see an inline formula like $\mat{K}\vx=\vb$, you are reading mathematics.
+\end{notationbox}
+
+\section*{Shapes, in brief}
+
+Every tensor carries a \emph{shape}---the sizes and meanings of its axes---written
+in square brackets after \code{Tensor}. We will treat shapes carefully in
+\cref{ch:tensors}; for now you need only three forms:
+
+\begin{itemize}[nosep]
+  \item \code{Tensor[N]} is a flat vector of length $N$---a single column of
+  degrees of freedom, the workhorse shape of every linear solve.
+  \item \code{Tensor[m, n]} is a two-axis array (think: a small dense matrix).
+  \item \lstinline[style=l4style]|Tensor[(S: ...)]| means ``a tensor whose axes
+  form a run we will call \code{S}, of unspecified rank''; a later
+  \lstinline[style=l4style]|Tensor[$S]| asserts ``the same shape \code{S}
+  again.'' This lets a single function describe an operation that works on
+  vectors, matrices, or higher arrays at once.
+\end{itemize}
+
+\section*{Mathematical conventions}
+
+Vector fields are set upright and bold: $\vE$ (electric field), $\vB$ (magnetic
+flux density), $\vJ$ (current density), $\vA$ (vector potential). The
+differential operators are $\Grad$ (gradient), $\Div$ (divergence), and
+$\Curl$ (curl). Discrete operators---matrices that act on vectors of degrees of
+freedom---are set in a sans-serif font: $\mat{K}$ (a stiffness operator),
+$\mat{M}$ (a mass operator), $\mat{C}$ (a damping operator). Inner products are
+$\inner{\vx}{\vy}$ and norms are $\norm{\vx}$. The real and complex numbers are
+$\Real$ and $\Complex$; $\Re$ and $\Im$ take real and imaginary parts. The four
+finite-element function spaces, introduced in \cref{ch:derham}, are $\Hone$,
+$\Hcurl$, $\Hdiv$, and $\Ltwo$.
+
+\Cref{tab:symbols} collects the symbols used most often.
+
+\begin{table}[t]
+\centering
+\caption[Frequently used symbols]{Frequently used symbols and the page or chapter
+where each is introduced.}
+\label{tab:symbols}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Introduced \\
+\midrule
+$\vE,\vB,\vA$ & electric field, magnetic flux density, vector potential & \cref{ch:maxwell} \\
+$\varepsilon,\mu,\sigma$ & permittivity, permeability, conductivity & \cref{ch:maxwell} \\
+$\mat{K},\mat{M},\mat{C}$ & stiffness, mass, damping operators & \cref{ch:weak} \\
+$a(u,v)$ & a bilinear (weak) form & \cref{ch:weak} \\
+$\Hone,\Hcurl,\Hdiv,\Ltwo$ & the de Rham function spaces & \cref{ch:derham} \\
+$N$ & number of (true) degrees of freedom & \cref{ch:fem} \\
+$\omega,\lambda$ & angular frequency, eigenvalue & \cref{ch:maxwell} \\
+$Q$ & quality factor of a resonant mode & \cref{ch:eigenmodes} \\
+$S_{ij}$ & scattering-matrix (S-parameter) entry & \cref{ch:driven} \\
+\code{Tensor[...]} & a typed, immutable array & \cref{ch:tensors} \\
+\code{iterate\_while} & the loop combinator & \cref{ch:fold} \\
+\code{Solve} & the state monad threading \code{SimState} & \cref{ch:monad} \\
+\bottomrule
+\end{tabular}
+\end{table}

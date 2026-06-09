@@ -1,0 +1,1309 @@
+\chapter{Maxwell's Equations: A Working Review}
+\label{ch:maxwell}
+
+% Chapter-local vector macros not in style/simbook.sty (\vs is the time-domain
+% state vector; the Poynting vector, wavevector, and z-hat are local here).
+\newcommand{\vS}{\mathbf{S}}
+\providecommand{\vk}{\mathbf{k}}
+\providecommand{\vz}{\mathbf{z}}
+
+\chapterorient{You have met Maxwell's equations before---probably as four lines
+on a slide, admired and then set aside. This chapter brings them back as
+\emph{working} equations: the ones the simulator actually discretizes. We will
+read each of the four laws for its physical content, attach the materials
+through the constitutive relations, pin down what happens at a wall or an
+interface, account for the energy, and---most important for everything that
+follows---split the physics into the three regimes (static, time-harmonic,
+time-domain) that become the analyses of Part~II onward. By the end you will
+recognize, in raw continuous form, every operator the rest of the book learns
+to assemble and solve.}
+
+\section{The four laws, read for meaning}
+
+Electromagnetism is the statement that two vector fields---the electric field
+$\vE$ and the magnetic field $\vB$---fill all of space, push on charges, and
+generate each other. Maxwell's four equations say exactly \emph{how} the fields
+arrange themselves around their sources and how a change in one provokes the
+other. In differential (point-by-point) form, in a region of space with charge
+density $\rho$ and current density $\vJ$, they are
+
+\begin{align}
+  \Div \vD &= \rho, & &\text{(Gauss's law for $\vE$)} \label{eq:gauss-e}\\
+  \Div \vB &= 0, & &\text{(Gauss's law for $\vB$)} \label{eq:gauss-b}\\
+  \Curl \vE &= -\,\partial_t \vB, & &\text{(Faraday's law)} \label{eq:faraday}\\
+  \Curl \vH &= \vJ + \partial_t \vD. & &\text{(Amp\`ere--Maxwell law)} \label{eq:ampere}
+\end{align}
+
+Here $\vD$ is the electric displacement and $\vH$ the magnetic field intensity;
+they are the ``material-aware'' partners of $\vE$ and $\vB$, related to them by
+the constitutive relations of \cref{sec:constitutive}. For the moment read
+$\vD$ as ``$\vE$, scaled by how the material responds'' and $\vH$ as
+``$\vB$, scaled the same way.'' The operators $\Div$ and $\Curl$ are the
+ordinary divergence and curl of vector calculus; if they feel rusty,
+\cref{tab:vectorcalc} is a one-line reminder of what each measures.
+
+\begin{table}[t]
+\centering
+\caption[The two derivative operators]{The two first-order vector-calculus
+operators that build every Maxwell equation. \emph{Divergence} measures
+net outflow from a point (a source); \emph{curl} measures local circulation
+(a swirl). Maxwell's equations are entirely statements about the divergence
+and curl of $\vE$ and $\vB$.}
+\label{tab:vectorcalc}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Operator & Reads & Measures \\
+\midrule
+$\Div \vF$ & ``div of $\vF$'' & net flux out of an infinitesimal box (a source/sink) \\
+$\Curl \vF$ & ``curl of $\vF$'' & circulation around an infinitesimal loop (a swirl) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A field theory is much easier to feel than to memorize. Take the four laws one
+at a time, each with the picture it draws (\cref{fig:fourlaws}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+% --- Gauss for E: charge with radial field lines ---
+\begin{scope}[shift={(0,0)}]
+  \fill[simRust] (0,0) circle (2.2pt);
+  \node[font=\scriptsize] at (0.0,-0.28) {$+q$};
+  \foreach \a in {0,45,...,315}{
+    \draw[flow,simBlue,shorten <=3pt]
+      (0,0) -- (\a:0.95);}
+  \node[font=\scriptsize\itshape,simBlue] at (0.85,0.85) {$\vE$};
+  \node[font=\footnotesize] at (0,-1.35) {$\Div\vD=\rho$};
+  \node[font=\scriptsize,text=simGray,align=center] at (0,-1.75)
+    {charge is\\ a source};
+\end{scope}
+% --- Gauss for B: dipole loop, no source ---
+\begin{scope}[shift={(3.6,0)}]
+  \draw[flow,simTeal] (0,0) circle (0.75);
+  \draw[flow,simTeal] (0,0) circle (0.42);
+  \node[font=\scriptsize\itshape,simTeal] at (0.95,0.0) {$\vB$};
+  \fill[simInk] (0,0) circle (1.2pt);
+  \node[font=\footnotesize] at (0,-1.35) {$\Div\vB=0$};
+  \node[font=\scriptsize,text=simGray,align=center] at (0,-1.75)
+    {lines close;\\ no source};
+\end{scope}
+% --- Faraday: changing B makes circulating E ---
+\begin{scope}[shift={(7.2,0)}]
+  \draw[-{Stealth[length=2mm]},simRust,thick] (0,-0.55)--(0,0.55)
+    node[right,font=\scriptsize]{$\partial_t\vB$};
+  \draw[flow,simBlue] (0.85,0) arc (0:300:0.85);
+  \node[font=\scriptsize\itshape,simBlue] at (-0.95,0.5) {$\vE$};
+  \node[font=\footnotesize] at (0,-1.35) {$\Curl\vE=-\partial_t\vB$};
+  \node[font=\scriptsize,text=simGray,align=center] at (0,-1.75)
+    {changing $\vB$\\ swirls $\vE$};
+\end{scope}
+% --- Ampere-Maxwell: current makes circulating H ---
+\begin{scope}[shift={(10.8,0)}]
+  \draw[-{Stealth[length=2mm]},simGreen,thick] (0,-0.55)--(0,0.55)
+    node[right,font=\scriptsize]{$\vJ$};
+  \draw[flow,simViolet] (0.85,0) arc (0:300:0.85);
+  \node[font=\scriptsize\itshape,simViolet] at (-0.95,0.5) {$\vH$};
+  \node[font=\footnotesize] at (0,-1.35) {$\Curl\vH=\vJ+\partial_t\vD$};
+  \node[font=\scriptsize,text=simGray,align=center] at (0,-1.75)
+    {current swirls\\ $\vH$};
+\end{scope}
+\end{tikzpicture}
+\caption[The four laws as pictures]{Each Maxwell equation as a field-line
+sketch. \emph{Gauss for $\vE$}: field lines begin and end on charge.
+\emph{Gauss for $\vB$}: field lines form closed loops---there is no magnetic
+charge. \emph{Faraday}: a time-varying magnetic field wraps an electric field
+around it. \emph{Amp\`ere--Maxwell}: a current (or a time-varying $\vD$) wraps a
+magnetic field around it. The last two are mirror images with a crucial sign
+difference.}
+\label{fig:fourlaws}
+\end{figure}
+
+\subsection{Gauss's law: charge is the source of \texorpdfstring{$\vE$}{E}}
+
+Equation~\eqref{eq:gauss-e}, $\Div\vD=\rho$, says that electric field lines
+\emph{begin and end on charge}. The divergence of $\vD$ at a point is the net
+number of field lines streaming out of an infinitesimal box around that
+point; the equation pins that outflow to the charge density enclosed. Where
+there is positive charge, lines emanate; where negative, they terminate; in
+empty space the divergence is zero and lines merely pass through. Integrate
+over a closed surface and you recover the familiar integral form,
+$\oint \vD\cdot\vn\,\mathrm{d}S = Q_{\text{enc}}$: the flux through any closed
+surface equals the charge inside. This is the law that makes a capacitor a
+capacitor, and it is the entire content of the electrostatic analysis.
+
+\subsection{Gauss's law for \texorpdfstring{$\vB$}{B}: no magnetic charge}
+
+Equation~\eqref{eq:gauss-b}, $\Div\vB=0$, is the same statement with the
+right-hand side set permanently to zero: there is no magnetic charge. Magnetic
+field lines never begin or end; they always close on themselves
+(\cref{fig:fourlaws}, second panel). This innocent-looking zero is
+load-bearing for the discretization. It forces $\vB$ to be \emph{divergence
+free}, and a finite-element method that fails to honour that property produces
+spurious, unphysical modes. We will spend real effort in \cref{ch:bc} building
+function spaces that respect $\Div\vB=0$ exactly rather than approximately.
+
+\subsection{Faraday's law: a changing \texorpdfstring{$\vB$}{B} drives \texorpdfstring{$\vE$}{E}}
+
+Equation~\eqref{eq:faraday}, $\Curl\vE=-\partial_t\vB$, is the first of the two
+\emph{coupling} laws---the ones that knit $\vE$ and $\vB$ together into a single
+electromagnetic field. It says a magnetic field that changes in time wraps an
+electric field around itself. The curl of $\vE$---its local circulation---is
+fed by the rate of change of $\vB$ threading through. This is the law of the
+electric generator and the transformer: move a magnet, and the changing flux
+induces a circulating $\vE$ that drives current. The minus sign is Lenz's law
+in disguise; it ensures the induced effect \emph{opposes} the change that
+caused it, which is why energy is conserved rather than spontaneously created.
+
+\subsection{Amp\`ere--Maxwell: current (and changing \texorpdfstring{$\vD$}{D}) drives \texorpdfstring{$\vH$}{H}}
+
+Equation~\eqref{eq:ampere}, $\Curl\vH=\vJ+\partial_t\vD$, is Faraday's mirror.
+A current $\vJ$ wraps a magnetic field around itself---the law of the
+electromagnet. Maxwell's own contribution was the second term, the
+\emph{displacement current} $\partial_t\vD$: even with no moving charge, a
+\emph{changing} electric field sources $\vH$ exactly as a real current would.
+That term is what lets the two coupling laws close a loop---$\vE$ feeds $\vB$
+through Faraday, $\vB$ feeds $\vE$ through Amp\`ere--Maxwell---and that loop,
+propagating through space, \emph{is} light. Without the displacement current,
+electromagnetic waves do not exist.
+
+We can make ``that loop is light'' precise in three lines, and it is worth
+doing once. Take the curl of Faraday's law~\eqref{eq:faraday} and feed in
+Amp\`ere--Maxwell~\eqref{eq:ampere} (in vacuum, $\vJ=\bm0$,
+$\vD=\varepsilon_0\vE$, $\vB=\mu_0\vH$):
+\[
+  \Curl(\Curl\vE)
+    = -\,\partial_t(\Curl\vB)
+    = -\,\mu_0\varepsilon_0\,\partial_t^2\vE.
+\]
+The vector identity $\Curl\Curl\vE=\Grad(\Div\vE)-\Lap\vE$, together with
+$\Div\vE=0$ in charge-free vacuum, collapses the left side to $-\Lap\vE$, and we
+are left with the \emph{wave equation}
+\begin{equation}
+  \Lap\vE - \mu_0\varepsilon_0\,\partial_t^2\vE = \bm0. \label{eq:waveeq}
+\end{equation}
+This is the equation of a disturbance propagating at speed
+$c=1/\sqrt{\mu_0\varepsilon_0}$---and the only thing it took to produce it was
+the displacement current, which supplied the second time derivative. Maxwell's
+quiet extra term turned a pair of static field laws into a dynamical theory of
+waves. The same operator $\Curl\Curl-\,(\text{constant})\,\partial_t^2$ is, in
+the frequency domain, the curl--curl operator $\mat K-\omega^2\mat M$ of
+Worked example~\ref{wex:phasor}; we will meet it again and again.
+
+\begin{keyidea}
+The four laws split cleanly into two pairs. The two \emph{Gauss} laws are
+constraints on the field at one instant---they say where lines can begin and
+end. The two \emph{curl} laws are the dynamics---they say how $\vE$ and $\vB$
+generate each other in time. Static analyses keep only the constraints; wave
+and resonance analyses turn on the coupling. Every analysis in this book is a
+choice of which terms of \eqref{eq:gauss-e}--\eqref{eq:ampere} survive.
+\end{keyidea}
+
+\subsection{The continuity equation: charge is conserved}
+
+The four laws are not independent; they already contain the conservation of
+charge. Take the divergence of the Amp\`ere--Maxwell law~\eqref{eq:ampere}. The
+divergence of any curl is identically zero, so the left side vanishes:
+\[
+  0 = \Div(\Curl\vH) = \Div\vJ + \partial_t(\Div\vD).
+\]
+Substitute Gauss's law $\Div\vD=\rho$ into the last term and you obtain the
+\emph{continuity equation}
+\begin{equation}
+  \Div\vJ + \partial_t\rho = 0. \label{eq:continuity}
+\end{equation}
+In words: the net current flowing out of any region equals the rate at which
+the charge inside it drops. Charge is never created or destroyed---it only
+flows. This is not an extra assumption; it is a \emph{consequence} of Maxwell's
+equations, and the displacement current is precisely the term that makes it
+come out right. (Had Maxwell omitted $\partial_t\vD$, the divergence of
+\eqref{eq:ampere} would have forced $\Div\vJ=0$, false whenever charge piles
+up.) We will meet the identity $\Div(\Curl(\cdot))=0$ again as one half of the
+\emph{de Rham complex} in \cref{ch:derham}; it is the same algebraic fact wearing
+different clothes.
+
+\begin{pitfall}
+It is tempting to treat $\Div\vJ+\partial_t\rho=0$ as a fifth law to be imposed
+separately. It is not---it follows from the other four. In the discrete setting
+the analogue is subtle: a finite-element scheme that discretizes the curl laws
+\emph{without} a compatible discretization of the divergence will generally
+\emph{violate} discrete continuity, leaking charge. Honouring these identities
+\emph{discretely}, not just continuously, is the entire reason for the
+structured function spaces of \cref{ch:functionspaces}.
+\end{pitfall}
+
+\subsection{The integral forms, and why we keep the differential ones}
+\label{sec:integral}
+
+Each differential law has an \emph{integral} twin, obtained by integrating over
+a region and applying the two great theorems of vector calculus---the
+divergence theorem (for the Gauss laws) and Stokes' theorem (for the curl
+laws). The divergence theorem turns a volume integral of a divergence into a
+flux through the bounding surface; Stokes' theorem turns a surface integral of a
+curl into a circulation around the bounding loop (\cref{fig:theorems}). Applied
+to the four laws they give
+
+\begin{align}
+  \oint_{\partial \mathcal V} \vD\cdot\vn\,\mathrm{d}S &= \int_{\mathcal V}\rho\dV
+    = Q_{\text{enc}}, & &\text{(Gauss, integral)}\\
+  \oint_{\partial \mathcal V} \vB\cdot\vn\,\mathrm{d}S &= 0, & &\text{(no monopole)}\\
+  \oint_{\partial \mathcal S} \vE\cdot\mathrm{d}\bm\ell
+    &= -\frac{\mathrm d}{\mathrm dt}\int_{\mathcal S}\vB\cdot\vn\,\mathrm{d}S,
+    & &\text{(Faraday: emf $=-\dot\Phi$)}\\
+  \oint_{\partial \mathcal S} \vH\cdot\mathrm{d}\bm\ell
+    &= \int_{\mathcal S}\Big(\vJ+\partial_t\vD\Big)\cdot\vn\,\mathrm{d}S.
+    & &\text{(Amp\`ere--Maxwell)}
+\end{align}
+
+These are the forms a physicist reaches for first: ``flux through a closed
+surface equals enclosed charge,'' ``the emf around a loop equals minus the rate
+of change of flux through it.'' They are equivalent to the differential laws
+wherever the fields are smooth---the differential and integral forms are two
+readings of the same content, related by the integral theorems. So why does a
+simulator prefer the \emph{differential} forms? Because the finite-element
+method discretizes a \emph{local} statement: it asks the equation to hold,
+weakly, on each little element, and a differential law is already local. The
+integral forms remain the right tool for \emph{deriving} the interface
+conditions of \cref{sec:bc} (shrink a loop or a pillbox across the interface)
+and for \emph{checking} a computed field (does the flux through this surface
+equal the charge we put inside?), and we will use them for exactly those two
+purposes.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+% --- divergence theorem: volume with outward flux ---
+\begin{scope}[shift={(0,0)}]
+  \draw[simInk,thick] (0,0) circle (1.0);
+  \fill[simBgBlue,opacity=0.5] (0,0) circle (1.0);
+  \node[font=\scriptsize] at (0,0) {$\mathcal V$};
+  \foreach \a in {20,90,160,230,300}{
+    \draw[-{Stealth[length=1.8mm]},simBlue,thick] (\a:1.0)--(\a:1.45);}
+  \node[font=\scriptsize,align=center] at (0,-1.55)
+    {$\displaystyle\int_{\mathcal V}\!\Div\vF\,\mathrm{d}V
+      =\!\oint_{\partial\mathcal V}\!\vF\cdot\vn\,\mathrm{d}S$};
+  \node[font=\footnotesize,text=simGray] at (0,1.7) {divergence theorem};
+\end{scope}
+% --- Stokes theorem: surface with circulation on boundary ---
+\begin{scope}[shift={(5.4,0)}]
+  \fill[simBgGold,opacity=0.6] (0,0) ellipse (1.05 and 0.7);
+  \draw[flow,simRust] (1.05,0) arc (0:355:1.05 and 0.7);
+  \node[font=\scriptsize] at (0,0) {$\mathcal S$};
+  \draw[-{Stealth[length=1.8mm]},simGreen,thick] (0,0)--(0,0.55)
+    node[right,font=\scriptsize]{$\Curl\vF$};
+  \node[font=\scriptsize,align=center] at (0,-1.55)
+    {$\displaystyle\int_{\mathcal S}\!\Curl\vF\cdot\vn\,\mathrm{d}S
+      =\!\oint_{\partial\mathcal S}\!\vF\cdot\mathrm d\bm\ell$};
+  \node[font=\footnotesize,text=simGray] at (0,1.7) {Stokes' theorem};
+\end{scope}
+\end{tikzpicture}
+\caption[The two integral theorems]{The divergence theorem (left) converts the
+volume integral of a divergence into the outward flux through the bounding
+surface; it turns the differential Gauss laws into their integral forms.
+Stokes' theorem (right) converts the surface integral of a curl into the
+circulation around the bounding loop; it turns Faraday's and Amp\`ere's laws
+into their integral forms. The same two theorems, applied to a test function
+instead of the field itself, produce the \emph{weak form} of \cref{ch:weak}.}
+\label{fig:theorems}
+\end{figure}
+
+These two theorems are not a one-time convenience. The integration by parts that
+produces the finite-element \emph{weak form} in \cref{ch:weak} is the
+divergence theorem applied to a product of the field and a test function---the
+very same identity, used to move a derivative off the field and onto the test
+function. The integral forms are the first appearance of the machinery the whole
+discretization rests on.
+
+\section{Materials: the constitutive relations}
+\label{sec:constitutive}
+
+Maxwell's four laws contain four fields---$\vE,\vD,\vB,\vH$---but only two are
+truly independent. The other two are tied to them by the \emph{material}: the
+\emph{constitutive relations} encode how a given substance responds to a field.
+For a linear, isotropic medium they are three scalar multiplications,
+
+\begin{align}
+  \vD &= \varepsilon\,\vE, & &\text{(permittivity: electric response)} \label{eq:const-eps}\\
+  \vB &= \mu\,\vH, & &\text{(permeability: magnetic response)} \label{eq:const-mu}\\
+  \vJ &= \sigma\,\vE. & &\text{(conductivity: Ohm's law)} \label{eq:const-sigma}
+\end{align}
+
+The three coefficients are the only place the \emph{stuff} of the device enters
+the physics. Everything else is geometry and excitation.
+
+\begin{itemize}
+  \item The \textbf{permittivity} $\varepsilon$ measures how much a material
+  polarizes---how its bound charges shift---in response to $\vE$, and so how
+  much electric flux $\vD$ a given field produces. In vacuum
+  $\varepsilon=\varepsilon_0\approx\SI{8.854e-12}{\farad\per\meter}$. For a
+  dielectric one writes $\varepsilon=\varepsilon_r\varepsilon_0$ with the
+  \emph{relative permittivity} $\varepsilon_r$ (the ``dielectric constant'')
+  ranging from $\approx 1$ (air) through $\approx 3.9$ (silicon dioxide) and
+  $\approx 11.7$ (silicon) to $\approx 80$ (water).
+
+  \item The \textbf{permeability} $\mu$ plays the same role magnetically. In
+  vacuum $\mu=\mu_0=4\pi\times10^{-7}\,\si{\henry\per\meter}$. Most materials of
+  interest in microwave engineering are non-magnetic, $\mu_r\approx 1$;
+  ferromagnets ($\mu_r$ in the hundreds or thousands) are the exception. In the
+  magnetostatic analysis it is the \emph{reluctivity} $\nu=1/\mu$ that appears
+  in the operator, exactly as $\varepsilon$ appears in the electrostatic one.
+
+  \item The \textbf{conductivity} $\sigma$ measures how freely charge flows:
+  Ohm's law~\eqref{eq:const-sigma} says the current is proportional to the
+  field. A perfect insulator has $\sigma=0$; a perfect conductor has
+  $\sigma\to\infty$; copper sits at $\approx\SI{6e7}{\siemens\per\meter}$. The
+  conductivity is what makes a material \emph{lossy}---it is the term that
+  drains electromagnetic energy into heat, and (as we will see in
+  \cref{sec:regimes}) it is what gives a resonant mode a finite quality factor
+  $Q$ rather than ringing forever.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\caption[Typical material parameters]{Representative values of the three
+constitutive coefficients. Relative permittivity $\varepsilon_r$ and relative
+permeability $\mu_r$ are dimensionless ratios to the vacuum values
+$\varepsilon_0\approx\SI{8.854e-12}{\farad\per\meter}$ and
+$\mu_0=4\pi\times10^{-7}\,\si{\henry\per\meter}$; conductivity $\sigma$ is in
+$\si{\siemens\per\meter}$. The enormous range of $\sigma$---from an insulator
+to a metal---is what separates a dielectric from a conductor, and what makes a
+boundary a PEC wall in the limit.}
+\label{tab:materials}
+\small
+\setlength{\tabcolsep}{7pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Material & $\varepsilon_r$ & $\mu_r$ & $\sigma\;(\si{\siemens\per\meter})$ \\
+\midrule
+Vacuum             & $1$     & $1$    & $0$ \\
+Air                & $1.0006$& $1$    & $\approx 0$ \\
+Silicon dioxide (\(\mathrm{SiO_2}\)) & $3.9$ & $1$ & $\sim 10^{-12}$ \\
+Silicon            & $11.7$  & $1$    & varies (doping) \\
+Water (\SI{20}{\celsius}) & $\approx 80$ & $1$ & $\sim 5\times10^{-4}$ \\
+Copper             & ---     & $1$    & $5.96\times10^{7}$ \\
+Iron (soft)        & ---     & $\sim 5000$ & $1.0\times10^{7}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{notationbox}
+Three symbols, three responses: $\varepsilon$ couples $\vE\!\to\!\vD$ (electric),
+$\mu$ couples $\vH\!\to\!\vB$ (magnetic), $\sigma$ couples $\vE\!\to\!\vJ$
+(conduction). Their reciprocals appear in the operators: reluctivity
+$\nu=1/\mu$ weights the curl--curl term, and $1/\varepsilon$ never appears
+alone---$\varepsilon$ itself is the weight in the electrostatic stiffness. Keep
+the pairing $(\vD,\vE,\varepsilon)$ and $(\vB,\vH,\mu)$ straight: $\vD$ and
+$\vB$ are the ``flux'' fields (the ones whose divergence the Gauss laws
+constrain); $\vE$ and $\vH$ are the ``intensity'' fields (the ones whose curl
+the dynamic laws constrain).
+\end{notationbox}
+
+\subsection{Isotropic, anisotropic, and the material tensor}
+
+Equations~\eqref{eq:const-eps}--\eqref{eq:const-sigma} assume the material
+responds the \emph{same in every direction}---it is \emph{isotropic}, and the
+coefficients are scalars. Real materials need not be so accommodating. A
+crystal, a layered substrate, or a magnetized ferrite responds differently
+along different axes, and then $\varepsilon$ becomes a $3\times3$ symmetric
+\emph{tensor} $\bm{\varepsilon}$:
+\[
+  \vD = \bm{\varepsilon}\,\vE,
+  \qquad
+  \bm{\varepsilon} =
+  \begin{pmatrix}
+    \varepsilon_{xx} & \varepsilon_{xy} & \varepsilon_{xz}\\
+    \varepsilon_{xy} & \varepsilon_{yy} & \varepsilon_{yz}\\
+    \varepsilon_{xz} & \varepsilon_{yz} & \varepsilon_{zz}
+  \end{pmatrix}.
+\]
+Now $\vD$ need not point along $\vE$. The isotropic case is the diagonal one
+with all three entries equal. The simulator treats the tensor case as the
+general one and the scalar case as a special diagonal---a pattern we will see
+repeatedly: handle the general object, specialize for free. The material
+coefficient becomes a per-point weight $Q$ inside the bilinear form
+$a(u,v)=(Q\,\diffop u,\diffop v)_\dom$ of \cref{ch:galerkin}, and whether $Q$
+is a scalar or a $3\times3$ tensor changes nothing in the structure of the
+assembly---only the arithmetic at each quadrature point.
+
+\section{Interfaces and walls: boundary conditions}
+\label{sec:bc}
+
+A simulation lives in a bounded box, and the box is made of materials that
+meet at interfaces and terminate at walls. What the fields do at those
+surfaces is dictated by Maxwell's equations themselves, applied across the
+discontinuity. Two conditions matter, and they are the continuous ancestors of
+the \emph{essential} and \emph{natural} boundary conditions that the
+finite-element method will later impose (\cref{ch:weak}, \cref{ch:bc}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % two media separated by an interface
+  \fill[simBgBlue]  (-3,0) rectangle (3,1.8);
+  \fill[simBgGold]  (-3,-1.8) rectangle (3,0);
+  \draw[very thick,simInk] (-3,0)--(3,0);
+  \node[font=\footnotesize] at (-2.5,1.4) {medium 1};
+  \node[font=\scriptsize,text=simGray] at (-2.5,1.0) {$\varepsilon_1,\mu_1$};
+  \node[font=\footnotesize] at (-2.5,-1.4) {medium 2};
+  \node[font=\scriptsize,text=simGray] at (-2.5,-1.0) {$\varepsilon_2,\mu_2$};
+  % interface normal
+  \draw[-{Stealth[length=2.2mm]},simRust,thick] (0,0)--(0,0.9)
+     node[right,font=\scriptsize]{$\vn$};
+  % tangential E continuous: same arrow both sides
+  \draw[-{Stealth[length=2mm]},simBlue,thick] (1.2,0.0)--(2.2,0.0)
+     node[above,font=\scriptsize]{$\vE_{\parallel}$};
+  \draw[densely dashed,simBlue] (1.7,0.06)--(1.7,-0.5);
+  \draw[-{Stealth[length=2mm]},simBlue,thick] (1.2,-0.0)--(2.2,-0.0);
+  \node[font=\scriptsize,text=simBlue,align=center] at (1.7,-0.85)
+     {$\vE_\parallel$ continuous};
+  % normal B continuous: vertical arrow crossing
+  \draw[-{Stealth[length=2.4mm]},simTeal,thick] (-1.7,-0.85)--(-1.7,0.85);
+  \node[font=\scriptsize,text=simTeal] at (-1.15,0.55) {$\vB_\perp$};
+  \node[font=\scriptsize,text=simTeal,align=center] at (-1.6,-1.15)
+     {$\vB_\perp$ continuous};
+\end{tikzpicture}
+\caption[Interface boundary conditions]{At an interface between two media the
+\emph{tangential} electric field $\vE_\parallel$ and the \emph{normal} magnetic
+flux $\vB_\perp$ pass through unchanged. These two continuities are what the
+finite-element spaces $\Hcurl$ (tangentially continuous, for $\vE$) and $\Hdiv$
+(normally continuous, for $\vB$) are built to honour exactly. The complementary
+components ($\vD_\perp$, $\vH_\parallel$) may jump by surface charge or current.}
+\label{fig:interface}
+\end{figure}
+
+\subsection{Tangential \texorpdfstring{$\vE$}{E} and normal \texorpdfstring{$\vB$}{B} are continuous}
+
+Apply Faraday's law to a thin loop straddling the interface, then shrink the
+loop's height to zero. The flux through the vanishing loop goes to zero, and
+what survives is the statement that the \emph{tangential component of $\vE$ is
+continuous across the interface}:
+\begin{equation}
+  \vn\times(\vE_1-\vE_2) = \bm 0. \label{eq:bc-Etan}
+\end{equation}
+Symmetrically, apply Gauss's law for $\vB$ to a thin pillbox and shrink its
+height: the \emph{normal component of $\vB$ is continuous},
+\begin{equation}
+  \vn\cdot(\vB_1-\vB_2) = 0. \label{eq:bc-Bnorm}
+\end{equation}
+The complementary components are \emph{not} continuous in general: the normal
+$\vD$ can jump by a surface charge density, and the tangential $\vH$ can jump by
+a surface current. But \eqref{eq:bc-Etan} and \eqref{eq:bc-Bnorm}---tangential
+$\vE$, normal $\vB$---always hold. They are the reason the discrete spaces of
+\cref{ch:functionspaces} are designed as they are: $\Hcurl$ enforces exactly
+tangential continuity (the right home for $\vE$), and $\Hdiv$ enforces exactly
+normal continuity (the right home for $\vB$). The physics chooses the function
+space.
+
+\subsection{PEC and PMC walls}
+
+Two idealized walls bound nearly every simulation.
+
+A \emph{perfect electric conductor} (PEC) is the $\sigma\to\infty$ limit of a
+metal. Inside it the field is zero, so by tangential continuity
+\eqref{eq:bc-Etan} the tangential electric field must vanish \emph{at the
+surface}:
+\begin{equation}
+  \vn\times\vE = \bm 0 \quad\text{on a PEC wall.} \label{eq:pec}
+\end{equation}
+A PEC wall is a mirror that shorts out any tangential $\vE$; it is the
+boundary condition at the metal plates of a capacitor and the walls of a
+cavity. It will become an \emph{essential} (Dirichlet) condition: imposed
+directly on the solution by removing the constrained degrees of freedom.
+
+A \emph{perfect magnetic conductor} (PMC) is the dual idealization,
+$\vn\times\vH=\bm0$. No real material is a PMC, but the condition arises
+naturally as a \emph{symmetry plane}---a surface across which the problem is
+mirror-symmetric---and it is the condition the finite-element method imposes by
+doing \emph{nothing} (a \emph{natural} condition). The contrast is worth
+holding onto: PEC must be enforced; PMC happens for free. That asymmetry,
+traced to the integration by parts of \cref{ch:weak}, is why one of them costs
+work to impose and the other costs nothing.
+
+\begin{notationbox}
+\textbf{Essential} (Dirichlet) conditions constrain the solution value and must
+be \emph{built into} the function space---the simulator eliminates the
+constrained degrees of freedom (\code{eliminate\_essential\_bc} in the
+machinery of \cref{ch:bc}). \textbf{Natural} (Neumann-like) conditions
+constrain a derivative and fall out of the weak form automatically; the
+simulator imposes them by adding nothing. PEC $\to$ essential; PMC and
+symmetry $\to$ natural. This single distinction reappears in every driver.
+\end{notationbox}
+
+\section{Energy and Poynting's theorem}
+\label{sec:energy}
+
+A simulation that finds the fields is only halfway done; the engineer wants a
+\emph{number}---a capacitance, an inductance, a quality factor---and almost
+every such number is an \emph{energy}. The electromagnetic field stores energy
+in space at a density
+\begin{equation}
+  u = \tfrac12\,\vE\cdot\vD + \tfrac12\,\vH\cdot\vB
+    = \tfrac12\,\varepsilon\,\abs{\vE}^2 + \tfrac{1}{2\mu}\,\abs{\vB}^2,
+  \label{eq:energy-density}
+\end{equation}
+the first term electric, the second magnetic. Integrate $u$ over the device and
+you have the total stored energy $U$---and from $U$ come the reductions:
+capacitance is $C = 2U/V^2$ at unit voltage, inductance is $L = 2U/I^2$ at unit
+current. These are the very quantities the \emph{energy reductions} of
+\cref{ch:reductions} compute. Equation~\eqref{eq:energy-density} is their
+integrand.
+
+\subsection{Poynting's theorem: where the energy goes}
+
+Energy density alone is a snapshot; we also want to know how energy
+\emph{moves}. That is the content of Poynting's theorem, and it follows from
+Maxwell's equations by one inspired manipulation. Define the \emph{Poynting
+vector}
+\begin{equation}
+  \vS = \vE\times\vH, \label{eq:poynting-vec}
+\end{equation}
+the directional flow of electromagnetic power per unit area (\cref{fig:poynting}).
+Now form the combination $\vH\cdot(\Curl\vE) - \vE\cdot(\Curl\vH)$. A standard
+vector identity rewrites it as a divergence,
+\[
+  \vH\cdot(\Curl\vE) - \vE\cdot(\Curl\vH) = \Div(\vE\times\vH) = \Div\vS.
+\]
+Substitute Faraday's law~\eqref{eq:faraday} for $\Curl\vE$ and the
+Amp\`ere--Maxwell law~\eqref{eq:ampere} for $\Curl\vH$:
+\[
+  \Div\vS
+  = \vH\cdot(-\partial_t\vB) - \vE\cdot(\vJ + \partial_t\vD)
+  = -\,\partial_t\!\left(\tfrac12\vH\cdot\vB + \tfrac12\vE\cdot\vD\right)
+    - \vE\cdot\vJ.
+\]
+Recognizing the bracket as the energy density $u$ of
+\eqref{eq:energy-density}, we arrive at \emph{Poynting's theorem}:
+\begin{equation}
+  \partial_t u + \Div\vS = -\,\vE\cdot\vJ. \label{eq:poynting}
+\end{equation}
+Read it as a balance sheet for energy at every point. The first term is the
+rate the stored energy changes; the second is the net power flowing \emph{out}
+(the divergence of the energy flux $\vS$); the right side is the power
+delivered to the currents. When $\vJ=\sigma\vE$ (Ohmic material), the source
+term is $-\sigma\abs{\vE}^2\le 0$: energy is \emph{dissipated}, drained
+irreversibly into heat. That loss term is what gives a resonator its finite
+$Q$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % E field (blue, right), H field (green, up/out), S = E x H (rust, into-page-ish)
+  \draw[-{Stealth[length=2.6mm]},simBlue,very thick] (0,0)--(2.0,0)
+     node[right,font=\small]{$\vE$};
+  \draw[-{Stealth[length=2.6mm]},simGreen,very thick] (0,0)--(0,2.0)
+     node[above,font=\small]{$\vH$};
+  \draw[-{Stealth[length=2.6mm]},simRust,very thick] (0,0)--(1.45,1.45)
+     node[above right,font=\small]{$\vS=\vE\times\vH$};
+  % little flux disk
+  \fill[simRust!18] (0.0,0.0) -- (2.0,0.0) arc (0:90:2.0) -- cycle;
+  \node[font=\scriptsize,text=simGray,align=center] at (3.6,1.0)
+     {power flows\\ along $\vS$};
+  % right angle ticks
+  \draw[simInk] (0.18,0)--(0.18,0.18)--(0,0.18);
+\end{tikzpicture}
+\caption[The Poynting vector]{The Poynting vector $\vS=\vE\times\vH$ points
+perpendicular to both fields and gives the direction and density of
+electromagnetic power flow. In a propagating wave, $\vE$, $\vH$, and $\vS$ form
+a right-handed triple and $\vS$ points the way the wave travels. Poynting's
+theorem \eqref{eq:poynting} is the local accounting that $\partial_t u+\Div\vS$
+equals the power delivered to charges.}
+\label{fig:poynting}
+\end{figure}
+
+\begin{keyidea}
+Poynting's theorem is the conservation of energy for the field, derived
+\emph{from} Maxwell's equations rather than assumed alongside them---just as
+continuity \eqref{eq:continuity} was conservation of charge. The pattern is
+worth noticing: the deep facts of the theory (energy conservation, charge
+conservation) are not extra axioms but algebraic consequences of the four laws,
+extracted by a vector identity. The energy density \eqref{eq:energy-density} is
+the integrand the output reductions sum; the loss term $\vE\cdot\vJ$ is what
+makes a quality factor finite.
+\end{keyidea}
+
+\subsection{Stored energy, the quality factor, and participation}
+\label{sec:Q}
+
+The energy bookkeeping is not an afterthought; it is what most analyses
+\emph{report}. Three quantities, all built from the energy density
+\eqref{eq:energy-density}, recur throughout the book.
+
+First, in a resonant mode the electric and magnetic energies are equal on
+average and exchange completely twice per cycle---energy sloshes from the
+electric field to the magnetic field and back, just as a pendulum trades
+kinetic for potential energy. The total $U=U_E+U_B$ is what the eigenmode
+analysis integrates.
+
+Second, when a small loss is present, the mode does not ring forever; its
+amplitude decays, and the \emph{quality factor}
+\[
+  Q = \omega\,\frac{U_{\text{stored}}}{P_{\text{loss}}}
+    = \frac{\omega}{\kappa}
+\]
+measures how many radians of oscillation it takes to drain a factor $1/e$ of the
+energy. A high-$Q$ cavity ($Q\sim10^6$ or more for a superconducting resonator)
+rings for millions of cycles; a lossy one barely rings at all. The numerator is
+the stored field energy of \eqref{eq:energy-density}; the denominator is the
+power-loss integral of $\sigma\abs{\vE}^2$ from Poynting's
+theorem~\eqref{eq:poynting}. This is the $Q$ the eigenmode reduction of
+\cref{ch:reductions} computes, and the reason that chapter cares about the loss
+term at all.
+
+Third, engineers want to know \emph{where} a mode keeps its energy---in which
+dielectric, in which gap. The \emph{participation ratio} of a region is the
+fraction of the total energy stored there,
+\[
+  p_{\text{region}} = \frac{\int_{\text{region}} u\dV}{\int_{\text{all}} u\dV},
+\]
+a number between $0$ and $1$ that sums to one over a partition of the device. It
+is the headline output of a great deal of quantum-device design: the
+participation of a lossy interface sets the limit on a qubit's coherence. Like
+$Q$ and like capacitance, it is just the energy density
+\eqref{eq:energy-density} integrated and divided---which is why a single
+\emph{energy reduction} (\cref{ch:reductions}) computes all three.
+
+\section{Three regimes: static, time-harmonic, time-domain}
+\label{sec:regimes}
+
+The full Maxwell system is a coupled set of time-dependent partial differential
+equations. Almost no engineering question needs it in that generality. Instead
+each analysis lives in one of three \emph{regimes}, distinguished entirely by
+\emph{how time enters}, and the choice of regime is what turns the one physics
+into the several analyses of \cref{ch:targets}. \Cref{fig:regimes} is the map;
+the rest of this section walks it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  \node[stage, minimum width=30mm, minimum height=14mm] (full)
+    {\textbf{Maxwell}\\[1pt]\footnotesize $\partial_t$ present};
+  \node[stage, minimum width=30mm, below left=14mm and 8mm of full] (static)
+    {\textbf{Static}\\[1pt]\footnotesize $\partial_t\to 0$};
+  \node[stage, minimum width=30mm, below=22mm of full] (harm)
+    {\textbf{Time-harmonic}\\[1pt]\footnotesize $\partial_t\to i\omega$};
+  \node[stage, minimum width=30mm, below right=14mm and 8mm of full] (td)
+    {\textbf{Time-domain}\\[1pt]\footnotesize $\partial_t$ kept};
+  \draw[flow] (full) -- (static);
+  \draw[flow] (full) -- (harm);
+  \draw[flow] (full) -- (td);
+  % products
+  \node[product, below=7mm of static, minimum width=30mm, font=\scriptsize]
+    {electro- / magnetostatic\\ $\to$ $C$, $L$};
+  \node[product, below=7mm of harm, minimum width=34mm, font=\scriptsize]
+    {eigenmode, driven\\ $\to$ $f,Q$, S-params};
+  \node[product, below=7mm of td, minimum width=30mm, font=\scriptsize]
+    {transient\\ $\to$ field history};
+  % the key substitution callout
+  \node[font=\scriptsize\itshape, text=simRust, right=10mm of harm, align=center]
+    (sub) {the phasor\\ substitution};
+  \draw[backflow] (sub) -- (harm);
+\end{tikzpicture}
+\caption[The three regimes]{The three regimes of Maxwell's equations, set by
+how the time derivative is treated. Dropping $\partial_t$ gives the
+\emph{static} problems (electrostatic, magnetostatic). Replacing
+$\partial_t\to i\omega$ gives the \emph{time-harmonic} problems (eigenmode,
+driven) and produces the complex curl--curl operators of
+\cref{ch:reductions-pde}. Keeping $\partial_t$ gives the \emph{time-domain}
+transient problem. The single substitution $\partial_t\to i\omega$ is the
+bridge from the time-domain to the frequency-domain analyses.}
+\label{fig:regimes}
+\end{figure}
+
+\subsection{Static: time stands still}
+
+When nothing changes in time, every $\partial_t$ vanishes and the two coupling
+laws \emph{decouple}. Faraday's law becomes $\Curl\vE=\bm0$, so $\vE$ is a
+gradient (\cref{sec:potentials}); Amp\`ere's law loses its displacement current
+and becomes $\Curl\vH=\vJ$. The electric and magnetic problems no longer talk
+to each other, and we are left with two independent, self-contained problems:
+
+\begin{itemize}
+  \item \textbf{Electrostatics.} With $\vE=-\Grad V$ and $\vD=\varepsilon\vE$,
+  Gauss's law $\Div\vD=\rho$ becomes a single scalar second-order equation for
+  the potential,
+  \begin{equation}
+    -\Div(\varepsilon\,\Grad V) = \rho, \label{eq:poisson}
+  \end{equation}
+  the \emph{Poisson equation} (Laplace's equation $-\Div(\varepsilon\Grad
+  V)=0$ in charge-free regions). This is the electrostatic analysis, and it is
+  the simplest governing equation in the book.
+
+  \item \textbf{Magnetostatics.} With $\vB=\Curl\vA$ and $\vH=\nu\vB$,
+  Amp\`ere's law $\Curl\vH=\vJ$ becomes the \emph{curl--curl} equation for the
+  vector potential,
+  \begin{equation}
+    \Curl(\nu\,\Curl\vA) = \vJ. \label{eq:curlcurl-static}
+  \end{equation}
+\end{itemize}
+
+These are the equations behind the electrostatic and magnetostatic analyses of
+\cref{ch:targets}, and \cref{ch:reductions-pde} derives them in full. Notice
+already how alike they are in shape---a weighted second-order operator equal to
+a source---differing only in the function space ($V$ scalar, $\vA$ vector) and
+the differential operator ($\Grad$ versus $\Curl$). That kinship is the seed of
+``the same machine, one part swapped.''
+
+\subsection{Time-harmonic: the phasor substitution}
+
+Most microwave engineering asks not ``what happens in time?'' but ``what is the
+steady response at frequency $\omega$?'' If every field oscillates at a single
+angular frequency $\omega$, we can write each as the real part of a complex
+\emph{phasor} times $e^{i\omega t}$:
+\[
+  \vE(\vx,t) = \Re\!\big\{\hat{\vE}(\vx)\,e^{i\omega t}\big\},
+\]
+and similarly for $\vB,\vD,\vH,\vJ$. The complex amplitude $\hat{\vE}(\vx)$
+carries both magnitude and phase at every point; time has been factored out.
+The payoff is a single, beautiful simplification. Differentiating
+$e^{i\omega t}$ in time just multiplies by $i\omega$:
+\begin{equation}
+  \partial_t \;\longrightarrow\; i\omega. \label{eq:phasor-sub}
+\end{equation}
+Every time derivative in Maxwell's equations becomes an algebraic factor
+$i\omega$, and the partial differential equations \emph{in space and time}
+collapse to partial differential equations \emph{in space alone}, with complex
+coefficients. The phasor curl laws read
+\begin{align}
+  \Curl\hat{\vE} &= -\,i\omega\,\hat{\vB}, \label{eq:faraday-phasor}\\
+  \Curl\hat{\vH} &= \hat{\vJ} + i\omega\,\hat{\vD}. \label{eq:ampere-phasor}
+\end{align}
+Worked example~\ref{wex:phasor} carries this substitution all the way to the curl--curl
+operator that the driven and eigenmode analyses solve. The substitution
+\eqref{eq:phasor-sub} is the single most important bridge in Part~II: it is
+what turns the time-domain Maxwell system into the frequency-domain operators
+$\mat K + i\omega\mat C - \omega^2\mat M$ that \cref{ch:reductions-pde} derives
+and that \cref{part:machinery} learns to solve.
+
+It is worth seeing in advance where those three operators come from, because the
+pattern recurs in every harmonic analysis. After the weak form and
+discretization of \cref{ch:weak,ch:galerkin}, each \emph{term} of the harmonic
+curl--curl equation contributes one matrix:
+\begin{itemize}
+  \item the curl--curl term $\Curl(\nu\,\Curl\hat{\vE})$ becomes the
+  \emph{stiffness} $\mat K$ (no $\omega$ in it---it is the static operator);
+  \item a conduction/loss term $i\omega\sigma\hat{\vE}$ (present when the medium
+  conducts, or a port radiates) becomes $i\omega\mat C$, the \emph{damping}
+  operator---first power of $\omega$, and the only one carrying the imaginary
+  unit;
+  \item the displacement term $-\omega^2\varepsilon\hat{\vE}$ becomes
+  $-\omega^2\mat M$, with the \emph{mass} $\mat M$---second power of $\omega$,
+  the term that makes the problem a resonance.
+\end{itemize}
+The full operator $\mat A(\omega)=\mat K + i\omega\mat C - \omega^2\mat M$ is a
+\emph{quadratic} polynomial in $\omega$ whose three coefficient matrices are
+assembled once and reused at every frequency. Drop the drive and you have the
+eigenmode problem $\mat K\hat{\vE}=\omega^2\mat M\hat{\vE}$ (a generalized
+eigenproblem when $\mat C=0$, a quadratic one when it does not); keep the drive
+and you sweep $\omega$, re-forming $\mat A(\omega)$ and solving
+$\mat A(\omega)\hat{\vE}=\vb(\omega)$ at each step. The single phasor
+substitution has produced the entire frequency-domain operator algebra the
+later chapters live in.
+
+\subsection{Time-domain: keep the clock running}
+
+Sometimes the excitation is a broadband pulse, or the materials are nonlinear,
+or one simply wants the movie. Then no single frequency suffices and the time
+derivatives must be \emph{kept}. After spatial discretization the result is a
+second-order system of ordinary differential equations in time,
+\[
+  \mat M\,\ddot{\vs}(t) + \mat C\,\dot{\vs}(t) + \mat K\,\vs(t) = \vJ(t),
+\]
+the same $\mat M,\mat C,\mat K$ operators as the harmonic case but now marched
+forward step by step rather than solved frequency by frequency. This is the
+transient analysis. Its defining feature---each step begins from the state the
+previous step produced---makes it the book's first genuinely \emph{sequential}
+computation, and the motivating example for the fold of \cref{ch:fold}.
+
+\begin{keyidea}
+One physics, three regimes, set by the fate of $\partial_t$. \textbf{Drop} it
+($\partial_t\to0$): static, real operators, two decoupled problems (electro-
+and magnetostatic). \textbf{Algebraize} it ($\partial_t\to i\omega$):
+time-harmonic, complex operators, the curl--curl/Helmholtz family (eigenmode,
+driven). \textbf{Keep} it: time-domain, a marched ODE system (transient). The
+substitution $\partial_t\to i\omega$ is the hinge between the second and third,
+and the source of every complex operator in the book.
+\end{keyidea}
+
+\begin{table}[t]
+\centering
+\caption[The three regimes, compared]{The three regimes side by side. The
+column that changes everything is the fate of the time derivative; it dictates
+whether the operator is real or complex, whether the problem couples $\vE$ and
+$\vB$, and which analyses of \cref{ch:targets} it produces. The discrete
+operators $\mat K,\mat C,\mat M$ are the same matrices in every column---only
+their combination differs.}
+\label{tab:regimes}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}llll@{}}
+\toprule
+ & Static & Time-harmonic & Time-domain \\
+\midrule
+$\partial_t$ becomes & $0$ & $i\omega$ (algebraic) & kept (a derivative) \\
+Unknown & real field & complex phasor & real field history \\
+Coupling & decoupled & coupled & coupled \\
+Discrete operator & $\mat K$ & $\mat K+i\omega\mat C-\omega^2\mat M$
+  & $\mat M\ddot{\vs}+\mat C\dot{\vs}+\mat K\vs$ \\
+Solve shape & one linear solve & solve per $\omega$ / eigenproblem & marched fold \\
+Analyses & electro-/magnetostatic & eigenmode, driven & transient \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Potentials: solving the constraints automatically}
+\label{sec:potentials}
+
+The static analyses were posed not for the fields $\vE,\vB$ directly but for
+\emph{potentials}---a scalar $V$ and a vector $\vA$. The reason is elegant: a
+potential \emph{automatically satisfies} one of the Gauss laws, removing it
+from the list of equations to solve. Potentials trade a constrained field for an
+unconstrained one.
+
+\subsection{The scalar potential \texorpdfstring{$V$}{V}}
+
+In the static (or curl-free) case Faraday's law gives $\Curl\vE=\bm0$. A vector
+identity from vector calculus states that the curl of \emph{any} gradient
+vanishes, $\Curl(\Grad f)=\bm0$. So if we write
+\begin{equation}
+  \vE = -\Grad V, \label{eq:E-from-V}
+\end{equation}
+then $\Curl\vE = -\Curl(\Grad V)=\bm 0$ is satisfied \emph{identically}, for
+\emph{any} scalar function $V$ (\cref{fig:potentials}, left). The curl law is no
+longer an equation to enforce; it is built into the representation. We are left
+with only Gauss's law, which \eqref{eq:E-from-V} turns into the Poisson
+equation~\eqref{eq:poisson}. The minus sign is convention: it makes $\vE$ point
+``downhill,'' from high potential to low, matching the picture of a positive
+charge rolling down a voltage slope.
+
+\subsection{The vector potential \texorpdfstring{$\vA$}{A}}
+
+The magnetic side runs in parallel. Gauss's law for $\vB$ says $\Div\vB=0$.
+The companion identity is that the divergence of \emph{any} curl vanishes,
+$\Div(\Curl\vF)=0$ (the same identity that gave us continuity in
+\eqref{eq:continuity}). So if we write
+\begin{equation}
+  \vB = \Curl\vA, \label{eq:B-from-A}
+\end{equation}
+then $\Div\vB=\Div(\Curl\vA)=0$ holds \emph{identically} for any vector field
+$\vA$ (\cref{fig:potentials}, right). Gauss's law for $\vB$ disappears, and
+Amp\`ere's law becomes the curl--curl equation
+\eqref{eq:curlcurl-static}. The two potentials are the two halves of the same
+trick: each rides on a vanishing-derivative identity ($\Curl\Grad=0$ and
+$\Div\Curl=0$) to dissolve one Gauss law and leave one equation behind. Those
+two identities are exactly the two composites of the de Rham complex
+$\Hone\xrightarrow{\Grad}\Hcurl\xrightarrow{\Curl}\Hdiv\xrightarrow{\Div}\Ltwo$
+that \cref{ch:derham} builds the discrete function spaces to honour.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+% left: scalar potential, E = -grad V over a hill
+\begin{scope}[shift={(0,0)}]
+  % contour "hill"
+  \foreach \r/\op in {1.05/12, 0.75/22, 0.45/36}{
+    \draw[simGray!60] (0,0) circle (\r);}
+  \node[font=\scriptsize] at (0,0) {high $V$};
+  % E arrows pointing downhill (outward, but E=-grad V so toward low V outside)
+  \foreach \a in {30,120,210,300}{
+    \draw[-{Stealth[length=2mm]},simBlue,thick]
+      (\a:0.5)--(\a:1.25);}
+  \node[font=\scriptsize\itshape,simBlue] at (1.35,1.0) {$\vE=-\Grad V$};
+  \node[font=\footnotesize] at (0,-1.7) {scalar potential};
+\end{scope}
+% right: vector potential, B = curl A
+\begin{scope}[shift={(5.0,0)}]
+  % A as a circulation
+  \draw[flow,simViolet] (0,0) circle (0.8);
+  \node[font=\scriptsize\itshape,simViolet] at (-1.05,0.6) {$\vA$};
+  % B coming out of the loop
+  \draw[-{Stealth[length=2.4mm]},simTeal,very thick] (0,0)--(0,0.0);
+  \fill[simTeal] (0,0) circle (1.6pt);
+  \node[font=\scriptsize\itshape,simTeal] at (0.45,0.25) {$\vB$};
+  \node[font=\footnotesize] at (0,-1.7) {vector potential};
+  \node[font=\scriptsize,text=simGray] at (0,-1.4) {$\vB=\Curl\vA$};
+\end{scope}
+\end{tikzpicture}
+\caption[The potential representations]{The two potential representations.
+\emph{Left}: writing $\vE=-\Grad V$ makes $\vE$ point downhill on the potential
+landscape and satisfies $\Curl\vE=\bm0$ identically. \emph{Right}: writing
+$\vB=\Curl\vA$ makes $\vB$ the circulation of $\vA$ and satisfies $\Div\vB=0$
+identically. Each potential dissolves one Gauss law for free, riding on a
+vanishing-derivative identity of vector calculus.}
+\label{fig:potentials}
+\end{figure}
+
+\subsection{Gauge freedom, briefly}
+
+There is a price, gentle but real. The potentials are not unique. Adding any
+constant to $V$ leaves $\vE=-\Grad V$ unchanged. Adding any gradient $\Grad
+\chi$ to $\vA$ leaves $\vB=\Curl\vA$ unchanged, because $\Curl(\Grad\chi)=\bm0$.
+This freedom---the \emph{gauge freedom}---means the magnetostatic curl--curl
+operator \eqref{eq:curlcurl-static} has a nontrivial null space: every gradient
+field is invisible to it. One fixes the freedom by an extra condition (a
+\emph{gauge}, such as $\Div\vA=0$), or, as the simulator does, by projecting
+the solution onto the gradient-free part with a divergence-free projector
+(\cref{ch:bc}). For now simply note that the null space is not a bug to be
+feared but the direct fingerprint of gauge freedom---the same vanishing-curl
+identity that made the potential useful, seen from the other side.
+
+\section{Worked examples}
+
+The examples below are deliberately small enough to check with a pencil. The
+first exercises Gauss's law and the energy integral end to end---it is the
+electrostatic analysis in miniature. The second carries the phasor substitution
+to the operator the time-harmonic analyses actually solve. The third puts the
+interface conditions of \cref{sec:bc} to work on a concrete refraction of field
+lines.
+
+\begin{workedexample}{Parallel-plate capacitor: field, charge, energy}{capacitor}
+Two parallel conducting plates of area $A$ sit a distance $d$ apart, the gap
+filled with a dielectric of permittivity $\varepsilon=\varepsilon_r\varepsilon_0$.
+The top plate is held at potential $V_0$, the bottom at $0$ (\cref{fig:capacitor}).
+Find the field, the charge, the capacitance, and the stored energy---ignoring
+fringing, so the field is uniform and vertical between the plates.
+
+\emph{Field from the potential.} With the plates close compared to their size,
+the potential varies linearly across the gap: $V(z)=V_0\,z/d$ for $0\le z\le
+d$. Then
+\[
+  \vE = -\Grad V = -\frac{dV}{dz}\,\hat{\vz} = -\frac{V_0}{d}\,\hat{\vz},
+\]
+a uniform field of magnitude $E=V_0/d$ pointing from the high plate to the low.
+With $V_0=\SI{1}{\volt}$ and $d=\SI{1}{\micro\meter}$ this is
+$E=\SI{e6}{\volt\per\meter}$---fields inside small devices are large.
+
+\emph{Charge from Gauss's law.} The displacement is $\vD=\varepsilon\vE$, of
+magnitude $D=\varepsilon V_0/d$. A pillbox Gauss surface straddling the top
+plate sees flux $D$ leave through its face of area $A$, so the enclosed surface
+charge is
+\[
+  Q = D\,A = \frac{\varepsilon A}{d}\,V_0.
+\]
+
+\emph{Capacitance.} By definition $C=Q/V_0$, so
+\begin{equation}
+  C = \frac{\varepsilon A}{d}. \label{eq:cap}
+\end{equation}
+The classic result: capacitance grows with plate area and dielectric constant,
+and shrinks with separation.
+
+\emph{Energy, two ways.} The stored energy from the energy
+density~\eqref{eq:energy-density}, integrated over the gap volume $V_{\text{gap}}=Ad$,
+is
+\[
+  U = \int \tfrac12\varepsilon\abs{\vE}^2\dV
+    = \tfrac12\varepsilon\Big(\frac{V_0}{d}\Big)^{\!2}\,(Ad)
+    = \tfrac12\,\frac{\varepsilon A}{d}\,V_0^2
+    = \tfrac12\,C\,V_0^2,
+\]
+recovering the familiar $U=\tfrac12 C V_0^2$. Read backwards, this says
+$C=2U/V_0^2$: \emph{the capacitance is twice the field energy at unit
+voltage}---exactly the energy reduction the electrostatic analysis performs in
+\cref{ch:reductions}. A concrete number: $\varepsilon_r=3.9$ (silicon dioxide),
+$A=\SI{100}{\micro\meter\squared}=\SI{e-10}{\meter\squared}$,
+$d=\SI{100}{\nano\meter}$ gives
+$C=3.9\times\SI{8.854e-12}{}\times\SI{e-10}{}/\SI{e-7}{}\approx\SI{3.5e-14}{\farad}=\SI{35}{\femto\farad}$,
+a typical on-chip value.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{physicsbox}
+\physicsframe{
+  \fill[simBgBlue] (-1.6,-0.9) rectangle (1.6,0.9);
+  \draw[very thick,simInk] (-1.6,0.9)--(1.6,0.9);
+  \draw[very thick,simInk] (-1.6,-0.9)--(1.6,-0.9);
+  \node[font=\scriptsize] at (-2.0,0.9) {$V_0$};
+  \node[font=\scriptsize] at (-2.0,-0.9) {$0$};
+  \node[font=\scriptsize,text=simGray] at (0,1.25) {area $A$};
+  \draw[{Stealth[length=1.5mm]}-{Stealth[length=1.5mm]},simGray]
+    (1.95,0.9)--(1.95,-0.9);
+  \node[font=\scriptsize,text=simGray] at (2.25,0) {$d$};
+  \foreach \x in {-1.2,-0.6,0,0.6,1.2}{
+    \draw[-{Stealth[length=1.8mm]},simBlue,thick] (\x,0.82)--(\x,-0.82);}
+  \node[font=\scriptsize\itshape,simBlue] at (1.0,0.45) {$\vE$};
+  \node[font=\scriptsize,text=simGreen] at (0,0) {$\varepsilon$};
+}
+\end{physicsbox}
+\caption[Parallel-plate capacitor]{The parallel-plate capacitor of
+Worked example~\ref{wex:capacitor}. A uniform vertical field $\vE=-(V_0/d)\hat{\vz}$ fills the
+dielectric-filled gap; Gauss's law gives the surface charge, and the field
+energy gives the capacitance $C=\varepsilon A/d = 2U/V_0^2$.}
+\label{fig:capacitor}
+\end{figure}
+
+\begin{workedexample}{Phasor reduction to the curl--curl operator}{phasor}
+Take a source-free region ($\vJ=\bm0$, $\rho=0$) of a linear medium
+($\vD=\varepsilon\vE$, $\vB=\mu\vH$). Show that the time-harmonic Maxwell
+equations reduce to a single second-order operator equation for $\hat{\vE}$,
+the \emph{curl--curl} (vector Helmholtz) equation that the driven and eigenmode
+analyses solve.
+
+\emph{Start from the phasor curl laws.} With $\vJ=\bm0$, equations
+\eqref{eq:faraday-phasor}--\eqref{eq:ampere-phasor} read
+\[
+  \Curl\hat{\vE} = -\,i\omega\,\hat{\vB} = -\,i\omega\mu\,\hat{\vH},
+  \qquad
+  \Curl\hat{\vH} = i\omega\,\hat{\vD} = i\omega\varepsilon\,\hat{\vE}.
+\]
+
+\emph{Eliminate $\hat{\vH}$.} Solve the first for $\hat{\vH}=
+-\,\dfrac{1}{i\omega\mu}\Curl\hat{\vE}$ and substitute into the second:
+\[
+  \Curl\!\left(-\frac{1}{i\omega\mu}\Curl\hat{\vE}\right)
+    = i\omega\varepsilon\,\hat{\vE}.
+\]
+Multiply through by $i\omega$ and write $\nu=1/\mu$. The factor $i\omega$ cancels
+on the left to leave $-\Curl(\nu\Curl\hat{\vE})$ on one side, and $i\omega\cdot
+i\omega = -\omega^2$ on the other:
+\begin{equation}
+  \Curl(\nu\,\Curl\hat{\vE}) - \omega^2\varepsilon\,\hat{\vE} = \bm0.
+  \label{eq:curlcurl-harmonic}
+\end{equation}
+
+\emph{Read the result.} Equation~\eqref{eq:curlcurl-harmonic} is the
+\emph{curl--curl} operator equation. Its two terms are exactly the discrete
+operators of \cref{ch:targets}: the curl--curl term becomes the stiffness
+$\mat K$ (weighted by reluctivity $\nu$), and the $\omega^2$ term becomes the
+mass $\mat M$ (weighted by permittivity $\varepsilon$). With no drive it is the
+generalized eigenvalue problem $\mat K\hat{\vE}=\omega^2\mat M\hat{\vE}$---the
+\emph{eigenmode} analysis, whose eigenvalues are the squared resonant
+frequencies. Restore a current source $\hat{\vJ}$ and add a loss term
+$i\omega\sigma$ (from $\vJ=\sigma\vE$) and the operator becomes
+$\mat K+i\omega\mat C-\omega^2\mat M$---the \emph{driven} analysis. Both
+analyses are this one phasor reduction, with and without a right-hand side.
+This is the single calculation that turns the four time-domain laws into the
+frequency-domain machinery the rest of the book solves.
+\end{workedexample}
+
+\begin{workedexample}{Refraction of electric field lines at an interface}{refract}
+A static electric field crosses the planar interface between two dielectrics,
+$\varepsilon_1$ above and $\varepsilon_2$ below, with no free surface charge.
+On the upper side the field makes an angle $\theta_1$ with the normal. Find the
+angle $\theta_2$ on the lower side, and show that field lines \emph{bend} at the
+interface like light through glass.
+
+\emph{Set up the two conditions.} Resolve each field into a normal component
+(along $\vn$) and a tangential component (in the surface). The interface
+conditions of \cref{sec:bc} give two equations. Tangential $\vE$ is continuous
+\eqref{eq:bc-Etan}:
+\[
+  E_1\sin\theta_1 = E_2\sin\theta_2.
+\]
+With no surface charge, normal $\vD=\varepsilon\vE$ is continuous:
+\[
+  \varepsilon_1 E_1\cos\theta_1 = \varepsilon_2 E_2\cos\theta_2.
+\]
+
+\emph{Divide to eliminate the magnitudes.} Dividing the first equation by the
+second cancels $E_1$ and $E_2$ and leaves a clean relation between the angles:
+\begin{equation}
+  \frac{\tan\theta_1}{\varepsilon_1} = \frac{\tan\theta_2}{\varepsilon_2},
+  \qquad\text{i.e.}\qquad
+  \tan\theta_2 = \frac{\varepsilon_2}{\varepsilon_1}\,\tan\theta_1.
+  \label{eq:refract}
+\end{equation}
+This is the electrostatic ``law of refraction.''
+
+\emph{Put numbers in.} Take air above ($\varepsilon_1=\varepsilon_0$) and a
+dielectric below with $\varepsilon_2=4\varepsilon_0$, and let the field enter at
+$\theta_1=\SI{30}{\degree}$. Then $\tan\theta_2 = 4\tan\SI{30}{\degree} =
+4\times 0.577 = 2.31$, so $\theta_2 = \arctan(2.31)\approx\SI{66.6}{\degree}$.
+The field line bends \emph{away} from the normal on entering the denser
+dielectric---the opposite sense from a light ray, because here it is the normal
+\emph{flux} $\vD$, not the field $\vE$, that is conserved. The lesson for the
+simulator is concrete: the two interface conditions of \cref{sec:bc} are not
+decorative; they are algebraic constraints the discrete field must satisfy at
+every material boundary, and they are exactly what the $\Hcurl$ and $\Hdiv$
+function spaces of \cref{ch:functionspaces} are constructed to enforce.
+\end{workedexample}
+
+\begin{pitfall}
+The cancellation in Worked example~\ref{wex:phasor} relied on $\omega\neq0$. At $\omega=0$ the
+phasor substitution \eqref{eq:phasor-sub} sends $\partial_t\to0$ and we are back
+in the static regime, where the mass term vanishes and the curl--curl equation
+degenerates to the magnetostatic $\Curl(\nu\Curl\vA)=\vJ$. The three regimes are
+not separate physics; the static case is the $\omega\to0$ limit of the harmonic
+one. Watch the limit: the $\omega^2\mat M$ term that defines a resonance simply
+switches off.
+\end{pitfall}
+
+\section{A third look: the plane wave}
+\label{sec:planewave}
+
+It is worth seeing the solution that the source-free curl--curl equation
+\eqref{eq:curlcurl-harmonic} hides: the \emph{plane wave}, the simplest
+nontrivial field in all of electromagnetism and the one that makes ``Maxwell's
+equations are light'' concrete. In a uniform medium try
+$\hat{\vE}=\vE_0\,e^{-i\vk\cdot\vx}$, a field of fixed amplitude $\vE_0$ and a
+single propagation direction $\vk$ (\cref{fig:planewave}). The curl of such a
+field turns into $-i\vk\times$, and \eqref{eq:curlcurl-harmonic} becomes the
+algebraic \emph{dispersion relation}
+\[
+  \abs{\vk}^2 = \omega^2\mu\varepsilon,
+  \qquad\text{i.e.}\qquad
+  \abs{\vk} = \frac{\omega}{c}, \quad c=\frac{1}{\sqrt{\mu\varepsilon}},
+\]
+the statement that the wave travels at speed $c=1/\sqrt{\mu\varepsilon}$. In
+vacuum $c=1/\sqrt{\mu_0\varepsilon_0}\approx\SI{3e8}{\meter\per\second}$---the
+speed of light, recovered from $\mu_0$ and $\varepsilon_0$ alone, with no light
+ever mentioned. Faraday's law \eqref{eq:faraday-phasor} then forces
+$\vk\cdot\vE_0=0$ (the field is transverse to the direction of travel) and ties
+$\vH_0$ perpendicular to both, so $\vE$, $\vH$, and the Poynting vector
+$\vS=\vE\times\vH$ form the right-handed triple of \cref{fig:poynting}, with
+$\vS$ pointing along $\vk$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % propagation axis
+  \draw[->,simGray] (-0.3,0)--(6.4,0) node[right,font=\scriptsize]{$\vk$};
+  % E field: blue sinusoid in the vertical plane
+  \draw[simBlue,thick,domain=0:5.9,samples=100,smooth]
+    plot (\x,{0.85*sin(180*\x)});
+  \node[font=\scriptsize\itshape,simBlue] at (0.55,1.05) {$\vE$};
+  % a few E vectors riding the crest
+  \foreach \x in {0.5,1.5,2.5,3.5,4.5,5.5}{
+    \draw[-{Stealth[length=1.3mm]},simBlue,semithick]
+      (\x,0)--(\x,{0.85*sin(180*\x)});}
+  % H field: smaller transverse green sinusoid in phase
+  \draw[simGreen,thick,domain=0:5.9,samples=100,smooth]
+    plot (\x,{0.40*sin(180*\x)});
+  \node[font=\scriptsize\itshape,simGreen] at (1.55,-0.62) {$\vH$};
+  \node[font=\scriptsize,text=simRust] at (5.0,0.95) {$\vS\parallel\vk$};
+\end{tikzpicture}
+\caption[A plane wave]{A plane electromagnetic wave. The electric field $\vE$
+(blue) and magnetic field $\vH$ (green, drawn here as the smaller transverse
+component) oscillate in phase, perpendicular to each other and to the
+propagation direction $\vk$. The wave moves at speed $c=1/\sqrt{\mu\varepsilon}$
+set by the dispersion relation $\abs{\vk}=\omega/c$, carrying power along
+$\vS=\vE\times\vH$. This solution falls out of the same source-free curl--curl
+operator \eqref{eq:curlcurl-harmonic} the eigenmode and driven analyses
+assemble.}
+\label{fig:planewave}
+\end{figure}
+
+\subsection{Lossy media and the skin depth}
+
+The dispersion relation already carries the materials inside it, and turning on
+conductivity makes the wave \emph{decay}. In a conductor the
+Amp\`ere--Maxwell law gains the conduction current $\vJ=\sigma\vE$, and the
+phasor curl law becomes $\Curl\hat{\vH}=(\sigma+i\omega\varepsilon)\hat{\vE}$.
+Carrying this through the elimination of Worked example~\ref{wex:phasor} replaces
+$\omega^2\mu\varepsilon$ by $\omega^2\mu\varepsilon - i\omega\mu\sigma$, so the
+wavenumber $\abs{\vk}$ acquires an imaginary part. A complex $\vk=\beta - i/\delta$
+means the field $e^{-i\vk\cdot\vx}$ carries a real exponential decay
+$e^{-x/\delta}$: the wave dies away as it penetrates, over a characteristic
+length---the \emph{skin depth}
+\[
+  \delta = \sqrt{\frac{2}{\omega\mu\sigma}}\qquad(\text{good conductor}).
+\]
+At microwave frequencies $\delta$ in copper is well under a micron, which is why
+fields do not penetrate metal and why the PEC idealization
+$\vn\times\vE=\bm0$ of \cref{sec:bc} is so accurate: a real conductor confines
+the field to a vanishingly thin surface layer. The same imaginary part is the
+microscopic origin of the loss term $-\sigma\abs{\vE}^2$ in Poynting's theorem
+\eqref{eq:poynting}, and of the finite quality factor $Q$ a resonant cavity
+exhibits.
+
+Light is Maxwell's equations solving themselves in empty space; a damped wave
+in a conductor is the same equations solving themselves in a lossy one. That
+both fall out of the single curl--curl operator the simulator assembles---the
+operator Worked example~\ref{wex:phasor} derived---is the unity the whole book is about.
+
+\summarysection
+Maxwell's four equations split into two \emph{Gauss} constraints
+($\Div\vD=\rho$, $\Div\vB=0$) and two \emph{curl} dynamics (Faraday
+$\Curl\vE=-\partial_t\vB$, Amp\`ere--Maxwell $\Curl\vH=\vJ+\partial_t\vD$); the
+displacement current closes the loop that becomes light, and forces the
+\emph{continuity} of charge $\Div\vJ+\partial_t\rho=0$ as a consequence.
+Materials enter only through the three constitutive coefficients
+($\vD=\varepsilon\vE$, $\vB=\mu\vH$, $\vJ=\sigma\vE$), scalar for isotropic
+media and tensor for anisotropic ones. At interfaces, tangential $\vE$ and
+normal $\vB$ are continuous; PEC walls force $\vn\times\vE=\bm0$ (an essential
+condition), PMC and symmetry walls impose $\vn\times\vH=\bm0$ for free (a
+natural condition). The field stores energy at density
+$\tfrac12\varepsilon\abs{\vE}^2+\tfrac1{2\mu}\abs{\vB}^2$, and Poynting's
+theorem $\partial_t u+\Div\vS=-\vE\cdot\vJ$ accounts for its flow and loss---the
+integrand of the output reductions. The physics divides into three regimes by
+the fate of $\partial_t$: dropping it gives the static Poisson and curl--curl
+problems posed via the potentials $\vE=-\Grad V$ and $\vB=\Curl\vA$;
+substituting $\partial_t\to i\omega$ gives the time-harmonic curl--curl operator
+$\mat K+i\omega\mat C-\omega^2\mat M$ behind the eigenmode and driven analyses;
+keeping it gives the marched transient system. Every operator the rest of
+Part~II assembles is one of these reductions.
+
+\furtherreading
+For the physics at a sophomore's level, Griffiths~\citep{griffiths2017} is the
+standard and the clearest---its treatment of the four laws, the constitutive
+relations, boundary conditions, and Poynting's theorem is exactly the
+background assumed here. For the engineering-oriented frequency-domain picture
+(phasors, the curl--curl/Helmholtz equation, waveguides) and the finite-element
+formulation that \cref{ch:weak} begins, Jin~\citep{jin2014} is the canonical
+reference. The mathematically careful treatment of the function spaces
+$\Hcurl,\Hdiv$ and the boundary conditions that motivate them---material we
+will need in earnest in \cref{ch:functionspaces}---is developed rigorously by
+Monk~\citep{monk2003}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Reading the laws.} For each of the four Maxwell equations, state
+  in one sentence what physical quantity is the ``source'' on the right-hand
+  side and what field property (divergence or curl) it controls. Which two
+  equations couple $\vE$ and $\vB$, and which two are instantaneous
+  constraints?
+
+  \item \textbf{Continuity by hand.} Starting from Faraday's law
+  $\Curl\vE=-\partial_t\vB$, take the divergence of both sides and use
+  $\Div(\Curl\,\cdot)=0$ to show that $\partial_t(\Div\vB)=0$---so once
+  $\Div\vB=0$ holds it holds forever. Explain why this is the magnetic analogue
+  of the continuity equation~\eqref{eq:continuity}.
+
+  \item \textbf{A different dielectric.} Repeat the capacitance calculation of
+  Worked example~\ref{wex:capacitor} for two plates of area $A=\SI{1}{\milli\meter\squared}$
+  separated by $d=\SI{10}{\micro\meter}$ of a material with $\varepsilon_r=10$.
+  Find $C$, then the energy stored at $V_0=\SI{5}{\volt}$, and verify
+  $C=2U/V_0^2$.
+
+  \item \textbf{The displacement current matters.} Suppose Maxwell had written
+  Amp\`ere's law without the $\partial_t\vD$ term. Take the divergence and show
+  that the resulting equation forces $\Div\vJ=0$ everywhere. Give a physical
+  situation (e.g.\ a charging capacitor) where $\Div\vJ\neq0$, and explain why
+  the missing term is therefore essential.
+
+  \item \textbf{Refraction, reversed.} Worked example~\ref{wex:refract} sent a
+  field from air into a denser dielectric. Reverse it: a field inside the
+  dielectric ($\varepsilon_2=4\varepsilon_0$) makes $\SI{66.6}{\degree}$ with the
+  normal and exits into air ($\varepsilon_1=\varepsilon_0$). Use the refraction
+  law~\eqref{eq:refract} to find the exit angle, and confirm it is the
+  $\SI{30}{\degree}$ you started with---refraction is reversible. Then explain,
+  in one sentence, why a field line crossing into a \emph{higher}-permittivity
+  region always bends away from the normal.
+
+  \item \textbf{The phasor factor.} Show explicitly that if
+  $f(t)=\Re\{\hat f\,e^{i\omega t}\}$ then $\partial_t f=\Re\{i\omega\hat
+  f\,e^{i\omega t}\}$, justifying the substitution
+  $\partial_t\to i\omega$~\eqref{eq:phasor-sub}. What does the factor $i$ do to
+  the \emph{phase} of the oscillation, and why does that make ``a derivative''
+  into ``a $\SI{90}{\degree}$ phase shift''?
+
+  \item \textbf{From harmonic to static.} Take the harmonic curl--curl equation
+  \eqref{eq:curlcurl-harmonic} and let $\omega\to0$. Which term vanishes? Show
+  that with a current source restored you recover the magnetostatic equation
+  \eqref{eq:curlcurl-static}, confirming that the static regime is the
+  zero-frequency limit of the harmonic one.
+
+  \item \textbf{Energy in a resonant mode.} In a lossless cavity a mode
+  oscillates with the electric and magnetic energies exchanging back and forth,
+  $U_E(t)+U_B(t)=U_{\text{total}}=\text{const}$. Using Poynting's theorem
+  \eqref{eq:poynting} with $\vJ=\bm0$ and no net outflow through the PEC walls,
+  argue that the total stored energy is conserved. Then add a small
+  conductivity $\sigma$ and explain, from the loss term $-\sigma\abs{\vE}^2$,
+  why the mode now decays---and why that decay rate is what the quality factor
+  $Q$ measures.
+\end{enumerate}

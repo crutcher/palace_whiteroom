@@ -1,0 +1,1101 @@
+\chapter{GMRES and FGMRES}
+\label{ch:gmres}
+
+\chapterorient{The previous two chapters built the machinery of Krylov subspaces
+and spent it on the friendliest possible case: a symmetric, positive-definite
+operator, where conjugate gradients rides a three-term recurrence to the answer
+on a fixed budget of storage. This chapter asks what happens when the operator is
+\emph{not} symmetric---the driven analysis, the eigenmode inner solves, the
+complex frequency-domain systems---where the short recurrence simply does not
+exist. The answer is GMRES: keep the \emph{whole} Krylov basis, and at every step
+pick the iterate that makes the residual as small as it can be. We build it from
+the Arnoldi process up, watch a big minimization shrink to a tiny least-squares
+problem, and see why the residual norm falls out for free at every step. Then we
+pay off a promise made back in \cref{ch:operators}: when the preconditioner is
+allowed to \emph{change every step}, plain GMRES breaks, and FGMRES---the same
+algorithm carrying one extra basis---is exactly the repair the decision rule
+predicts.}
+
+\section{Why the short recurrence is gone}
+
+Conjugate gradients (\cref{ch:cg}) is a small miracle of bookkeeping. To minimize
+the energy of the error over the growing Krylov subspace $\mathcal{K}_m(\mat{A},
+\vr_0)$, it never stores more than a handful of vectors: the new search direction
+is $\mat{A}$-conjugate to all the previous ones, yet computing it requires only
+the \emph{last} direction, because symmetry of $\mat{A}$ forces all the earlier
+conjugacy conditions to hold automatically. The cost per step is fixed; the
+storage is fixed; the algorithm is, in a precise sense, optimal on a budget.
+
+That miracle has a single load-bearing hypothesis, and it is \emph{symmetry}. The
+three-term recurrence at the heart of CG is the Lanczos recurrence, and Lanczos
+tridiagonalizes $\mat{A}$ only because $\mat{A}=\mat{A}^{\top}$. The moment we drop
+symmetry---and most of the operators in this book are not symmetric: the
+frequency-domain system $\mat{A}(\omega)=\mat{K}+i\omega\mat{C}-\omega^2\mat{M}$ of
+the driven analysis (\cref{ch:targets}) is complex and non-Hermitian; the shifted
+operators inside an eigenvalue solve are indefinite---the recurrence collapses.
+There is a theorem (Faber--Manteuffel) that makes this brutal: for a general
+nonsymmetric $\mat{A}$, \emph{no} short recurrence can generate the optimal Krylov
+iterate. You cannot have both optimality and bounded storage. You must give up one.
+
+GMRES gives up bounded storage and keeps optimality. It commits to remembering the
+\emph{entire} orthonormal basis of the Krylov subspace, and in exchange it delivers,
+at every step, the genuinely best iterate the subspace can offer. The chapter is the
+story of how it affords this---and, when the cost grows too large, how restarting
+trades a controlled amount of optimality back for a memory bound.
+
+\begin{notationbox}
+Throughout, $\mat{A}$ is a general (possibly nonsymmetric, possibly complex
+non-Hermitian) invertible operator on $\Real^N$ or $\Complex^N$; we solve
+$\mat{A}\vx=\vb$. We write $\vx_0$ for the initial guess, $\vr_0=\vb-\mat{A}\vx_0$
+for the initial residual, $\beta=\norm{\vr_0}$ for its norm, and
+$\mathcal{K}_m=\mathcal{K}_m(\mat{A},\vr_0)=\operatorname{span}\{\vr_0,\mat{A}\vr_0,
+\dots,\mat{A}^{m-1}\vr_0\}$ for the $m$-th Krylov subspace. The norm $\norm{\cdot}$
+is always the Euclidean ($2$-)norm. Vectors $\vv_1,\dots,\vv_m$ are the Arnoldi
+basis; $\vec e_1$ is the first coordinate vector.
+\end{notationbox}
+
+\subsection{The minimum-residual idea}
+
+CG minimized the $\mat{A}$-norm of the error, a quantity that only makes sense---and
+is only non-negative---when $\mat{A}$ is positive definite. For a general operator
+that functional is meaningless. So GMRES minimizes something that always makes
+sense: the ordinary Euclidean norm of the \emph{residual}.
+
+\begin{keyidea}
+The \textbf{minimum-residual principle.} At step $m$, GMRES chooses the iterate
+$\vx_m$ from the affine Krylov subspace $\vx_0+\mathcal{K}_m$ that makes the
+residual as small as possible:
+\[
+  \vx_m \;=\; \operatorname*{arg\,min}_{\vx\,\in\,\vx_0+\mathcal{K}_m}\ \norm{\vb-\mat{A}\vx}.
+\]
+Because $\mathcal{K}_m\subseteq\mathcal{K}_{m+1}$, the feasible set only grows from
+one step to the next, so the minimum can only \emph{decrease}. The residual norms
+are therefore \emph{monotonically non-increasing}: $\norm{\vr_0}\ge\norm{\vr_1}\ge
+\norm{\vr_2}\ge\cdots$. GMRES never takes a step backward---a guarantee CG cannot
+make for indefinite systems and that BiCGStab cannot make at all.
+\end{keyidea}
+
+\Cref{fig:minres} draws the principle. The affine subspace $\vx_0+\mathcal{K}_m$ is
+a flat slice of $\Real^N$ that grows one dimension wider at each step. Over each
+slice we minimize the residual; the minimizer is the point of the slice closest
+(in the $\mat{A}$-image) to $\vb$. As the slice widens, the achievable minimum
+drops, and the residual curve marches monotonically down.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % the ambient space hint
+  \node[font=\scriptsize\itshape, simGray] at (-3.1,2.3) {$\Real^N$};
+  % growing affine subspaces as nested line segments through x0
+  \coordinate (x0) at (-2.6,-1.2);
+  \fill[simInk] (x0) circle (1.4pt);
+  \node[font=\scriptsize] at (x0) [below left=0pt and -1pt] {$\vx_0$};
+  % K_1 : a short segment
+  \draw[simGreen, thick] (x0) -- ++(2.2,0.5)
+    node[pos=1.0, right, font=\scriptsize, simGreen] {$\vx_0+\mathcal{K}_1$};
+  % K_2 : a wider wedge (a 2D slice drawn as a parallelogram)
+  \draw[simBlue, thick, fill=simBgBlue, fill opacity=0.45]
+    (x0) -- ++(2.2,0.5) -- ++(0.2,1.7) -- ++(-2.2,-0.5) -- cycle;
+  \node[font=\scriptsize, simBlue] at (0.2,1.0) {$\vx_0+\mathcal{K}_2$};
+  % the iterates, each the closest point in its slice
+  \fill[simGreen] (-0.85,-0.78) circle (1.4pt);
+  \node[font=\scriptsize, simGreen] at (-0.85,-0.78) [below=1pt] {$\vx_1$};
+  \fill[simRust] (-0.2,0.35) circle (1.6pt);
+  \node[font=\scriptsize, simRust] at (-0.2,0.35) [right=1pt] {$\vx_2$};
+  % the target (in A-image, schematically): the "true solution" direction
+  \node[draw=simGold, fill=simBgGold, thick, rounded corners=2pt,
+        font=\scriptsize, inner sep=2pt] (sol) at (2.9,1.9) {$\vx_\star=\mat{A}^{-1}\vb$};
+  % residual arrows: from each iterate "toward" the solution, shrinking
+  \draw[backflow, shorten >=2pt] (-0.85,-0.78) -- (sol)
+    node[pos=0.45, above, font=\scriptsize, simRust, sloped] {$\norm{\vr_1}$};
+  \draw[flow, simRust, shorten >=2pt] (-0.2,0.35) -- (sol)
+    node[pos=0.5, below, font=\scriptsize, simRust, sloped] {$\norm{\vr_2}<\norm{\vr_1}$};
+\end{tikzpicture}
+\caption[The minimum-residual idea]{The minimum-residual principle. At each step
+the feasible set is the affine Krylov subspace $\vx_0+\mathcal{K}_m$---a flat slice
+of $\Real^N$ that gains one dimension per step (here $\mathcal{K}_1\subset
+\mathcal{K}_2$). GMRES returns the point $\vx_m$ of that slice whose residual
+$\norm{\vb-\mat{A}\vx_m}$ is smallest. Because each slice contains the previous one,
+the achievable minimum can only shrink: $\norm{\vr_2}\le\norm{\vr_1}\le\norm{\vr_0}$.
+The residual decreases monotonically by construction---GMRES never moves backward.}
+\label{fig:minres}
+\end{figure}
+
+There is one immediate problem, and the rest of the chapter is its solution. The
+minimization is posed over a subspace of $\Real^N$, and $N$ is enormous---millions
+of unknowns for a real mesh. We cannot solve an $N$-dimensional least-squares
+problem at every step. The genius of GMRES is that we never have to: by choosing
+the \emph{right basis} for $\mathcal{K}_m$, the giant minimization collapses to a
+tiny one of size $m+1$, where $m$ is the step count, a few dozen at most. That
+right basis is built by the Arnoldi process.
+
+\section{Arnoldi: an orthonormal basis for the Krylov subspace}
+
+The raw Krylov vectors $\vr_0,\mat{A}\vr_0,\mat{A}^2\vr_0,\dots$ span
+$\mathcal{K}_m$ but are a terrible basis: they line up more and more with the
+dominant eigenvector of $\mat{A}$, becoming numerically parallel within a handful
+of steps. We need an \emph{orthonormal} basis instead, and we need to build it one
+vector at a time, because we discover $\mathcal{K}_m$ one matvec at a time. The
+Arnoldi process does exactly this: it is Gram--Schmidt orthogonalization (the full
+treatment is \cref{ch:orthog}) applied to the Krylov sequence as it is generated.
+
+\subsection{The process}
+
+Start with the normalized initial residual $\vv_1=\vr_0/\beta$. At each step, take
+the most recently produced basis vector $\vv_j$, hit it with $\mat{A}$ to push into
+the next Krylov dimension, then \emph{orthogonalize} the result against every basis
+vector built so far and normalize what remains:
+
+\begin{lstlisting}[style=l4style]
+-- one Arnoldi step: extend an orthonormal Krylov basis by one vector
+arnoldi_step :: LinOp -> Vec[] -> Int -> (Vec, Float[], Float)
+arnoldi_step A V j =
+  let w0 = matvec A (V[j])           -- push into the next Krylov dimension
+  let (w, h) = orthogonalize w0 V    -- subtract off components along V[0..j]
+  --   h[k] = <w0, V[k]>  are the Arnoldi coefficients (the Hessenberg column)
+  let hjj1 = norm w                  -- the new sub-diagonal entry  ||w||
+  let v_next = w `scale` (1 / hjj1)  -- normalize: the new basis vector V[j+1]
+  in (v_next, h, hjj1)
+\end{lstlisting}
+
+\noindent The coefficients $h_{kj}=\inner{\mat{A}\vv_j}{\vv_k}$ for $k\le j$ record
+how much of $\mat{A}\vv_j$ pointed along each existing basis vector; the
+sub-diagonal entry $h_{j+1,j}=\norm{\vw}$ records the size of the genuinely new
+direction. Collect these numbers and a remarkable structure appears.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.92]
+  % ---- LEFT: the tall-skinny basis V_{m+1} ----
+  \begin{scope}
+    \node[font=\bfseries\small, simInk] at (0,3.05) {The basis $\mat{V}_{m+1}$};
+    \draw[simBlue, thick, fill=simBgBlue] (-1.0,-2.6) rectangle (1.0,2.6);
+    % columns
+    \foreach \x in {-0.6,-0.2,0.2,0.6}{
+      \draw[simBlue!55] (\x,-2.6) -- (\x,2.6);}
+    \node[font=\scriptsize, simGray, rotate=90] at (0,0) {$N$ rows (huge)};
+    \node[font=\scriptsize, simBlue] at (0,2.85) {$m{+}1$ columns};
+    \node[font=\scriptsize\itshape, simGray, align=center] at (0,-3.0)
+      {orthonormal\\columns $\vv_1\dots\vv_{m+1}$};
+  \end{scope}
+  % ---- the Arnoldi relation glyph ----
+  \node[font=\Large] at (2.0,0) {$\mat{A}\,\mat{V}_m=$};
+  % ---- RIGHT: V_{m+1} times the small Hessenberg ----
+  \begin{scope}[shift={(4.5,0)}]
+    % small V_{m+1} again
+    \draw[simBlue, thick, fill=simBgBlue] (-0.8,-2.0) rectangle (0.5,2.0);
+    \node[font=\scriptsize, simBlue] at (-0.15,2.25) {$\mat{V}_{m+1}$};
+    \node[font=\large] at (1.0,0) {$\cdot$};
+  \end{scope}
+  % ---- the Hessenberg H-bar (small, (m+1) x m) ----
+  \begin{scope}[shift={(6.6,0)}]
+    \node[font=\bfseries\small, simInk] at (0,3.05) {$\bar{\mat{H}}_m$ (small)};
+    \draw[simRust, thick, fill=simBgRust] (-0.95,-1.0) rectangle (0.95,2.0);
+    \node[font=\scriptsize, simRust] at (0,2.25) {$m$ cols};
+    \node[font=\scriptsize, simRust, rotate=90] at (-1.25,0.5) {$m{+}1$ rows};
+    % shade the upper-Hessenberg pattern: filled on/above first subdiagonal
+    \fill[simRust!30] (-0.95,2.0) -- (0.95,2.0) -- (0.95,-1.0) -- (-0.55,-1.0)
+      -- (-0.95,-0.4) -- cycle;
+    % subdiagonal staircase
+    \draw[simRust!75, very thick] (-0.95,-0.4) -- (-0.55,-1.0);
+    \node[font=\scriptsize\itshape, simGray, align=center] at (0,-1.7)
+      {upper-Hessenberg:\\one nonzero\\sub-diagonal};
+  \end{scope}
+\end{tikzpicture}
+\caption[Arnoldi builds a tall basis and a small Hessenberg]{The Arnoldi process
+produces two objects of utterly different size. \emph{Left:} the orthonormal basis
+$\mat{V}_{m+1}$, an $N\times(m{+}1)$ matrix---tall and skinny, $N$ in the millions
+but only $m{+}1$ columns. \emph{Right:} the Arnoldi relation
+$\mat{A}\mat{V}_m=\mat{V}_{m+1}\bar{\mat{H}}_m$ expresses the action of $\mat{A}$ on
+the basis entirely through the \emph{small} $(m{+}1)\times m$ upper-Hessenberg
+matrix $\bar{\mat{H}}_m$, whose only nonzeros are on and above the first
+sub-diagonal. The huge operator $\mat{A}$ is, within the Krylov subspace, captured
+by a matrix a few dozen entries on a side. That compression is what makes the
+minimization tractable.}
+\label{fig:arnoldi}
+\end{figure}
+
+\subsection{The Arnoldi relation}
+
+Read the orthogonalization step backward. We computed $\mat{A}\vv_j$, then wrote it
+as its components along the existing basis plus a new normalized direction:
+\[
+  \mat{A}\vv_j \;=\; \sum_{k=1}^{j} h_{kj}\,\vv_k \;+\; h_{j+1,j}\,\vv_{j+1}.
+\]
+This says $\mat{A}\vv_j$ is a combination of $\vv_1,\dots,\vv_{j+1}$ only---the
+matvec never reaches past the next basis vector. Stacking these identities for
+$j=1,\dots,m$ into matrix form gives the \emph{Arnoldi relation}, the single most
+important equation in the chapter:
+
+\begin{theorem}[Arnoldi relation]
+\label{thm:arnoldi}
+Let $\mat{V}_m=[\vv_1\ \cdots\ \vv_m]$ be the $N\times m$ matrix of Arnoldi basis
+vectors and $\mat{V}_{m+1}=[\mat{V}_m\ \vv_{m+1}]$ the same with one extra column.
+Let $\bar{\mat{H}}_m$ be the $(m{+}1)\times m$ matrix whose entry in row $k$,
+column $j$ is the Arnoldi coefficient $h_{kj}$ (and zero where $k>j+1$). Then
+\[
+  \mat{A}\,\mat{V}_m \;=\; \mat{V}_{m+1}\,\bar{\mat{H}}_m,
+\]
+and $\bar{\mat{H}}_m$ is \emph{upper-Hessenberg}: $h_{kj}=0$ whenever $k>j+1$, so
+its only sub-diagonal is the first one.
+\end{theorem}
+
+The Hessenberg structure is not a coincidence; it \emph{is} the statement that
+$\mat{A}\vv_j$ reaches only as far as $\vv_{j+1}$. (When $\mat{A}$ is symmetric,
+$\bar{\mat{H}}_m$ becomes tridiagonal---one sub-diagonal \emph{and} one
+super-diagonal---and the orthogonalization collapses to the three-term Lanczos
+recurrence of \cref{ch:cg}. Hessenberg is the nonsymmetric generalization;
+tridiagonal is the symmetric special case.) \Cref{fig:arnoldi} contrasts the two
+sizes: $\mat{V}_{m+1}$ is enormous in one dimension, but $\bar{\mat{H}}_m$ is tiny
+in both.
+
+\subsection{From a big minimization to a small one}
+
+Now we cash in. Any candidate iterate in the affine subspace can be written
+$\vx=\vx_0+\mat{V}_m\vy$ for some coordinate vector $\vy\in\Real^m$---the columns of
+$\mat{V}_m$ span $\mathcal{K}_m$, so $\mat{V}_m\vy$ ranges over all of it as $\vy$
+ranges over $\Real^m$. Substitute and compute the residual, using $\vr_0=\beta\vv_1$
+and the Arnoldi relation:
+\begin{align*}
+  \vb-\mat{A}\vx
+    &= \vr_0 - \mat{A}\mat{V}_m\vy
+     = \beta\vv_1 - \mat{V}_{m+1}\bar{\mat{H}}_m\vy \\
+    &= \mat{V}_{m+1}\bigl(\beta\vec e_1 - \bar{\mat{H}}_m\vy\bigr),
+\end{align*}
+where the last step pulls out $\mat{V}_{m+1}$ and uses $\vv_1=\mat{V}_{m+1}\vec e_1$.
+Because the columns of $\mat{V}_{m+1}$ are orthonormal, multiplying by
+$\mat{V}_{m+1}$ preserves the Euclidean norm. Therefore
+\[
+  \norm{\vb-\mat{A}\vx}
+    \;=\; \norm{\mat{V}_{m+1}\bigl(\beta\vec e_1-\bar{\mat{H}}_m\vy\bigr)}
+    \;=\; \norm{\beta\vec e_1-\bar{\mat{H}}_m\vy}.
+\]
+
+\begin{keyidea}
+The minimum-residual problem in $\Real^N$ collapses to a least-squares problem in
+$\Real^{m+1}$:
+\[
+  \min_{\vx\,\in\,\vx_0+\mathcal{K}_m}\norm{\vb-\mat{A}\vx}
+  \;=\;
+  \min_{\vy\,\in\,\Real^m}\ \norm{\beta\,\vec e_1-\bar{\mat{H}}_m\,\vy}.
+\]
+The orthonormality of the Arnoldi basis turned a minimization over a subspace of
+the \emph{huge} space into one over $\vy$ of dimension $m$---a problem whose data is
+the \emph{tiny} $(m{+}1)\times m$ Hessenberg matrix $\bar{\mat{H}}_m$ and the scalar
+$\beta$. We solve this small problem for $\vy_m$, and only then form the actual
+iterate $\vx_m=\vx_0+\mat{V}_m\vy_m$ in the big space---once, at the end.
+\end{keyidea}
+
+\Cref{fig:reduction} draws the reduction as a funnel: the $N$-dimensional residual
+minimization on the left, the orthonormal-basis change in the middle, the
+$(m{+}1)$-dimensional least-squares problem on the right. Everything expensive about
+$\mat{A}$ and $N$ has been squeezed into building $\mat{V}_m$ and $\bar{\mat{H}}_m$;
+the actual optimization happens in a space small enough to hold in a cache line.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  % BIG problem (left)
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=34mm, minimum height=20mm, align=center, font=\footnotesize]
+        (big) at (0,0)
+    {\textbf{big minimization}\\[2pt]$\displaystyle\min_{\vx\in\vx_0+\mathcal{K}_m}$\\[1pt]
+     $\norm{\vb-\mat{A}\vx}$\\[2pt]\itshape\scriptsize over a subspace of $\Real^N$};
+  % the lever: orthonormal basis + Arnoldi relation
+  \node[stage, minimum width=30mm, minimum height=16mm, right=12mm of big, align=center]
+        (lever)
+    {\textbf{Arnoldi}\\[1pt]\footnotesize $\vx=\vx_0+\mat{V}_m\vy$\\\footnotesize
+     $\mat{A}\mat{V}_m=\mat{V}_{m+1}\bar{\mat{H}}_m$\\\footnotesize
+     $\norm{\mat{V}_{m+1}\vu}=\norm{\vu}$};
+  \draw[flow] (big) -- node[above,font=\scriptsize]{change of} node[below,font=\scriptsize]{basis} (lever);
+  % SMALL problem (right)
+  \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+        minimum width=34mm, minimum height=20mm, align=center, font=\footnotesize]
+        (small) at ($(lever.east)+(2.0,0)$)
+    {\textbf{small least-squares}\\[2pt]$\displaystyle\min_{\vy\in\Real^m}$\\[1pt]
+     $\norm{\beta\vec e_1-\bar{\mat{H}}_m\vy}$\\[2pt]\itshape\scriptsize
+     dimension $m{+}1$ (tiny)};
+  \draw[flow] (lever) -- (small);
+  % annotation
+  \node[font=\scriptsize\itshape, simGray, align=center, below=4mm of lever, text width=34mm]
+    {the same minimum value,\\two sizes of problem};
+\end{tikzpicture}
+\caption[The big-to-small reduction]{The engine of GMRES. The minimum-residual
+problem on the left lives in $\Real^N$ with $N$ in the millions. Writing every
+candidate as $\vx_0+\mat{V}_m\vy$ and invoking the Arnoldi relation
+(\cref{thm:arnoldi}) plus the norm-preservation of the orthonormal basis
+$\mat{V}_{m+1}$ turns it into the least-squares problem on the right, whose data is
+just the $(m{+}1)\times m$ Hessenberg matrix and the scalar $\beta$. Both problems
+have \emph{exactly the same minimum value}; only the second is one we can afford to
+solve at every step.}
+\label{fig:reduction}
+\end{figure}
+
+\begin{workedexample}{Two Arnoldi steps on a small nonsymmetric operator}{arnoldi}
+Take the nonsymmetric $3\times3$ operator and right-hand side
+\[
+  \mat{A}=\begin{bmatrix} 2 & 1 & 0\\ 0 & 3 & 1\\ 1 & 0 & 4\end{bmatrix},
+  \qquad
+  \vb=\begin{bmatrix}1\\0\\0\end{bmatrix},
+  \qquad \vx_0=\mathbf{0}.
+\]
+$\mat{A}$ is not symmetric ($a_{31}=1\ne0=a_{13}$), so CG does not apply. We run two
+Arnoldi steps by hand.
+
+\textbf{Setup.} The initial residual is $\vr_0=\vb-\mat{A}\vx_0=\vb=[1,0,0]^{\top}$,
+so $\beta=\norm{\vr_0}=1$ and the first basis vector is
+$\vv_1=\vr_0/\beta=[1,0,0]^{\top}$.
+
+\textbf{Step 1.} Push and orthogonalize. The matvec is
+\[
+  \mat{A}\vv_1=\begin{bmatrix}2\\0\\1\end{bmatrix}.
+\]
+Project onto $\vv_1$: the coefficient is $h_{11}=\inner{\mat{A}\vv_1}{\vv_1}=2$.
+Subtract it off:
+\[
+  \vw=\mat{A}\vv_1-h_{11}\vv_1=\begin{bmatrix}2\\0\\1\end{bmatrix}
+     -2\begin{bmatrix}1\\0\\0\end{bmatrix}=\begin{bmatrix}0\\0\\1\end{bmatrix}.
+\]
+The new sub-diagonal entry is $h_{21}=\norm{\vw}=1$, and the new basis vector is
+$\vv_2=\vw/h_{21}=[0,0,1]^{\top}$. (It is orthonormal to $\vv_1$, as it must be.)
+
+\textbf{Step 2.} Push and orthogonalize again. The matvec is
+\[
+  \mat{A}\vv_2=\begin{bmatrix}0\\1\\4\end{bmatrix}.
+\]
+Project onto both existing basis vectors:
+$h_{12}=\inner{\mat{A}\vv_2}{\vv_1}=0$ and
+$h_{22}=\inner{\mat{A}\vv_2}{\vv_2}=4$. Subtract both:
+\[
+  \vw=\mat{A}\vv_2-h_{12}\vv_1-h_{22}\vv_2
+     =\begin{bmatrix}0\\1\\4\end{bmatrix}-0-4\begin{bmatrix}0\\0\\1\end{bmatrix}
+     =\begin{bmatrix}0\\1\\0\end{bmatrix}.
+\]
+The sub-diagonal entry is $h_{32}=\norm{\vw}=1$, and $\vv_3=[0,1,0]^{\top}$.
+
+\textbf{Read off the Hessenberg.} Assembling the coefficients into the
+$3\times2$ upper-Hessenberg matrix:
+\[
+  \mat{V}_2=\begin{bmatrix}1&0\\0&0\\0&1\end{bmatrix},
+  \qquad
+  \bar{\mat{H}}_2=\begin{bmatrix} h_{11}&h_{12}\\ h_{21}&h_{22}\\ 0&h_{32}\end{bmatrix}
+   =\begin{bmatrix} 2 & 0\\ 1 & 4\\ 0 & 1\end{bmatrix}.
+\]
+Notice the shape: $\bar{\mat{H}}_2$ is $(m{+}1)\times m=3\times2$, with a single
+nonzero sub-diagonal (the $1$'s in positions $(2,1)$ and $(3,2)$)---exactly the
+upper-Hessenberg pattern of \cref{thm:arnoldi}. We have compressed the action of the
+$3\times3$ operator on $\mathcal{K}_2$ into these six numbers. We solve the
+least-squares problem they pose in \cref{wex:leastsq}.
+\end{workedexample}
+
+\section{The small least-squares problem and the free residual}
+
+We are left with $\min_{\vy}\norm{\beta\vec e_1-\bar{\mat{H}}_m\vy}$, an
+overdetermined least-squares problem ($m{+}1$ equations, $m$ unknowns). The
+textbook solution is a QR factorization of $\bar{\mat{H}}_m$: write
+$\bar{\mat{H}}_m=\mat{Q}\mat{R}$ with $\mat{Q}$ orthonormal and $\mat{R}$ upper
+triangular, then the minimizer solves $\mat{R}\vy=\mat{Q}^{\top}(\beta\vec e_1)$ by
+back-substitution. But re-factorizing from scratch at every step would waste the
+fact that $\bar{\mat{H}}_m$ grows by exactly one column per step. We can do far
+better, and the better way hands us the residual norm for free.
+
+\subsection{The running QR by Givens rotations}
+
+A Hessenberg matrix is already \emph{almost} triangular: its only obstacle to upper
+triangularity is the single sub-diagonal. Each new column, when it arrives, adds one
+sub-diagonal entry that must be annihilated. A \emph{Givens rotation}---a $2\times2$
+plane rotation acting on two adjacent rows---annihilates exactly one entry while
+leaving the triangular structure above it intact. So we maintain the QR factorization
+\emph{incrementally}: when column $j$ arrives, we replay the rotations generated for
+columns $1,\dots,j-1$ onto it (bringing it into the established triangular frame),
+then generate one new rotation to kill its fresh sub-diagonal entry. The mechanics of
+the rotations---how each $2\times2$ rotation is computed and applied---are the
+business of \cref{ch:givens}; here we use only the result.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.95]
+  % the growing triangular factor R, with one new column arriving
+  \node[font=\bfseries\small, simInk] at (0,2.55) {Running QR: one new column per step};
+  % already-triangular block
+  \fill[simBlue!18] (-2.4,-1.4) -- (0.2,-1.4) -- (0.2,1.6) -- (-2.4,1.6) -- cycle;
+  \draw[simBlue, thick] (-2.4,-1.4) rectangle (0.2,1.6);
+  % triangular staircase inside
+  \draw[simBlue!70, thick] (-2.4,1.6) -- (0.2,1.6) -- (0.2,-1.0) -- (-2.0,1.2) -- cycle;
+  \node[font=\scriptsize, simBlue] at (-1.3,0.5) {already};
+  \node[font=\scriptsize, simBlue] at (-1.3,0.1) {triangular};
+  % the new column (highlighted)
+  \draw[simRust, very thick, fill=simBgRust] (0.2,-1.4) rectangle (0.55,1.6);
+  \node[font=\scriptsize, simRust, rotate=90] at (0.38,0.1) {new column $j$};
+  % the offending subdiagonal entry
+  \fill[simRust] (0.38,-1.15) circle (2pt);
+  \node[font=\scriptsize, simRust, align=left] at (1.9,-1.15)
+    {one sub-diagonal\\entry to annihilate};
+  \draw[refedge] (1.0,-1.15) -- (0.5,-1.15);
+  % the rotation
+  \draw[-{Stealth[length=2mm]}, simGreen, thick] (1.1,0.6) arc (-40:40:0.5);
+  \node[font=\scriptsize, simGreen, align=left] at (2.2,0.6)
+    {generate one\\Givens rotation};
+  % the RHS column on the far right, with the residual entry glowing
+  \draw[simGold, thick, fill=simBgGold] (3.6,-1.4) rectangle (3.95,1.6);
+  \node[font=\scriptsize, simGold!70!black, rotate=90] at (3.78,0.55) {rotated RHS $s$};
+  \fill[simGold!80!black] (3.78,-1.15) circle (2.4pt);
+  \node[font=\scriptsize\bfseries, simGold!60!black, align=left] at (5.0,-1.15)
+    {$|s_{m+1}|=\norm{\vr_m}$\\\itshape\mdseries the residual,\\\itshape\mdseries for free};
+  \draw[refedge] (4.2,-1.15) -- (3.9,-1.15);
+\end{tikzpicture}
+\caption[The running QR and the free residual readout]{The incremental QR. Each
+Arnoldi step appends one column to the Hessenberg matrix; the already-computed
+Givens rotations are replayed onto it, then one new rotation annihilates its single
+fresh sub-diagonal entry, extending the triangular factor by one column. The same
+new rotation is applied to the rotated right-hand side $s$ (initialized to
+$\beta\vec e_1$): because every rotation is an isometry, the magnitude of its last
+entry, $|s_{m+1}|$, equals the least-squares residual norm $\norm{\vr_m}$
+\emph{exactly}---available at every step \emph{without} forming $\vx_m$ or computing
+a single matvec. The rotation mechanics are developed in \cref{ch:givens}.}
+\label{fig:runningqr}
+\end{figure}
+
+\subsection{The residual is free}
+
+The payoff is the reason GMRES is built this way. Alongside the Hessenberg matrix we
+carry a small right-hand-side vector $s$, initialized to $\beta\vec e_1$, and we
+apply each Givens rotation to $s$ as we generate it. Because every rotation is an
+isometry (it preserves length), the transformed system has the same residual norm as
+the original. And after triangularization, the least-squares residual is precisely
+the magnitude of the \emph{last} entry of $s$:
+\[
+  \norm{\vr_m}\;=\;\min_{\vy}\norm{\beta\vec e_1-\bar{\mat{H}}_m\vy}\;=\;\abs{s_{m+1}}.
+\]
+
+\begin{keyidea}
+The GMRES residual norm is available \textbf{for free}, every step, as a single
+scalar. After the running QR processes column $m$, the magnitude $|s_{m+1}|$ of the
+last entry of the rotated right-hand side \emph{equals} $\norm{\vr_m}$
+exactly---with no matvec, no explicit residual vector, and without ever forming the
+iterate $\vx_m$. The convergence test reads off $|s_{m+1}|$ and compares it to the
+tolerance. Only when the test passes (or we restart) do we pay the one-time cost of
+back-solving the small triangular system for $\vy_m$ and forming
+$\vx_m=\vx_0+\mat{V}_m\vy_m$ in the big space.
+\end{keyidea}
+
+This is what the source actually does: Palace's GMRES carries rotation registers
+\code{cs} and \code{sn} and a rotated right-hand side \code{s}, applies each new
+rotation to \code{s}, and reads the convergence test directly off
+$\beta=|s_{j+1}|$---no residual is ever evaluated explicitly. The back-solve that
+turns $\vy$ into a correction $\mat{V}_m\vy$ fires only at convergence or at a
+restart boundary. We trace the small problem end to end now.
+
+\begin{workedexample}{Solving the $3\times2$ least-squares and reading the residual}{leastsq}
+Continue \cref{wex:arnoldi}, with $\beta=1$ and
+\[
+  \bar{\mat{H}}_2=\begin{bmatrix} 2 & 0\\ 1 & 4\\ 0 & 1\end{bmatrix},
+  \qquad
+  \beta\vec e_1=\begin{bmatrix}1\\0\\0\end{bmatrix}.
+\]
+We solve $\min_{\vy}\norm{\beta\vec e_1-\bar{\mat{H}}_2\vy}$ by the running QR,
+generating two Givens rotations $\mat{G}_1,\mat{G}_2$ and watching the residual
+appear in the rotated right-hand side $s$.
+
+\textbf{Rotation 1} acts on rows $1,2$ to kill the $(2,1)$ entry. With diagonal
+$\rho=2$ and sub-diagonal $\sigma=1$, the rotation has
+$c_1=\rho/\sqrt{\rho^2+\sigma^2}=2/\sqrt5$ and
+$s_1=\sigma/\sqrt{\rho^2+\sigma^2}=1/\sqrt5$. Applying $\mat{G}_1$ to the first
+column of $\bar{\mat{H}}_2$ turns $(2,1)$ into $\sqrt{2^2+1^2}=\sqrt5$ on the
+diagonal and $0$ below. Applying $\mat{G}_1$ to the second column
+$[0,4,1]^{\top}$ mixes rows $1,2$: the new $(1,2)$ entry is
+$c_1\!\cdot\!0+s_1\!\cdot\!4=4/\sqrt5$ and the new $(2,2)$ entry is
+$-s_1\!\cdot\!0+c_1\!\cdot\!4=8/\sqrt5$. Applying $\mat{G}_1$ to the right-hand side
+$s=[1,0,0]^{\top}$ gives
+$s\leftarrow[c_1,\,-s_1,\,0]^{\top}=[2/\sqrt5,\,-1/\sqrt5,\,0]^{\top}$. After
+rotation 1 the working system is
+\[
+  \mat{R}^{(1)}=\begin{bmatrix} \sqrt5 & 4/\sqrt5\\ 0 & 8/\sqrt5\\ 0 & 1\end{bmatrix},
+  \qquad
+  s=\begin{bmatrix} 2/\sqrt5\\ -1/\sqrt5\\ 0\end{bmatrix}.
+\]
+
+\textbf{Rotation 2} acts on rows $2,3$ to kill the $(3,2)$ entry. The diagonal is
+$\rho=8/\sqrt5$ and the sub-diagonal $\sigma=1$, so
+$r=\sqrt{\rho^2+\sigma^2}=\sqrt{64/5+1}=\sqrt{69/5}=\sqrt{69}/\sqrt5$, giving
+$c_2=\rho/r=8/\sqrt{69}$ and $s_2=\sigma/r=\sqrt5/\sqrt{69}$. Applying $\mat{G}_2$ to
+the right-hand side mixes rows $2,3$: the new entry $2$ is
+$c_2\!\cdot\!(-1/\sqrt5)+s_2\!\cdot\!0=-8/\sqrt{5\cdot69}$, and---the entry we want---
+the new entry $3$ is
+\[
+  s_3 \;=\; -s_2\cdot\!\left(-\tfrac{1}{\sqrt5}\right)+c_2\cdot 0
+        \;=\; \frac{\sqrt5}{\sqrt{69}}\cdot\frac{1}{\sqrt5}
+        \;=\; \frac{1}{\sqrt{69}}.
+\]
+
+\textbf{Read the residual for free.} The residual norm after two steps is
+\[
+  \norm{\vr_2}\;=\;\abs{s_3}\;=\;\frac{1}{\sqrt{69}}\;\approx\;0.1204,
+\]
+read directly off the last entry of the rotated right-hand side---no matvec, no
+explicit residual vector. (The starting residual was $\norm{\vr_0}=\beta=1$, so two
+GMRES steps cut it by a factor of about $8.3$.)
+
+\textbf{Recover the iterate, once.} Only now do we back-solve the upper-triangular
+$2\times2$ system $\mat{R}\vy=[s_1,s_2]^{\top}$ for the coordinate vector $\vy$. The
+upper $2\times2$ block of the rotated Hessenberg is $\mat{R}=\bigl[\begin{smallmatrix}
+\sqrt5 & 4/\sqrt5\\ 0 & 8/\sqrt{69}\cdot\sqrt5/\sqrt5\end{smallmatrix}\bigr]$ (with
+$(2,2)=r=\sqrt{69}/\sqrt5$ after rotation~2), and the right-hand side is
+$[2/\sqrt5,\,-8/\sqrt{5\cdot69}]^{\top}$. Back-substitution gives
+$y_2=(-8/\sqrt{5\cdot69})/(\sqrt{69}/\sqrt5)=-8/69$ and
+$y_1=(2/\sqrt5-(4/\sqrt5)y_2)/\sqrt5=(2+32/69)/5=170/345=34/69$. The iterate is
+\[
+  \vx_2=\vx_0+\mat{V}_2\vy=\begin{bmatrix}1&0\\0&0\\0&1\end{bmatrix}
+    \begin{bmatrix}34/69\\-8/69\end{bmatrix}=\begin{bmatrix}34/69\\0\\-8/69\end{bmatrix}.
+\]
+As a check, $\mat{A}\vx_2=[60/69,\,-8/69,\,2/69]^{\top}$ and the true residual
+$\vb-\mat{A}\vx_2=[9/69,\,8/69,\,-2/69]^{\top}$ has norm
+$\sqrt{81+64+4}/69=\sqrt{149}/69\approx0.1768$. This differs from $|s_3|$ because the
+$3\times3$ Krylov space is not yet exhausted; in exact arithmetic GMRES reaches the
+exact solution at step $m=3=N$, where the residual hits zero. The point stands: the
+\emph{small} problem's residual $|s_3|$ was free, and the iterate was formed only once.
+\end{workedexample}
+
+\section{Restart: bounding the cost of remembering everything}
+
+GMRES bought optimality by remembering the entire basis. That memory is not free,
+and as $m$ grows the bill comes due on two fronts.
+
+\begin{itemize}[nosep]
+  \item \textbf{Storage grows linearly in $m$.} The basis $\mat{V}_m$ holds $m$
+  vectors of length $N$, so storage is $O(mN)$. At step 100 of a million-unknown
+  solve, that is a hundred million-entry vectors---hundreds of megabytes, just for
+  the basis.
+  \item \textbf{Work grows quadratically in $m$.} Orthogonalizing the new vector
+  against all $m$ existing ones costs $O(mN)$ per step, so the cumulative
+  orthogonalization work through step $m$ is $O(m^2N)$. The matvecs are only $O(mN)$;
+  it is the \emph{orthogonalization against an ever-growing basis} that dominates.
+\end{itemize}
+
+Both costs are unbounded in $m$, which is intolerable for a solve that might need
+hundreds of iterations. The standard remedy is to cap $m$ at a fixed restart length
+$k$.
+
+\begin{definition}[Restarted GMRES, GMRES($k$)]
+\label{def:restart}
+Fix a restart length $k$. Run GMRES for at most $k$ steps. If the residual has not
+met the tolerance by step $k$, \emph{restart}: discard the basis $\mat{V}_k$ and the
+Hessenberg matrix entirely, take the current iterate $\vx_k$ as the new initial guess
+$\vx_0$, recompute the residual $\vr_0=\vb-\mat{A}\vx_0$, and begin a fresh GMRES
+cycle of up to $k$ steps. Repeat until convergence. Storage is capped at $O(kN)$ and
+per-cycle work at $O(k^2N)$, both independent of the total iteration count.
+\end{definition}
+
+The basis is \emph{ephemeral}: it is born at the start of a cycle and discarded at
+the restart boundary. This is exactly the lifetime story of \cref{ch:strata}---the
+Krylov basis is per-solve, indeed per-\emph{cycle}, run-time state, allocated fresh
+and thrown away, never part of any operator's frozen internals. Only the iterate
+$\vx$ survives across a restart; everything else is rebuilt.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=12.0cm, height=5.4cm,
+      xlabel={total iterations},
+      ylabel={basis size (vectors stored)},
+      xmin=0, xmax=15, ymin=0, ymax=8,
+      xtick={0,3,6,9,12,15}, ytick={0,2,4,6},
+      tick label style={font=\scriptsize},
+      label style={font=\small},
+      axis lines=left, clip=false,
+    ]
+    % full GMRES: linear growth
+    \addplot[simBlue, thick, mark=*, mark size=1.2pt] coordinates
+      {(0,0)(1,1)(2,2)(3,3)(4,4)(5,5)(6,6)(7,7)};
+    \node[font=\scriptsize, simBlue, anchor=west] at (axis cs:6.1,6.9)
+      {full GMRES: $O(m)$};
+    % restarted GMRES(3): sawtooth
+    \addplot[simRust, very thick] coordinates
+      {(0,0)(1,1)(2,2)(3,3)};
+    \addplot[simRust, very thick] coordinates
+      {(3,0)(4,1)(5,2)(6,3)};
+    \addplot[simRust, very thick] coordinates
+      {(6,0)(7,1)(8,2)(9,3)};
+    \addplot[simRust, very thick] coordinates
+      {(9,0)(10,1)(11,2)(12,3)};
+    \addplot[simRust, very thick] coordinates
+      {(12,0)(13,1)(14,2)(15,3)};
+    % restart drop markers
+    \draw[simRust, densely dashed] (axis cs:3,3) -- (axis cs:3,0);
+    \draw[simRust, densely dashed] (axis cs:6,3) -- (axis cs:6,0);
+    \draw[simRust, densely dashed] (axis cs:9,3) -- (axis cs:9,0);
+    \draw[simRust, densely dashed] (axis cs:12,3) -- (axis cs:12,0);
+    \node[font=\scriptsize, simRust, anchor=west] at (axis cs:9.3,3.5)
+      {GMRES(3): sawtooth, capped at $k{=}3$};
+  \end{axis}
+\end{tikzpicture}
+\caption[Memory: full GMRES versus the restart sawtooth]{Basis storage over the
+course of a solve. Full GMRES (blue) accumulates one vector per step forever, so its
+memory climbs linearly without bound. Restarted GMRES($k$) (rust, here $k=3$) caps
+the basis at $k$ vectors: every $k$ steps it discards the basis and starts a fresh
+cycle from the current iterate, producing the characteristic sawtooth. The peak
+memory is bounded by $O(kN)$ no matter how many total iterations the solve takes. The
+trade is convergence quality, charted in \cref{fig:convergence}.}
+\label{fig:memory}
+\end{figure}
+
+\subsection{The trade-off}
+
+Restarting is not free either; it trades memory for convergence speed.
+
+\begin{pitfall}
+\textbf{Restarting loses GMRES's optimality, and can stall.} Full GMRES minimizes
+the residual over the \emph{entire} accumulated Krylov subspace---its convergence is
+often superlinear, accelerating as the subspace captures more of the operator's
+spectrum. The instant you restart, that accumulated subspace is thrown away: the new
+cycle minimizes only over a \emph{fresh} $k$-dimensional space built from the current
+residual, blind to everything the discarded basis had learned. The monotonic
+\emph{decrease} of the residual still holds across restarts (each cycle starts from a
+no-worse iterate), but the \emph{rate} can collapse---and for some operators
+GMRES($k$) \emph{stagnates}, making negligible progress per cycle while full GMRES
+would have converged. Choosing $k$ is a real engineering decision: too small and you
+stall; too large and you run out of memory. There is no value of $k$ that is right
+for every problem.
+\end{pitfall}
+
+\section{FGMRES: when the preconditioner changes every step}
+
+We now pay off the promise of \cref{ch:operators}. There we met the
+\emph{decision rule}: a variant bound once at construction is absorbed by a
+constructed operator; a variant that changes \emph{per step} cannot be, and must
+instead be threaded through the run-time state. We claimed that this single rule is
+``exactly why \code{FGMRES} is a different algorithm from \code{GMRES}.'' Here is the
+claim, made good.
+
+\subsection{Where preconditioned GMRES applies $\mat{M}$}
+
+A preconditioner $\mat{M}$ is an approximate inverse of $\mat{A}$ whose job is to
+cluster the spectrum so the Krylov iteration converges faster (\cref{ch:precond}).
+\emph{Right}-preconditioned GMRES solves $\mat{A}\mat{M}^{-1}\vu=\vb$ with
+$\vx=\mat{M}^{-1}\vu$; concretely, each Arnoldi step preconditions the current basis
+vector before the matvec: $\vz_j=\mat{M}^{-1}\vv_j$, then $\vw=\mat{A}\vz_j$. If
+$\mat{M}$ is \emph{fixed}---chosen once at solve start and held constant---this is a
+textbook constructed operator (\cref{wex:jacobi} in spirit): build it once, apply the
+same \code{pc} at every step. The preconditioner is build-time configuration; it never
+enters the threaded state. The left branch of the decision rule
+(\cref{fig:decisionrule} of \cref{ch:operators}) handles it cleanly.
+
+\subsection{What breaks when $\mat{M}$ varies}
+
+Now allow the preconditioner to differ at each step: $\mat{M}_j$ at step $j$. This is
+not exotic---it is exactly what happens when the preconditioner is \emph{itself an
+inner iterative solve} (a few steps of an inner GMRES, a multigrid cycle run to a
+loose, varying tolerance, a smoother whose accuracy adapts to the residual). Each
+inner solve produces a slightly different linear operator, so $\vz_j=\mat{M}_j^{-1}
+\vv_j$ uses a \emph{different} $\mat{M}_j$ for every $j$. There is no single $\mat{M}$
+to construct.
+
+Trace what fails. In right-preconditioned GMRES the iterate is recovered, at the end,
+as $\vx=\vx_0+\mat{M}^{-1}\mat{V}_m\vy$---the basis $\mat{V}_m$ lives in the
+\emph{preconditioned} space, and we map back by applying $\mat{M}^{-1}$ to the
+correction. This reconstruction \emph{assumes a single fixed $\mat{M}$}: it applies
+one $\mat{M}^{-1}$ to the whole combination $\mat{V}_m\vy$. But with per-step
+$\mat{M}_j$, the $j$-th basis vector was preconditioned by $\mat{M}_j$, the next by
+$\mat{M}_{j+1}$, and there is no single $\mat{M}^{-1}$ that undoes the mixture. The
+operator that produced $\vz_j$ is \emph{gone} by the next step---it was an ephemeral
+inner solve, not a stored value---so $\vz_j$ cannot be recomputed on demand. Plain
+GMRES, which never stored the $\vz_j$, simply cannot form the right answer.
+
+\begin{pitfall}
+\textbf{Driving plain GMRES with a per-step preconditioner silently corrupts the
+solve.} If you feed a varying $\mat{M}_j$ to an algorithm that recovers its iterate
+as $\vx_0+\mat{M}^{-1}\mat{V}_m\vy$ under the assumption of a single fixed $\mat{M}$,
+the code \emph{runs}---no crash, no error---and even reports a small ``residual''
+$|s_{m+1}|$ from its running QR. But that residual is the residual of a least-squares
+problem the iterate no longer corresponds to: the reconstruction used the wrong
+inverse. The solve converges to the wrong answer, quietly. This is the silent partial
+absorption of \cref{ch:operators} in its most dangerous form---a tidy equation hiding
+an operation chain that has secretly forked. The repair is not a patch to GMRES; it is
+a different algorithm that \emph{remembers} the preconditioned vectors. That algorithm
+is FGMRES.
+\end{pitfall}
+
+\subsection{The repair: keep a second basis}
+
+FGMRES---flexible GMRES---makes the only move the decision rule allows: it routes the
+per-step variant into the threaded state by \emph{remembering} every preconditioned
+vector. Alongside the Arnoldi basis $\mat{V}_m$ (the orthonormalized, Arnoldi-built
+vectors), FGMRES carries a \emph{second} basis $\mat{Z}_m=[\vz_1\ \cdots\ \vz_m]$
+holding the preconditioned vectors $\vz_j=\mat{M}_j^{-1}\vv_j$ exactly as they were
+produced, each by its own ephemeral $\mat{M}_j$. The Arnoldi process and the running
+QR are \emph{identical} to GMRES---byte for byte, the same orthogonalization, the same
+Givens stream, the same free residual. Only two things change: at each step we save
+$\vz_j$ into $\mat{Z}_m$, and at the end we reconstruct the iterate against
+$\mat{Z}_m$ instead of against $\mat{V}_m$.
+
+\begin{keyidea}
+\textbf{The $\mat{Z}$-versus-$\mat{V}$ distinction.} GMRES recovers its iterate from
+the Arnoldi basis, $\vx_m=\vx_0+\mat{V}_m\vy_m$. FGMRES recovers it from the stored
+\emph{preconditioned} basis,
+\[
+  \vx_m \;=\; \vx_0 + \mat{Z}_m\,\vy_m,
+  \qquad \mat{Z}_m=[\mat{M}_1^{-1}\vv_1\ \cdots\ \mat{M}_m^{-1}\vv_m].
+\]
+Because each $\vz_j=\mat{M}_j^{-1}\vv_j$ already carries the action of its own
+per-step preconditioner, the reconstruction $\mat{Z}_m\vy_m$ never needs to apply a
+single ``$\mat{M}^{-1}$'' to the combination---the per-step inverses are baked into the
+columns of $\mat{Z}$. The flexibility is paid for by exactly one extra length-$N$ basis
+in the threaded state. This is the ``\code{FgmresState} adds a $\mat{Z}$ field''
+prediction of \cref{wex:flexible} (\cref{ch:operators}), realized.
+\end{keyidea}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.95, node distance=6mm]
+  % --- the per-step pipeline, drawn once ---
+  \node[font=\bfseries\small, simInk] at (0,2.9) {FGMRES threads two bases};
+  % v_j
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=15mm, minimum height=8mm, font=\footnotesize] (vj) at (-4.4,1.4)
+    {$\vv_j$};
+  % the per-step preconditioner (ephemeral, dashed)
+  \node[extern, minimum width=20mm, minimum height=9mm, right=8mm of vj] (Mj)
+    {$\mat{M}_j^{-1}$ \scriptsize(per step)};
+  % z_j
+  \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+        minimum width=15mm, minimum height=8mm, font=\footnotesize, right=8mm of Mj] (zj)
+    {$\vz_j$};
+  % A
+  \node[draw=simTeal, fill=simBgGray, thick, rounded corners=2pt,
+        minimum width=12mm, minimum height=8mm, font=\footnotesize, right=8mm of zj] (A)
+    {$\mat{A}$};
+  % w
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=15mm, minimum height=8mm, font=\footnotesize, right=8mm of A] (w)
+    {$\vw\!\to\!\vv_{j+1}$};
+  \draw[flow] (vj) -- (Mj);
+  \draw[flow] (Mj) -- (zj);
+  \draw[flow] (zj) -- (A);
+  \draw[flow] (A) -- node[above,font=\scriptsize]{matvec} (w);
+  % the two bases being accumulated
+  \node[draw=simBlue, fill=simBgBlue, semithick, rounded corners=2pt,
+        minimum width=70mm, minimum height=7mm, font=\scriptsize, align=center] (Vbasis)
+    at (0,-0.4) {Arnoldi basis $\mat{V}_m=[\vv_1\,\cdots\,\vv_m]$
+                 \quad\itshape (orthonormal, built by Arnoldi)};
+  \node[draw=simRust, fill=simBgRust, semithick, rounded corners=2pt,
+        minimum width=70mm, minimum height=7mm, font=\scriptsize, align=center] (Zbasis)
+    at (0,-1.5) {preconditioned basis $\mat{Z}_m=[\vz_1\,\cdots\,\vz_m]$
+                 \quad\itshape (the per-step $\mat{M}_j^{-1}\vv_j$, remembered)};
+  \draw[refedge] (vj.south) to[out=-90,in=90] (Vbasis.north -| -3.3,-0.4);
+  \draw[refedge] (zj.south) to[out=-90,in=90] (Zbasis.north -| 0.5,-1.5);
+  % the reconstruction
+  \node[font=\scriptsize, simRust, align=center] at (0,-2.5)
+    {iterate recovered from $\mat{Z}$, not $\mat{V}$:\quad
+     $\vx_m=\vx_0+\mat{Z}_m\vy_m$};
+\end{tikzpicture}
+\caption[FGMRES's two bases]{Why FGMRES carries a second basis. Each step
+preconditions the Arnoldi vector $\vv_j$ by a \emph{per-step} operator $\mat{M}_j^{-1}$
+(dashed: ephemeral, gone by the next step---perhaps an inner iterative solve), giving
+$\vz_j$, which is then hit with $\mat{A}$ to continue the Arnoldi process. The
+algorithm accumulates \emph{both} bases: $\mat{V}_m$ (the orthonormal Arnoldi vectors,
+blue) drives orthogonalization and the running QR exactly as in plain GMRES; but the
+iterate is reconstructed from $\mat{Z}_m$ (the remembered preconditioned vectors,
+rust), because each $\vz_j$ already carries its own $\mat{M}_j^{-1}$ and no single
+$\mat{M}^{-1}$ could undo the mixture. The per-step variant has become a field of the
+threaded state---precisely the right branch of the decision rule
+(\cref{fig:decisionrule}, \cref{ch:operators}).}
+\label{fig:fgmres}
+\end{figure}
+
+\Cref{fig:fgmres} draws the doubled basis. The structural reading is exactly the one
+\cref{ch:operators} set up: the variant ``which preconditioner this step'' has a
+per-step lifetime, so by the decision rule it cannot live in a constructed operator;
+it lives in the carry, as the extra basis $\mat{Z}$. FGMRES is GMRES with one field
+added to its state schema---and that field is forced, not chosen, by the lifetime of
+the varying preconditioner. The least-squares machinery does not even notice: in the
+source, the FGMRES running-QR stream is line-for-line identical to the GMRES one; the
+\emph{only} difference is the back-solve reconstructs the correction against $\mat{Z}$
+rather than $\mat{V}$.
+
+\begin{workedexample}{GMRES versus restarted GMRES(2): convergence on one system}{restart}
+We compare full GMRES with restarted GMRES(2) on a $4\times4$ nonsymmetric system,
+watching the residual norms (read for free from $|s_{m+1}|$) at each step. The system
+is mildly nonnormal, so restarting visibly hurts.
+
+\textbf{Full GMRES.} Storing the whole basis, full GMRES drives the residual down
+monotonically and, on a $4\times4$ system, reaches the exact solution by step $4$ (in
+exact arithmetic, GMRES converges in at most $N$ steps because $\mathcal{K}_N$ spans
+the whole space). A representative residual history:
+\[
+  \norm{\vr_0}=1,\quad \norm{\vr_1}\approx0.42,\quad \norm{\vr_2}\approx0.15,\quad
+  \norm{\vr_3}\approx0.03,\quad \norm{\vr_4}\approx10^{-15}.
+\]
+
+\textbf{Restarted GMRES(2).} Capped at $k=2$, GMRES(2) discards its basis after every
+second step. The first cycle matches full GMRES through step $2$
+($\norm{\vr_2}\approx0.15$), but then it \emph{restarts}: the rich 2-dimensional
+subspace is thrown away, and cycle 2 rebuilds a fresh 2-dimensional space from the
+step-2 residual---blind to what cycle 1 learned. Progress per cycle slows:
+\[
+  0.15 \;\to\; 0.066 \;\to\; 0.030 \;\to\; 0.014 \;\to\; 0.0065 \;\to\;\cdots
+\]
+roughly halving each cycle---a \emph{linear} rate, where full GMRES was racing to
+machine precision. \Cref{fig:convergence} plots both. GMRES(2) still converges (the
+residual is monotone), but it takes many more iterations to reach the same tolerance:
+the price of bounding memory at $k=2$ rather than letting the basis grow to $N=4$.
+
+\textbf{The reading.} Full GMRES exhausts the Krylov space and hits the exact answer
+at step $N$; restarted GMRES(2) trades that finite-termination guarantee, and the
+superlinear tail, for a flat $O(kN)$ memory ceiling. On this small system the gap is
+stark; on a million-unknown system where full GMRES is impossible, GMRES($k$)'s slow
+linear convergence is simply the cost of being able to run at all.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=12.2cm, height=6.2cm,
+      xlabel={iteration $m$}, ylabel={residual norm $\norm{\vr_m}$},
+      ymode=log, ymin=1e-16, ymax=2, xmin=0, xmax=10,
+      xtick={0,2,4,6,8,10},
+      ytick={1e0,1e-3,1e-6,1e-9,1e-12,1e-15},
+      tick label style={font=\scriptsize}, label style={font=\small},
+      legend style={font=\scriptsize, at={(0.98,0.98)}, anchor=north east},
+      grid=both, grid style={simGray!18},
+      axis lines=left, clip=false,
+    ]
+    % full GMRES: superlinear, hits machine precision at m=4
+    \addplot[simBlue, very thick, mark=*, mark size=1.4pt] coordinates
+      {(0,1)(1,0.42)(2,0.15)(3,0.03)(4,1e-15)};
+    \addlegendentry{full GMRES}
+    % restarted GMRES(2): linear, restarts every 2 steps (dashed verticals)
+    \addplot[simRust, very thick, mark=square*, mark size=1.3pt] coordinates
+      {(0,1)(1,0.42)(2,0.15)(3,0.066)(4,0.030)(5,0.014)(6,0.0065)(7,0.0030)(8,0.0014)(9,0.00065)(10,0.00030)};
+    \addlegendentry{restarted GMRES(2)}
+    % restart boundaries
+    \draw[simRust, densely dotted] (axis cs:2,1e-16) -- (axis cs:2,2);
+    \draw[simRust, densely dotted] (axis cs:4,1e-16) -- (axis cs:4,2);
+    \draw[simRust, densely dotted] (axis cs:6,1e-16) -- (axis cs:6,2);
+    \draw[simRust, densely dotted] (axis cs:8,1e-16) -- (axis cs:8,2);
+    \node[font=\scriptsize, simRust, anchor=south] at (axis cs:4,1.1) {restarts};
+  \end{axis}
+\end{tikzpicture}
+\caption[Convergence: full GMRES versus GMRES(2)]{Residual histories for
+\cref{wex:restart} (log scale). Full GMRES (blue) converges superlinearly and reaches
+machine precision at step $4=N$, exhausting the Krylov space. Restarted GMRES(2)
+(rust) matches it for the first two steps, then restarts (dotted verticals) every two
+steps; each restart discards the accumulated subspace, collapsing the convergence to a
+slow linear rate. Both residual curves are monotone non-increasing---restart never
+\emph{increases} the residual---but GMRES(2) needs many more iterations to reach the
+same tolerance. The flat $O(kN)$ memory ceiling is paid for in convergence speed.}
+\label{fig:convergence}
+\end{figure}
+
+\section{The variant axes: preconditioner side and the absorption view}
+
+GMRES carries several orthogonal axes of variation, and they line up precisely with
+the variant-absorption discipline of \cref{ch:operators}. We collect them here.
+
+\subsection{Left, right, and no preconditioning}
+
+A preconditioner can be applied on either side of $\mat{A}$, or not at all
+(\cref{fig:precondside}):
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[None.] Solve $\mat{A}\vx=\vb$ directly; the Krylov space is built from
+  $\mat{A}$ and $\vr_0$. Used when $\mat{A}$ is already well-conditioned.
+  \item[Left.] Solve $\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$. The matvec at each step
+  is $\vw=\mat{M}^{-1}(\mat{A}\vv_j)$ (precondition \emph{after} the operator). The
+  residual GMRES minimizes is the \emph{preconditioned} residual
+  $\norm{\mat{M}^{-1}(\vb-\mat{A}\vx)}$---which is not the true residual, a subtlety
+  when reading the convergence test.
+  \item[Right.] Solve $\mat{A}\mat{M}^{-1}\vu=\vb$ with $\vx=\mat{M}^{-1}\vu$. The
+  matvec is $\vw=\mat{A}(\mat{M}^{-1}\vv_j)$ (precondition \emph{before} the operator).
+  The residual minimized is the \emph{true} residual $\norm{\vb-\mat{A}\vx}$, which is
+  why right preconditioning is often preferred for GMRES---and why FGMRES, which
+  preconditions before the matvec, is naturally a right-preconditioned scheme.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+  % three little pipelines stacked
+  \foreach \row/\lbl/\seq in {
+      1.7/{none}/{$\vv_j$/$\mat{A}$/$\vw$},
+      0.0/{left}/{$\vv_j$/$\mat{A}$/$\mat{M}^{-1}$/$\vw$},
+      -1.7/{right}/{$\vv_j$/$\mat{M}^{-1}$/$\mat{A}$/$\vw$}}{
+    \node[font=\footnotesize\bfseries, simInk, anchor=east] at (-4.3,\row) {\lbl:};
+  }
+  % NONE
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize] (n1) at (-3.0,1.7) {$\vv_j$};
+  \node[draw=simTeal,fill=simBgGray,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of n1] (n2) {$\mat{A}$};
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of n2] (n3) {$\vw$};
+  \draw[flow] (n1)--(n2); \draw[flow] (n2)--(n3);
+  % LEFT
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize] (l1) at (-3.0,0.0) {$\vv_j$};
+  \node[draw=simTeal,fill=simBgGray,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of l1] (l2) {$\mat{A}$};
+  \node[extern,minimum width=12mm,minimum height=7mm,font=\footnotesize,right=7mm of l2] (l3) {$\mat{M}^{-1}$};
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of l3] (l4) {$\vw$};
+  \draw[flow] (l1)--(l2); \draw[flow] (l2)--(l3); \draw[flow] (l3)--(l4);
+  % RIGHT
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize] (r1) at (-3.0,-1.7) {$\vv_j$};
+  \node[extern,minimum width=12mm,minimum height=7mm,font=\footnotesize,right=7mm of r1] (r2) {$\mat{M}^{-1}$};
+  \node[draw=simTeal,fill=simBgGray,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of r2] (r3) {$\mat{A}$};
+  \node[draw=simBlue,fill=simBgBlue,thick,rounded corners=2pt,minimum width=11mm,minimum height=7mm,font=\footnotesize,right=7mm of r3] (r4) {$\vw$};
+  \draw[flow] (r1)--(r2); \draw[flow] (r2)--(r3); \draw[flow] (r3)--(r4);
+  % note
+  \node[font=\scriptsize\itshape, simGray, align=left, anchor=west] at (3.6,1.7)
+    {minimizes true residual};
+  \node[font=\scriptsize\itshape, simGray, align=left, anchor=west] at (3.6,0.0)
+    {minimizes $\mat{M}^{-1}$-residual};
+  \node[font=\scriptsize\itshape, simGray, align=left, anchor=west] at (3.6,-1.7)
+    {minimizes true residual};
+\end{tikzpicture}
+\caption[The preconditioner-side axis]{The three settings of the preconditioner-side
+variant. \emph{None:} the matvec is just $\mat{A}\vv_j$. \emph{Left:} apply
+$\mat{M}^{-1}$ \emph{after} $\mat{A}$, solving $\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$;
+the residual GMRES sees is the preconditioned one. \emph{Right:} apply $\mat{M}^{-1}$
+\emph{before} $\mat{A}$, solving $\mat{A}\mat{M}^{-1}\vu=\vb$; the residual stays the
+true one. All three are the \emph{same} Arnoldi-plus-running-QR loop with the matvec's
+operand chain rebound---a textbook variant absorbed by a constructed operator
+(\cref{ch:operators}): the side is read once, at construction, and the per-step loop
+never branches on it.}
+\label{fig:precondside}
+\end{figure}
+
+\subsection{The absorption view}
+
+These axes are the running example of \cref{ch:operators}'s discipline. The
+preconditioner side, the restart length, the orthogonalization method, even the
+choice of CG/GMRES/FGMRES itself are all read \emph{once}, at the factory that
+constructs the solver (\code{ConfigureKrylovSolver}), and absorbed into a single
+uniformly typed solver-operator. After construction the per-step loop is
+variant-free: it asks the operator for \code{apply(A, v)} and the preconditioner for
+\code{apply(pc, r)}, and never re-inspects which side, which method, which restart it
+got. The fixed-versus-flexible axis is the \emph{one} axis that cannot be absorbed
+this way---because, by the decision rule, a per-step preconditioner has run-time
+lifetime---and that is exactly why FGMRES is a distinct algorithm with a distinct
+state schema rather than a configuration flag on GMRES. Everything else is a binding;
+flexibility alone is a structural fork, honestly disclosed by the extra $\mat{Z}$
+basis.
+
+\subsection{Convergence intuition: no clean condition-number bound}
+
+CG (\cref{ch:cg}) came with a clean convergence bound: the error after $m$ steps
+shrinks like $\bigl(\tfrac{\sqrt\kappa-1}{\sqrt\kappa+1}\bigr)^m$, governed entirely
+by the condition number $\kappa$. GMRES has \emph{no such bound}, and the reason is
+instructive. For a symmetric operator the spectrum lives on the real line and the
+condition number captures everything; for a nonsymmetric operator the eigenvalues
+scatter into the complex plane, and---worse---if $\mat{A}$ is far from normal, the
+eigenvalues can lie anywhere and \emph{still} mislead, because the relevant object is
+not the spectrum but the \emph{field of values} (the set $\{\inner{\mat{A}\vx}{\vx}:
+\norm{\vx}=1\}$, a region of the complex plane). GMRES converges fast when the field
+of values is a tidy cluster bounded away from the origin, and can stagnate when it
+wraps around the origin---regardless of the condition number. The practical
+consequence: GMRES convergence is judged empirically, by watching the free residual
+$|s_{m+1}|$ fall, and is engineered by \emph{preconditioning}---reshaping the field of
+values with $\mat{M}$ until the cluster is favorable. The whole point of
+\cref{ch:precond,ch:multigrid} is to build the $\mat{M}$ that makes GMRES converge.
+
+\summarysection
+When $\mat{A}$ is nonsymmetric, the short three-term recurrence that makes CG cheap
+simply does not exist (Faber--Manteuffel): optimality and bounded storage cannot
+coexist. \emph{GMRES} keeps optimality and stores the whole basis. It is built on the
+\emph{minimum-residual principle}---at step $m$, return the $\vx_m\in\vx_0+\mathcal{K}_m$
+minimizing $\norm{\vb-\mat{A}\vx_m}$---which makes the residual norms monotone
+non-increasing. The \emph{Arnoldi process} (Gram--Schmidt on the Krylov sequence,
+\cref{ch:orthog}) builds an orthonormal basis $\mat{V}_{m+1}$ and the small
+upper-Hessenberg $\bar{\mat{H}}_m$ satisfying the Arnoldi relation
+$\mat{A}\mat{V}_m=\mat{V}_{m+1}\bar{\mat{H}}_m$; orthonormality then collapses the
+$N$-dimensional minimization to the $(m{+}1)$-dimensional least-squares problem
+$\min_{\vy}\norm{\beta\vec e_1-\bar{\mat{H}}_m\vy}$. A \emph{running QR by Givens
+rotations} (\cref{ch:givens}) solves that small problem incrementally and---the central
+economy---exposes the residual norm \emph{for free} as $|s_{m+1}|$ at every step,
+without forming the iterate. Because storage grows as $O(mN)$ and work as $O(m^2N)$,
+\emph{restarted GMRES($k$)} caps memory at $O(kN)$ by discarding the (ephemeral,
+\cref{ch:strata}) basis every $k$ steps---at the cost of losing superlinear
+convergence and risking stagnation. Finally, \emph{FGMRES} pays off \cref{ch:operators}'s
+decision rule: when the preconditioner changes per step ($\mat{M}_j$, e.g.\ an inner
+iterative solve), no constructed operator can absorb it, so the per-step variant is
+threaded into the state as a second basis $\mat{Z}_m$ of remembered preconditioned
+vectors, and the iterate is recovered as $\vx_m=\vx_0+\mat{Z}_m\vy_m$ rather than
+$\vx_0+\mat{V}_m\vy_m$. Preconditioner side (left/right/none) is an absorbed variant; the
+fixed-versus-flexible axis is the one structural fork, disclosed honestly by the extra
+basis. GMRES carries no clean condition-number bound: its convergence is governed by the
+field of values and engineered by preconditioning.
+
+\furtherreading
+The definitive treatment of GMRES, FGMRES, the Arnoldi process, restarting, and the
+preconditioning variants is Saad~\citep{saad2003}, whose chapters on Krylov methods for
+nonsymmetric systems and on flexible preconditioning are the direct source for this
+chapter's algorithm and its decision-rule reading. For the numerical-analysis
+perspective---the Arnoldi relation as an orthogonal reduction, the role of
+nonnormality and the field of values in convergence, and the contrast with the clean
+symmetric theory---Trefethen and Bau~\citep{trefethenbau1997} (the lectures on
+Arnoldi, GMRES, and iterative-method convergence) is the ideal companion. The
+running-QR/Givens mechanics this chapter used as a black box are developed in full in
+\cref{ch:givens}; the orthogonalization inside Arnoldi in \cref{ch:orthog}; and the
+preconditioners $\mat{M}$ whose construction makes GMRES converge in
+\cref{ch:precond,ch:multigrid}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Why no short recurrence.} State, in your own words, what the
+  Faber--Manteuffel theorem rules out, and explain why CG's three-term recurrence is a
+  special consequence of symmetry. What \emph{two} desirable properties does GMRES
+  refuse to give up simultaneously, and which one does restarting trade away?
+
+  \item \textbf{Monotonicity.} Prove that the GMRES residual norms satisfy
+  $\norm{\vr_{m+1}}\le\norm{\vr_m}$ using only the minimum-residual principle and the
+  nesting $\mathcal{K}_m\subseteq\mathcal{K}_{m+1}$. Why does this argument
+  \emph{not} establish strict decrease, and when can the residual stall at a plateau?
+
+  \item \textbf{A third Arnoldi step.} Continue \cref{wex:arnoldi} with one more step:
+  compute $\mat{A}\vv_3$, the coefficients $h_{13},h_{23},h_{33}$, and the new
+  sub-diagonal $h_{43}$. What is special about $h_{43}$ for this particular $3\times3$
+  operator, and what does its value tell you about where GMRES terminates exactly?
+
+  \item \textbf{The reduction, by hand.} Starting from $\vr_0=\beta\vv_1$ and the
+  Arnoldi relation, rederive the identity $\vb-\mat{A}(\vx_0+\mat{V}_m\vy)=
+  \mat{V}_{m+1}(\beta\vec e_1-\bar{\mat{H}}_m\vy)$, naming the single property of
+  $\mat{V}_{m+1}$ that lets you drop it from the norm. Which step would fail if the
+  Arnoldi basis were merely linearly independent rather than orthonormal?
+
+  \item \textbf{The free residual.} In \cref{wex:leastsq} the running QR reported
+  $\norm{\vr_2}=|s_3|=1/\sqrt{69}$ \emph{without} forming $\vx_2$. Explain precisely
+  why $|s_{m+1}|$ equals the least-squares residual norm, citing the isometry property
+  of Givens rotations. Then state what GMRES would have to compute instead if it lacked
+  this readout, and estimate the cost difference per step.
+
+  \item \textbf{Sizing a restart.} A solve has $N=10^6$ unknowns; each vector is $8$~MB.
+  You have a $4$~GB memory budget for the Krylov basis. (i) What is the largest restart
+  length $k$ you can afford? (ii) If full GMRES would converge in $40$ steps but
+  GMRES($k$) for your $k$ needs $300$, has restarting helped or hurt, and in what sense?
+  (iii) Name one operator property under which GMRES($k$) might \emph{stagnate} entirely.
+
+  \item \textbf{The mutating-preconditioner trap, revisited.} A colleague proposes to
+  run \emph{plain} GMRES with an inner-iterative preconditioner whose accuracy varies
+  step to step, ``since GMRES only ever asks \code{apply(pc, v)} and won't notice.''
+  Using the $\mat{Z}$-versus-$\mat{V}$ distinction and the decision rule of
+  \cref{ch:operators}, explain exactly what goes wrong, why no error is raised, and why
+  the reported $|s_{m+1}|$ is misleading. What is the minimal change that fixes it, and
+  what does it cost in storage?
+
+  \item \textbf{$\mat{V}$ versus $\mat{Z}$.} For \emph{fixed} right-preconditioned GMRES,
+  the iterate is $\vx_0+\mat{M}^{-1}\mat{V}_m\vy$; for FGMRES it is $\vx_0+\mat{Z}_m\vy$.
+  Show that when $\mat{M}_j=\mat{M}$ for all $j$ (the preconditioner happens to be
+  constant), these two formulas \emph{coincide}, so FGMRES reduces to fixed
+  right-preconditioned GMRES. What, then, is the only cost of always using FGMRES, and
+  when is paying it worthwhile?
+
+  \item \textbf{Side and the residual.} Left and right preconditioning minimize
+  \emph{different} residuals (\cref{fig:precondside}). For a convergence test with
+  tolerance $\varepsilon$ on the \emph{true} residual $\norm{\vb-\mat{A}\vx}$, which
+  side lets you read the test directly from the free $|s_{m+1}|$, and which forces a
+  correction? Explain why this is one practical reason GMRES implementations often
+  default to right preconditioning.
+
+  \item \textbf{Absorbed or forked?} Classify each axis as either \emph{absorbed} (read
+  once at construction, per-step loop variant-free) or a \emph{structural fork} (forces
+  a different operation chain or state schema), and justify with the decision rule:
+  (a) preconditioner side $\in\{\text{none},\text{left},\text{right}\}$;
+  (b) restart length $k$; (c) orthogonalization method (MGS vs CGS); (d)
+  fixed vs per-step preconditioner. For the one you classify as a fork, name the extra
+  state it forces into the carry.
+\end{enumerate}

@@ -1,0 +1,569 @@
+\chapter{The Layered Stack: A Reference Map}
+\label{app:stack}
+
+\chapterorient{This book taught one description of the simulator---the $L_4$
+calculus of Part~III---grounded in the cited source and pure-function operators of
+Parts~II and~IV, and composed into the modalities of Part~V. But the calculus is
+only the top of a five-layer stack, and the full specification the book draws on is
+built from all five layers and the rotations between them. This appendix is the
+reference map of that stack. It is not a tutorial---\cref{ch:rotations} already
+taught the rotation idea, and you should read that chapter first. It is a
+\emph{legend}: a one-page-per-layer account of what each layer expresses and what
+impedance it has turned; a reference table of the four rotations; a catalogue of the
+obstructions that do not rotate; and a chart of how the book's parts map onto the
+layers. Keep it beside you when you go to read the underlying spec.}
+
+This appendix maps the layered representation that underlies the entire book. Where
+\cref{ch:rotations} \emph{taught} the rotation idea---what a rotation is, the three
+tests that detect one, the five justification kinds, and how an obstruction is an
+honest failure---this appendix \emph{tabulates} the structure for reference. The
+reader who has finished the book and now wants to open the full specification will
+find here the map: the five layers in order, the four edges between them, the
+negative results, and the correspondence to the parts already read.
+
+\begin{keyidea}
+The stack is \textbf{five layers, four rotations, and a catalogue of obstructions}.
+The five layers ($L_0$ source, $L_1$ pure functions, $L_2$ algebra, $L_3$
+tensor-field operations, $L_4$ calculus) are each a complete, correct account of the
+simulator in its own vocabulary. The four rotations between adjacent layers each turn
+exactly one impedance---mutation, fusion, iteration, coordination---without changing
+the numbers. And the obstructions---the loops that will \emph{not} rotate to a
+whole-field form---are findings, not failures: they mark precisely where the
+abstract tensor picture meets a wall, and why. The book taught $L_4$; this map shows
+the rest.
+\end{keyidea}
+
+\section{The five layers}
+\label{sec:fivelayers}
+
+We number the layers from the ground up: $L_0$ is the literal source, $L_4$ the
+calculus. \Cref{fig:appstack} is the hero figure of this appendix---the polished
+reference version of the stack first drawn in \cref{ch:rotations}. It shows all five
+bands and the four labeled rotation arrows between them, each tagged with the
+impedance it turns. The subsections that follow give each layer its own paragraph:
+what it expresses, and what impedance it has rotated relative to the layer below.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[node distance=0mm]
+  \def\lw{96mm}    % layer width
+  \def\lh{14mm}    % layer height
+  \def\gap{12mm}   % vertical gap between bands (room for rotation arrow + 2 labels)
+  % five stacked layer bands, L0 at bottom -> L4 at top
+  \foreach \i/\name/\desc/\col/\bg in {%
+      0/$L_0$/the cited source {\textbullet} Palace C++ {\&} MFEM {\textbullet} reference notes/simInk/simBgGray,
+      1/$L_1$/pure functions over immutable tensors {\textbullet} no in-place mutation/simGreen/simBgGreen,
+      2/$L_2$/algebraic decompositions {\textbullet} HPC fusions erased/simTeal/simBgGray,
+      3/$L_3$/global tensor-field operations {\textbullet} element loops lifted/simBlue/simBgBlue,
+      4/$L_4$/the calculus {\textbullet} combinators {\textbullet} state monad {\textbullet} strata/simViolet/simBgViolet}{
+    \node[draw=\col, fill=\bg, very thick, rounded corners=3pt,
+          minimum width=\lw, minimum height=\lh, align=center, font=\small]
+      (L\i) at (0, \i*\dimexpr\lh+\gap\relax) {%
+        \textbf{\name}\quad\textcolor{simGray}{\footnotesize\desc}};
+  }
+  % rotation arrows between adjacent bands
+  \foreach \lo/\hi in {0/1,1/2,2/3,3/4}{
+    \draw[depedge, line width=1.3pt] (L\lo.north) -- (L\hi.south);
+  }
+  % rotation labels (name + impedance turned), placed to the RIGHT of each arrow gap
+  \def\lx{0.52*\lw+3mm}
+  \foreach \i/\rot/\imp in {%
+      0/mutation rotation/{mutation $\to$ purity},
+      1/fusion rotation/{fused kernel $\to$ base algebra},
+      2/iteration rotation/{element loop $\to$ whole-field op},
+      3/calculus rotation/{control flow $\to$ named combinators}}{
+    \node[font=\scriptsize\bfseries\itshape, simRust, anchor=west]
+      at (\lx, \i*\dimexpr\lh+\gap\relax+0.5*\lh+0.5*\gap+1.6mm) {\rot};
+    \node[font=\scriptsize, simGray, anchor=west]
+      at (\lx, \i*\dimexpr\lh+\gap\relax+0.5*\lh+0.5*\gap-1.6mm) {turns: \imp};
+  }
+  % side bracket: "complete & correct in itself"
+  \draw[decorate, decoration={brace, amplitude=6pt}, simGray, thick]
+    (-0.52*\lw-3mm, -0.5*\lh) -- (-0.52*\lw-3mm, 4*\dimexpr\lh+\gap\relax+0.5*\lh);
+  \node[rotate=90, font=\scriptsize\itshape, simGray, anchor=south]
+    at (-0.52*\lw-9mm, 2*\dimexpr\lh+\gap\relax) {each layer complete \& correct in its own vocabulary};
+  % top / bottom annotations
+  \node[font=\scriptsize\itshape, simViolet, anchor=south] at (0, 4*\dimexpr\lh+\gap\relax+0.5*\lh+2mm)
+    {\textbf{top:} the accelerator-ready surface (what the backend consumes)};
+  \node[font=\scriptsize\itshape, simInk, anchor=north] at (0, -0.5*\lh-2mm)
+    {\textbf{ground:} every claim in the stack rests on an $L_0$ citation};
+\end{tikzpicture}
+\caption[The five-layer impedance-matching stack]{The impedance-matching stack, in
+full. Read it from the ground up. $L_0$ is the cited Palace/MFEM source---the only
+layer that \emph{is} the machine rather than a description of it. Each rotation above
+turns exactly one impedance while computing the same numbers: \emph{mutation} into
+purity ($L_0\!\to\!L_1$), a \emph{fused kernel} into the base algebra it implements
+($L_1\!\to\!L_2$), an explicit \emph{element loop} into a whole-field operation
+($L_2\!\to\!L_3$), and hand-written \emph{control flow} into named combinators
+($L_3\!\to\!L_4$). Every band is a complete, correct account of the simulator in its
+own vocabulary; the arrows are translations between vocabularies, never mere
+renamings (\cref{ch:rotations}). The book has been teaching the $L_4$ view at the top,
+with Parts~II and~IV supplying the $L_0$--$L_1$ grounding at the bottom.}
+\label{fig:appstack}
+\end{figure}
+
+\subsection*{$L_0$ --- the cited source}
+
+$L_0$ is the ground truth: ranges of Palace's C++ (and the MFEM library beneath it),
+quoted by file and line, together with a small set of cross-cutting \emph{reference
+notes} that explain the conventions those ranges use---output-argument versus
+receiver mutation, the \code{Vector}/\code{ComplexVector} element-type duality,
+free-function versus method-form symbols, transparent versus load-bearing
+optimization tricks. $L_0$ is not ``ours''; it is the machine as written. Nothing is
+interpreted here, only read and cited. It has turned \emph{no} impedance---there is no
+layer below it---and every claim anywhere higher in the stack ultimately rests on an
+$L_0$ citation. The reference notes are deliberately lean (a few paragraphs of
+interpretation plus representative citations each), so that the higher layers can
+\emph{point} at a convention rather than re-state it. $L_0$ is where the grep-and-IDE
+workflow lives; the citation format is the plain-text \code{path/file.ext:start-end}
+the whole book uses.
+
+\subsection*{$L_1$ --- the mutation rotation}
+
+$L_1$ re-expresses each $L_0$ operation as a \emph{pure function over immutable
+tensors}. The destination array that $L_0$ overwrote in place becomes a returned
+value; \lstinline[style=l4style]|y.Add(alpha, x)| (a mutating member method) becomes
+\lstinline[style=l4style]|y_new = axpy(alpha, x, y_old)|, with the $L_0$ destination
+buffer gone from the signature. An operator application \lstinline[style=l4style]|A.Mult(x, y)|
+that wrote into \code{y} becomes \lstinline[style=l4style]|y = apply_linop(A, x)|, no
+destination mentioned. This is the \emph{mutation rotation}, applied operator by
+operator: it has turned the impedance \emph{mutation into purity}. $L_1$ is the layer
+the book mostly worked in for its operator definitions (Part~IV)---it is the closest
+pure-functional layer to the source, its structure still following the source loop,
+with workspace scratch buffers erased and only semantically-meaningful aliasing kept.
+Reduction-tree non-associativity (the order in which \code{dot} and \code{nrm2} sum)
+is preserved here as a \emph{load-bearing} algebraic claim, not quietly discarded.
+
+\subsection*{$L_2$ --- the fusion rotation}
+
+$L_2$ unfolds each $L_1$ function back into a \emph{composition of base algebraic
+primitives}, with the performance tricks erased. A fused kernel that computed
+$a x + b y + c z$ in one cache-friendly sweep is decomposed into the scaled sums it
+stands for; a packed, blocked, SIMD-tuned matrix apply becomes the plain linear map it
+implements; a batched specialized BLAS call becomes a composition of base operations.
+This is the \emph{fusion rotation}: it has turned the impedance \emph{a fused kernel
+into its base algebra}. The discipline of \cref{ch:bigidea} governs the erasure---a
+\emph{transparent} performance trick (fusion, tiling, packing) is unfolded and gets a
+one-line note, while a \emph{load-bearing} numerical trick (a non-associative reduction
+ordering, a deterministic-versus-atomic accumulation) is \emph{preserved} as an
+explicit algebraic claim with the property it buys called out. $L_2$ is where the
+fold cohorts live: \code{linear\_combination} folds the term axis to a tensor,
+\code{inner\_product} folds the length axis to a scalar, and the once-standalone leaves
+(\code{axpy}, \code{dot}, \code{scal}, \dots) become thin specializations of their
+combinator.
+
+\subsection*{$L_3$ --- the iteration rotation}
+
+$L_3$ lifts the explicit per-degree-of-freedom loops of $L_2$, where the algebra
+permits, to \emph{whole-field operations}: ``add these two fields,'' ``apply this
+operator to this field,'' with no surviving element loop in the spec form. This is the
+\emph{iteration rotation}: it has turned the impedance \emph{an explicit element loop
+into a whole-field operation}. It is the rotation that does \emph{not} always go
+through---and where it fails, the failure is recorded as a first-class
+\emph{obstruction} (\cref{sec:appobstruction}). A clean BLAS-1 update lifts trivially
+(every entry independent); a Gauss--Seidel sweep does not (each entry reads the
+previous one). $L_3$ therefore arranges its operators on an obstruction-profile
+spectrum, from the obstruction-free leaves (\code{apply\_linop}, \code{dot},
+\code{normalize}) through operators that carry an obstruction \emph{by reference}
+(the divergence-free projector, whose inner solve iterates) to the four
+\emph{partial-obstruction} operators whose body lifts cleanly but whose loop does not
+(\code{chebyshev}, \code{eigsolve}, \code{orthogonalize}, \code{fold\_solve}).
+
+\subsection*{$L_4$ --- the calculus}
+
+$L_4$ is the small, formally defined graph-evaluation calculus the book taught in
+Part~III: high-order combinators (\cref{ch:fold,ch:combinators}), the state monad
+(\cref{ch:monad}), the three-stratum state stratification (\cref{ch:strata}), and
+operators as values (\cref{ch:operators}). It is \emph{vocabulary, not architecture}---it
+says what the algorithm \emph{is}, abstractly, in a form an accelerator backend can
+consume, without committing to eager-versus-traced execution or to any particular
+container or monad implementation. The \emph{calculus rotation} from $L_3$ replaces
+hand-written control flow with named combinators: it has turned the impedance
+\emph{hand-written coordination into a named combinator}. A solver's restart-and-converge
+loop, threaded by hand at $L_3$, becomes \code{ksp\_solve} folding \code{krylov\_step}
+through \code{iterate\_while}; a time march becomes \code{fold\_solve} over a schedule;
+an RHS family becomes \code{solve\_family} mapping a fixed operator. $L_4$ is the
+backend-lowering target---the whole-tensor, no-aliasing surface the GPU wants---and the
+implementation rendered \emph{as} that surface is the synthesized library of
+\cref{ch:synthlib}.
+
+\begin{notationbox}
+The layer numbers run \emph{opposite} to the direction of construction. The
+\emph{stack} is numbered ground-up ($L_0$ source at the bottom, $L_4$ calculus at the
+top), but the \emph{rotations} are performed and read \emph{up} the stack: a rotation
+``$L_n\!\to\!L_{n+1}$'' takes the lower form to the higher one. A
+\emph{lowering}---the spec's name for the formal correspondence---points the other
+way, ``$L_{n+1}>L_n$,'' and narrates how the higher form \emph{lowers} into the lower
+one. Both describe the same edge; the rotation is the act, the lowering is the
+recorded correspondence. The spec stores lowerings in per-adjacent-edge directories
+(\code{L4-L3/}, \code{L3-L2/}, \code{L2-L1/}, \code{L1-L0/}), one chapter per theme.
+\end{notationbox}
+
+\section{The four rotations between adjacent layers}
+\label{sec:approtations}
+
+The four edges of the stack are the four rotations. Each is a \emph{translation across
+vocabularies}, not a one-to-one renaming (\cref{def:rotation}): the lower form is
+re-expressed in a genuinely different idiom in which one impedance has been turned. A
+move that merely pastes new names on the old operations---same state threaded, same
+grain, same admitted algorithm in every slot---turns no impedance and is a
+\emph{renaming}, the smell \cref{sec:tests} teaches you to catch. \Cref{tab:rotations}
+is the reference table: each layer pair, the impedance it rotates, what changes in the
+vocabulary, and a worked example drawn from the book.
+
+\begin{table}[t]
+\centering
+\caption[The four rotations: a reference table]{The four rotations between adjacent
+layers, as a reference table. Each row names the edge, the impedance it turns, the
+vocabulary shift it performs (the genuine translation, not a rename), and a concrete
+example met in the book. Read up the stack ($L_0$ at the bottom): mutation becomes
+purity, fusion becomes base algebra, the element loop becomes a whole-field operation,
+and hand-written coordination becomes a named combinator.}
+\label{tab:rotations}
+\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.115\textwidth}
+                   >{\raggedright\arraybackslash}p{0.155\textwidth}
+                   >{\raggedright\arraybackslash}p{0.30\textwidth}
+                   >{\raggedright\arraybackslash}p{0.30\textwidth}@{}}
+\toprule
+\textbf{Edge} & \textbf{Impedance turned} & \textbf{What rotates (the translation)} &
+\textbf{Example} \\
+\midrule
+\textbf{$L_4 > L_3$} \newline calculus rotation &
+hand-written control flow $\to$ named combinator &
+The monad / strata / \code{readonly} wrappers dissolve; coordination loops become
+\code{iterate\_while}, \code{fold\_solve}, \code{solve\_family}. State that was
+threaded by hand is hidden in a combinator's contract. &
+\code{ksp\_solve} folding \code{krylov\_step} through \code{iterate\_while} replaces a
+hand-threaded restart loop; the time march becomes \code{fold\_solve} over a schedule
+(\cref{ch:transient}). \\
+\textbf{$L_3 > L_2$} \newline iteration rotation &
+explicit element loop $\to$ whole-field op &
+The per-DoF loop is erased and the operation re-stated on whole tensors---\emph{or},
+where it cannot be, an \code{obstruction} marker is named first-class and shadows to an
+$L_2$ non-law. &
+\lstinline[style=l4style]|for i: y[i]=a*x[i]+y[i]| becomes the single whole-field
+\code{axpy}; the Gauss--Seidel sweep refuses and records an obstruction
+(\cref{sec:appobstruction}). \\
+\textbf{$L_2 > L_1$} \newline fusion rotation &
+fused kernel $\to$ base algebra &
+A fused / packed / batched kernel is unfolded into a composition of base primitives;
+transparent tricks get a note, load-bearing numerical tricks are preserved as explicit
+claims. &
+A fused $ax+by+cz$ sweep unfolds into scaled sums; the leaves \code{axpy}/\code{dot}
+become specializations of the \code{linear\_combination} / \code{inner\_product}
+folds. \\
+\textbf{$L_1 > L_0$} \newline mutation rotation &
+mutation $\to$ purity &
+The in-place destination buffer disappears from the signature; a mutating method
+becomes a function returning a fresh value. The lowering reintroduces the buffer when
+reading down to source. &
+\lstinline[style=l4style]|y.Add(alpha, x)| (writes \code{y}) becomes
+\lstinline[style=l4style]|axpy alpha x y| (returns fresh);
+\lstinline[style=l4style]|A.Mult(x, y)| becomes \code{apply\_linop}
+(\cref{ch:bigidea}). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A few structural facts about the table are worth stating once. First, not every edge
+is substantive for every operator: a leaf that is already at the right grain---an
+\code{axpy} that is whole-field by construction---``carries through'' an edge unchanged,
+and the spec records that as an in-line identity note rather than a separate lowering
+theme (a mirrored entry with a thin theme would be the renaming smell). The genuine
+content of an edge lives in the operators that \emph{do} rotate: the solver caps at
+$L_4>L_3$, the fold cohorts at $L_2>L_1$, the constructed-operator gates and the
+sequential obstructions at $L_3>L_2$.
+
+Second, an edge can be substantive in one direction's vocabulary and identity-in-form
+in the other. The Krylov step's \emph{body} is identity-in-form across $L_4>L_3>L_2$
+(the same primitive sequence, only the wrappers dissolving), while its \emph{driver}---the
+outer restart-and-converge loop---rotates substantively at every edge (the iteration
+view is rendered at $L_3$, erased at $L_2$, named as a combinator at $L_4$). The spec
+captures this as a kernel-identity-plus-driver-non-identity pair of themes.
+
+Third, identity rotations that span \emph{non-adjacent} layers are annotated in-line,
+not given their own directory. There is no \code{L3-L1/}; when an operator's $L_3$ body
+is value-thread-isomorphic to its $L_1$ form through an identity-like $L_2$ absorption,
+that relationship is the transitive composition of the adjacent-edge themes, noted in
+the $L_n$ entry.
+
+\section{Obstructions: the things that do not rotate}
+\label{sec:appobstruction}
+
+Not everything rotates. Some work, faithfully described at $L_2$, genuinely cannot be
+lifted to a clean $L_3$ whole-field operation, because its very meaning depends on doing
+things in order. When that happens the spec does \emph{not} fake a rotation and does
+\emph{not} treat the failure as a defect in the method. It records an
+\emph{obstruction}: a precise statement of what blocks the lift and why. An obstruction
+is a first-class negative result---a finding, not a failure (\cref{ch:rotations}). The
+obstructions are some of the most valuable output in the stack, because they say
+exactly where the abstract whole-tensor picture meets a wall.
+
+There are two \emph{kinds} of obstruction, distinguished by how the blocking loop
+relates to Palace, and the kind determines whether the obstruction can ever be
+discharged. \Cref{tab:obstructions} catalogues both, with the book chapters where each
+was met; \cref{fig:obstructionkinds} draws the distinction.
+
+\begin{table}[t]
+\centering
+\caption[The obstruction catalogue]{The catalogue of non-rotation. Two kinds of
+obstruction block the iteration rotation, distinguished by \emph{whose} loop carries
+the blockage. A \emph{sequential-obstruction} is a Palace-authored loop whose
+$i$-th step reads the $(i\!-\!1)$-th step's output (a loop-carried dependency); Palace
+\emph{renders} it, so it survives as ``these reordering laws do not hold,'' and it
+could in principle be re-described. An \emph{opaque-library-ownership} obstruction is a
+loop that lives entirely in third-party code (SLEPc, MFEM); Palace authors no loop to
+render, only a boundary marker, and it cannot be discharged unless the upstream
+architecture changes.}
+\label{tab:obstructions}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}
+                   >{\raggedright\arraybackslash}p{0.34\textwidth}
+                   >{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+\toprule
+\textbf{Kind} & \textbf{What blocks the lift} & \textbf{Where the book met it} \\
+\midrule
+\textbf{sequential-} \newline \textbf{obstruction} \newline \emph{(Palace-authored
+loop)} &
+A loop-carried dependency: step $i$ reads step $i\!-\!1$'s output, so there is no
+``all entries at once'' form. Palace \emph{renders} the loop (an explicit tail
+recursion); the lift erases the iteration view and the obstruction survives as a lost
+reordering law. Root is usually numerical stability. &
+The MGS arm of orthogonalization---the serial rank-1-projector chain that buys
+roundoff-orthogonality (\cref{ch:orthog}); the Chebyshev smoother's inner $k$-recurrence
+and outer Richardson sweep; the Gauss--Seidel-flavored multigrid smoother sweep; the
+transient time march's carry-threading (\cref{ch:transient}). \\
+\textbf{opaque-} \newline \textbf{library-} \newline \textbf{ownership} \newline
+\emph{(third-party loop)} &
+The iteration lives entirely inside a library Palace calls but does not implement.
+Palace authors \emph{no} loop, so there is nothing to render---only a marker at the
+library boundary. No promotion route unless Palace re-architects; these are the
+\code{\#extern} edges of \cref{app:kernel}. &
+The SLEPc / ARPACK eigensolve loop, handed the operators and run to convergence inside
+the library (\cref{ch:eigenmodes}); the MFEM ODE time-integrator step inside
+\code{fold\_solve} (\cref{ch:transient}); the libCEED element-quadrature kernel inside
+\code{fe\_assemble}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm]
+  % ---- LEFT: liftable, independent ----
+  \begin{scope}
+    \node[font=\bfseries\small, simGreen] at (1.4,1.85) {Liftable: independent updates};
+    \foreach \i in {0,1,2,3}{
+      \node[opbox, minimum width=8mm, minimum height=6mm] (a\i) at (\i*0.95,0.7) {$y_\i$};
+      \node[data, minimum width=8mm, minimum height=5mm] (x\i) at (\i*0.95,-0.4) {$x_\i$};
+      \draw[flow] (x\i) -- (a\i);
+    }
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=42mm] at (1.4,-1.3)
+      {each $y_i = a x_i + y_i$ reads only its own input $\Rightarrow$ one whole-field op};
+    \node[draw=simGreen, thick, rounded corners=2pt, fit=(a0)(a3), inner sep=3pt,
+          fill=simGreen!8] {};
+    \node[font=\scriptsize\bfseries, simGreen] at (1.4,1.2) {$L_3$ whole-field op};
+  \end{scope}
+  % ---- MIDDLE: sequential-obstruction (Palace-authored) ----
+  \begin{scope}[shift={(5.4,0)}]
+    \node[font=\bfseries\small, simRust, align=center, text width=42mm] at (1.4,1.85)
+      {Sequential-obstruction\\[-1pt]\scriptsize(Palace authors the loop)};
+    \foreach \i in {0,1,2,3}{
+      \node[opbox, draw=simRust, minimum width=8mm, minimum height=6mm] (b\i) at (\i*0.95,0.7) {$y_\i$};
+      \node[data, minimum width=8mm, minimum height=5mm] (u\i) at (\i*0.95,-0.4) {$x_\i$};
+      \draw[flow] (u\i) -- (b\i);
+    }
+    \foreach \i/\j in {0/1,1/2,2/3}{
+      \draw[backflow] (b\i.east) -- (b\j.west);}
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=42mm] at (1.4,-1.3)
+      {$y_i$ reads the \emph{already-updated} $y_{i-1}$ $\Rightarrow$ loop renders, does not lift};
+    \node[font=\scriptsize\bfseries, simRust] at (1.4,1.2) {loop-carried dependency};
+  \end{scope}
+  % ---- RIGHT: opaque-library-ownership ----
+  \begin{scope}[shift={(10.8,0)}]
+    \node[font=\bfseries\small, simViolet, align=center, text width=40mm] at (1.1,1.85)
+      {Opaque-library-ownership\\[-1pt]\scriptsize(Palace authors no loop)};
+    \node[extern, minimum width=34mm, minimum height=18mm, align=center] (lib) at (1.1,0.15)
+      {\textbf{\#extern}\\[2pt]\scriptsize the loop lives entirely\\in SLEPc / MFEM / libCEED;\\only a boundary marker};
+    \node[data, minimum width=10mm, above=4mm of lib] (in2) {operators in};
+    \node[data, minimum width=10mm, below=4mm of lib] (out2) {result out};
+    \draw[flow] (in2) -- (lib);
+    \draw[flow] (lib) -- (out2);
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=40mm] at (1.1,-1.95)
+      {nothing to render $\Rightarrow$ a marker, not a recurrence};
+  \end{scope}
+\end{tikzpicture}
+\caption[The two kinds of obstruction]{Why some loops rotate to $L_3$ and some do not,
+and the two kinds of those that do not. \emph{Left (green):} an \code{axpy}-style
+update writes $y_i = a x_i + y_i$ reading only its own input; the entries are
+independent, so the loop lifts to one whole-field operation. \emph{Middle (rust):} a
+\emph{sequential-obstruction}---a Gauss--Seidel-like sweep where $y_i$ reads the
+already-updated $y_{i-1}$ (the dashed loop-carried dependency). Palace authors this
+loop, so $L_3$ \emph{renders} it as an explicit tail recursion; the lift to $L_2$
+erases the iteration view and the obstruction survives as a lost reordering law. It
+could, in principle, be re-described. \emph{Right (violet):} an
+\emph{opaque-library-ownership} obstruction---the loop lives entirely in third-party
+code (the eigensolver, the ODE step, the quadrature kernel). Palace authors no loop, so
+there is nothing to render; only a boundary marker, the \code{\#extern} edge of
+\cref{app:kernel}, and no discharge route unless the upstream changes.}
+\label{fig:obstructionkinds}
+\end{figure}
+
+The distinction is not pedantry; it changes how an obstruction can ever be removed. A
+\emph{rendered} recurrence (the sequential kind) records a loop Palace chose to
+surface and could in principle re-describe---and indeed, for the three opaque kernels
+that are spine dependencies, the book provides \emph{both} an opaque
+\code{\#extern} contract and a separate, constructive realization in our own
+vocabulary, linked by a reviewable correspondence (\cref{app:kernel}'s
+kernel-API/kernel-implementation split; the eigensolve's Krylov--Schur reconstruction,
+\cref{ch:eigenmodes}). An \emph{opaque-library} marker, by contrast, records a boundary
+Palace never sees inside and will not discharge unless the upstream architecture
+changes.
+
+A finer reading---the \emph{erasure scope} of \cref{ch:rotations}---asks how much of
+the iteration view a single layer-hop erases: a single sequential loop (a linear
+solve's outer iteration), a nested double loop (a polynomial smoother's inner
+recurrence inside an outer sweep), or an opaque library call with no loop to render at
+all. The rung names what kind of obstruction you are looking at; \cref{ch:rotations}'s
+erasure-scope ladder draws all three.
+
+\begin{pitfall}
+An obstruction is never an excuse to stop, and never a whole-operator verdict when
+only the loop resists. The honest record is precise about the boundary: the per-step
+\emph{body} usually rotates cleanly (it is identity-in-form to the layer below), and
+only the \emph{iteration} fails. That is exactly the \emph{partial-obstruction} status
+the spec uses for \code{chebyshev}, \code{eigsolve}, \code{orthogonalize}, and
+\code{fold\_solve}---``the body lifts; the loop does not, because of this cited
+dependency.'' Reading one of these as a total failure, or forcing a false whole-field
+form to avoid recording the obstruction, both throw away the finding the obstruction
+\emph{is}.
+\end{pitfall}
+
+\section{How the book navigated the stack}
+\label{sec:appnavigation}
+
+The book did not present the five layers in order. It taught the \emph{top}---the $L_4$
+calculus---as the main object (Part~III), grounded it in the \emph{bottom}---the cited
+source and the pure-function operators (Parts~II and~IV)---and then \emph{composed} the
+top into the user-facing modalities (Part~V). The synthesized library (Part~VI)
+rendered that same $L_4$ surface as code. \Cref{fig:partsmap} charts which part teaches
+which layer, so the reader who now wants the full spec knows where each piece of the
+book already sits in the stack.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=0mm]
+  \def\lw{58mm}
+  \def\lh{9mm}
+  \def\gap{3.0mm}
+  % the five layer bands (left column)
+  \foreach \i/\name/\col/\bg in {%
+      0/$L_0$ cited source/simInk/simBgGray,
+      1/$L_1$ pure functions/simGreen/simBgGreen,
+      2/$L_2$ algebra/simTeal/simBgGray,
+      3/$L_3$ tensor-field ops/simBlue/simBgBlue,
+      4/$L_4$ the calculus/simViolet/simBgViolet}{
+    \node[draw=\col, fill=\bg, thick, rounded corners=2pt,
+          minimum width=\lw, minimum height=\lh, align=center, font=\small]
+      (B\i) at (0, \i*\dimexpr\lh+\gap\relax) {\textbf{\name}};
+  }
+  % the part annotations (right column), aligned to layers, with connector braces
+  \def\px{0.5*\lw+6mm}
+  % Parts II/IV -> L0/L1  (grounding)
+  \draw[decorate, decoration={brace, amplitude=5pt, mirror}, simGreen, thick]
+    ($(B0.east)+(3mm,-0.5*\lh+1mm)$) -- ($(B1.east)+(3mm,0.5*\lh-1mm)$);
+  \node[product, anchor=west, text width=44mm, align=left] at (\px, 0.5*\dimexpr\lh+\gap\relax)
+    {\textbf{Parts II \& IV} $\to$ $L_0$/$L_1$\\[1pt]\scriptsize the field theory + the
+     pure-function operators: the bottom-up grounding};
+  % L2 -> intervening
+  \node[opbox, anchor=west, text width=44mm, align=left] at (\px, 2*\dimexpr\lh+\gap\relax)
+    {\textbf{the intervening algebra}\\[1pt]\scriptsize $L_2$/$L_3$: the stepping-stones
+     the rotations pass through (the spec's middle)};
+  \draw[refedge] (B2.east) -- (\px-1mm, 2*\dimexpr\lh+\gap\relax);
+  % Part III -> L4 (the taught surface)
+  \draw[decorate, decoration={brace, amplitude=5pt, mirror}, simViolet, thick]
+    ($(B4.east)+(3mm,-0.5*\lh+1mm)$) -- ($(B4.east)+(3mm,0.5*\lh-1mm)$);
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, anchor=west,
+        text width=44mm, align=left] at (\px, 4*\dimexpr\lh+\gap\relax)
+    {\textbf{Part III} $\to$ $L_4$ \emph{(the taught surface)}\\[1pt]\scriptsize the calculus:
+     fold, combinators, monad, strata, operators-as-values};
+  % Part V / VI annotations along the top
+  \node[font=\scriptsize\itshape, simRust, align=center, text width=0.95\linewidth]
+    at (0.30\linewidth, 4*\dimexpr\lh+\gap\relax+0.5*\lh+5mm)
+    {\textbf{Part V} reads the modalities as $L_4$ compositions (drivers as composition
+     roots); \quad \textbf{Part VI} renders the $L_4$ surface as the synthesized library
+     (\cref{ch:synthlib}).};
+\end{tikzpicture}
+\caption[How the book's parts map onto the layers]{The correspondence between the
+book's parts and the stack's layers. The book taught the \emph{top} of the stack as its
+primary object---\textbf{Part~III} is the $L_4$ calculus (violet, the taught
+surface)---and grounded it in the \emph{bottom}: \textbf{Parts~II and~IV} supply the
+$L_0$ cited source and the $L_1$ pure-function operators (green, the bottom-up
+grounding). The intervening $L_2$/$L_3$ algebra (teal/blue) is the spec's middle---the
+stepping-stones the rotations pass through, which the book touched mainly when an
+operator's iteration rotation or fusion rotation was load-bearing. \textbf{Part~V} then
+reads the five modalities as $L_4$ compositions (each driver a composition root over
+the calculus), and \textbf{Part~VI} renders that same $L_4$ surface as the synthesized
+library. The reader who wants the full specification now has the map: the book is the
+$L_4$-and-grounding view; the spec is all five layers and the rotations between them.}
+\label{fig:partsmap}
+\end{figure}
+
+The choice to teach $L_4$ first, rather than climb the stack from $L_0$, was
+deliberate. A direct $L_0\!\to\!L_4$ leap would be a leap of faith; the stack replaces
+it with a sequence of short, auditable rotations, but a \emph{reader} does not need to
+re-perform that sequence to understand the result. The result---what the algorithm
+\emph{is}, abstractly---is the $L_4$ calculus, and that is what the book taught. The
+grounding in Parts~II and~IV is what lets you trust the calculus is faithful; the
+rotations of \cref{ch:rotations} are what connect the two; and this appendix is the map
+that lets you go read the rest. The payoff of the whole layered construction is three
+things at once: \emph{auditability} (each short move is checkable), \emph{honesty} (the
+obstructions are recorded, not papered over), and a \emph{target} (the $L_4$ surface an
+accelerator backend consumes, rendered as the library of \cref{ch:synthlib}).
+
+\summarysection
+The simulator is described not once but at a stack of five \emph{layers}, each complete
+and correct in its own vocabulary: $L_0$, the cited Palace/MFEM source plus its
+reference notes; $L_1$, pure functions over immutable tensors; $L_2$, algebraic
+decompositions with HPC fusions erased; $L_3$, global tensor-field operations; and
+$L_4$, the calculus of Part~III. Adjacent layers are joined by one of \emph{four
+rotations}, each turning exactly one impedance while computing the same numbers: the
+\emph{mutation rotation} ($L_1>L_0$, mutation into purity), the \emph{fusion rotation}
+($L_2>L_1$, a fused kernel into base algebra), the \emph{iteration rotation} ($L_3>L_2$,
+an element loop into a whole-field operation), and the \emph{calculus rotation}
+($L_4>L_3$, hand-written control flow into a named combinator). Every rotation is a
+translation across vocabularies, never a renaming. Where the iteration rotation cannot
+go through, the spec records a first-class \emph{obstruction}---of two kinds: a
+\emph{sequential-obstruction} (a Palace-authored loop-carried dependency, rendered and
+re-describable in principle---Gauss--Seidel smoothing, MGS orthogonalization, the
+Chebyshev recurrence) and an \emph{opaque-library-ownership} obstruction (a loop owned
+by SLEPc, MFEM, or libCEED, marked but not rendered, the \code{\#extern} edges of
+\cref{app:kernel})---each tied to the chapter where the book met it
+(\cref{ch:orthog,ch:eigenmodes,ch:transient}). The book navigated the stack by teaching
+the top ($L_4$, Part~III), grounding it in the bottom ($L_0$/$L_1$, Parts~II and~IV),
+and composing it into the modalities (Part~V) and the synthesized library (Part~VI).
+The reader who wants the full specification now holds the map: five layers, four
+rotations, and the obstructions that, by not rotating, are findings rather than
+failures.
+
+\furtherreading
+The layered, rotation-based method this appendix maps is purpose-built for this project,
+but the obstructions it catalogues are the standard hard cases of numerical linear
+algebra. The sequential reductions that resist the iteration rotation---Gauss--Seidel
+and SSOR smoothing, the modified-Gram--Schmidt orthogonalization whose serial
+rank-one projector chain buys the roundoff-orthogonality the batched form loses---are
+developed in Saad's \emph{Iterative Methods for Sparse Linear
+Systems}~\citep{saad2003}, the standard reference for the Krylov and multigrid loops
+behind the single-loop and nested-loop obstructions of \cref{sec:appobstruction}.
+Trefethen and Bau's \emph{Numerical Linear Algebra}~\citep{trefethenbau1997} develops
+orthogonalization, conditioning, and the eigenvalue problem lecture by lecture, and is
+the ideal companion for seeing \emph{why} the eigensolve loop is the canonical
+opaque-library obstruction---why the iteration is best left to a specialized library
+and marked at the boundary rather than re-derived. The simulator whose five-layer
+dissection this map summarizes is Palace~\citep{palace2023}; reading its source against
+this stack, with the four rotations of \cref{sec:approtations} and the obstruction
+catalogue of \cref{sec:appobstruction} in hand, is exactly the auditable
+ground-to-calculus walk the layered method was built to make possible.

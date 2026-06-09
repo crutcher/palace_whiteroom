@@ -1,0 +1,1112 @@
+\chapter{The Five Reductions of Maxwell}
+\label{ch:reductions-pde}
+
+% local: velocity unknown in the first-order transient recast (no \vv in simbook)
+\providecommand{\vv}{\mathbf{v}}
+
+\chapterorient{Maxwell's four equations describe every electromagnetic
+phenomenon at once---which is precisely why, taken whole, they are too rich to
+compute against directly. Every practical simulation first \emph{specializes}
+them: it fixes a regime (static, time-harmonic, or time-domain), discards the
+terms that vanish there, and lands on a single, tractable partial differential
+equation. This chapter performs that specialization five times, once for each
+of the analyses of \cref{ch:targets}. We will watch the same four equations
+collapse into a Poisson problem, a curl--curl problem, an eigenproblem, a
+complex-valued Helmholtz system, and a second-order evolution---and we will end
+by noticing that, beneath their different faces, all five are assembled from
+the \emph{same three operators}.}
+
+\section{From one theory to five problems}
+
+In \cref{ch:maxwell} we reviewed Maxwell's equations in their full, coupled,
+time-dependent glory. They are a beautiful and complete description of the
+electromagnetic field, and for exactly that reason they are not yet a
+\emph{computation}. A computation needs a finite, well-posed question: given
+\emph{this} geometry, \emph{these} materials, and \emph{this} excitation, solve
+for \emph{that} field. The art of turning physics into simulation is the art of
+\emph{reduction}---of asking a question narrow enough that Maxwell's equations,
+restricted to it, become a single solvable problem.
+
+The six analyses of \cref{ch:targets} are six such questions. Five of them
+(every one but the boundary-mode analysis, which is an eigenproblem posed on a
+two-dimensional slice and which we postpone to \cref{ch:waveports}) reduce
+Maxwell's equations to a governing PDE of one of three kinds:
+
+\begin{itemize}[nosep]
+  \item a \emph{boundary-value problem}---solve once for a static field
+  (electrostatic, magnetostatic);
+  \item an \emph{eigenvalue problem}---find the fields that ring with no drive
+  (eigenmode);
+  \item an \emph{evolution problem}---march a field forward in a parameter,
+  either frequency (driven) or time (transient).
+\end{itemize}
+
+This chapter derives all five. Each derivation follows the same three-step
+recipe, and it is worth naming the recipe before we run it, because the
+repetition is the point.
+
+\begin{keyidea}
+Every reduction is three moves: \textbf{(1) choose a regime}---decide whether
+$\partial/\partial t$ is zero (static), is replaced by $i\omega$
+(time-harmonic), or is kept (time-domain); \textbf{(2) introduce a
+potential or pick the primary field}---so that one of Maxwell's curl or
+divergence constraints is satisfied identically; \textbf{(3) substitute the
+constitutive law} ($\vD=\varepsilon\vE$, $\vB=\mu\vH$, $\vJ=\sigma\vE$) and
+collect terms into a single PDE for the chosen unknown. The regime decides the
+\emph{kind} of problem; the potential decides the \emph{function space}; the
+constitutive law decides the \emph{material weights}.
+\end{keyidea}
+
+\Cref{fig:reductiontree} previews where the recipe lands. One box---Maxwell's
+equations---fans out into five leaves, each a different PDE. Keep it in view;
+the sections that follow are a guided walk down its five branches.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize},
+    leaf/.style={product, text width=30mm, minimum height=13mm, font=\scriptsize},
+    regime/.style={band, fill=simBgGray, draw=simGray, font=\scriptsize\itshape},
+    node distance=6mm]
+  % root
+  \node[stage, minimum width=46mm, minimum height=12mm] (root)
+    {\textbf{Maxwell's equations}\\[1pt]\scriptsize $\Curl\vE=-\partial_t\vB,\ \Curl\vH=\vJ+\partial_t\vD$};
+  % regime band
+  \node[regime, below left=10mm and 22mm of root] (rstat) {static $\partial_t=0$};
+  \node[regime, below=10mm of root] (rharm) {harmonic $\partial_t\!\to i\omega$};
+  \node[regime, below right=10mm and 22mm of root] (rtime) {time-domain};
+  \draw[depedge] (root) -- (rstat);
+  \draw[depedge] (root) -- (rharm);
+  \draw[depedge] (root) -- (rtime);
+  % leaves
+  \node[leaf, below=7mm of rstat, xshift=-12mm] (es)
+    {\textbf{Electrostatic}\\[1pt]$-\Div(\varepsilon\Grad V)=\rho$};
+  \node[leaf, below=7mm of rstat, xshift=14mm] (ms)
+    {\textbf{Magnetostatic}\\[1pt]$\Curl(\nu\Curl\vA)=\vJ$};
+  \node[leaf, below=7mm of rharm, xshift=-9mm] (eig)
+    {\textbf{Eigenmode}\\[1pt]$\Curl(\nu\Curl\vE)=\omega^2\varepsilon\vE$};
+  \node[leaf, below=7mm of rharm, xshift=14mm] (dr)
+    {\textbf{Driven}\\[1pt]$(\Kop+i\omega\Cop-\omega^2\Mop)\vE=\vb$};
+  \node[leaf, below=7mm of rtime] (tr)
+    {\textbf{Transient}\\[1pt]$\Mop\ddot\vs+\Cop\dot\vs+\Kop\vs=\vJ(t)$};
+  \draw[flow] (rstat) -- (es);
+  \draw[flow] (rstat) -- (ms);
+  \draw[flow] (rharm) -- (eig);
+  \draw[flow] (rharm) -- (dr);
+  \draw[flow] (rtime) -- (tr);
+\end{tikzpicture}
+\caption[Maxwell's equations and their five reductions]{One theory, five
+problems. The choice of \emph{regime} (static / time-harmonic / time-domain)
+splits Maxwell's equations into three families; within each family the choice
+of unknown and excitation fixes the individual PDE. The static branch yields two
+boundary-value problems, the harmonic branch an eigenproblem and a driven
+system, the time-domain branch an evolution. By the end of the chapter every
+leaf will be re-expressed in the three operators $\Kop,\Mop,\Cop$.}
+\label{fig:reductiontree}
+\end{figure}
+
+\begin{notationbox}
+Throughout, $\varepsilon$ is the electric permittivity, $\mu$ the magnetic
+permeability, and $\sigma$ the conductivity; all may vary with position and may
+be tensors (anisotropic materials). We write $\nu=\mu^{-1}$ for the
+\emph{reluctivity}, the magnetic counterpart of $\varepsilon$. Capital
+$V$ is a scalar potential, $\vA$ a vector potential, $\vE,\vB,\vH,\vD,\vJ$ the
+usual fields, and $\rho$ the free charge density. Sans-serif $\Kop,\Mop,\Cop$
+denote the three \emph{assembled operators}---the discrete stiffness, mass, and
+damping matrices---introduced in \cref{sec:threeoperators}.
+\end{notationbox}
+
+\section{Electrostatic: Maxwell collapses to Poisson}
+\label{sec:electrostatic}
+
+We begin with the simplest reduction, and the one the rest of the book treats as
+its anchor. The physical question is the one from \cref{ch:targets}: hold a set
+of conductors at fixed voltages and ask for the field between them.
+
+\begin{physicsbox}
+Two or more conductors sit in a dielectric. Each is an \emph{equipotential}: a
+perfect conductor cannot sustain a tangential electric field, so its surface is
+a surface of constant $V$. We prescribe those voltages and ask for the potential
+$V$---hence the field $\vE=-\Grad V$---in the dielectric between them. Nothing
+moves, nothing oscillates: this is a \emph{static} problem,
+$\partial/\partial t = 0$.
+\end{physicsbox}
+
+\subsection{The derivation}
+
+Apply the recipe. \emph{Step 1, regime:} set every time derivative to zero.
+Faraday's law $\Curl\vE = -\partial_t\vB$ then loses its right-hand side:
+\begin{equation}
+  \Curl\vE = \mathbf{0}.
+  \label{eq:es-curlfree}
+\end{equation}
+\emph{Step 2, potential:} a curl-free field on a simply connected domain is the
+gradient of a scalar. (This is the converse of $\Curl\Grad\equiv\mathbf 0$, the
+first exactness identity of the de Rham complex we meet in
+\cref{ch:functionspaces}.) So there exists a scalar potential $V$ with
+\begin{equation}
+  \vE = -\Grad V,
+  \label{eq:es-potential}
+\end{equation}
+the minus sign a convention making $\vE$ point ``downhill,'' from high to low
+potential. Introducing $V$ \emph{automatically} satisfies
+\cref{eq:es-curlfree}; we have traded a vector field obeying a constraint for an
+unconstrained scalar field.
+
+\emph{Step 3, the remaining law and the constitutive relation.} The equation we
+have not yet used is Gauss's law, $\Div\vD = \rho$, together with the dielectric
+constitutive relation $\vD = \varepsilon\vE$. Substituting
+\cref{eq:es-potential},
+\begin{equation}
+  \rho \;=\; \Div\vD \;=\; \Div(\varepsilon\vE)
+        \;=\; \Div\bigl(\varepsilon(-\Grad V)\bigr)
+        \;=\; -\Div(\varepsilon\Grad V).
+\end{equation}
+Rearranging gives the governing equation of the electrostatic analysis:
+\begin{equation}
+  \boxed{\;-\Div(\varepsilon\Grad V) = \rho\;}
+  \label{eq:es-poisson}
+\end{equation}
+the \emph{generalized Poisson equation}. In the charge-free dielectric between
+the conductors $\rho=0$, and it degenerates to the homogeneous
+\emph{Laplace equation} $-\Div(\varepsilon\Grad V)=0$---the equation Palace
+actually solves, since the free charge lives only on the conductor surfaces and
+enters through the boundary conditions, not the interior. If $\varepsilon$ is a
+spatial constant it factors out, leaving the textbook $\Lap V = -\rho/\varepsilon$.
+
+\begin{remark}
+The same operator $-\Div(\varepsilon\Grad\,\cdot\,)$ governs steady heat
+conduction (with $\varepsilon$ the thermal conductivity and $V$ the
+temperature), steady incompressible potential flow, and the equilibrium shape of
+a soap film. The electrostatic solver is, mathematically, a general second-order
+elliptic solver wearing an electromagnetic hat. This is the first hint of the
+book's thesis: the \emph{physics} is in the coefficients and the boundary data,
+not in the operator.
+\end{remark}
+
+\subsection{Boundary conditions}
+
+A PDE is only half a problem; the boundary conditions are the other half, and in
+electrostatics they are where the physics enters. There are two kinds, and the
+distinction---\emph{essential} versus \emph{natural}---runs through the whole of
+\cref{part:fieldtheory}.
+
+\begin{description}[style=nextline,leftmargin=1em,font=\normalfont\itshape]
+  \item[Dirichlet (essential) conditions] prescribe the value of $V$ on a
+  boundary. On each conductor surface $\Gamma_i$ we set $V=V_i$, the applied
+  terminal voltage. These conditions are called \emph{essential} because they
+  constrain the solution \emph{space} directly: an admissible $V$ must equal
+  $V_i$ on $\Gamma_i$ before we even ask it to satisfy the PDE.
+  \item[Neumann (natural) conditions] prescribe the \emph{flux}
+  $\varepsilon\,\partial V/\partial n = -\vn\cdot\vD$ across a boundary. A
+  homogeneous Neumann condition $\partial V/\partial n = 0$ means no normal
+  field---a symmetry plane, or a far boundary. These are called \emph{natural}
+  because, as we will see in \cref{ch:weak}, they fall out of the variational
+  formulation \emph{for free}, requiring no constraint on the space.
+\end{description}
+
+Palace runs the electrostatic analysis as a \emph{family} of solves: it holds
+one conductor at unit voltage ($V_i=1$) and all the others grounded ($V_j=0$,
+$j\neq i$), solves \cref{eq:es-poisson}, and repeats for each conductor in turn.
+The driver source makes this concrete---it loops over the terminal set,
+\code{laplace\_op.GetExcitationVector(idx, ...)} forming each unit-voltage
+right-hand side, and solves the \emph{same} assembled operator each
+time.\footnote{\code{palace/drivers/electrostaticsolver.cpp:59-69}---the
+per-terminal loop forming each RHS and solving the once-assembled stiffness
+operator. We trace this driver end to end in \cref{ch:electrostatics}.} The
+operator is assembled \emph{once}; only the right-hand side changes. That
+``assemble once, solve a family'' shape is the fixed-operator solve corner of
+\cref{ch:situating}.
+
+\subsection{The operator that will be assembled}
+
+When we discretize \cref{eq:es-poisson} by the finite-element method
+(\cref{ch:galerkin,ch:assembly}), the differential operator
+$-\Div(\varepsilon\Grad\,\cdot\,)$ becomes a matrix. Multiplying
+\cref{eq:es-poisson} by a test function $v$ and integrating by parts (the subject
+of \cref{ch:weak}) turns it into the \emph{bilinear form}
+\begin{equation}
+  a(u,v) = \int_\Omega \varepsilon\,\Grad u\cdot\Grad v \dV,
+  \label{eq:es-bilinear}
+\end{equation}
+the $\varepsilon$-weighted \emph{stiffness} or \emph{diffusion} form. Assembled
+over the mesh it becomes a sparse symmetric positive-(semi)definite matrix we
+call $\Kop$, the \emph{stiffness matrix}. In the specification's vocabulary this
+is one \code{weak\_form\_term}: the pair (coefficient $\varepsilon$, differential
+operator \emph{gradient}), realizing $a(u,v)=(\varepsilon\,\Grad u,\Grad
+v)$.\footnote{The differential-operator/coefficient factorization is the
+\code{weak\_form\_term} value; the electrostatic stiffness is its
+\emph{gradient} variant, witnessed at
+\code{palace/models/laplaceoperator.cpp:191-194}. All four reductions in this
+chapter are built from this one family of terms; see
+\cref{tab:weakforms}.} The unknown $V$ lives in the scalar space $\Hone$
+(continuous, nodal) of \cref{ch:functionspaces}; the matrix $\Kop$ is the
+electrostatic instance of the stiffness operator that will recur, in different
+clothes, in every reduction to follow.
+
+\section{Magnetostatic: the curl--curl equation}
+\label{sec:magnetostatic}
+
+The magnetic dual of electrostatics is nearly its mirror image---which is the
+whole pedagogical point. We run the identical recipe, change the field that the
+potential satisfies, and a different (but structurally parallel) PDE drops out.
+
+\begin{physicsbox}
+A steady current $\vJ$ flows in conductors and coils; it produces a static
+magnetic field $\vB$ threading the surrounding space. Nothing changes in
+time, so again $\partial/\partial t = 0$, but now the \emph{magnetic} side of
+Maxwell is active. We ask for the field $\vB$, hence the flux through circuits,
+hence inductance.
+\end{physicsbox}
+
+\subsection{The derivation}
+
+\emph{Step 1, regime:} static again, time derivatives zero. Amp\`ere's law
+$\Curl\vH = \vJ + \partial_t\vD$ loses its displacement-current term, leaving
+the magnetostatic Amp\`ere law
+\begin{equation}
+  \Curl\vH = \vJ.
+  \label{eq:ms-ampere}
+\end{equation}
+\emph{Step 2, potential:} the constraint to satisfy identically is now Gauss's
+law for magnetism, $\Div\vB = 0$. A divergence-free field is the curl of a
+vector field (the converse of $\Div\Curl\equiv 0$, the \emph{second} exactness
+identity of the de Rham complex). So introduce the \emph{magnetic vector
+potential} $\vA$ with
+\begin{equation}
+  \vB = \Curl\vA.
+  \label{eq:ms-potential}
+\end{equation}
+This automatically satisfies $\Div\vB=0$, just as $\vE=-\Grad V$ automatically
+satisfied $\Curl\vE=\mathbf0$. The parallel is exact: where electrostatics
+introduced a \emph{scalar} potential to kill a \emph{curl} constraint,
+magnetostatics introduces a \emph{vector} potential to kill a \emph{divergence}
+constraint. They sit one slot apart in the de Rham complex
+(\cref{ch:functionspaces}).
+
+\emph{Step 3, constitutive relation.} Use $\vH = \nu\vB$ with reluctivity
+$\nu = \mu^{-1}$, and substitute \cref{eq:ms-potential} into
+\cref{eq:ms-ampere}:
+\begin{equation}
+  \vJ \;=\; \Curl\vH \;=\; \Curl(\nu\vB) \;=\; \Curl(\nu\,\Curl\vA).
+\end{equation}
+This is the governing equation of the magnetostatic analysis, the
+\emph{curl--curl equation}:
+\begin{equation}
+  \boxed{\;\Curl(\nu\,\Curl\vA) = \vJ\;}
+  \label{eq:curlcurl}
+\end{equation}
+Compare it term for term with Poisson \cref{eq:es-poisson}: $\Grad\mapsto\Curl$,
+$\varepsilon\mapsto\nu$, scalar $V\mapsto$ vector $\vA$, charge
+$\rho\mapsto$ current $\vJ$. It is, almost literally, the electrostatic equation
+with the gradient replaced by the curl and the scalar by a vector. This is the
+``same machine, one part swapped'' promise of \cref{ch:targets} made into an
+equation.
+
+\subsection{The gauge non-uniqueness, and why it is a feature of the operator}
+
+There is a subtlety here that does not arise in electrostatics, and it will cost
+us real attention later, so we name it now. The vector potential $\vA$ is
+\emph{not unique}. If $\vA$ solves \cref{eq:curlcurl}, so does $\vA + \Grad\phi$
+for \emph{any} scalar field $\phi$, because
+\begin{equation}
+  \Curl\bigl(\vA + \Grad\phi\bigr) = \Curl\vA + \Curl\Grad\phi
+    = \Curl\vA + \mathbf 0 = \Curl\vA = \vB,
+\end{equation}
+using the exactness identity $\Curl\Grad\equiv\mathbf0$ a second time. Adding any
+gradient leaves $\vB$---the physically meaningful field---unchanged. This freedom
+is called \emph{gauge freedom}, and it means the curl--curl operator
+$\Curl(\nu\,\Curl\,\cdot\,)$ has a large \emph{null space}: it annihilates every
+gradient field $\Grad\phi$. The assembled matrix $\Kop$ is therefore singular
+(positive \emph{semi}definite, not definite).
+
+\begin{pitfall}
+A naive iterative solver applied to the singular curl--curl system can wander in
+the gradient null space and fail to converge, even though the physical field
+$\vB$ is perfectly well-defined. Two standard fixes---\emph{fixing the gauge}
+(adding a constraint that selects one $\vA$) and \emph{projecting onto the
+divergence-free subspace} (the discrete Helmholtz decomposition)---are the
+business of \cref{ch:bc}. For now, simply note that the null space is real, that
+it comes directly from the exactness identity $\Curl\Grad=\mathbf0$, and that it
+is the price magnetostatics pays for its vector potential.
+\end{pitfall}
+
+\subsection{The operator}
+
+Discretizing \cref{eq:curlcurl} yields the bilinear form
+\begin{equation}
+  a(u,v) = \int_\Omega \nu\,\Curl u\cdot\Curl v \dV,
+  \label{eq:ms-bilinear}
+\end{equation}
+the $\nu$-weighted \emph{curl--curl} form---the \code{weak\_form\_term} with
+coefficient $\nu$ and differential operator \emph{curl}.\footnote{The
+\emph{curl} variant of \code{weak\_form\_term}, witnessed at
+\code{palace/models/curlcurloperator.cpp:178-181}; the \emph{same}
+\code{BilinearForm} build-up as the electrostatic stiffness, differing only in
+the integrator (curl instead of gradient).} Assembled, it is again a stiffness
+matrix $\Kop$---the \emph{magnetostatic} stiffness. The unknown $\vA$ now lives
+in the vector space $\Hcurl$ (tangentially continuous, edge-based) rather than
+the scalar $\Hone$; that change of function space, and the swap
+$\varepsilon\to\nu$ in the coefficient, are \emph{the entire difference} between
+the electrostatic and magnetostatic analyses. The solve corner, the assembly
+machinery, the reduction-to-a-matrix---all are shared.
+
+\section{Eigenmode: a generalized eigenproblem}
+\label{sec:eigenmode}
+
+We now leave the static world. Switch on time, but let it run \emph{without an
+external source}: ask what fields the cavity can sustain on its own. Those are
+its resonant modes, and finding them is an eigenvalue problem.
+
+\begin{physicsbox}
+Seal a region of space with conducting walls and put nothing inside---no charge,
+no driving current. The empty cavity is not, electromagnetically, silent: it can
+hold standing-wave fields that oscillate forever (in the lossless idealization)
+at particular frequencies, its \emph{resonant modes}. Each mode is a field
+pattern $\vE(\vx)$ paired with a frequency $\omega$. We seek the pairs.
+\end{physicsbox}
+
+\subsection{The time-harmonic reduction}
+
+When a field oscillates sinusoidally at a single angular frequency $\omega$, we
+write it as $\vE(\vx,t) = \Re\{\vE(\vx)\,e^{i\omega t}\}$ and work with the
+complex \emph{phasor} amplitude $\vE(\vx)$. The payoff is that time derivatives
+become algebra:
+\begin{equation}
+  \frac{\partial}{\partial t}\,e^{i\omega t} = i\omega\,e^{i\omega t},
+  \qquad\text{so}\qquad
+  \partial_t \;\longmapsto\; i\omega,\quad
+  \partial_t^2 \;\longmapsto\; -\omega^2 .
+  \label{eq:harmonic-rule}
+\end{equation}
+This substitution---the \emph{time-harmonic} or \emph{frequency-domain}
+reduction---is the single most useful trick in computational electromagnetics,
+and it powers both this analysis and the next. Apply it to source-free Maxwell.
+Faraday and Amp\`ere, with no current and no charge, become
+\begin{equation}
+  \Curl\vE = -i\omega\vB = -i\omega\mu\vH,
+  \qquad
+  \Curl\vH = i\omega\vD = i\omega\varepsilon\vE.
+\end{equation}
+Take the curl of the first, divide by $\mu$ (use $\nu=\mu^{-1}$), and substitute
+the second:
+\begin{align}
+  \Curl(\nu\,\Curl\vE)
+    &= \Curl(-i\omega\vH)
+     = -i\omega\,\Curl\vH \notag\\
+    &= -i\omega\,(i\omega\varepsilon\vE)
+     = \omega^2\varepsilon\vE.
+\end{align}
+The result is the source-free time-harmonic curl--curl equation:
+\begin{equation}
+  \boxed{\;\Curl(\nu\,\Curl\vE) = \omega^2\,\varepsilon\,\vE\;}
+  \label{eq:eigen-pde}
+\end{equation}
+Look at what this is. The left side is the \emph{same} curl--curl operator that
+governed magnetostatics, now acting on $\vE$. The right side is $\omega^2$ times
+$\vE$ weighted by $\varepsilon$. This is an \emph{eigenvalue equation}: we seek
+fields $\vE$ that the curl--curl operator merely \emph{rescales}, the scale
+factor being $\omega^2\varepsilon$. Only special $\omega$ admit a nonzero
+solution---the resonant frequencies---and each comes with its mode shape $\vE$.
+
+\subsection{In operator form}
+\label{sec:eigen-operatorform}
+
+Discretize. The left side $\Curl(\nu\,\Curl\,\cdot\,)$ assembles, exactly as in
+magnetostatics, into the stiffness matrix $\Kop$. The right-side weighting
+$\varepsilon\,\cdot$ is the \code{weak\_form\_term} with coefficient
+$\varepsilon$ and differential operator \emph{identity}---it assembles into the
+$\varepsilon$-weighted \emph{mass matrix} $\Mop$.\footnote{The \emph{identity}
+variant of \code{weak\_form\_term}, the $L^2$ pairing $a(u,v)=(Q\,u,v)$; the
+mass matrix is assembled by the very same \code{BilinearForm} fold, witnessed at
+\code{palace/models/spaceoperator.cpp:278}. Three reductions in (electrostatic,
+magnetostatic, eigenmode) and we have already met all three of the operators
+$\Kop,\Mop,\Cop$ except the damping $\Cop$.} With $\lambda=\omega^2$ the
+discrete form of \cref{eq:eigen-pde} is the \emph{generalized eigenvalue
+problem}
+\begin{equation}
+  \boxed{\;\Kop\,\vx = \lambda\,\Mop\,\vx,\qquad \lambda=\omega^2\;}
+  \label{eq:gevp}
+\end{equation}
+Each eigenvalue $\lambda$ gives a resonant frequency $\omega=\sqrt\lambda$; each
+eigenvector $\vx$ gives the mode field. ``Generalized'' refers to the matrix
+$\Mop$ on the right: an \emph{ordinary} eigenproblem would read
+$\Kop\vx=\lambda\vx$, but the $\varepsilon$-weighting puts $\Mop$ there instead.
+Solving \cref{eq:gevp} is the one analysis whose ``solve'' is a single call to a
+specialized eigenvalue library rather than a loop we write ourselves---the
+opaque black-box solve corner of \cref{ch:situating}, treated in depth in
+\cref{ch:eigenmodes}.\footnote{The driver hands the assembled pencil
+$(\Kop,\Mop)$ to one library call, \code{eigen->Solve()}; there is no
+Palace-authored iteration around it (\code{palace/drivers/eigensolver.cpp:367}).}
+
+\subsection{The lossy case: a quadratic eigenproblem}
+
+The derivation above assumed a lossless cavity. Real cavities lose energy---to
+finite wall conductivity, to dielectric absorption, to radiation through ports.
+Loss introduces a conduction current $\vJ=\sigma\vE$ into Amp\`ere's law, which
+under the harmonic rule \cref{eq:harmonic-rule} contributes a term linear in
+$i\omega$. Carrying it through the derivation adds a middle operator, the
+\emph{damping} matrix $\Cop$ (the $\sigma$-weighted mass term), and the
+eigenproblem becomes \emph{quadratic} in the eigenvalue:
+\begin{equation}
+  \bigl(\Kop + \lambda\,\Cop + \lambda^2\,\Mop\bigr)\,\vx = \mathbf 0,
+  \qquad \lambda = i\omega.
+  \label{eq:qevp}
+\end{equation}
+Now $\lambda$ is complex; its imaginary part is the oscillation frequency and its
+real part the decay rate, from which the quality factor $Q$ is read off (a mode
+that decays slowly has high $Q$). The lossless problem \cref{eq:gevp} is the
+special case $\Cop=0$, with $\lambda=\omega^2$ real. The polynomial structure
+$\Kop+\lambda\Cop+\lambda^2\Mop$---three operators, combined with powers of
+$\lambda$---is worth fixing in mind, because the \emph{very same} polynomial is
+about to reappear in the driven analysis, with $\lambda$ replaced by a fixed
+$i\omega$.
+
+\section{Driven: a complex-valued Helmholtz system}
+\label{sec:driven}
+
+The eigenmode analysis asked which frequencies the cavity \emph{chooses}. The
+driven analysis asks the complementary question: \emph{we} choose the frequency,
+push the system at it, and ask how it responds.
+
+\begin{physicsbox}
+Feed a sinusoidal signal into a microwave device at a frequency $\omega$ of our
+choosing. The device responds with a steady oscillation at that same frequency:
+some of the signal passes through, some reflects. We want the response---the
+fields, and from them the scattering parameters---at each frequency across a
+band. Unlike the eigenmode problem, there \emph{is} a source, and $\omega$ is an
+input, not an unknown.
+\end{physicsbox}
+
+\subsection{The derivation}
+
+Take the full time-harmonic Maxwell system---now \emph{with} sources and
+\emph{with} loss---and apply the harmonic rule \cref{eq:harmonic-rule}. The same
+curl-of-Faraday manipulation as before, but retaining the conduction current
+$\sigma\vE$ and an impressed source current $\vJ_{\text{src}}$, gives
+\begin{equation}
+  \Curl(\nu\,\Curl\vE)
+    + i\omega\,\sigma\,\vE
+    - \omega^2\,\varepsilon\,\vE
+    = -i\omega\,\vJ_{\text{src}}.
+  \label{eq:driven-pde}
+\end{equation}
+This is a \emph{Helmholtz-type} equation: a curl--curl operator plus a
+zeroth-order term proportional to $-\omega^2$, the vector analogue of the scalar
+Helmholtz equation $u'' + k^2 u = 0$ we will meet in
+\cref{wex:cavity1d}. Read its three pieces against the operators we have already
+named:
+\begin{itemize}[nosep]
+  \item $\Curl(\nu\,\Curl\,\cdot\,)$ is the curl--curl \emph{stiffness} $\Kop$
+  (\cref{sec:magnetostatic});
+  \item $\sigma\,\cdot$ is the conduction/loss term---the $\sigma$-weighted
+  \emph{damping} $\Cop$, entering linearly in $i\omega$;
+  \item $\varepsilon\,\cdot$ is the displacement-current \emph{mass} $\Mop$
+  (\cref{sec:eigen-operatorform}), entering as $-\omega^2$.
+\end{itemize}
+
+\subsection{In operator form}
+
+Assembling each term, \cref{eq:driven-pde} becomes the discrete \emph{driven
+system}
+\begin{equation}
+  \boxed{\;\bigl(\Kop + i\omega\,\Cop - \omega^2\,\Mop\bigr)\,\vE = \vb(\omega)\;}
+  \label{eq:driven-system}
+\end{equation}
+with right-hand side $\vb(\omega)=-i\omega\,\vJ_{\text{src}}$ the discretized
+source. Define $\mat{A}(\omega) = \Kop + i\omega\,\Cop - \omega^2\,\Mop$: this is the
+\emph{frequency-dependent system operator}. The structural resemblance to the
+quadratic eigenproblem \cref{eq:qevp} is not a coincidence---both are the
+polynomial $\Kop + \lambda\Cop + \lambda^2\Mop$ in disguise. The eigenproblem
+\emph{solves for} the $\lambda=i\omega$ that make it singular; the driven problem
+\emph{fixes} $\omega$ and solves the (generally nonsingular) linear system
+\cref{eq:driven-system} for $\vE$.
+
+\begin{keyidea}
+The driven and eigenmode analyses share one operator polynomial,
+$\Kop+\lambda\Cop+\lambda^2\Mop$, and differ only in what they hold fixed.
+\emph{Eigenmode}: the right-hand side is zero and $\lambda$ is the unknown---a
+\emph{search for the $\omega$ that resonate}. \emph{Driven}: $\omega$ is given,
+the right-hand side is the source, and the field is the unknown---a
+\emph{response at a chosen $\omega$}. Resonance and response are two questions
+about the same three matrices.
+\end{keyidea}
+
+\subsection{The solve corner: assemble \emph{inside} the loop}
+
+There is one operational fact about \cref{eq:driven-system} that the rest of the
+book leans on heavily. The operator $\mat{A}(\omega)$ \emph{depends on the
+frequency}. A driven analysis sweeps a whole band of frequencies, and at each one
+it must \emph{rebuild} $\mat{A}(\omega)$ from the fixed pieces $\Kop,\Cop,\Mop$ and
+re-solve. Contrast electrostatics, which assembled its operator \emph{once} and
+reused it across the whole terminal family: there the operator was constant and
+the assembly hoisted out of the loop. Here the operator varies, and the assembly
+lives \emph{inside} the loop.\footnote{The driver builds the solver once but
+captures the operator per frequency: \code{ksp.SetOperators(*A, *P)} sits
+\emph{inside} the frequency loop (\code{palace/drivers/drivensolver.cpp:176-180}),
+the exact negation of the electrostatic hoist. This operator-varying-map versus
+fixed-operator-map distinction is a load-bearing axis of \cref{ch:situating} and
+\cref{ch:driven}.} The three matrices $\Kop,\Cop,\Mop$ are assembled once and
+held; only their \emph{combination} $\mat{A}(\omega)$ is rebuilt per step. We are
+beginning to see why isolating the three operators matters so much: they are the
+fixed, reusable raw material, and the analysis is the recipe for recombining
+them.
+
+\section{Transient: a second-order evolution}
+\label{sec:transient}
+
+The final reduction keeps time in full. Rather than assume a single frequency, we
+inject an arbitrary pulse and watch the field evolve, step by step, in time.
+
+\begin{physicsbox}
+Inject a current pulse $\vJ(t)$---a short burst, a step, a modulated wave packet,
+anything---into a device and follow the fields as they propagate, reflect, and
+ring down. The output is not a number or a spectrum but a \emph{movie}: the
+entire time history of the field. This is the analysis of choice when the
+excitation is broadband, or when one simply wants to watch a wave move.
+\end{physicsbox}
+
+\subsection{The derivation}
+
+We do \emph{not} apply the harmonic rule; we keep $\partial_t$ as a genuine time
+derivative. The same curl-of-Faraday manipulation that produced the driven
+equation, but with $i\omega\mapsto\partial_t$ and $-\omega^2\mapsto\partial_t^2$
+(reversing the substitution \cref{eq:harmonic-rule}), gives the time-domain
+\emph{second-order wave equation}
+\begin{equation}
+  \varepsilon\,\frac{\partial^2\vE}{\partial t^2}
+    + \sigma\,\frac{\partial\vE}{\partial t}
+    + \Curl(\nu\,\Curl\vE)
+    = -\frac{\partial\vJ_{\text{src}}}{\partial t}.
+  \label{eq:transient-pde}
+\end{equation}
+Each term is the time-domain image of a term in the driven equation
+\cref{eq:driven-pde}: the displacement-current $\varepsilon\,\partial_t^2$, the
+conduction $\sigma\,\partial_t$, the curl--curl $\Curl(\nu\Curl\,\cdot\,)$. The
+harmonic and transient equations are the \emph{same physics} expressed in
+frequency and in time; the substitution \cref{eq:harmonic-rule} is the bridge
+between them.
+
+\subsection{Semi-discretization in space}
+
+Discretize \emph{only the space} (leave time continuous for the moment)---this is
+the \emph{method of lines}. Each spatial term assembles into the matrix we
+already know, and the field becomes a vector of time-dependent degrees of freedom
+$\vs(t)$. The result is a system of \emph{ordinary} differential equations in
+time:
+\begin{equation}
+  \boxed{\;\Mop\,\ddot\vs + \Cop\,\dot\vs + \Kop\,\vs = \vJ(t)\;}
+  \label{eq:transient-ode}
+\end{equation}
+where the dots are time derivatives, $\Mop$ is the $\varepsilon$-mass, $\Cop$ the
+$\sigma$-damping, $\Kop$ the curl--curl stiffness, and $\vJ(t)$ the discretized
+forcing $-\partial_t\vJ_{\text{src}}$. This is precisely the equation of a damped
+mechanical oscillator---mass times acceleration, plus damping times velocity,
+plus stiffness times displacement, equals the applied force---and the analogy is
+exact: $\Mop$ resists change in the field (inertia), $\Kop$ pulls it back toward
+equilibrium (restoring stiffness), $\Cop$ bleeds energy away (damping). The names
+$\Mop$ (mass), $\Kop$ (stiffness), $\Cop$ (damping) are borrowed wholesale from
+structural dynamics, and they earn their keep here.
+
+\subsection{Recast as a first-order IVP}
+
+Standard time integrators expect a \emph{first-order} system $\dot\vy =
+\vF(\vy,t)$. We reduce the order by carrying the velocity as an extra unknown.
+Set $\vv = \dot\vs$ and stack $(\vs,\vv)$ into a doubled state vector; then
+\cref{eq:transient-ode} becomes
+\begin{equation}
+  \frac{d}{dt}\begin{pmatrix}\vs\\\vv\end{pmatrix}
+  =
+  \begin{pmatrix}
+    \vv\\
+    \Mop^{-1}\bigl(\vJ(t) - \Cop\,\vv - \Kop\,\vs\bigr)
+  \end{pmatrix},
+  \label{eq:transient-firstorder}
+\end{equation}
+a first-order initial-value problem in the doubled state, ready for an
+off-the-shelf ODE integrator.\footnote{Palace builds exactly this first-order
+operator (\code{TimeDependentFirstOrderOperator}) and hands it to a library
+integrator---Generalized-$\alpha$, SDIRK, or others---constructed once outside
+the loop (\code{palace/models/timeoperator.cpp:311-335}). The detailed time
+integration is \cref{ch:time}.} The crucial feature, the one that sets transient
+apart from every other analysis in this chapter, is its \emph{sequential}
+character: each time step starts from the state the previous step produced. The
+electrostatic terminal family and the driven frequency sweep were collections of
+\emph{independent} solves; the transient march is a \emph{chain}, where step
+$n{+}1$ cannot begin until step $n$ is done. This carry-the-state-forward
+structure is the \emph{fold}, the keystone of \cref{ch:fold} and the solve corner
+of \cref{ch:situating}, and it is why the transient analysis is the book's
+canonical example of a genuinely stateful computation.
+
+\section{Two worked reductions}
+\label{sec:worked}
+
+The five derivations above are general. To make them concrete---and checkable by
+hand---we now solve two one-dimensional instances in full. The first reduces
+electrostatics to an ODE and solves it; the second reduces a wave to a Helmholtz
+equation and extracts a spectrum of cavity modes, previewing the eigenmode
+analysis with real numbers.
+
+\begin{workedexample}{Parallel plates: electrostatics in one dimension}{plates1d}
+Two large parallel conducting plates sit at $x=0$ and $x=L$, the lower held at
+$V=0$, the upper at $V=V_0$, with a uniform dielectric and \emph{no free charge}
+between them. Find the potential and field in the gap.
+
+\medskip
+\emph{Reduce.} By symmetry the field depends only on $x$, so $V=V(x)$ and the
+Poisson equation \cref{eq:es-poisson} with constant $\varepsilon$ and $\rho=0$
+collapses to the ordinary differential equation
+\begin{equation*}
+  -\varepsilon\,V''(x) = 0
+  \qquad\Longrightarrow\qquad
+  V''(x) = 0,\quad 0<x<L,
+\end{equation*}
+the one-dimensional Laplace equation, with Dirichlet data $V(0)=0$, $V(L)=V_0$.
+
+\emph{Solve.} The general solution of $V''=0$ is the affine function
+$V(x)=ax+b$. The boundary conditions fix the constants: $V(0)=b=0$ and
+$V(L)=aL=V_0$, so $a=V_0/L$. Hence
+\begin{equation*}
+  V(x) = \frac{V_0}{L}\,x,
+  \qquad
+  E(x) = -V'(x) = -\frac{V_0}{L}.
+\end{equation*}
+The potential ramps \emph{linearly} across the gap and the field is
+\emph{uniform}---the textbook parallel-plate result, here derived as the
+one-dimensional reduction of the electrostatic PDE. The surface charge on the
+upper plate follows from Gauss's law as
+$\sigma_s = \vn\cdot\vD = \varepsilon|E| = \varepsilon V_0/L$, and since the
+total charge is $\sigma_s$ times the plate area $A$, the capacitance is
+\begin{equation*}
+  C = \frac{Q}{V_0} = \frac{\varepsilon A V_0/L}{V_0}
+    = \frac{\varepsilon A}{L},
+\end{equation*}
+recovering $C=\varepsilon A/L$. The whole electrostatic pipeline---solve for $V$,
+differentiate to $\vE$, integrate the flux, divide by voltage---runs here in four
+lines of algebra; \cref{ch:electrostatics} runs the identical pipeline in three
+dimensions on a finite-element mesh.
+\end{workedexample}
+
+\Cref{fig:plates1d} draws the result: the linear potential ramp and the uniform
+field it produces.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.62\linewidth, height=46mm,
+    xlabel={position $x/L$}, ylabel={},
+    xmin=0, xmax=1, ymin=-0.15, ymax=1.15,
+    axis lines=left, xtick={0,0.5,1}, ytick={0,0.5,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.02,0.98)},
+      anchor=north west},
+    every axis plot/.append style={very thick},
+  ]
+  \addplot[simBlue, domain=0:1, samples=2] {x};
+  \addlegendentry{$V(x)/V_0 = x/L$}
+  \addplot[simRust, domain=0:1, samples=2] {0.5};
+  \addlegendentry{$-E\,L/V_0 = 1$ (uniform)}
+\end{axis}
+\end{tikzpicture}
+\caption[The one-dimensional parallel-plate solution]{The parallel-plate
+reduction of \cref{wex:plates1d}. The potential $V$ (blue) ramps linearly from
+$0$ to $V_0$ across the gap; the field $E=-V'$ (rust) is constant. This is the
+simplest non-trivial instance of every electrostatic solve in the book---and the
+exact answer the finite-element method must reproduce on a one-element mesh.}
+\label{fig:plates1d}
+\end{figure}
+
+\begin{workedexample}{The one-dimensional cavity: from wave to spectrum}{cavity1d}
+A field $u(x,t)$ on the interval $0\le x\le L$ satisfies the lossless wave
+equation $\partial_t^2 u = c^2\,\partial_x^2 u$, with the field pinned to zero at
+the ends, $u(0,t)=u(L,t)=0$ (perfectly conducting walls). Find the frequencies at
+which the cavity can ring, and the mode shapes.
+
+\medskip
+\emph{Reduce (time-harmonic).} Seek a single-frequency solution
+$u(x,t)=\Re\{u(x)\,e^{i\omega t}\}$. The harmonic rule \cref{eq:harmonic-rule}
+sends $\partial_t^2\mapsto-\omega^2$, so the wave equation becomes the
+one-dimensional \emph{Helmholtz equation}
+\begin{equation*}
+  -\omega^2 u(x) = c^2\,u''(x)
+  \qquad\Longrightarrow\qquad
+  u''(x) + k^2\,u(x) = 0,
+  \qquad k \equiv \frac{\omega}{c},
+\end{equation*}
+with $u(0)=u(L)=0$. This is the one-dimensional scalar shadow of the
+source-free curl--curl eigenproblem \cref{eq:eigen-pde}: a second-order operator
+on the left, $k^2$ times the field on the right, no source---an
+\emph{eigenproblem for $k$}.
+
+\emph{Solve.} The general solution of $u''+k^2u=0$ is
+$u(x)=\alpha\sin(kx)+\beta\cos(kx)$. The condition $u(0)=0$ kills the cosine,
+$\beta=0$. The condition $u(L)=0$ then demands $\alpha\sin(kL)=0$; a nonzero mode
+($\alpha\neq 0$) requires
+\begin{equation*}
+  \sin(kL) = 0
+  \qquad\Longrightarrow\qquad
+  kL = n\pi,\quad n=1,2,3,\dots
+\end{equation*}
+So the cavity rings only at the \emph{discrete} wavenumbers and frequencies
+\begin{equation*}
+  \boxed{\;k_n = \frac{n\pi}{L},\qquad \omega_n = c\,k_n = \frac{n\pi c}{L}\;}
+\end{equation*}
+with mode shapes $u_n(x)=\sin(n\pi x/L)$. The lowest mode $n=1$ fits a half
+wavelength in the cavity; higher modes fit $n$ half-wavelengths
+(\cref{fig:cavitymodes}).
+
+\emph{Connect to the operator form.} Discretize $-u''$ on a grid and it becomes a
+stiffness matrix $\Kop$; discretize the $u$ on the right and it becomes a mass
+matrix $\Mop$. The continuous eigenproblem $-u''=k^2u$ is then exactly the
+discrete generalized eigenproblem $\Kop\vx=\lambda\Mop\vx$ of \cref{eq:gevp},
+with $\lambda=k^2$. The countable spectrum $k_n=n\pi/L$ is the one-dimensional
+preview of the resonant frequencies the eigenmode solver returns in three
+dimensions---now you have computed them by hand.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.8\linewidth, height=50mm,
+    xlabel={position $x/L$}, ylabel={mode shape $u_n(x)$},
+    xmin=0, xmax=1, ymin=-1.25, ymax=1.25,
+    axis lines=middle, xtick={0,0.25,0.5,0.75,1}, ytick={-1,0,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize, at={(axis description cs:0.5,-0.04)}},
+    ylabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(1.0,1.18)},
+      anchor=north east, legend columns=3, column sep=4pt},
+    every axis plot/.append style={very thick, samples=80},
+  ]
+  \addplot[simBlue, domain=0:1] {sin(deg(pi*x))};
+  \addlegendentry{$n=1$}
+  \addplot[simTeal, domain=0:1] {sin(deg(2*pi*x))};
+  \addlegendentry{$n=2$}
+  \addplot[simRust, domain=0:1] {sin(deg(3*pi*x))};
+  \addlegendentry{$n=3$}
+\end{axis}
+\end{tikzpicture}
+\caption[Standing-wave modes of the one-dimensional cavity]{The first three
+cavity modes $u_n(x)=\sin(n\pi x/L)$ of \cref{wex:cavity1d}, the eigenfunctions
+of $-u''=k^2u$ with $u(0)=u(L)=0$. Mode $n$ fits $n$ half-wavelengths between the
+walls and rings at $\omega_n=n\pi c/L$. These standing waves are the
+one-dimensional ancestors of the three-dimensional cavity modes the eigenmode
+analysis computes in \cref{ch:eigenmodes}.}
+\label{fig:cavitymodes}
+\end{figure}
+
+\section{The three operators, recombined five ways}
+\label{sec:threeoperators}
+
+Step back and look at the five boxed governing equations together. They were
+derived from different regimes, live on different function spaces, and produce
+different products---yet, written in operator form, they are built from a
+\emph{single vocabulary of three matrices}:
+\begin{itemize}[nosep]
+  \item the \emph{stiffness} $\Kop$---the second-order spatial operator
+  ($\varepsilon$-weighted $\Grad$ for the scalar problems, $\nu$-weighted
+  $\Curl$ for the vector ones);
+  \item the \emph{mass} $\Mop$---the zeroth-order $\varepsilon$-weighted $L^2$
+  pairing, the displacement-current term;
+  \item the \emph{damping} $\Cop$---the $\sigma$-weighted $L^2$ pairing, the
+  conduction/loss term.
+\end{itemize}
+Every reduction in this chapter is a way of \emph{combining} these three, as
+\cref{fig:kmc} shows. The static problems use $\Kop$ alone. The eigenproblem
+pairs $\Kop$ against $\Mop$. The driven problem combines all three with the
+complex weights $1,\,i\omega,\,-\omega^2$. The transient problem combines all
+three again, but as coefficients of $\vs,\dot\vs,\ddot\vs$. The \emph{matrices}
+are shared; the \emph{recipe for combining them} is the analysis.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize},
+    op/.style={stage, minimum width=15mm, minimum height=10mm,
+      font=\small\bfseries},
+    use/.style={product, text width=33mm, minimum height=9mm, font=\scriptsize,
+      align=left},
+    node distance=5mm]
+  % the three shared operators, left column
+  \node[op] (K) {$\Kop$};
+  \node[op, below=8mm of K] (M) {$\Mop$};
+  \node[op, below=8mm of M] (C) {$\Cop$};
+  \node[font=\scriptsize\itshape, above=1mm of K] {three shared operators};
+  % the five recombinations, right column
+  \node[use, right=34mm of K, yshift=12mm] (es) {\textbf{Electrostatic:} $\ \Kop\vx=\vb$};
+  \node[use, below=3mm of es] (ms) {\textbf{Magnetostatic:} $\ \Kop\vx=\vb$};
+  \node[use, below=3mm of ms] (eig) {\textbf{Eigenmode:} $\ \Kop\vx=\lambda\Mop\vx$};
+  \node[use, below=3mm of eig] (dr) {\textbf{Driven:} $\ (\Kop{+}i\omega\Cop{-}\omega^2\Mop)\vx=\vb$};
+  \node[use, below=3mm of dr] (tr) {\textbf{Transient:} $\ \Mop\ddot\vx{+}\Cop\dot\vx{+}\Kop\vx=\vb$};
+  % edges K -> all (K appears in all five)
+  \draw[depedge] (K.east) -- (es.west);
+  \draw[depedge] (K.east) -- (ms.west);
+  \draw[depedge] (K.east) -- (eig.west);
+  \draw[depedge] (K.east) -- (dr.west);
+  \draw[depedge] (K.east) -- (tr.west);
+  % edges M -> eigen, driven, transient
+  \draw[refedge] (M.east) -- (eig.west);
+  \draw[refedge] (M.east) -- (dr.west);
+  \draw[refedge] (M.east) -- (tr.west);
+  % edges C -> driven, transient
+  \draw[backflow] (C.east) -- (dr.west);
+  \draw[backflow] (C.east) -- (tr.west);
+\end{tikzpicture}
+\caption[The $\Kop/\Mop/\Cop$ recurrence]{Three operators, five recombinations.
+The stiffness $\Kop$ (solid blue) appears in every analysis; the mass $\Mop$
+(dotted) joins for the eigenmode, driven, and transient problems; the damping
+$\Cop$ (dashed rust) appears only where loss or conduction matters (driven,
+transient). The static analyses are $\Kop$ alone. The figure is the chapter's
+thesis in one picture: \emph{the analysis is not new physics, it is a new way of
+combining the same three matrices.}}
+\label{fig:kmc}
+\end{figure}
+
+This recurrence is the structural payoff of the chapter, and it is worth stating
+as the central idea.
+
+\begin{keyidea}
+The five reductions of Maxwell are built from \emph{three} assembled
+operators---stiffness $\Kop$, mass $\Mop$, damping $\Cop$---recombined five ways.
+What distinguishes the analyses is not the operators (those are shared) but
+\emph{how they are combined and what is solved}: $\Kop$ alone for a static
+boundary-value problem; the pencil $(\Kop,\Mop)$ for an eigenproblem; the
+frequency-weighted sum $\Kop+i\omega\Cop-\omega^2\Mop$ for a driven linear
+system; the time-derivative-weighted sum for a transient evolution. Build the
+three operators well, and you have built every analysis.
+\end{keyidea}
+
+\subsection{The regimes on a timeline}
+
+One more lens before the summary table. The five reductions partition cleanly by
+how they treat time, and \cref{fig:timeline} arranges them on that axis. The
+static problems freeze it; the harmonic problems replace it with a single complex
+frequency; the transient problem keeps it and marches. Reading left to right is
+reading the harmonic rule \cref{eq:harmonic-rule} forward and backward:
+\emph{static} is the $\omega\to 0$ limit, \emph{harmonic} is a single $\omega$,
+\emph{transient} is all frequencies at once (a pulse is a superposition of
+harmonics).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\footnotesize}]
+  % the time axis
+  \draw[flow, simGray] (-0.3,0) -- (12.3,0)
+    node[right, font=\scriptsize\itshape, text=simGray] {treatment of $\partial_t$};
+  % three regime bands
+  \node[band, fill=simBgBlue, draw=simBlue, minimum width=30mm] (stat) at (1.8,1)
+    {\textbf{Static}\\[-1pt]\scriptsize $\partial_t = 0$};
+  \node[band, fill=simBgGold, draw=simGold, minimum width=38mm] (harm) at (6.2,1)
+    {\textbf{Time-harmonic}\\[-1pt]\scriptsize $\partial_t \to i\omega$};
+  \node[band, fill=simBgRust, draw=simRust, minimum width=30mm] (time) at (10.5,1)
+    {\textbf{Time-domain}\\[-1pt]\scriptsize $\partial_t$ kept};
+  \foreach \n in {stat,harm,time}{\draw[refedge] (\n.south) -- (\n.south|-0,0.06);}
+  % leaves under each band
+  \node[font=\scriptsize, align=center, below=2mm of {(1.8,0)}] (le1)
+    {electrostatic\\ magnetostatic\\[1pt]\itshape boundary-value};
+  \node[font=\scriptsize, align=center, below=2mm of {(6.2,0)}] (le2)
+    {eigenmode \quad driven\\[1pt]\itshape eigen \quad linear-solve};
+  \node[font=\scriptsize, align=center, below=2mm of {(10.5,0)}] (le3)
+    {transient\\[1pt]\itshape evolution (fold)};
+  \draw[refedge] (1.8,0) -- (le1.north);
+  \draw[refedge] (6.2,0) -- (le2.north);
+  \draw[refedge] (10.5,0) -- (le3.north);
+\end{tikzpicture}
+\caption[The reductions arranged by regime]{The five reductions along the
+time axis. Freezing time ($\partial_t=0$) gives the two static boundary-value
+problems; replacing it with a single complex frequency ($\partial_t\to i\omega$)
+gives the eigenmode (no source) and driven (with source) problems; keeping it
+gives the transient evolution. The static problems are the $\omega\to0$ corner of
+the harmonic ones; the transient problem is, by Fourier superposition, all
+frequencies at once.}
+\label{fig:timeline}
+\end{figure}
+
+\section{The five reductions, side by side}
+
+\Cref{tab:reductions} collects the chapter. Read across each row to see one
+analysis whole---its PDE, the operators it assembles, the function space its
+unknown lives in, and the solve corner that handles it. Read \emph{down} the
+``operators'' column and the recurrence of \cref{fig:kmc} reappears in symbols:
+$\Kop$ in every row, $\Mop$ from the eigenmode down, $\Cop$ only where there is
+loss.
+
+\begin{table}[t]
+\centering
+\caption[The five reductions of Maxwell, compared]{The five PDE reductions of
+this chapter, with the operators each assembles, the function space its unknown
+inhabits (\cref{ch:functionspaces}), and the solve corner that processes it
+(\cref{ch:situating}). The boundary-mode analysis---a sixth, eigen-type problem
+posed on a 2-D cross-section---is deferred to \cref{ch:waveports}.}
+\label{tab:reductions}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Analysis & Governing PDE & Operators & Space & Solve corner \\
+\midrule
+Electrostatic
+  & $-\Div(\varepsilon\Grad V)=\rho$
+  & $\Kop$
+  & $\Hone$
+  & fixed-operator map \\
+Magnetostatic
+  & $\Curl(\nu\Curl\vA)=\vJ$
+  & $\Kop$
+  & $\Hcurl$
+  & fixed-operator map \\
+Eigenmode
+  & $\Curl(\nu\Curl\vE)=\omega^2\varepsilon\vE$
+  & $\Kop,\Mop\ (\Cop)$
+  & $\Hcurl$
+  & black-box eigen \\
+Driven
+  & $(\Kop{+}i\omega\Cop{-}\omega^2\Mop)\vE=\vb$
+  & $\Kop,\Mop,\Cop$
+  & $\Hcurl$
+  & operator-varying map \\
+Transient
+  & $\Mop\ddot\vs{+}\Cop\dot\vs{+}\Kop\vs=\vJ(t)$
+  & $\Kop,\Mop,\Cop$
+  & $\Hcurl$
+  & state-threaded fold \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three columns of \cref{tab:reductions} are promissory notes the rest of
+\cref{part:fieldtheory} and \cref{part:framework} redeem. The \emph{operators}
+column---how each $\Kop,\Mop,\Cop$ is built from a mesh and materials by
+integrating a bilinear form---is the assembly story of
+\cref{ch:galerkin,ch:assembly}, and the bilinear-form family that unifies all of
+them is previewed in \cref{tab:weakforms}. The \emph{space} column---why $V$
+belongs in $\Hone$ and $\vE,\vA$ in $\Hcurl$, and what the de Rham complex has to
+do with it---is \cref{ch:functionspaces,ch:derham}. The \emph{solve corner}
+column---the four kinds of solve and why each analysis lands where it does---is
+the framework of \cref{part:framework}. This chapter has supplied the rows; the
+book supplies the columns.
+
+\begin{table}[t]
+\centering
+\caption[The bilinear-form family behind the operators]{Every operator in
+\cref{tab:reductions} is assembled from one family of \emph{weak-form terms}
+$a(u,v)=(Q\,\diffop u,\diffop v)$, differing only in the coefficient $Q$ and the
+differential operator $\diffop$. Three of the four variants are exercised by the
+five reductions; the divergence variant awaits an analysis that needs it. This is
+the \code{weak\_form\_term} family of \cref{ch:galerkin}.}
+\label{tab:weakforms}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llll@{}}
+\toprule
+$\diffop$ & Bilinear form $a(u,v)$ & Operator & Appears in \\
+\midrule
+$\Grad$ (gradient)
+  & $(\varepsilon\,\Grad u,\Grad v)$
+  & stiffness $\Kop$ (scalar)
+  & electrostatic \\
+$\Curl$ (curl)
+  & $(\nu\,\Curl u,\Curl v)$
+  & stiffness $\Kop$ (vector)
+  & magneto-, eigen, driven, transient \\
+$I$ (identity)
+  & $(\varepsilon\,u,v)$ or $(\sigma\,u,v)$
+  & mass $\Mop$, damping $\Cop$
+  & eigen, driven, transient \\
+$\Div$ (divergence)
+  & $(Q\,\Div u,\Div v)$
+  & (div--div stiffness)
+  & ---\,(no reduction here) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\summarysection
+Maxwell's equations are too rich to compute against whole; every analysis first
+\emph{reduces} them to a single governing PDE by a three-step recipe---fix the
+regime, introduce a potential or primary field, substitute the constitutive law.
+Run five times, the recipe yields: the \emph{electrostatic} Poisson equation
+$-\Div(\varepsilon\Grad V)=\rho$ (curl-free $\vE=-\Grad V$ plus Gauss), assembled
+as the scalar stiffness $\Kop$ on $\Hone$; the \emph{magnetostatic} curl--curl
+equation $\Curl(\nu\Curl\vA)=\vJ$ (divergence-free $\vB=\Curl\vA$ plus
+Amp\`ere), assembled as the vector stiffness $\Kop$ on $\Hcurl$ with a gauge null
+space; the \emph{eigenmode} generalized eigenproblem $\Kop\vx=\lambda\Mop\vx$
+($\lambda=\omega^2$) from source-free time-harmonic curl--curl, with the lossy
+case quadratic in $\lambda$; the \emph{driven} Helmholtz system
+$(\Kop+i\omega\Cop-\omega^2\Mop)\vE=\vb(\omega)$ from time-harmonic Maxwell with
+sources and loss, re-assembled per frequency; and the \emph{transient}
+second-order ODE $\Mop\ddot\vs+\Cop\dot\vs+\Kop\vs=\vJ(t)$, recast as a
+first-order IVP and marched as a sequential fold. Beneath the variety, all five
+are built from the \emph{same three operators} $\Kop,\Mop,\Cop$---a stiffness, a
+mass, a damping---recombined five ways. The analysis is the recipe for combining
+them, not new physics.
+
+\furtherreading
+The reductions in this chapter are standard computational-electromagnetics
+material. Jin's \emph{The Finite Element Method in Electromagnetics}
+\citep{jin2014} derives the static, time-harmonic, and time-domain formulations
+at book length and is the natural next text for a reader who wants every step
+filled in; its treatment of the curl--curl equation and its gauge subtleties
+(\cref{ch:bc}) is especially thorough. Monk's \emph{Finite Element Methods for
+Maxwell's Equations} \citep{monk2003} supplies the rigorous functional-analytic
+backing---the $\Hcurl$ spaces, the de Rham complex, well-posedness---that
+\cref{ch:functionspaces,ch:derham} develop more gently. For the engineering
+side---what the driven and eigenmode analyses \emph{compute} (S-parameters,
+quality factors, cavity and waveguide modes) and why they matter---Pozar's
+\emph{Microwave Engineering} \citep{pozar2011} is the standard reference and the
+source of the resonant-cavity picture behind \cref{wex:cavity1d}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{The recipe, applied.} For each of the five reductions, name (a)
+  the regime (value of $\partial_t$), (b) the potential introduced or primary
+  field chosen, and (c) the Maxwell equation used in the final substitution.
+  Present your answer as a five-row table.
+
+  \item \textbf{Poisson with charge.} Repeat \cref{wex:plates1d} but with a
+  uniform free charge density $\rho_0$ filling the gap, so the equation is
+  $-\varepsilon V''=\rho_0$ with $V(0)=0$, $V(L)=V_0$. Solve for $V(x)$ and
+  $E(x)$, and verify that the field is no longer uniform. What is the
+  field at each plate?
+
+  \item \textbf{Cavity overtones.} For the one-dimensional cavity of
+  \cref{wex:cavity1d} with $L=\SI{5}{\centi\meter}$ and wave speed $c$ the speed
+  of light, compute the three lowest resonant frequencies $f_n=\omega_n/2\pi$ in
+  gigahertz. By what factor do successive modes differ in frequency?
+
+  \item \textbf{Static as a limit.} Show that the driven system operator
+  $\mat{A}(\omega)=\Kop+i\omega\Cop-\omega^2\Mop$ reduces to the magnetostatic
+  stiffness $\Kop$ as $\omega\to 0$. Which physical effects do the dropped terms
+  $i\omega\Cop$ and $\omega^2\Mop$ represent, and why is it consistent that they
+  vanish in the static limit?
+
+  \item \textbf{Eigenproblem versus driven, structurally.} The quadratic
+  eigenproblem \cref{eq:qevp} and the driven system \cref{eq:driven-system} both
+  contain the polynomial $\Kop+\lambda\Cop+\lambda^2\Mop$ (with
+  $\lambda=i\omega$). Explain precisely what each problem holds fixed and what it
+  solves for, and why one is an eigenvalue search while the other is a linear
+  solve.
+
+  \item \textbf{The damping term's origin.} In the lossless eigenmode derivation
+  (\cref{sec:eigenmode}) the damping $\Cop$ was absent; in the driven and
+  transient derivations it appeared. Trace exactly which physical effect (and
+  which term in Maxwell's equations) introduces $\Cop$, and explain why a
+  \emph{lossless} cavity has $\Cop=0$ but a real one does not.
+
+  \item \textbf{The mechanical analogy.} The transient system
+  $\Mop\ddot\vs+\Cop\dot\vs+\Kop\vs=\vJ(t)$ is formally identical to a damped
+  mechanical oscillator. Match each of $\Mop,\Cop,\Kop$ to its mechanical
+  counterpart (inertia, friction, spring), and predict qualitatively how the
+  field rings down when $\Cop$ is small versus large.
+
+  \item \textbf{A reduction of your own.} Suppose a problem is \emph{lossy and
+  static}: a steady current flows through a conductor of finite conductivity
+  $\sigma$ (so $\vJ=\sigma\vE$) with no time dependence. Starting from
+  $\Curl\vE=\mathbf0$ and $\Div\vJ=0$, introduce a scalar potential and derive the
+  governing PDE. Which of the chapter's five reductions does your result most
+  resemble, and what plays the role of the coefficient $\varepsilon$?
+\end{enumerate}

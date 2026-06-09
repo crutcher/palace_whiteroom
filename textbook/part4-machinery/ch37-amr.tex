@@ -1,0 +1,1062 @@
+\chapter{Adaptive Mesh Refinement}
+\label{ch:amr}
+
+\chapterorient{\Cref{ch:lifecycle} showed the simulation lifecycle closing into a
+loop: solve, estimate the error, mark the worst elements, refine the mesh, solve
+again. We called that the adaptive estimate--mark--refine loop and named it as our
+first \emph{fold}, but we left its three working stages as black boxes. This
+chapter opens them. We ask three questions in turn. \emph{Where} is the error
+worst---when we do not know the true solution and so cannot subtract it? \emph{Which}
+elements should we refine---given a per-element error guess, how many, and which?
+And \emph{how} does the refinement happen, and why does the whole loop terminate
+with a good answer using far fewer unknowns than a uniform mesh would need? Two of
+the three answers are short, sharp algorithms we can run by hand---a flux-recovery
+estimate and a bulk-marking rule---and the third is a mesh operation we will treat
+as a boundary. By the end you will be able to compute an error indicator on a tiny
+mesh, mark elements by the D\"orfler rule on a list of numbers, and read a
+convergence curve that shows adaptivity earning its keep.}
+
+\section{Why adapt at all}
+\label{sec:why-adapt}
+
+Refining a mesh means cutting its elements into smaller ones, raising the number of
+unknowns $N$ and---by C\'ea's lemma (\cref{ch:galerkin})---driving the discretization
+error down. The simplest way to refine is \emph{uniformly}: cut every element. In
+one step a 2-D mesh of $N$ elements becomes $4N$; in three dimensions, $8N$. Uniform
+refinement is easy to implement and easy to reason about, and for a perfectly smooth
+solution on a simple domain it is hard to beat. But the solutions an engineering
+simulator actually computes are rarely smooth everywhere.
+
+Real fields have \emph{features}. An electrostatic potential develops a singularity
+at a sharp conductor corner---the field strength blows up like $r^{-\gamma}$ as the
+distance $r$ to the corner goes to zero. A magnetic field crowds into the gap between
+two poles. The current concentrates at a material interface where the permittivity
+jumps. Near such a feature the solution bends violently and the piecewise-polynomial
+basis of \cref{ch:galerkin} struggles to follow it, so the local error is large.
+Away from the feature---across the broad, gently-varying interior---the same basis is
+already more than accurate enough, and the local error is tiny.
+
+\Cref{fig:cornermesh} is the canonical picture. A re-entrant (``L-shaped'') corner
+pulls a singularity into the field; a good mesh is \emph{fine} in a small
+neighbourhood of the corner and \emph{coarse} everywhere else. Uniform refinement,
+by contrast, would spend the same effort everywhere---lavishing resolution on the
+smooth interior, where it buys almost nothing, in order to resolve the corner.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % L-shaped domain outline (re-entrant corner at the origin)
+  \def\a{4.0}
+  \draw[simInk, thick, fill=simBgGray]
+    (0,0) -- (\a,0) -- (\a,2.0) -- (2.0,2.0) -- (2.0,\a) -- (0,\a) -- cycle;
+  % the re-entrant corner
+  \fill[simRust] (2.0,2.0) circle (2.2pt);
+  \node[simRust, above right=0pt and 1pt] at (2.0,2.0) {re-entrant corner};
+  % graded mesh: coarse far cells
+  \draw[simBlue!55, thin] (0,0) grid[step=1.0] (\a,2.0);
+  \draw[simBlue!55, thin] (0,2.0) grid[step=1.0] (2.0,\a);
+  % progressively finer cells toward the corner: a few nested rings
+  \foreach \s in {0.5,0.25,0.125}{
+    \draw[simBlue!75, thin] (2.0-\s,2.0-\s) rectangle (2.0,2.0);
+    \draw[simBlue!75, thin] (2.0-\s,2.0) rectangle (2.0,2.0+\s);
+    \draw[simBlue!75, thin] (2.0,2.0-\s) rectangle (2.0+\s,2.0);
+  }
+  % subdivide those finer rings further (just visual: cross lines)
+  \draw[simBlue!75, thin] (1.5,2.0)--(2.0,2.0); % already there
+  % field-strength annotation
+  \draw[refedge, simRust] (3.4,3.0) to[bend right=20] (2.15,2.15);
+  \node[simRust, font=\scriptsize, align=center] at (3.55,3.2)
+    {$|\vE|\sim r^{-\gamma}$\\(error large)};
+  \node[simGray, font=\scriptsize, align=center] at (1.0,1.0)
+    {smooth interior\\(error tiny)};
+\end{tikzpicture}
+\caption[A mesh graded to a corner singularity]{The canonical adaptive mesh. A
+re-entrant corner (here the inner corner of an L-shaped domain) forces the field to
+blow up like $r^{-\gamma}$ as the distance $r$ to the corner shrinks, so the
+discretization error concentrates there. A well-adapted mesh is heavily refined in a
+small neighbourhood of the corner---the nested rings of ever-smaller cells---and
+left coarse across the smooth interior, where the basis already resolves the field.
+Uniform refinement would instead cut \emph{every} cell, spending most of its new
+unknowns on the interior, where they buy almost nothing.}
+\label{fig:cornermesh}
+\end{figure}
+
+The payoff is captured by a single principle. C\'ea's lemma told us the total error
+is governed by how well the basis can approximate the solution; interpolation theory
+adds that, for a fixed total number of unknowns, the approximation error is
+\emph{minimised} when the local error contributions are \emph{equal} across
+elements---when the error is \emph{equidistributed}. A uniform mesh equidistributes
+the cell \emph{size}, not the error: it leaves large error at the corner and
+negligible error in the interior, a wildly unequal distribution. An adaptive mesh
+equidistributes the \emph{error} by making cells small exactly where the error per
+cell is large. The result is dramatic: for a corner singularity in two dimensions, a
+uniform mesh achieves error $\mathcal{O}(N^{-\gamma/2})$ with a stalled exponent set
+by the singularity strength $\gamma$, while a properly graded adaptive mesh recovers
+the full smooth-solution rate $\mathcal{O}(N^{-p/2})$---the same accuracy for
+\emph{orders of magnitude} fewer unknowns. \Cref{sec:convergence} makes this
+quantitative; \cref{fig:convergence} draws it.
+
+\begin{keyidea}
+Uniform refinement equidistributes \emph{cell size}; adaptive refinement
+equidistributes \emph{error}. Because a solution's error concentrates at features
+(corners, interfaces, field concentrations) and is negligible across smooth regions,
+putting small cells only where the error is large reaches a target accuracy with far
+fewer unknowns than cutting every cell. The recipe to do this automatically is the
+loop of \cref{ch:lifecycle}: \emph{estimate} where the error is, \emph{mark} a bulk
+fraction of it, \emph{refine} those elements, and \emph{repeat}. The rest of this
+chapter is those four words.
+\end{keyidea}
+
+There is a circularity to defeat first. To put small cells where the error is large,
+we must know where the error is large---but the error is $u - u_h$, and we do not
+know the exact solution $u$ (if we did, we would not be running the simulation). The
+whole edifice rests on \emph{estimating} the error from the computed solution alone,
+without ever seeing the truth. That is the subject of the next section, and it is the
+cleverest of the three stages.
+
+\section{Estimate: Zienkiewicz--Zhu flux recovery}
+\label{sec:estimate}
+
+We have a computed solution $u_h$ and want a number $\eta_K \ge 0$ for each element
+$K$---an \emph{error indicator}---large where the local error $\norm{u - u_h}_K$ is
+large and small where it is small. We cannot compute the error directly. The
+Zienkiewicz--Zhu (ZZ) idea is to find a \emph{computable quantity that is zero
+exactly when the error is zero} and grows with it---a proxy we \emph{can} evaluate.
+
+\subsection{The discontinuous flux and the smoothing trick}
+
+The proxy is built from the \emph{flux}. In the electrostatic problem the field is
+$\vE = -\Grad V$ and the physical flux is the displacement $\vD = \varepsilon\vE$;
+in the magnetostatic problem the flux is $\vH = \mu^{-1}\vB$. Generically write the
+flux as $\mat F = Q\,\diffop u_h$, a material weight $Q$ times a derivative of the
+discrete solution. Here is the key observation about this flux as the finite-element
+method computes it.
+
+The discrete solution $u_h$ is continuous across element boundaries (it is built from
+the conforming basis of \cref{ch:galerkin}), but its \emph{derivative} is not. A
+piecewise-linear $u_h$ has a constant gradient on each element that jumps as you
+cross into the next. So the computed flux $\mat F = Q\,\diffop u_h$ is
+\emph{discontinuous across element faces}---it has jumps. The \emph{true} flux of the
+exact solution, by contrast, is smooth (continuity of the normal flux is a physical
+conservation law). The size of the jumps in the computed flux therefore measures how
+far the discrete solution is from the truth: where $u_h$ resolves the solution well,
+its flux is nearly continuous and the jumps are small; where $u_h$ struggles, the
+flux is wildly discontinuous and the jumps are large.
+
+ZZ turns this qualitative observation into a number with one move: \emph{recover a
+smooth flux} $G$ from the discontinuous one and measure the gap. Concretely, $G$ is
+the $L^2$ projection of the computed flux $\mat F$ onto a conforming
+(continuous-where-it-should-be) finite-element space:
+\begin{equation}
+G = \arg\min_{g \in V_{\text{smooth}}} \int_\dom \norm{g - \mat F}^2 \dV,
+\qquad\text{equivalently}\qquad
+G = \mat M^{-1}\,\bigl(\text{Flux}\cdot u_h\bigr),
+\label{eq:zz-recover}
+\end{equation}
+where $\mat M$ is the mass matrix of the smooth space and $\text{Flux}\cdot u_h$
+assembles the projection's right-hand side---a single mass-matrix solve, exactly the
+kind of system the solvers of \cref{ch:krylov} dispatch. The smoothed flux $G$ is the
+code's best guess at the \emph{true}, continuous flux; the gap $\mat F - G$ between
+the rough computed flux and its smoothed version stands in for the unknowable error.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\begin{axis}[
+  width=12.5cm, height=5.4cm,
+  xmin=-0.05, xmax=4.05, ymin=-0.15, ymax=2.6,
+  xtick={0,1,2,3,4},
+  xticklabels={$x_0$,$x_1$,$x_2$,$x_3$,$x_4$},
+  ytick=\empty, ylabel={flux}, axis lines=left,
+  tick label style={font=\footnotesize},
+  legend style={at={(0.97,0.97)}, anchor=north east, font=\footnotesize,
+    draw=simGray!50},
+  clip=false,
+]
+  % discontinuous element flux: constant per element, jumps at nodes
+  \addplot[simRust, very thick] coordinates {(0,0.35)(1,0.35)};
+  \addplot[simRust, very thick] coordinates {(1,0.75)(2,0.75)};
+  \addplot[simRust, very thick] coordinates {(2,1.7)(3,1.7)};
+  \addplot[simRust, very thick] coordinates {(3,2.15)(4,2.15)};
+  \addlegendentry{$\mathbf{F}$ (computed, discontinuous)}
+  % the jumps (dotted vertical risers)
+  \addplot[simRust, densely dotted, thin] coordinates {(1,0.35)(1,0.75)};
+  \addplot[simRust, densely dotted, thin] coordinates {(2,0.75)(2,1.7)};
+  \addplot[simRust, densely dotted, thin] coordinates {(3,1.7)(3,2.15)};
+  % recovered smooth flux: a continuous (piecewise-linear through midpoints) curve
+  \addplot[simBlue, very thick, mark=*, mark size=1.4pt] coordinates
+    {(0,0.2)(0.5,0.35)(1.5,0.75)(2.5,1.7)(3.5,2.15)(4,2.35)};
+  \addlegendentry{$G$ (recovered, smooth)}
+  % gap annotation on the big-jump element (between x2 and x3)
+  \draw[<->, simGreen, thick] (axis cs:2.5,1.30) -- (axis cs:2.5,1.70);
+  \node[simGreen, font=\scriptsize, anchor=west] at (axis cs:2.58,1.5)
+    {gap $=\eta_K$};
+  \node[simGray, font=\scriptsize, anchor=north] at (axis cs:0.5,0.30)
+    {small gap};
+\end{axis}
+\end{tikzpicture}
+\caption[Zienkiewicz--Zhu flux recovery]{The ZZ estimator in one dimension. The
+computed flux $\mathbf F = Q\,\mathcal{D}u_h$ (rust) is \emph{piecewise constant} and
+\emph{jumps} across each element boundary, because $u_h$'s derivative is
+discontinuous. The recovered flux $G$ (blue) is the smooth $L^2$ projection of
+$\mathbf F$ onto a conforming space---the code's best estimate of the true,
+continuous flux. The per-element indicator $\eta_K$ is the size of the gap $\mathbf
+F - G$ over element $K$ (\cref{eq:zz-indicator}). It is small where the flux is
+nearly continuous (left, smooth region) and large where the flux jumps sharply
+(centre, where the solution bends most). The estimator never sees the true error---it
+infers it from the roughness the discretization left behind.}
+\label{fig:zz}
+\end{figure}
+
+\subsection{The per-element indicator}
+
+With a smooth flux $G$ in hand, the error indicator on element $K$ is the $L^2$ norm
+of the gap, restricted to that element:
+\begin{equation}
+\boxed{\;
+\eta_K^2 = \int_K \norm{\mat F - G}^2 \dV
+\;}
+\label{eq:zz-indicator}
+\end{equation}
+We work with the \emph{squared} indicator $\eta_K^2$ throughout, for a reason that
+will matter in marking: squared error contributions \emph{add}, and the total squared
+error $\sum_K \eta_K^2$ is the quantity the marking step apportions. The square root
+that recovers $\eta_K$ itself (with a physical energy normalisation) is a thin
+epilogue applied later, when the indicators are compared against a tolerance.
+
+Three properties make \cref{eq:zz-indicator} a good indicator, and each is worth
+naming because each is a fact you can check.
+
+\emph{Local and cheap.} The integral in \cref{eq:zz-indicator} is over a single
+element $K$, so $\eta_K^2$ is computed element-by-element from the local values of
+$\mat F$ and $G$---one small quadrature per element, no global coupling in this step.
+(The recovery \cref{eq:zz-recover} of $G$ is a global solve, but it is one solve,
+shared by all elements; the per-element \emph{difference} is local.) The cost is a
+small constant per element, negligible beside the solve that produced $u_h$.
+
+\emph{Quadratic in the field.} The indicator is a squared norm of $\mat F - G$, and
+both $\mat F$ and $G$ are \emph{linear} in $u_h$ (the flux map and the projection are
+linear operators). So $\eta_K^2$ is a \emph{quadratic} functional of the solution: it
+scales as $\eta_K^2(\alpha u_h) = \alpha^2\,\eta_K^2(u_h)$ but is \emph{not} additive,
+$\eta_K^2(u_h + w_h) \ne \eta_K^2(u_h) + \eta_K^2(w_h)$. It is an energy-like
+quantity, not a linear measurement.
+
+\emph{Vanishes exactly when the flux is already smooth.} If the computed flux $\mat
+F$ already lies in the smooth recovery space---no jumps to recover away---then its
+$L^2$ projection $G$ equals $\mat F$ itself, and $\eta_K^2 = 0$ for every element.
+The estimator fires precisely on the \emph{non-smoothness} the discretization
+introduced, which is exactly the ZZ premise: a big jump means a big error, a smooth
+flux means a converged solution.
+
+\begin{pitfall}
+The ZZ estimate is an \emph{indicator}, not the error. It is not a rigorous upper
+bound on $\norm{u - u_h}$---it can over- or under-estimate the true error by a
+problem-dependent constant. What it does reliably is rank the elements: it is large
+where the error is large and small where it is small, so it tells you \emph{which}
+elements to refine even when it does not tell you the error's exact size. For
+\emph{driving refinement} that ranking is all we need (the marking step uses only the
+relative sizes); for \emph{certifying} a final accuracy one wants a guaranteed bound,
+which is a separate and harder theory. Do not read $\eta_K$ as ``the error on element
+$K$''; read it as ``element $K$'s share of the work still to do.''
+\end{pitfall}
+
+\subsection{Why recover rather than just measure the jumps?}
+
+One might ask: if the jumps in $\mat F$ are the signal, why project at all---why not
+measure the jumps directly, face by face? Both strategies exist in the literature
+(the direct one is the ``residual'' or ``jump'' estimator). The recovery approach has
+two practical virtues that make it Palace's choice. First, it produces a smooth flux
+$G$ that is itself a \emph{better} approximation to the true flux than $\mat F$
+was---a useful by-product, sometimes used to improve the reported solution.\ Second,
+the projection \cref{eq:zz-recover} is a single mass-matrix solve in machinery the
+code already has (\cref{ch:cg}'s conjugate gradients on an SPD mass matrix), so the
+estimator reuses the solver infrastructure rather than introducing face-by-face jump
+bookkeeping. The estimator is, structurally, ``one extra solve and one cheap
+per-element norm''---a small tax on each adaptive pass.
+
+\section{Mark: D\"orfler bulk marking}
+\label{sec:mark}
+
+The estimate step hands us a list of nonnegative numbers, one per element:
+$\{\eta_K^2\}_{K=1}^{N}$. The mark step must decide \emph{which} elements to refine.
+This is a more subtle question than it looks, and the answer---D\"orfler's bulk
+marking---is the one choice in the loop with a convergence theorem attached.
+
+\subsection{Three marking strategies, one good one}
+
+The naive strategies are tempting and wrong.
+
+\emph{Refine the top $k$.} Mark the $k$ elements with the largest indicators, for a
+fixed $k$. But $k$ is a magic number unrelated to the error: on a mesh where the
+error is concentrated in two elements, marking the top $50$ wastes effort; on a mesh
+where it is spread over hundreds, marking the top $50$ refines too little.
+
+\emph{Refine the top fraction of elements.} Mark the worst-ranked $10\%$ of
+\emph{elements}. This couples to the mesh size but still not to the error: $10\%$ of a
+mesh might carry $90\%$ of the error or $5\%$ of it, depending on how concentrated the
+features are. Marking by element \emph{count} ignores the very thing we are trying to
+equidistribute.
+
+\emph{Refine the elements carrying a fixed fraction of the error.} This is
+D\"orfler's idea, and it is the right one. Mark the \emph{smallest} set of elements
+whose summed squared error reaches a target fraction $\theta$ of the \emph{total}
+squared error:
+\begin{equation}
+\boxed{\;
+\text{find the smallest } \mathcal{S} \text{ with } \;
+\sum_{K \in \mathcal{S}} \eta_K^2 \;\ge\; \theta \sum_{K} \eta_K^2.
+\;}
+\label{eq:dorfler}
+\end{equation}
+The marking is by \emph{error mass}, not element count. If the error is concentrated
+in a few elements, $\mathcal{S}$ is tiny; if it is spread out, $\mathcal{S}$ is large.
+Either way the marked set captures the same fraction $\theta$ of the work. The
+default fraction in Palace is $\theta = 0.7$: mark the smallest set of elements
+responsible for $70\%$ of the total squared error. This is called \emph{bulk}
+marking because it marks the bulk of the error, however few or many elements that
+takes.
+
+\subsection{The algorithm: sort, accumulate, pivot}
+
+\Cref{eq:dorfler} reads as a combinatorial optimisation---``the smallest set
+with''---but it has a one-pass realisation, because greedily taking the largest
+indicators first is optimal. The algorithm is:
+
+\begin{enumerate}[nosep]
+\item \textbf{Sort} the squared indicators in descending order.
+\item \textbf{Accumulate} a running sum down the sorted list.
+\item \textbf{Stop} (the \emph{pivot}) at the first point where the running sum
+reaches $\theta$ of the total. Everything down to and including the pivot is marked.
+\end{enumerate}
+
+That ``largest first'' greedy is optimal for \cref{eq:dorfler}: to reach a fixed
+error budget $\theta\sum_K\eta_K^2$ with the fewest elements, you must take the
+biggest contributors first---swapping any marked element for a smaller unmarked one
+could only require \emph{more} elements to reach the same budget. So the prefix of the
+sorted list \emph{is} the smallest set. \Cref{alg:dorfler} writes it in the
+framework's pseudo-language; the implementation realises the running sum as a
+\emph{prefix sum} and the pivot as a binary search (a \code{lower\_bound}) for speed,
+but the meaning is exactly the three steps above.
+
+\begin{lstlisting}[style=l4style,caption={D\"orfler bulk marking: the smallest set covering fraction $\theta$ of the squared error.},label={alg:dorfler}]
+dorfler_mark :: Float -> [Float] -> IndexSet
+dorfler_mark theta etas2 =
+  let total   = sum etas2                       -- total squared error
+      ranked  = sortDescendingByIndicator etas2 -- (index, eta2) pairs, biggest first
+      target  = theta * total                   -- the error budget to cover
+      go acc marked ((i, e2):rest)
+        | acc >= target = marked                -- pivot reached: stop
+        | otherwise     = go (acc + e2) (i:marked) rest
+      go acc marked []  = marked                -- (all elements; only if theta = 1)
+  in  go 0.0 [] ranked
+\end{lstlisting}
+
+\Cref{fig:dorfler-hist} draws the algorithm as a picture: the squared indicators as
+bars sorted tallest-first, and the marked prefix as the leading bars whose cumulative
+area first crosses the $\theta$ line. It is the most vivid way to see what bulk
+marking does---it walks in from the left, taking the biggest bars, until it has
+captured fraction $\theta$ of the total area, then stops.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\begin{axis}[
+  width=12.5cm, height=6.0cm,
+  ybar, bar width=8mm,
+  xmin=0.3, xmax=8.7, ymin=0, ymax=46,
+  xtick={1,2,3,4,5,6,7,8},
+  xticklabels={$K_1$,$K_2$,$K_3$,$K_4$,$K_5$,$K_6$,$K_7$,$K_8$},
+  xlabel={elements, sorted by indicator (largest first)},
+  ylabel={$\eta_K^2$},
+  axis lines=left, tick label style={font=\footnotesize},
+  clip=false,
+]
+  % marked bars (first three: 40+25+14 = 79 >= 70 = theta*total), then unmarked
+  \addplot[fill=simBgRust, draw=simRust, thick] coordinates
+    {(1,40)(2,25)(3,14)};
+  \addplot[fill=simBgGray, draw=simGray] coordinates
+    {(4,9)(5,5)(6,3)(7,2.5)(8,1.5)};
+  % pivot line between K3 (last marked) and K4 (first unmarked)
+  \draw[simGreen, thick, densely dashed] (axis cs:3.5,0) -- (axis cs:3.5,44);
+  \node[simGreen, font=\scriptsize, anchor=south] at (axis cs:3.5,44) {pivot};
+  \node[simRust, font=\scriptsize\bfseries, align=center] at (axis cs:2,35)
+    {\textsc{marked}\\(bulk of the error)};
+  \node[simGray, font=\scriptsize, align=center] at (axis cs:6,18)
+    {unmarked\\(refine later, if ever)};
+\end{axis}
+\end{tikzpicture}
+\caption[D\"orfler bulk marking on a sorted histogram]{D\"orfler marking, drawn as a
+sorted histogram. The per-element squared indicators $\eta_K^2$ are sorted
+\emph{descending} and accumulated from the left; the marked set (rust) is the leading
+prefix of bars whose cumulative area first reaches fraction $\theta$ of the total. The
+pivot (green dashed line) is exactly where the running sum crosses $\theta\sum_K
+\eta_K^2$. Here a few tall bars on the left carry most of the error, so a small marked
+set suffices---the hallmark of a solution with concentrated features. A flat
+histogram (no features) would push the pivot far to the right, marking nearly
+everything, which is bulk marking correctly reporting that the error is spread out.
+\Cref{wex:dorfler} traces the arithmetic for $\theta = 0.7$.}
+\label{fig:dorfler-hist}
+\end{figure}
+
+\subsection{The four laws that make marking trustworthy}
+
+The marking rule \cref{eq:dorfler} satisfies four properties that are worth stating
+as laws, because the convergence theory of \cref{sec:loop} depends on them and because
+they make the rule predictable.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+\item[Coverage.] The marked set provably covers at least fraction $\theta$ of the
+total squared error: $\sum_{K \in \mathcal S}\eta_K^2 \ge \theta\sum_K \eta_K^2$.
+This is the defining inequality, and it is the hypothesis the convergence theorem
+needs. The implementation verifies it as a post-condition---it never returns an
+under-marking.
+\item[Minimality.] Among all sets achieving coverage, $\mathcal S$ has the fewest
+elements. This is the ``smallest set'' in \cref{eq:dorfler}, guaranteed by the
+largest-first greedy. Minimality is what keeps the mesh from growing faster than it
+must: we refine the least we can while still capturing the bulk.
+\item[Monotonicity in $\theta$.] A larger target fraction marks a superset:
+$\theta_1 \le \theta_2 \implies \mathcal S(\theta_1) \subseteq \mathcal S(\theta_2)$.
+At $\theta \to 0^+$ the marked set shrinks to the single largest-indicator element;
+at $\theta = 1$ it grows to the whole mesh. The fraction is a smooth dial between
+``refine only the very worst'' and ``refine everything (uniform).''
+\item[The over-mark tie-break.] The achievable cumulative fractions form a discrete
+ladder---one rung per element---so the target $\theta$ usually falls \emph{between}
+rungs. When it does, the rule takes the \emph{larger} set: it covers the smallest
+fraction $\ge \theta$, never the largest fraction $< \theta$. This ``over-mark rather
+than under-mark'' tie-break is load-bearing, not cosmetic---it is what guarantees the
+coverage inequality holds with $\ge$, and the convergence theorem assumes exactly
+that direction. Flipping it to under-mark would void the guarantee.
+\end{description}
+
+\begin{keyidea}
+D\"orfler (\emph{bulk}) marking refines the smallest set of elements responsible for
+a fixed fraction $\theta$ of the \emph{total squared error}---not a fixed count of
+elements, and not a fixed fraction of elements. The algorithm is: sort the indicators
+largest-first, accumulate, and stop at the pivot where the running sum reaches
+$\theta$. Marking by error \emph{mass} (rather than element count) is what
+equidistributes the error, and the ``over-mark on ties'' rule is what makes the
+covered fraction provably $\ge \theta$---the single hypothesis behind the convergence
+guarantee of \cref{sec:loop}.
+\end{keyidea}
+
+\section{Refine: subdividing the marked elements}
+\label{sec:refine}
+
+Marking produced a set of element indices. Refinement turns that set into a finer
+mesh: each marked element is \emph{subdivided} into smaller children, and the global
+finite-element space and operators are rebuilt on the new mesh before the next solve.
+
+\subsection{How an element is split}
+
+Two subdivision strategies dominate, and \cref{fig:refine} draws both for a triangle.
+
+\emph{Red--green refinement.} A ``red'' refinement of a triangle joins the midpoints
+of its three edges, splitting it into four congruent children (and a tetrahedron into
+eight). This is clean and uniform, but it creates a problem at the boundary of the
+refined region: a red-refined triangle has new nodes at its edge midpoints, and if the
+neighbouring triangle was \emph{not} refined, those midpoint nodes sit in the middle
+of the neighbour's edge with nothing to match them---a \emph{hanging node}. A hanging
+node breaks conformity (the mesh is no longer a clean tiling) and must be dealt with.
+The ``green'' part of red--green refinement is a closure step: neighbours adjacent to a
+red element get a temporary bisection (a single cut to a vertex) that absorbs the
+hanging node and restores a conforming mesh, at the cost of some sliver elements that
+are undone before the next refinement pass.
+
+\emph{Bisection.} An alternative cuts each marked element in two by a single edge
+(the longest edge, or a designated ``refinement edge''), propagating the cut into
+neighbours as needed to keep the mesh conforming. Repeated bisection, organised
+carefully (newest-vertex bisection), provably keeps element shapes bounded---no cell
+degenerates into a sliver however many times it is cut---which is what protects the
+conditioning of the assembled matrix.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % ===== LEFT: red refinement (1 -> 4) =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simRust] at (1.0,2.5) {red: $1 \to 4$};
+    \coordinate (A) at (0,0); \coordinate (B) at (2,0); \coordinate (C) at (1,1.8);
+    \coordinate (mAB) at (1,0); \coordinate (mBC) at (1.5,0.9); \coordinate (mCA) at (0.5,0.9);
+    \draw[simInk, thick] (A)--(B)--(C)--cycle;
+    \draw[simRust, thick] (mAB)--(mBC)--(mCA)--cycle;
+    \fill[simRust] (mAB) circle (1.3pt); \fill[simRust] (mBC) circle (1.3pt);
+    \fill[simRust] (mCA) circle (1.3pt);
+    \node[simGray, font=\scriptsize] at (1.0,-0.4) {four congruent children};
+  \end{scope}
+  % ===== MIDDLE: bisection (1 -> 2) =====
+  \begin{scope}[xshift=4.0cm]
+    \node[font=\small\bfseries, text=simGreen] at (1.0,2.5) {bisect: $1 \to 2$};
+    \coordinate (A2) at (0,0); \coordinate (B2) at (2,0); \coordinate (C2) at (1,1.8);
+    \coordinate (mid2) at (1,0); % midpoint of longest edge AB
+    \draw[simInk, thick] (A2)--(B2)--(C2)--cycle;
+    \draw[simGreen, thick] (C2)--(mid2);
+    \fill[simGreen] (mid2) circle (1.3pt);
+    \node[simGray, font=\scriptsize] at (1.0,-0.4) {cut the longest edge};
+  \end{scope}
+  % ===== RIGHT: hanging node =====
+  \begin{scope}[xshift=8.2cm]
+    \node[font=\small\bfseries, text=simBlue] at (1.1,2.5) {hanging node};
+    % refined triangle on the left, coarse on the right sharing an edge
+    \coordinate (P) at (0,0); \coordinate (Q) at (1.1,0); \coordinate (R) at (0.55,1.7);
+    \coordinate (mPR) at (0.275,0.85); \coordinate (mQR) at (0.825,0.85);
+    \coordinate (mPQ) at (0.55,0);
+    \draw[simInk, thick] (P)--(Q)--(R)--cycle;
+    \draw[simRust, thick] (mPQ)--(mQR)--(mPR)--cycle;
+    % coarse neighbour to the right sharing edge QR
+    \coordinate (S) at (2.0,0.85);
+    \draw[simInk, thick] (Q)--(S)--(R);
+    % the hanging node sits at mQR, mid of shared edge QR, unmatched in the neighbour
+    \fill[simBlue] (mQR) circle (2.0pt);
+    \draw[refedge, simBlue] (1.7,1.9) to[bend right=15] (mQR);
+    \node[simBlue, font=\scriptsize, align=center] at (1.75,2.05)
+      {unmatched\\midpoint};
+    \node[simGray, font=\scriptsize, align=center] at (1.0,-0.45)
+      {neighbour not refined\\$\Rightarrow$ constrain or close};
+  \end{scope}
+\end{tikzpicture}
+\caption[Refinement of a marked element]{Subdividing a marked triangle. \emph{Left}:
+\emph{red} refinement joins the three edge midpoints, producing four congruent
+children (eight for a tetrahedron). \emph{Middle}: \emph{bisection} cuts a single
+edge (here the longest) into two children, propagating into neighbours to stay
+conforming. \emph{Right}: the difficulty either strategy must handle---a refined
+element creates a new midpoint node on an edge it shares with an \emph{unrefined}
+neighbour, a \emph{hanging node} unmatched on the coarse side. It is resolved either
+by a \emph{green} closure (bisecting the neighbour to absorb it) or by a
+\emph{constraint} that algebraically ties the hanging degree of freedom to its coarse
+neighbours, keeping the global space conforming.}
+\label{fig:refine}
+\end{figure}
+
+\subsection{Where our framework stops}
+
+The subdivision geometry---which edges to cut, how to propagate cuts, how to generate
+and constrain hanging nodes, how many levels of nonconformity to allow---is intricate,
+and in Palace it is handled entirely by the underlying mesh library (MFEM). Our
+framework treats \code{refine} as an \emph{opaque boundary}: a function
+$\code{refine} : \text{Mesh} \to \text{IndexSet} \to \text{Mesh}$ that takes the
+current mesh and the marked set and returns a finer conforming mesh, with the
+subdivision arithmetic owned by the library. This is a deliberate scope decision, not
+an oversight: the estimate and mark stages are short, well-defined algorithms we
+specify fully and could re-implement; the refinement kernel is a large, mature piece
+of mesh infrastructure we \emph{call} rather than \emph{re-derive}.
+
+\begin{notationbox}
+We write the refinement step as \lstinline[style=l4style]|refine mesh marked|,
+returning a new mesh. Like every value in this book it is treated as
+\emph{immutable}: refinement \emph{produces} a finer mesh rather than mutating the old
+one in place (the underlying library does mutate a buffer, but that is below our
+boundary, exactly as the in-place arithmetic of a BLAS kernel sits below
+\code{linear\_combination}). The new mesh is the value the loop threads forward;
+the old mesh is spent.
+\end{notationbox}
+
+What matters for the loop is only \code{refine}'s contract: given a marked set, it
+returns a mesh that is finer \emph{exactly there}, conforming, and ready for the next
+assemble--solve. With that contract we can close the loop.
+
+\section{The loop as a state-generated fold}
+\label{sec:loop}
+
+We can now assemble the three stages into the loop of \cref{ch:lifecycle} and see
+precisely what kind of computation it is. The shape is a \emph{fold}---the structure
+\cref{ch:combinators} made the spine of the whole simulator---but a fold of a special
+and important kind: one whose \emph{schedule is generated from its own state}.
+
+\subsection{Recalling the two kinds of fold}
+
+\Cref{ch:combinators} drew the map/fold split: a \code{fold} threads a carry through a
+chain of steps, each step consuming what the last produced. The transient analysis of
+\cref{ch:time} was the exemplar---it folds a time-step operator over a \emph{fixed,
+pre-known} schedule of times $[t_0, t_1, \dots, t_M]$. You know the whole schedule
+before you start; the fold simply walks it, threading the field state.
+
+The AMR loop is a fold of the \emph{same combinator}, \code{fold\_solve}, but its
+schedule is not fixed in advance. There is no list of meshes laid out before the loop
+begins. Instead each iteration \emph{computes the next mesh from the current
+solution's error}: solve on the current mesh, estimate the error, mark, refine---and
+the refined mesh is the next ``schedule element,'' generated on the spot. The loop
+also decides \emph{when to stop} from the state: it halts when the estimated error
+falls below tolerance (or a resource budget---a maximum element count or iteration
+count---is exhausted). This is a \emph{state-generated} (or \emph{data-dependent})
+fold: the schedule is a function of the running carry, not a constant.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: fixed-schedule fold (time) =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.8,3.1) {fixed schedule (time-stepping)};
+    \node[data, minimum width=9mm] (t0) at (-0.4,2.0) {$s_0$};
+    \node[opbox, minimum width=10mm] (k1) at (1.0,2.0) {\code{step}};
+    \node[opbox, minimum width=10mm] (k2) at (2.6,2.0) {\code{step}};
+    \node[data, minimum width=9mm] (t3) at (4.0,2.0) {$s_M$};
+    \draw[flow] (t0) -- (k1);
+    \draw[flow] (k1) -- node[above,font=\scriptsize]{$s_1$} (k2);
+    \draw[flow] (k2) -- (t3);
+    % the pre-known schedule sitting above, feeding the steps
+    \node[data, minimum width=30mm, fill=simBgBlue] (sched) at (1.8,0.9)
+      {schedule $[t_0,\dots,t_M]$ (known up front)};
+    \draw[refedge, simBlue] (1.0,1.55) -- (k1.south);
+    \draw[refedge, simBlue] (2.6,1.55) -- (k2.south);
+    \draw[flow, simBlue] (sched.north) -- (1.8,1.55);
+  \end{scope}
+  \draw[simGray!50, thick] (5.3,0.3) -- (5.3,3.4);
+  % ===== RIGHT: state-generated fold (AMR) =====
+  \begin{scope}[xshift=6.1cm]
+    \node[font=\small\bfseries, text=simGreen] at (2.0,3.1) {state-generated (AMR)};
+    \node[data, minimum width=11mm] (m0) at (-0.2,2.0) {mesh$_0$};
+    \node[opbox, minimum width=13mm, fill=simBgGreen, draw=simGreen] (s1) at (1.6,2.0)
+      {\scriptsize solve$\to$est$\to$mark$\to$refine};
+    \node[data, minimum width=11mm] (m1) at (3.7,2.0) {mesh$_1$};
+    \draw[flow] (m0) -- (s1);
+    \draw[flow] (s1) -- (m1);
+    % the back-edge: next mesh computed FROM the solve
+    \draw[backflow, simGreen] (m1.south) -- ++(0,-9mm) -| node[pos=0.25,below,font=\scriptsize]{if $\eta > \text{tol}$: continue} (s1.south);
+    % terminate
+    \node[product, minimum width=12mm] (done) at (3.7,0.55) {output};
+    \draw[flow] (m1.east) ++(0.0,0) .. controls +(0.6,0) and +(0.6,0) .. (done.east)
+      node[midway, right, font=\scriptsize] {$\eta \le \text{tol}$};
+    \node[simGreen, font=\scriptsize, align=center] at (1.6,0.95)
+      {next mesh is\\\emph{computed}, not listed};
+  \end{scope}
+\end{tikzpicture}
+\caption[Fixed-schedule versus state-generated fold]{Two folds of the same
+combinator. \emph{Left}: time-stepping (\cref{ch:time}) folds over a schedule
+$[t_0,\dots,t_M]$ that is \emph{known before the loop starts}---the steps read their
+times from a pre-built list. \emph{Right}: the AMR loop folds the
+solve--estimate--mark--refine step, but its schedule is \emph{generated from the
+state}: the next mesh is computed from the current solution's error, and the loop
+continues or halts depending on whether the estimated error $\eta$ has fallen below
+tolerance. Same carry-threading \code{fold} structure; the difference is whether the
+schedule is a constant (left) or a function of the carry (right). This is why the
+adaptive loop is a fold with a \emph{data-dependent} stopping condition, not a
+\code{map} over a fixed range.}
+\label{fig:amrfold}
+\end{figure}
+
+\subsection{Writing the fold}
+
+In the framework's vocabulary the loop is one \code{fold\_solve} whose step is the
+three-stage body and whose carry bundles the mesh with the running error indicators.
+\Cref{alg:amr-fold} writes it. Read it against \cref{fig:amrfold}: the carry is the
+mesh (plus the indicators and the scalar error), the step is solve--estimate--mark--
+refine, and the loop predicate tests the state.
+
+\begin{lstlisting}[style=l4style,caption={The AMR loop as a state-generated \code{fold\_solve}. The schedule (the sequence of meshes) is generated from the carry, not supplied as a fixed list.},label={alg:amr-fold}]
+-- the carry threaded through the fold: a mesh and its error state
+type AmrCarry = { mesh : Mesh, etas : [Float], err : Float, ndof : Int }
+
+amr_step :: Estimator -> Float -> AmrCarry -> AmrCarry
+amr_step est theta carry =
+  let (field, ndof) = solve carry.mesh                 -- assemble + solve (per-driver)
+      etas          = flux_recovery_estimate est field -- ESTIMATE (Section 37.2)
+      err           = nrm2 etas                         -- global error scalar
+      marked        = dorfler_mark theta etas           -- MARK    (Section 37.3)
+      mesh'         = refine carry.mesh marked           -- REFINE  (Section 37.4)
+  in  { mesh = mesh', etas = etas, err = err, ndof = ndof }
+
+-- the loop: iterate the step WHILE the state says "not yet accurate enough"
+adaptive :: Estimator -> RefineConfig -> Mesh -> Product
+adaptive est cfg mesh0 =
+  let stop carry = carry.err <= cfg.tol            -- data-dependent stop ...
+                || exhausted carry.ndof cfg         -- ... or budget hit
+      final = iterate_while (not . stop) (amr_step est cfg.theta) (seed mesh0)
+  in  product_of final
+\end{lstlisting}
+
+Two features of \cref{alg:amr-fold} are the whole point. First, the step \emph{reads
+its carry}: \code{amr\_step} solves on \code{carry.mesh}, the mesh the previous step
+produced. That read is what makes this a fold and not a \code{map}---the iterations do
+not commute and cannot run in parallel or be reordered, because mesh $n+1$ is
+\emph{computed from} the solution on mesh $n$. Second, the loop's \code{stop}
+predicate is a function of the \emph{state} (the error \code{carry.err} and the
+DOF count \code{carry.ndof}), not of a fixed iteration count. The number of
+refinement passes is not known in advance; it is however many it takes to drive the
+error below tolerance. This is the \code{iterate\_while} of \cref{ch:fold} at its most
+characteristic---a loop whose length is discovered, not declared.
+
+\begin{pitfall}
+It is tempting to picture the AMR loop as a \code{map} over a list of meshes
+``$[\text{mesh}_0, \text{mesh}_1, \dots]$.'' It is not, and the difference is not
+pedantic. A \code{map}'s elements are independent and known up front; here neither
+holds. Mesh$_{n+1}$ \emph{does not exist} until mesh$_n$ has been solved, estimated,
+and refined---it is \emph{produced by} the step, from the carry. You cannot list the
+schedule before running the loop, and you cannot run the iterations out of order or in
+parallel. The AMR loop is intrinsically a sequential, state-threaded fold; reading it
+as a map would promise a parallelism that the data dependence forbids.
+\end{pitfall}
+
+\subsection{Why it converges: D\"orfler's theorem}
+
+The loop would be useless if refining did not reliably reduce the error. It does, and
+the guarantee is the reason bulk marking, not the naive strategies of
+\cref{sec:mark}, is used. The result, due to D\"orfler, is a \emph{contraction}
+theorem.
+
+\begin{theorem}[D\"orfler, contraction of adaptive refinement; informal]
+\label{thm:dorfler}
+For a model elliptic problem, with the error estimator equivalent to the true error
+and elements marked by the bulk criterion \cref{eq:dorfler} with fraction $\theta$,
+each adaptive pass reduces the error by at least a fixed factor: there is a constant
+$\rho = \rho(\theta) < 1$, independent of the mesh, with
+\begin{equation}
+\norm{u - u_{h}^{(n+1)}} \;\le\; \rho \, \norm{u - u_{h}^{(n)}}
+\label{eq:contraction}
+\end{equation}
+where $u_h^{(n)}$ is the discrete solution after $n$ adaptive passes. Consequently the
+error decreases geometrically in the number of passes, and---combined with the
+minimality of marking---the adaptive sequence achieves the optimal error-versus-DOF
+rate.
+\end{theorem}
+
+The content of \cref{thm:dorfler} is that the loop is a genuine \emph{contraction}:
+every pass shrinks the error by a guaranteed factor $\rho < 1$, so $n$ passes shrink
+it by $\rho^n \to 0$. The bulk-marking coverage law of \cref{sec:mark} is exactly the
+hypothesis: because the marked set carries at least fraction $\theta$ of the error,
+refining it removes at least a corresponding fixed share, which is what forces
+$\rho < 1$. Had we marked by the naive ``top $10\%$ of elements'' rule, no such
+guarantee holds---one can construct meshes where the top $10\%$ of elements carry a
+vanishing fraction of the error, and refinement stalls. Bulk marking buys the
+theorem; the theorem is why the loop is trusted to terminate with a good answer.
+
+\section{Reading the payoff: adaptive versus uniform convergence}
+\label{sec:convergence}
+
+The promise of \cref{sec:why-adapt} was that adaptivity reaches a target accuracy with
+far fewer unknowns. \Cref{fig:convergence} is where that promise is cashed: a
+log--log plot of error against the number of degrees of freedom $N$, for uniform and
+adaptive refinement on a corner-singularity problem. It is the single most important
+diagnostic an AMR practitioner reads.
+
+On a log--log plot, a convergence rate $\text{error} = C\,N^{-r}$ appears as a
+\emph{straight line of slope $-r$}: the steeper the line, the faster the error falls
+per unknown added. Two lines tell the story.
+
+\emph{Uniform refinement} (the shallow line) is rate-limited by the singularity. The
+corner's $r^{-\gamma}$ blow-up caps the smooth-solution rate: no matter how finely you
+cut \emph{every} cell, the under-resolved corner drags the global error down only as
+$N^{-\gamma/2}$, a shallow slope. The interior is over-resolved and the corner is
+under-resolved, and the corner wins.
+
+\emph{Adaptive refinement} (the steep line) recovers the full rate. By concentrating
+cells at the corner---equidistributing the error---it resolves the singularity with a
+small, local investment of unknowns and lets the interior stay coarse. The recovered
+slope is $N^{-p/2}$, the rate a smooth solution would enjoy. The gap between the lines
+is the payoff: read horizontally at any fixed error level, the adaptive mesh needs
+\emph{orders of magnitude} fewer unknowns to reach it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\begin{axis}[
+  width=12cm, height=7.0cm,
+  xmode=log, log basis x=10, ymode=log, log basis y=10,
+  xmin=2e2, xmax=3e5, ymin=2e-4, ymax=2e-1,
+  xlabel={degrees of freedom $N$}, ylabel={error $\|u-u_h\|$},
+  axis lines=left, tick align=outside, grid=major, grid style={simGray!18},
+  legend style={at={(0.03,0.03)}, anchor=south west, font=\footnotesize,
+    draw=simGray!50},
+  every axis plot/.append style={very thick},
+  tick label style={font=\footnotesize},
+]
+  % uniform: slope ~ -1/3 (singularity-limited), shallow
+  \addplot[simRust, mark=*, mark size=1.6pt] coordinates {
+    (400,1.0e-1)(1600,6.3e-2)(6400,4.0e-2)(25600,2.5e-2)(102400,1.6e-2)};
+  \addlegendentry{uniform: slope $-\gamma/2$ (singularity-limited)}
+  % adaptive: slope ~ -1 (full rate), steep
+  \addplot[simBlue, mark=square*, mark size=1.6pt] coordinates {
+    (300,8.0e-2)(900,2.7e-2)(2700,9.0e-3)(8100,3.0e-3)(24300,1.0e-3)(72900,3.3e-4)};
+  \addlegendentry{adaptive: slope $-p/2$ (full smooth rate)}
+  % horizontal "same accuracy" guide at error = 3.3e-3
+  \draw[simGreen, densely dashed, thick] (axis cs:2e2,3.3e-3) -- (axis cs:3e5,3.3e-3);
+  \node[simGreen, font=\scriptsize, anchor=south west] at (axis cs:2.2e2,3.5e-3)
+    {same accuracy};
+  % the DOF gap at that level: adaptive ~7e3, uniform off-chart (extrapolated)
+  \node[simGreen, font=\scriptsize, anchor=west] at (axis cs:1.1e4,1.8e-3)
+    {$\sim\!10\times$ fewer DoFs};
+\end{axis}
+\end{tikzpicture}
+\caption[Adaptive versus uniform convergence]{The payoff, on a log--log error-vs-DOF
+plot for a corner-singularity problem. \emph{Uniform} refinement (rust) is limited by
+the singularity to the shallow rate $\|u-u_h\| = \mathcal{O}(N^{-\gamma/2})$---cutting
+every cell cannot outpace the under-resolved corner. \emph{Adaptive} refinement (blue)
+concentrates unknowns at the corner and recovers the full smooth-solution rate
+$\mathcal{O}(N^{-p/2})$, a steeper line. Reading horizontally at any fixed accuracy
+(green dashed), the adaptive mesh reaches it with far fewer degrees of freedom---the
+gap widens without bound as the target accuracy tightens. This separation, not any
+single solve, is what adaptive mesh refinement buys.}
+\label{fig:convergence}
+\end{figure}
+
+\begin{keyidea}
+On a log--log error-versus-DOF plot, a convergence rate is a straight line and a
+\emph{steeper line is better}. Uniform refinement on a singular problem is stuck on a
+shallow line (the singularity caps the rate); adaptive refinement recovers the steep,
+full-rate line by equidistributing the error. The horizontal gap between the lines---
+how many fewer unknowns adaptivity needs for the same accuracy---widens as the target
+accuracy tightens. That gap is the entire economic case for the
+estimate--mark--refine loop.
+\end{keyidea}
+
+\section{Worked examples}
+\label{sec:worked}
+
+\begin{workedexample}{D\"orfler marking on eight elements, $\theta = 0.7$}{dorfler}
+\label{wex:dorfler}
+We run the bulk-marking algorithm of \cref{sec:mark} explicitly on a concrete list of
+indicators, showing exactly which elements are marked and verifying the coverage law.
+
+\emph{The data.} Eight elements with squared error indicators (in arbitrary units)
+\[
+\eta^2 = (\,4,\;\;36,\;\;9,\;\;1,\;\;25,\;\;2,\;\;16,\;\;7\,),
+\qquad K = 1,\dots,8.
+\]
+The total squared error is
+\[
+T = \sum_K \eta_K^2 = 4+36+9+1+25+2+16+7 = 100,
+\]
+and with $\theta = 0.7$ the error budget to cover is $\theta T = 70$.
+
+\emph{Step 1 --- sort descending.} Rank the elements largest-first, carrying their
+original indices:
+\[
+\begin{array}{c|cccccccc}
+\text{rank} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\\hline
+\text{element } K & 2 & 5 & 7 & 3 & 8 & 1 & 6 & 4 \\
+\eta_K^2 & 36 & 25 & 16 & 9 & 7 & 4 & 2 & 1
+\end{array}
+\]
+
+\emph{Step 2 --- accumulate, and find the pivot.} Walk the sorted list, summing until
+the running total reaches the budget $70$:
+\[
+\begin{array}{c|c|c|c}
+\text{take element} & \eta^2 & \text{running sum} & \ge 70? \\\hline
+K=2 & 36 & 36 & \text{no} \\
+K=5 & 25 & 61 & \text{no} \\
+K=7 & 16 & 77 & \textbf{yes} \;\leftarrow\; \text{pivot} \\
+\end{array}
+\]
+The running sum first reaches $70$ when we add the third element, $K = 7$, bringing
+the total to $77$. The pivot is here: we stop.
+
+\emph{Step 3 --- the marked set.} The marked elements are the prefix taken up to and
+including the pivot:
+\[
+\mathcal S = \{\,K_2,\;K_5,\;K_7\,\} = \{2, 5, 7\},
+\qquad |\mathcal S| = 3.
+\]
+
+\emph{Verify the laws.} \textbf{Coverage:} the marked set carries
+$36 + 25 + 16 = 77$ of the total $100$, so the covered fraction is $0.77 \ge 0.70 =
+\theta$. The coverage law holds. \textbf{Minimality:} could a smaller set cover
+$70$? A two-element set tops out at $36 + 25 = 61 < 70$ (the two largest), so no two
+elements suffice---three is the minimum, and the greedy found it. \textbf{Over-mark
+tie-break:} the achievable cumulative fractions are the ladder
+$0.36,\,0.61,\,0.77,\,\dots$; the target $0.70$ falls \emph{between} the second rung
+($0.61$) and the third ($0.77$), so the rule takes the larger set ($0.77 \ge 0.70$),
+never the smaller ($0.61 < 0.70$). It over-marks, exactly as the convergence theory
+requires.
+
+Three of eight elements---the bulk of the error---are marked for refinement; the other
+five stay coarse. Notice the marking ignored element \emph{count} entirely: it took
+whatever number of elements was needed to reach $70\%$ of the error mass, which here
+happened to be three. On a mesh where the error were more concentrated (say all $100$
+in one element) it would mark just one; spread evenly over the eight (each
+$\eta_K^2 = 12.5$) it would mark six. Bulk marking adapts the set size to the
+error distribution.
+\end{workedexample}
+
+\begin{workedexample}{A ZZ flux indicator on a 1-D mesh}{zz}
+\label{wex:zz}
+We compute the Zienkiewicz--Zhu indicator of \cref{sec:estimate} on a tiny
+one-dimensional example, showing it is largest where the solution bends most.
+
+\emph{The setup.} Take the interval $[0,4]$ meshed into four unit elements
+$K_1=[0,1],\,K_2=[1,2],\,K_3=[2,3],\,K_4=[3,4]$, with a piecewise-linear solution
+$u_h$ whose nodal values are
+\[
+u_h(0)=0,\quad u_h(1)=1,\quad u_h(2)=2,\quad u_h(3)=4,\quad u_h(4)=8.
+\]
+The field is the (1-D) gradient $\diffop u_h = u_h'$; take material weight $Q=1$ so
+the flux is $\mat F = u_h'$. On each element $u_h$ is linear, so $u_h'$ is the
+constant slope:
+\[
+\mat F|_{K_1}=\frac{1-0}{1}=1,\quad
+\mat F|_{K_2}=\frac{2-1}{1}=1,\quad
+\mat F|_{K_3}=\frac{4-2}{1}=2,\quad
+\mat F|_{K_4}=\frac{8-4}{1}=4.
+\]
+This is the \emph{discontinuous} computed flux: a constant on each element, jumping
+$1\!\to\!1\!\to\!2\!\to\!4$ at the interior nodes. The jumps are $0$ (at $x=1$), $1$
+(at $x=2$), $2$ (at $x=3$)---the flux is smooth on the left and increasingly broken
+on the right, where the solution bends upward.
+
+\emph{Recover a smooth flux.} A simple nodal recovery (the 1-D analogue of the $L^2$
+projection \cref{eq:zz-recover}) assigns each interior node the average of the two
+adjacent element fluxes, and each end node the one flux it touches:
+\[
+G(0)=1,\quad
+G(1)=\tfrac{1+1}{2}=1,\quad
+G(2)=\tfrac{1+2}{2}=1.5,\quad
+G(3)=\tfrac{2+4}{2}=3,\quad
+G(4)=4.
+\]
+The recovered flux $G$ is the continuous, piecewise-linear function through these
+nodal values---a smooth stand-in for the true flux.
+
+\emph{The per-element indicator.} On element $K$, the indicator
+$\eta_K^2 = \int_K (\mat F - G)^2\,dx$ measures the gap between the constant element
+flux $\mat F|_K$ and the linear recovered flux $G$. On a unit element from node values
+$G_{\text{left}}, G_{\text{right}}$ against the constant $\mat F$, the integral of the
+squared difference of a constant and a line evaluates to
+\[
+\eta_K^2 = \int_0^1\!\Bigl(\mat F - \bigl[G_{\text{left}} + (G_{\text{right}}-G_{\text{left}})\,s\bigr]\Bigr)^2 ds .
+\]
+Computing each:
+\[
+\begin{array}{c|c|c|c}
+\text{element} & \mat F|_K & (G_{\text{left}},G_{\text{right}}) & \eta_K^2 \\\hline
+K_1 & 1 & (1,\,1)   & 0 \\
+K_2 & 1 & (1,\,1.5) & \int_0^1(1-(1+0.5s))^2\,ds = \int_0^1 (0.5s)^2 ds = \tfrac{1}{12}\approx 0.083 \\
+K_3 & 2 & (1.5,\,3) & \int_0^1(2-(1.5+1.5s))^2 ds = \int_0^1 (0.5-1.5s)^2 ds = 0.25 \\
+K_4 & 4 & (3,\,4)   & \int_0^1(4-(3+s))^2 ds = \int_0^1 (1-s)^2 ds = \tfrac{1}{3}\approx 0.333 \\
+\end{array}
+\]
+
+\emph{Read the result.} The indicators are
+\[
+\eta^2 = (\,0,\;\;0.083,\;\;0.25,\;\;0.333\,),
+\qquad K_1,\dots,K_4,
+\]
+\emph{increasing left to right}---exactly tracking where the solution bends most. On
+$K_1$, where the flux is perfectly constant ($1\!\to\!1$, no jump), the indicator is
+zero: the discretization already resolves this region, and the estimator correctly
+reports nothing to do. On $K_4$, where the flux jumps hardest ($2\!\to\!4$ across the
+node and the solution curves upward fastest), the indicator is largest. Feed these
+four numbers to the D\"orfler marker of \cref{wex:dorfler}: with $\theta = 0.7$ and
+total $0.666$, the budget is $0.466$; the sorted prefix $0.333 + 0.25 = 0.583 \ge
+0.466$ marks $\{K_4, K_3\}$---the two right-hand elements, precisely the region that
+needs refining. The estimator found the feature, and the marker selected it, with no
+knowledge of the true solution at all.
+\end{workedexample}
+
+\section{Where this leaves us}
+
+We have opened the three black boxes of the adaptive loop. \emph{Estimate} is
+Zienkiewicz--Zhu flux recovery: smooth the discontinuous computed flux by an $L^2$
+projection and take the per-element gap as the indicator---local, cheap, quadratic in
+the field, and zero exactly when the flux is already smooth. \emph{Mark} is
+D\"orfler bulk marking: sort the indicators, accumulate, and take the smallest prefix
+carrying fraction $\theta$ of the total squared error---marking by error mass, with an
+over-mark tie-break that makes the coverage provable. \emph{Refine} subdivides the
+marked elements (red--green or bisection, keeping the mesh conforming) and rebuilds the
+space---a mesh-library operation we treat as a boundary. And the whole loop is a
+\code{fold\_solve} whose schedule is \emph{generated from its own state}: the next
+mesh is computed from the current solution's error, and the fold runs until the error
+falls below tolerance. D\"orfler's contraction theorem guarantees each pass shrinks
+the error by a fixed factor, and the log--log convergence plot shows the payoff: the
+full smooth-solution rate on a singular problem, at orders of magnitude fewer
+unknowns than uniform refinement.
+
+This closes the adaptive loop that \cref{ch:lifecycle} sketched and
+\cref{ch:combinators} typed as a state-threaded fold. The error indicators the loop
+consumes are themselves \emph{reductions}---a per-element norm of the flux gap, and a
+global norm of the indicator vector for the stopping test. Those reductions, and the
+broader family of fold-to-a-scalar operations the simulator runs, are the subject of
+\cref{ch:reductions}, which we take up next.
+
+\summarysection
+Adaptive mesh refinement reaches a target accuracy with far fewer unknowns than
+uniform refinement by \emph{equidistributing the error}: it puts small cells only
+where the solution's features (corners, interfaces, field concentrations) make the
+local error large, leaving smooth regions coarse. It does this automatically through
+the estimate--mark--refine loop of \cref{ch:lifecycle}. \emph{Estimate} uses the
+Zienkiewicz--Zhu flux-recovery indicator $\eta_K^2 = \int_K \norm{\mat F - G}^2$,
+where $\mat F = Q\,\diffop u_h$ is the discontinuous computed flux and $G = \mat
+M^{-1}(\text{Flux}\cdot u_h)$ is its smooth $L^2$ projection---a local, cheap,
+quadratic indicator that vanishes exactly when the flux is already smooth and is large
+where the solution bends most. \emph{Mark} uses D\"orfler bulk marking: the smallest
+set of elements whose summed squared error covers a fraction $\theta$ (default $0.7$)
+of the total, found by sorting the indicators largest-first and accumulating to a
+pivot, with an over-mark-on-ties rule that makes coverage provably $\ge \theta$.
+\emph{Refine} subdivides the marked elements (red--green or bisection, kept conforming)
+and rebuilds the space---a mesh-library operation at our framework's boundary. The
+whole loop is a \code{fold\_solve} whose schedule is generated from its own state: the
+next mesh is computed from the current solution's error, and the loop halts when the
+error drops below tolerance or a budget is hit---a state-generated fold, not a map
+over a fixed schedule. D\"orfler's theorem guarantees geometric error contraction per
+pass, and the log--log error-vs-DOF plot shows the payoff: the full smooth-solution
+convergence rate on a singular problem, at a fraction of the unknowns uniform
+refinement would demand.
+
+\furtherreading
+The bulk-marking strategy and its convergence theory are due to
+D\"orfler~\citep{dorfler1996}, whose ``convergent adaptive algorithm for Poisson's
+equation'' introduced the criterion \cref{eq:dorfler} and proved the contraction
+\cref{eq:contraction}; it remains the standard reference and is well worth reading for
+the elegance of the marking argument. The flux-recovery error estimator is due to
+Zienkiewicz and Zhu~\citep{zienkiewiczzhu1987}, whose ``simple error estimator and
+adaptive procedure'' is one of the most cited papers in computational engineering;
+the recovered-gradient idea of \cref{sec:estimate} is theirs. For the mathematical
+theory tying it all together---a-posteriori estimates, the role of bulk marking in
+optimal convergence rates, and the approximation theory behind the rate recovery of
+\cref{sec:convergence}---Brenner and Scott~\citep{brennerscott2008} is the standard
+graduate reference, building directly on the C\'ea-lemma foundation of
+\cref{ch:galerkin}. The mesh-refinement geometry of \cref{sec:refine}---red--green
+refinement, newest-vertex bisection, and the hanging-node constraints---is treated in
+the finite-element-implementation literature; readers wanting the algorithmic detail
+of the boundary we declined to cross will find it there.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Marking by hand.} Six elements have squared indicators
+  $\eta^2 = (10,\,2,\,30,\,5,\,18,\,35)$. With $\theta = 0.6$, run the D\"orfler
+  algorithm: sort descending, accumulate, find the pivot, and write the marked set.
+  Verify the coverage law and confirm minimality (no smaller set reaches the budget).
+
+  \item \textbf{The dial $\theta$.} For the data of \cref{wex:dorfler}
+  ($\eta^2 = (4,36,9,1,25,2,16,7)$, total $100$), find the marked set for
+  $\theta = 0.3$, $\theta = 0.7$, and $\theta = 0.95$. Confirm the monotonicity law
+  $\mathcal S(0.3) \subseteq \mathcal S(0.7) \subseteq \mathcal S(0.95)$. What is the
+  marked set as $\theta \to 0^+$? As $\theta \to 1$?
+
+  \item \textbf{Why not ``top $10\%$ of elements''?} Construct a list of $20$
+  squared indicators in which the top $10\%$ of \emph{elements} (the two largest)
+  carry only a tiny fraction of the total error. Explain, using D\"orfler's theorem
+  \cref{thm:dorfler}, why refining those two would stall convergence, and how bulk
+  marking avoids the trap. (Hint: make the error spread nearly uniformly.)
+
+  \item \textbf{The ZZ indicator vanishes on smooth flux.} Suppose the computed flux
+  $\mat F$ is already continuous and piecewise linear---so its $L^2$ projection $G$
+  onto the smooth space equals $\mat F$ itself. Show every $\eta_K^2 = 0$. Then argue,
+  conversely, that a single jump in $\mat F$ forces at least one $\eta_K^2 > 0$. Which
+  property of the indicator (\cref{sec:estimate}) is this?
+
+  \item \textbf{Quadratic, not linear.} Using $\eta_K^2 = \int_K \norm{\mat F - G}^2$
+  and the linearity of the flux map and projection in $u_h$, show
+  $\eta_K^2(\alpha u_h) = \alpha^2\,\eta_K^2(u_h)$ but give a concrete two-element
+  example where $\eta_K^2(u_h + w_h) \ne \eta_K^2(u_h) + \eta_K^2(w_h)$. Why does this
+  mean the estimator is \emph{not} an \code{apply\_linop}-style linear operator?
+
+  \item \textbf{Map or fold?} Explain why the AMR loop of \cref{alg:amr-fold} is a
+  \code{fold\_solve} and not a \code{map} over a list of meshes. Identify the carry,
+  the step, and the data-dependent stopping condition. Which line of the pseudocode is
+  the one that forbids reordering the iterations, and why?
+
+  \item \textbf{Reading the convergence curve.} On the log--log plot of
+  \cref{fig:convergence}, the uniform line has slope $-\tfrac13$ and the adaptive line
+  slope $-1$. (a)~If a target error of $10^{-3}$ requires $N_{\text{ad}} = 8\times10^3$
+  adaptive unknowns, estimate how many \emph{uniform} unknowns the shallow line would
+  need to reach the same error by extrapolation. (b)~By what factor does the DOF
+  advantage of adaptivity grow each time you tighten the target error by $10\times$?
+
+  \item \textbf{Composite indicators.} A driven (frequency-domain) analysis computes
+  \emph{two} ZZ indicators per element---an electric-flux one $\eta_{K,E}^2$ and a
+  magnetic-flux one $\eta_{K,B}^2$---and combines them as
+  $\eta_K^2 = \eta_{K,E}^2 + \eta_{K,B}^2$. Why is the combination done in the
+  \emph{squared} domain rather than on the indicators $\eta_K$ themselves? (Hint: which
+  quantity is it that the total error $\sum_K \eta_K^2$ must equal, and how does that
+  decompose?) Relate this to the channel-additivity of \cref{ch:reductions}'s
+  reduction verbs.
+\end{enumerate}

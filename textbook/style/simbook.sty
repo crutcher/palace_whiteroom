@@ -1,0 +1,220 @@
+% simbook.sty — shared preamble for
+% "Tensor-Field Simulation: How the Synthesis Surface Simulates Its Targets"
+% Target engine: pdflatex (TeX Live 2023). Class: memoir.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{style/simbook}[2026/06/09 Textbook shared preamble]
+
+% ── encoding / fonts ─────────────────────────────────────────────────────────
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{lmodern}
+\RequirePackage{microtype}
+
+% ── math ─────────────────────────────────────────────────────────────────────
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mathtools}
+\RequirePackage{amsthm}
+\RequirePackage{bm}
+
+% ── graphics / color / diagrams ──────────────────────────────────────────────
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.geometric,
+  shapes.misc,decorations.pathreplacing,decorations.markings,matrix,patterns,
+  shapes.multipart,chains,quotes,angles}
+
+% ── tables / lists / units ───────────────────────────────────────────────────
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{multirow}
+\RequirePackage{enumitem}
+\RequirePackage{siunitx}
+\sisetup{detect-all}
+
+% ── bibliography (natbib + bibtex; biblatex/biber not installed) ─────────────
+\RequirePackage[numbers,sort&compress]{natbib}
+
+% ── pseudocode (the L4 calculus notation) ────────────────────────────────────
+% Rendered with listings, NOT math mode: the named-shape-group $S sigil and the
+% Haskell/TS notation are literal here. (No KaTeX collision in LaTeX, but we keep
+% pseudocode out of math mode by convention, matching the source spec.)
+\RequirePackage{listings}
+
+% ── palette ──────────────────────────────────────────────────────────────────
+\definecolor{simInk}{HTML}{1A1A2E}
+\definecolor{simBlue}{HTML}{1F4E79}
+\definecolor{simTeal}{HTML}{2A7F7F}
+\definecolor{simRust}{HTML}{B5532A}
+\definecolor{simGold}{HTML}{B7892B}
+\definecolor{simGreen}{HTML}{2E7D32}
+\definecolor{simViolet}{HTML}{5E35B1}
+\definecolor{simGray}{HTML}{5A5A66}
+\definecolor{simBgBlue}{HTML}{EAF1F8}
+\definecolor{simBgGold}{HTML}{FBF3DC}
+\definecolor{simBgRust}{HTML}{FBEBE2}
+\definecolor{simBgGreen}{HTML}{E8F3E9}
+\definecolor{simBgGray}{HTML}{F0F0F3}
+\definecolor{simBgViolet}{HTML}{EEE9F7}
+\definecolor{simCode}{HTML}{F6F6FB}
+
+\lstdefinelanguage{L4}{
+  morekeywords={let,in,do,return,if,then,else,where,case,of,data,type,newtype,
+    forall,get,put,modify,execState,foldl,foldr,map,zip,zipWith,while,Op,Sim,Solve,
+    StateT,Identity,Tensor,Scalar,Bool,Int,Float,LinOp},
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[s]{\{-}{-\}},
+  morestring=[b]",
+}
+\lstdefinestyle{l4style}{
+  language=L4,
+  basicstyle=\small\ttfamily\color{simInk},
+  keywordstyle=\color{simBlue}\bfseries,
+  commentstyle=\color{simGray}\itshape,
+  stringstyle=\color{simRust},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  breakatwhitespace=true,
+  backgroundcolor=\color{simCode},
+  frame=single,
+  rulecolor=\color{simGray!45},
+  framesep=5pt,
+  xleftmargin=8pt,
+  xrightmargin=4pt,
+  aboveskip=1.1ex,
+  belowskip=1.1ex,
+  literate={->}{{$\rightarrow$}}2 {=>}{{$\Rightarrow$}}2 {<-}{{$\leftarrow$}}2
+           {>>=}{{>>=}}3 {::}{{::}}2,
+}
+\lstset{style=l4style}
+% inline pseudocode. For simple snippets (escape `_` as \_); for snippets that
+% contain `$` or literal braces, use \lstinline[style=l4style]|...| directly in
+% running text (never inside \item[] / captions / section titles).
+\newcommand{\code}[1]{\texttt{#1}}
+
+% ── theorem-like environments (amsthm) ───────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}[definition]{Example}
+\newtheorem{remark}[definition]{Remark}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+
+% ── boxed pedagogical asides (tcolorbox) ─────────────────────────────────────
+\RequirePackage[most]{tcolorbox}
+\tcbset{
+  simbox/.style={
+    enhanced, breakable, boxrule=0.5pt, arc=2pt, left=8pt, right=8pt,
+    top=5pt, bottom=5pt, fonttitle=\bfseries, coltitle=white,
+    attach boxed title to top left={xshift=8pt,yshift=-2pt},
+    boxed title style={boxrule=0pt, arc=1pt, left=4pt, right=4pt},
+  },
+}
+% Key idea / "aha"
+\newtcolorbox{keyidea}[1][]{simbox, colback=simBgGold, colframe=simGold,
+  title={Key idea}, #1}
+% Pitfall / warning
+\newtcolorbox{pitfall}[1][]{simbox, colback=simBgRust, colframe=simRust,
+  title={Pitfall}, #1}
+% Notation note
+\newtcolorbox{notationbox}[1][]{simbox, colback=simBgGray, colframe=simGray,
+  title={Notation}, #1}
+% Physical-setup anchor
+\newtcolorbox{physicsbox}[1][]{simbox, colback=simBgGreen, colframe=simGreen,
+  title={The physical picture}, #1}
+% Worked example (titled, counter-bearing). Its counter is named `workedexample`;
+% cleveref is told that name below (after cleveref loads) so \cref{wex:...} works.
+\newtcbtheorem[number within=chapter]{workedexample}{Worked example}{%
+  simbox, colback=simBgBlue, colframe=simBlue, title after break={Worked example~\thetcbcounter\ (cont.)}}{wex}
+
+% ── cross-cutting math macros ────────────────────────────────────────────────
+% vector calculus
+\newcommand{\grad}{\operatorname{grad}}
+\renewcommand{\div}{\operatorname{div}}
+\newcommand{\curl}{\operatorname{curl}}
+\newcommand{\Grad}{\nabla}
+\newcommand{\Div}{\nabla\cdot}
+\newcommand{\Curl}{\nabla\times}
+\newcommand{\Lap}{\nabla^2}
+% function spaces (de Rham)
+\newcommand{\Hone}{H^1}
+\newcommand{\Hcurl}{H(\mathrm{curl})}
+\newcommand{\Hdiv}{H(\mathrm{div})}
+\newcommand{\Ltwo}{L^2}
+% fields (upright bold for vector fields)
+\newcommand{\vE}{\mathbf{E}}
+\newcommand{\vB}{\mathbf{B}}
+\newcommand{\vH}{\mathbf{H}}
+\newcommand{\vD}{\mathbf{D}}
+\newcommand{\vJ}{\mathbf{J}}
+\newcommand{\vA}{\mathbf{A}}
+\newcommand{\vF}{\mathbf{F}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vb}{\mathbf{b}}
+\newcommand{\vs}{\mathbf{s}}
+\newcommand{\vr}{\mathbf{r}}
+\newcommand{\vn}{\mathbf{n}}
+\newcommand{\vu}{\mathbf{u}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vw}{\mathbf{w}}
+\newcommand{\vp}{\mathbf{p}}
+\newcommand{\vq}{\mathbf{q}}
+\newcommand{\vk}{\mathbf{k}}
+\newcommand{\vz}{\mathbf{z}}
+\newcommand{\va}{\mathbf{a}}
+\newcommand{\vc}{\mathbf{c}}
+\newcommand{\vd}{\mathbf{d}}
+\newcommand{\ve}{\mathbf{e}}
+\newcommand{\vf}{\mathbf{f}}
+\newcommand{\vg}{\mathbf{g}}
+\newcommand{\vh}{\mathbf{h}}
+\newcommand{\vm}{\mathbf{m}}
+\newcommand{\vt}{\mathbf{t}}
+% operators / matrices
+\newcommand{\mat}[1]{\mathsf{#1}}
+\newcommand{\Kop}{\mathsf{K}}
+\newcommand{\Mop}{\mathsf{M}}
+\newcommand{\Cop}{\mathsf{C}}
+% linear algebra / analysis
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\newcommand{\inner}[2]{\left\langle #1,\, #2\right\rangle}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\Complex}{\mathbb{C}}
+\newcommand{\dx}{\,\mathrm{d}x}
+\newcommand{\dt}{\,\mathrm{d}t}
+\newcommand{\dV}{\,\mathrm{d}V}
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+% the four weak-form differential operators
+\newcommand{\diffop}{\mathcal{D}}
+% shorthand for a domain
+\newcommand{\dom}{\Omega}
+\newcommand{\bdry}{\partial\Omega}
+
+% ── hyperref + cleveref (load late) ──────────────────────────────────────────
+\RequirePackage[colorlinks=true,linkcolor=simBlue,citecolor=simTeal,
+  urlcolor=simRust]{hyperref}
+\RequirePackage[nameinlink]{cleveref}
+\crefname{definition}{Definition}{Definitions}
+% the tcbtheorem `workedexample` counter, for \cref{wex:...}
+\crefname{workedexample}{Worked example}{Worked examples}
+\Crefname{workedexample}{Worked example}{Worked examples}
+
+% ── small helpers ────────────────────────────────────────────────────────────
+% chapter-opening orientation paragraph
+\newcommand{\chapterorient}[1]{\begin{quote}\itshape\small #1\end{quote}\medskip}
+% "further reading" + "summary" section helpers (level: section*)
+\newcommand{\summarysection}{\section*{Summary}\addcontentsline{toc}{section}{Summary}}
+\newcommand{\furtherreading}{\section*{Further reading}\addcontentsline{toc}{section}{Further reading}}
+\newcommand{\exercisessection}{\section*{Exercises}\addcontentsline{toc}{section}{Exercises}}

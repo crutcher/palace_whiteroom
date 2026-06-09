@@ -1,0 +1,1024 @@
+\chapter{Operators as Values: Constructed Operators and Capability Typing}
+\label{ch:operators}
+
+\chapterorient{In \cref{ch:language} we learned that a function is a value, and
+that partial application can \emph{freeze} some arguments now and supply the rest
+later---``build once, apply many.'' In \cref{ch:strata} we learned that the
+build-time configuration a solver bakes in lives in a different stratum, with a
+different lifetime, from the run-time vectors it processes. This chapter pays both
+ideas off at once. It makes precise the single most important value in the whole
+numerical machinery: the \emph{operator}---a function built once with its entire
+configuration baked into immutable internal state, then applied again and again as
+a pure function. By the end you will be able to say exactly why ``the
+preconditioner is just a function you apply,'' why the \emph{same} \code{GMRES}
+drives wildly different preconditioners without changing a line, why a \emph{flexible}
+preconditioner cannot be a constructed operator and must instead be threaded
+through state, and how a phantom-typed \emph{brand} can make ``you passed the
+preconditioner where the true operator belongs'' a compile-time error rather than a
+silent wrong answer.}
+
+\section{The shape we keep meeting}
+
+We have now met the same shape four or five times, in four or five disguises, and
+it is time to name it once and for all.
+
+In \cref{ch:targets} the simulator assembled an operator from the mesh and
+materials and then solved a system built from that operator. In \cref{ch:language}
+a constructor took a configuration and \emph{returned a function}
+(\lstinline[style=l4style]|make_operator :: Config -> (Tensor[N] -> Tensor[N])|),
+which we then applied to many different vectors. In \cref{ch:strata} we separated
+the \emph{build-time stratum}---configs, tables, a factorization, computed once and
+never touched again---from the \emph{run-time stratum}---the iterate, the residual,
+the state that evolves every step. Each time, the same picture: an expensive,
+once-only \emph{construction} produces a thing; a cheap, repeated \emph{application}
+uses it.
+
+That thing is what this book calls a \emph{constructed operator}, and it is the
+backbone of every solver, every preconditioner, every assembled matrix in the
+chapters ahead. The shape is so pervasive that it earns its own vocabulary, its own
+type spelling, and---because getting it slightly wrong silently corrupts a
+solve---its own pitfalls. This chapter develops all three.
+
+\begin{keyidea}
+A \emph{constructed operator} is a value built \emph{once}, with its entire
+configuration baked into immutable internal state, then \emph{applied} many times as
+a pure function. Construction is expensive and happens at build time (factorize,
+precompute, allocate); application is cheap and pure with respect to the operator's
+internals (it reads them, never changes them). The two phases live in two strata
+(\cref{ch:strata}) with two lifetimes. Spotting this shape---and resisting the urge
+to collapse the two phases---is the central skill of this chapter.
+\end{keyidea}
+
+\subsection{Two phases, two strata}
+
+Make the two phases concrete. A constructed operator has exactly two events in its
+life, and they can be arbitrarily far apart in the program.
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[Construction.] Inputs are the \emph{configuration}: enum flags, raw tables,
+  problem data, a matrix to factorize. The output is an operator value carrying
+  internal immutable state. This step is often expensive---a sparse $LU$
+  factorization, a precomputed basis-evaluation table, an assembled stiffness
+  matrix. It happens \emph{once}.
+  \item[Application.] The only input is the \emph{operand}---the vector (or sim
+  state) being transformed. The output is a new vector. This step is cheap relative
+  to construction, and it is \emph{pure with respect to the operator's internals}:
+  it reads the baked-in state, produces a fresh result, and changes nothing. It
+  happens \emph{many} times.
+\end{description}
+
+\Cref{fig:constructapply} draws the split. Configs and tables flow \emph{in} on the
+left; an opaque operator value sits in the middle; a stream of cheap
+\code{apply(v)} calls flows out on the right, each reading the same frozen internals
+and returning a fresh vector. The left arrow fires once; the right arrows fire
+thousands of times.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % ---- construction inputs ----
+  \node[data, align=left, text width=26mm] (cfg)
+    {config / enums\\raw tables\\a matrix to\\factorize};
+  % ---- the construct step ----
+  \node[stage, minimum width=26mm, minimum height=14mm, right=14mm of cfg] (con)
+    {\textbf{construct}\\[1pt]\footnotesize factorize,\\precompute};
+  \draw[flow] (cfg) -- node[above,font=\scriptsize]{once} (con);
+  % ---- the opaque operator value ----
+  \node[draw=simBlue, fill=simBgBlue, very thick, rounded corners=3pt,
+        minimum width=24mm, minimum height=20mm, right=14mm of con] (op) {};
+  \node[font=\ttfamily\scriptsize, simInk] at (op.north) [yshift=-3.2mm]
+    {\lstinline[style=l4style]|Op[N -> N]|};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (op.center)
+    {frozen\\internals\\(factorization,\\tables)};
+  \draw[flow] (con) -- (op);
+  % ---- many cheap applies out ----
+  \foreach \y/\lbl in {1.1/a, 0.0/b, -1.1/c}{
+    \node[draw=simTeal, fill=simBgGreen, semithick, rounded corners=2pt,
+          minimum width=18mm, minimum height=6mm] (ap\lbl) at ($(op.east)+(2.8,\y)$)
+          {\footnotesize\ttfamily apply v};
+    \draw[flow] (op.east) -- (ap\lbl.west);
+  }
+  \node[font=\scriptsize\itshape, simGray] at ($(op.east)+(2.8,-1.9)$) {many times, cheap};
+  % build-time / run-time band labels
+  \node[font=\scriptsize\bfseries, simRust] at ($(con)+(0,-1.6)$) {build-time stratum};
+  \node[font=\scriptsize\bfseries, simGreen] at ($(op.east)+(2.8,1.9)$) {run-time stratum};
+\end{tikzpicture}
+\caption[The construct-then-apply phase split]{The defining shape of a constructed
+operator. \emph{Construction} (left) consumes the configuration---enums, tables, a
+matrix to factorize---and runs \emph{once}, producing an opaque operator value whose
+internal state (a factorization, precomputed tables) is now frozen. \emph{Application}
+(right) consumes only an operand vector and runs \emph{many} times, each call cheap
+and pure on the frozen internals. The two phases live in the two strata of
+\cref{ch:strata}: construction is build-time, application is run-time, and the
+boundary between them is a lifetime boundary the type system can enforce.}
+\label{fig:constructapply}
+\end{figure}
+
+\subsection{It is currying, made first-class}
+
+You have, in fact, already built constructed operators---you just called them
+closures. Recall \code{scaled\_by} from \cref{wex:scaledby}: it took a scalar,
+captured it, and returned a function that scales a tensor by that captured value.
+Construction was ``supply the scalar''; application was ``supply the tensor''; the
+captured scalar was the baked-in internal state. A constructed operator is that
+pattern grown up: the captured state is no longer a single scalar but a whole
+configuration---a factorization, a stack of basis tables, an enum that selected an
+algorithm---and the returned function is no longer a throwaway lambda but a
+long-lived value the rest of the program holds and applies.
+
+This is why \cref{ch:language} could already write the signature
+
+\begin{lstlisting}[style=l4style]
+make_operator :: Config -> Op[Tensor[N] -> Tensor[N]]
+\end{lstlisting}
+
+\noindent and read it as ``give me a configuration, I return an operator value you
+apply later.'' \emph{Constructing} the operator is partial application: we supply
+the \code{Config} argument now and \emph{freeze} it, getting back a more specialized
+value awaiting the run-time vector (\cref{fig:opcurry}). The
+\lstinline[style=l4style]|Op[in -> out]| brackets are the same reader-intent marker
+as the closure-returning parentheses of \cref{ch:language}---they announce ``the
+result is a thing you hold and apply''---with one addition: they promise the held
+thing carries \emph{baked-in parameters}, the configuration, as a first-class,
+named part of the value rather than as an invisible capture.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  \node[font=\bfseries\small, simInk] at (0,2.5)
+    {Construction is partial application: freeze the configuration, await the vector};
+  % stage 0: the constructor, needs config + vector
+  \node[draw=simTeal, fill=simBgGray, thick, rounded corners=2pt,
+        minimum width=24mm, minimum height=11mm] (f0) at (-4.6,1.0) {};
+  \node[font=\ttfamily\scriptsize] at (-4.6,1.32) {make\_operator};
+  \node[font=\scriptsize, simTeal] at (-4.6,0.78) {needs cfg, $v$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of f0,align=center]
+    {\code{Config ->}\\\code{Op[N -> N]}};
+  % supply config
+  \draw[flow] (-3.3,1.0) -- node[above,font=\scriptsize]{supply \code{cfg}} (-1.6,1.0);
+  % stage 1: the constructed operator, config frozen
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=24mm, minimum height=11mm] (f1) at (-0.2,1.0) {};
+  \node[font=\ttfamily\scriptsize] at (-0.2,1.32) {apply\_A = make\_operator cfg};
+  \node[font=\scriptsize, simBlue] at (-0.2,0.78) {needs $v$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of f1] {\code{Op[N -> N]}};
+  \node[draw=simRust,fill=simBgRust,rounded corners=1pt,font=\scriptsize,
+        inner sep=1.5pt] at (-0.2,2.05) {\code{cfg} frozen in};
+  % supply v
+  \draw[flow] (1.0,1.0) -- node[above,font=\scriptsize]{supply $v$} (2.6,1.0);
+  % stage 2: a vector
+  \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+        minimum width=16mm, minimum height=11mm] (r) at (3.8,1.0) {$\mat{A}v$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of r] {\code{Tensor[N]}};
+\end{tikzpicture}
+\caption[Constructing an operator is partial application]{A constructed operator is
+currying (\cref{ch:language}) raised to first class. \code{make\_operator} needs a
+configuration \emph{and}, later, a vector. Supplying the configuration does not
+produce a vector---it produces a \emph{new value}, the constructed operator
+\code{apply\_A}, with the configuration \emph{frozen in}. Supplying a vector to that
+operator finally produces a result. The two arrows are the two phases of
+\cref{fig:constructapply}; the frozen \code{cfg} is the operator's immutable internal
+state. The \lstinline[style=l4style]|Op[...]| spelling differs from a plain closure
+only in advertising that the frozen part is a first-class, named configuration.}
+\label{fig:opcurry}
+\end{figure}
+
+\subsection{Application is pure on the internals}
+
+The word ``pure'' is doing real work in ``applied as a pure function,'' and it is
+worth pinning down, because it is exactly the property that makes constructed
+operators safe to share.
+
+Application reads the operator's internal state and never writes it. So two
+applications of the same operator cannot interfere: \code{apply\_A x1} and
+\code{apply\_A x2} each read the frozen factorization, each produce a fresh result,
+and neither disturbs the other or the operator. This is the immutability discipline
+of \cref{ch:language} applied to the operator's internals: there is nothing to clone
+and nothing to protect, because the internals cannot be overwritten by any
+application. An operator, once constructed, is as inert and shareable as the number
+$7$.
+
+\begin{pitfall}
+``Pure on the internals'' is not the same as ``stateless.'' A constructed operator
+\emph{does} carry state---a whole factorization, perhaps megabytes of it. The
+discipline is that this state is \emph{set at construction and never changed
+thereafter}. If you find yourself wanting an operator to update something between
+applications---an iteration count, a running residual, a cached previous input---stop:
+that thing is \emph{not} operator-internal state. It is sim state (\cref{ch:strata}),
+and it must be threaded explicitly through the run-time stratum, not stuffed into the
+operator. An operator that mutates between applications has stopped being a pure
+function, and every guarantee in this chapter evaporates with it. We return to
+exactly this failure---and why it is not a flaw but a real distinction---in
+\cref{sec:decisionrule}.
+\end{pitfall}
+
+\section{Worked example: a constructed Jacobi preconditioner}
+
+The cleanest possible constructed operator is the \emph{Jacobi} (diagonal)
+preconditioner, and tracing it end to end makes every abstract claim above concrete.
+We will meet it again, in its proper numerical setting, in \cref{ch:precond}; here it
+is purely a vehicle for the construct-then-apply shape.
+
+\begin{workedexample}{Building and applying a Jacobi preconditioner}{jacobi}
+A preconditioner is an \emph{approximate inverse}: given a matrix $\mat{A}$, we want
+a cheap operator $\mat{M}^{-1}$ with $\mat{M}^{-1}\approx \mat{A}^{-1}$, so that
+applying it to a residual $\vr$ yields something close to the error. The Jacobi
+choice is the cheapest possible: take $\mat{M}=\operatorname{diag}(\mat{A})$, the
+diagonal of $\mat{A}$, and ignore everything off the diagonal. Then $\mat{M}^{-1}$ is
+just ``divide each component by the corresponding diagonal entry.''
+
+\textbf{Construction (once).} Extract the diagonal of $\mat{A}$ and invert it
+componentwise, producing a single vector $\mathbf{d}$ of reciprocals. This is the entire
+baked-in internal state:
+\begin{lstlisting}[style=l4style]
+make_jacobi :: Tensor[N, N] -> Op[Tensor[N] -> Tensor[N]]
+make_jacobi A =
+  let diag = extract_diagonal A in   -- read the N diagonal entries: O(N)
+  let d    = reciprocal diag in      -- d[i] = 1 / A[i,i]: O(N)
+  \r -> d .* r                       -- the closure: captures d, awaits r
+\end{lstlisting}
+The returned closure captures \code{d}---the operator's frozen internal state---and
+awaits a residual. Construction touched $\mat{A}$ exactly twice (extract, invert),
+each an $O(N)$ pass; it produced one length-$N$ vector. Notice what construction did
+\emph{not} do: it never looked at any residual, because no residual exists yet.
+
+\textbf{Application (many times).} Inside a solve, every iteration produces a fresh
+residual $\vr_k$ and applies the preconditioner to it:
+\begin{lstlisting}[style=l4style]
+let pc = make_jacobi A in       -- build ONCE, before the loop
+... inside the iteration ...
+let z1 = pc r1 in               -- z1 = d .* r1 ; O(N), pure on d
+let z2 = pc r2 in               -- z2 = d .* r2 ; O(N), reads the SAME d
+let z3 = pc r3 in               -- ...
+\end{lstlisting}
+Each application is one componentwise multiply: $\vz_k = \mathbf{d} \odot \vr_k$, an $O(N)$
+operation. Take $N=4$, $\operatorname{diag}(\mat{A})=[4,2,8,1]$, so $\mathbf{d} =
+[\tfrac14,\tfrac12,\tfrac18,1]$. Then for $\vr_1=[8,6,16,3]$,
+\[
+  \vz_1 \;=\; \mathbf{d} \odot \vr_1 \;=\; \bigl[\tfrac14\!\cdot\!8,\ \tfrac12\!\cdot\!6,\
+  \tfrac18\!\cdot\!16,\ 1\!\cdot\!3\bigr] \;=\; [2,\,3,\,2,\,3],
+\]
+and for a \emph{different} residual $\vr_2=[4,4,4,4]$ on the \emph{same} operator,
+\[
+  \vz_2 \;=\; \mathbf{d} \odot \vr_2 \;=\; \bigl[1,\,2,\,\tfrac12,\,4\bigr].
+\]
+
+\textbf{Three readings, each a habit from \cref{ch:language}.} (1) \emph{The phases
+are separate and asymmetric in cost.} Construction did two $O(N)$ passes over the
+matrix, once. Each application does one $O(N)$ multiply, but there are thousands of
+them; the matrix is never re-examined. The reciprocal $\mathbf{d}$ was computed once and
+amortized over the whole solve. (2) \emph{Application is pure on the captured
+\code{d}.} Computing $\vz_1$ did not change $\mathbf{d}$; $\vz_2$ read exactly the same
+$\mathbf{d}$; the two could be computed in either order, or in parallel, without affecting
+each other (\cref{fig:exprtree}'s ``no hidden order,'' now applied to operator
+application). (3) \emph{Nothing was overwritten.} \code{r1}, \code{r2}, and \code{d}
+all name exactly the values they did before each call; each \code{z} is a brand-new
+vector.
+
+The Jacobi preconditioner is the constructed-operator pattern in its purest form: the
+expensive-but-once part (form $\mathbf{d}$) is frozen into the operator, and the cheap part
+(multiply by $\mathbf{d}$) is repeated. Every richer preconditioner in
+\cref{ch:precond,ch:multigrid}---an incomplete factorization, a multigrid V-cycle---is
+the \emph{same shape} with more elaborate baked-in state.
+\end{workedexample}
+
+\section{The decision rule: construction-bound versus per-step variants}
+\label{sec:decisionrule}
+
+We now reach the load-bearing distinction of the chapter---the one rule that, applied
+correctly, tells you whether a piece of configuration belongs inside a constructed
+operator or out in the threaded state. Getting it right is the difference between a
+clean solve and a subtle, convergent, \emph{wrong} one.
+
+\begin{keyidea}
+A variant that is \emph{bound once at construction} and held fixed for the whole
+solve $\to$ a constructed operator absorbs it cleanly. A variant that \emph{changes
+per step}---a different value on each iteration---\emph{cannot} be a constructed
+operator, because there is no single value to freeze at construction. The per-step
+variant must instead enter the threaded \code{SimState} (\cref{ch:strata,ch:monad}).
+This single rule is exactly why \emph{flexible} preconditioners exist, and exactly
+why \code{FGMRES} is a different algorithm from \code{GMRES}.
+\end{keyidea}
+
+The reasoning is almost a tautology once stated. Construction happens \emph{once},
+before the loop. To freeze a value at construction, that value must \emph{exist}, and
+be \emph{final}, at that moment. A preconditioner $\mat{M}$ chosen at solve start and
+held fixed satisfies this: it exists, it is final, freeze it. But a preconditioner
+$\mat{M}_k$ that is allowed to be \emph{different on each step $k$}---a so-called
+\emph{flexible} preconditioner---does not: at construction time the later $\mat{M}_k$
+do not yet exist, and there is no single $\mat{M}$ to bake in. The construction phase
+has nothing to capture.
+
+When this happens, the variant has not vanished---it has merely moved. A value that
+changes every step \emph{is} run-time state, by definition. So it belongs in the
+run-time stratum: it must be threaded through \code{SimState}, evolving step by step
+like the iterate and the residual, rather than frozen in the operator. The
+construction-vs-run-time stratification of \cref{ch:strata} is precisely the test:
+\emph{ask which stratum the variant's lifetime puts it in.}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  % decision diamond
+  \node[draw=simGold, fill=simBgGold, thick, diamond, aspect=2.2, inner sep=1pt,
+        align=center, font=\footnotesize] (q) at (0,2.6)
+    {Does the variant\\change \emph{per step}?};
+  % NO branch (left): constructed operator
+  \node[stage, minimum width=30mm, align=center, below left=12mm and 2mm of q] (con)
+    {\footnotesize bind \emph{once} at construction\\[1pt]\textbf{constructed operator}};
+  \node[draw=simBlue, fill=simBgBlue, semithick, rounded corners=2pt,
+        minimum width=34mm, align=center, font=\scriptsize, below=5mm of con] (conex)
+    {build $\mat{M}^{-1}$ once;\\\code{apply(pc, r)} each step;\\\code{op} never changes};
+  \draw[flow] (con) -- (conex);
+  \draw[flow] (q.south west) to[out=210,in=90]
+    node[left,font=\scriptsize\bfseries,simGreen]{NO} (con.north);
+  % YES branch (right): threaded state
+  \node[product, minimum width=30mm, align=center, below right=12mm and 2mm of q] (thr)
+    {\footnotesize thread it through state\\[1pt]\textbf{SimState schema grows}};
+  \node[draw=simRust, fill=simBgRust, semithick, rounded corners=2pt,
+        minimum width=34mm, align=center, font=\scriptsize, below=5mm of thr] (threx)
+    {add per-step $\mat{M}_k$ data\\to the carry (\code{Z} basis);\\evolves every iteration};
+  \draw[flow] (thr) -- (threx);
+  \draw[flow] (q.south east) to[out=-30,in=90]
+    node[right,font=\scriptsize\bfseries,simRust]{YES} (thr.north);
+  % captions
+  \node[font=\scriptsize\itshape, simGray, below=4mm of conex, text width=36mm, align=center]
+    {fixed preconditioner;\\GMRES, CG};
+  \node[font=\scriptsize\itshape, simGray, below=4mm of threx, text width=36mm, align=center]
+    {flexible preconditioner;\\FGMRES};
+\end{tikzpicture}
+\caption[The decision rule]{The one rule that places a variant. Ask: does it change
+per step? If \emph{no} (a preconditioner chosen at solve start and held fixed), bind
+it once at construction---a constructed operator absorbs it, and the iteration calls
+\code{apply(pc, r)} uniformly. If \emph{yes} (a flexible preconditioner $\mat{M}_k$
+differing each step), no construction can freeze it; the variant must enter the
+threaded \code{SimState} and evolve every iteration. The right branch is why
+\code{FGMRES} carries an extra basis the left branch does not---the subject of
+\cref{wex:flexible} and, in full, \cref{ch:gmres}.}
+\label{fig:decisionrule}
+\end{figure}
+
+\subsection{Worked example: fixed versus flexible, in two signatures}
+
+The decision rule is easiest to feel as a contrast between two signatures. We put the
+fixed preconditioner and the flexible one side by side and watch the variant move out
+of the operator and into the state.
+
+\begin{workedexample}{Why a flexible preconditioner cannot be a constructed
+operator}{flexible}
+A Krylov solver (\cref{ch:gmres}) builds, step by step, a basis $\{\vv_0, \vv_1,
+\dots\}$ of search directions, applying the preconditioner to each. We compare two
+ways the preconditioner can enter.
+
+\textbf{Case 1: a fixed preconditioner (a constructed operator works).} The
+preconditioner $\mat{M}$ is chosen once, at solve start. We construct it before the
+loop and apply it---the \emph{same} operator---at every step:
+\begin{lstlisting}[style=l4style]
+-- the preconditioner is a constructed operator, built once:
+let pc = make_preconditioner config A in   -- pc :: Op[Tensor[N] -> Tensor[N]]
+-- each Arnoldi step applies the SAME pc to a fresh basis vector:
+let z_j = pc v_j in                        -- z_j = M^{-1} v_j, same M every j
+let w   = matvec A z_j in ...
+\end{lstlisting}
+Here \code{pc} appears once, at construction, and is then applied uniformly. The state
+the loop threads is the basis $V = [\vv_0, \dots, \vv_j]$ and some bookkeeping; the
+preconditioner is \emph{not} part of that state, because it never changes. The
+constructed operator absorbs the entire ``which preconditioner'' question. This is
+the left branch of \cref{fig:decisionrule}.
+
+\textbf{Case 2: a flexible preconditioner (it must move into the state).} Now the
+preconditioner is allowed to differ each step---$\mat{M}_j$ at step $j$ (perhaps it is
+itself an inner iterative solve whose accuracy varies, perhaps it adapts to the
+residual). There is no single $\mat{M}$ to construct. The application becomes
+\begin{lstlisting}[style=l4style]
+-- there is NO single pc to construct; M_j is produced per step:
+let z_j = apply_M_step j v_j in   -- z_j = M_j^{-1} v_j, a DIFFERENT M_j each j
+\end{lstlisting}
+and---this is the crucial consequence---the per-step preconditioned vectors $\vz_j$
+can no longer be recomputed on demand from a frozen operator, because the operator
+that made them is gone by the next step. They must be \emph{remembered}: the solver
+threads a \emph{second} basis $Z = [\vz_0, \dots, \vz_j]$ alongside $V$. Contrast the
+two state schemas:
+\begin{lstlisting}[style=l4style]
+-- GMRES  (fixed pc): the preconditioner is a constructed operator, NOT in state
+type GmresState  = { x: Vec, V: Vec[], H: Mat, ... }
+-- FGMRES (flexible pc): the per-step preconditioned basis Z IS threaded state
+type FgmresState = { x: Vec, V: Vec[], Z: Vec[], H: Mat, ... }
+--                                     ^^^^^^^ the extra basis the flexible case forces
+\end{lstlisting}
+The solution update reflects the move exactly: GMRES recovers the answer from the
+plain basis, $\vx = \vx_0 + V_m \vy_m$, while FGMRES must use the remembered
+preconditioned basis, $\vx = \vx_0 + Z_m \vy_m$. The variant that the constructed
+operator absorbed in Case~1 has, in Case~2, become a field of the threaded state.
+
+\textbf{The reading.} Nothing went wrong; a real distinction surfaced. A fixed
+preconditioner is build-time configuration---freeze it, the operator is a value. A
+flexible preconditioner is run-time state---thread it, the carry grows by one basis.
+The decision rule (\cref{fig:decisionrule}) reads the variant's \emph{lifetime} and
+routes it to the matching stratum. ``\code{FGMRES} exists because the preconditioner
+became per-step state'' is the whole story, and \cref{ch:gmres} is where we tell it in
+full.
+\end{workedexample}
+
+\begin{pitfall}
+The tempting mistake is to try to keep a flexible preconditioner inside a constructed
+operator by letting the operator \emph{mutate}---``I'll just update \code{pc}'s
+internal $\mat{M}$ each step.'' This re-introduces exactly the mutable box
+\cref{ch:language} spent a whole section banishing. A constructed operator that
+mutates between applications is no longer pure on its internals, no longer safely
+shareable, and no longer has a well-defined ``value'' at all---``what does \code{pc}
+hold \emph{now}?'' becomes a live question again. The discipline is firm: per-step
+variation goes in the threaded state, never in a secretly-mutating operator. The cost
+is one honest extra field in the state schema; the alternative is a silent corruption
+of the value model.
+\end{pitfall}
+
+\section{Solver as operator: an inverse is a function you apply}
+
+We have been calling a preconditioner ``an approximate inverse'' and applying it like
+an operator. It is time to make the type-level move that justifies this explicit,
+because it is one of the most powerful abstractions in the whole numerical stack.
+
+\begin{keyidea}
+A \emph{solver} is an operator. A solver computes (or approximates) the action
+$\vv \mapsto \mat{M}^{-1}\vv$ of an inverse, and that action has \emph{exactly the
+same shape} as the action $\vv \mapsto \mat{M}\vv$ of the operator it inverts: vector
+in, vector out. So a solver can wear the same \code{apply} interface as a plain
+operator, and be substituted anywhere an operator is expected. ``Apply the
+preconditioner to the residual'' is just \code{apply(pc, r)}---a function call,
+indistinguishable in form from \code{apply(A, x)}.
+\end{keyidea}
+
+This sounds almost too simple to be worth a name, but its consequence is enormous. A
+Krylov method (\cref{ch:gmres}) is written against the \code{apply} interface and
+nothing else. It asks the operator $\mat{A}$ for matrix--vector products
+\code{apply(A, v)}, and it asks the preconditioner for $\code{apply(pc, r)} \approx
+\mat{M}^{-1}\vr$---and that is \emph{all} it ever asks of either. The iteration never
+sees the \emph{algorithm} inside the preconditioner. It does not know, and cannot
+ask, whether \code{apply(pc, r)} runs a diagonal multiply, an incomplete
+factorization, a multigrid V-cycle, or a direct sparse solve. It sees a black box
+that turns a residual into an approximate error, and it iterates.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % the GMRES driver
+  \node[stage, minimum width=26mm, minimum height=22mm] (gm) at (0,0)
+    {\textbf{GMRES}\\[2pt]\footnotesize asks only:\\\code{apply(A, v)}\\\code{apply(pc, r)}};
+  % the operator black box (top)
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=22mm, minimum height=9mm, right=24mm of gm, yshift=8mm] (A)
+        {\footnotesize operator $\mat{A}$};
+  % the preconditioner black box (bottom) -- SAME interface
+  \node[draw=simViolet, fill=simBgViolet, thick, rounded corners=2pt, densely dashed,
+        minimum width=22mm, minimum height=9mm, right=24mm of gm, yshift=-8mm] (pc)
+        {\footnotesize solver \code{pc}};
+  % the SAME apply arrow to both
+  \draw[flow] (gm.east|-A) -- node[above,font=\scriptsize]{\code{apply}} (A.west);
+  \draw[flow] (gm.east|-pc) -- node[below,font=\scriptsize]{\code{apply}} (pc.west);
+  % what's INSIDE pc, hidden
+  \node[align=left, font=\scriptsize\itshape, simGray, text width=36mm, right=4mm of pc]
+    {inside (hidden): Jacobi?\\ILU? multigrid V-cycle?\\direct solve?\\\textbf{GMRES cannot tell.}};
+  \node[align=left, font=\scriptsize\itshape, simGray, text width=30mm, right=4mm of A]
+    {a true operator action\\$v \mapsto \mat{A}v$};
+  % brace: both wear the same interface
+  \draw[decorate, decoration={brace, amplitude=4pt}, simGray]
+    ($(A.north west)+(-0.2,0.2)$) -- ($(pc.south west)+(-0.2,-0.2)$)
+    node[midway, left=5pt, font=\scriptsize\bfseries, simInk, align=center]
+    {same\\\code{apply}\\interface};
+\end{tikzpicture}
+\caption[A solver wears the operator's interface]{The solver-as-operator move. The
+\code{GMRES} driver is written against one interface---\code{apply}---and asks for two
+kinds of action through it: matrix--vector products from the true operator $\mat{A}$,
+and approximate-inverse actions from the preconditioner \code{pc}. Because a solver
+\emph{is} an operator (same vector-in, vector-out shape), \code{pc} wears the very
+same \code{apply} interface as $\mat{A}$, and the iteration cannot see---and never asks
+about---the algorithm hidden inside it. This is exactly why the same \code{GMRES}
+drives a Jacobi preconditioner, an incomplete factorization, and a multigrid V-cycle
+without changing a line: the differences are all behind the black box.}
+\label{fig:solveroperator}
+\end{figure}
+
+\Cref{fig:solveroperator} draws the picture. The payoff is the one the whole book
+keeps returning to: \emph{write the coordination once, feed it the verbs}
+(\cref{ch:language}). Here the coordination is the Krylov iteration; the verbs are
+\code{apply(A, $\cdot$)} and \code{apply(pc, $\cdot$)}; and because both verbs have the
+same type, the \emph{same} iteration drives every combination of operator and
+preconditioner the simulator offers. The driven solver, the electrostatic solver, and
+the eigenmode solver's inner solves all reuse one \code{GMRES}---they differ only in
+which operator and which preconditioner they hand it, and those are just two
+\code{apply}-shaped values.
+
+\subsection{Why this is a rotation, not a renaming}
+
+It is fair to ask whether ``a solver is an operator'' says anything at all, or merely
+relabels one thing as another. It says something, and the test is whether any
+\emph{state} is hidden by the move.
+
+At the source level (\cref{ch:strata} called this $L_0$), a solver is genuinely a
+different kind of thing from a bare operator: it carries extra machinery---a routine to
+set which operator it inverts, an initial-guess slot, convergence tolerances, internal
+iteration state. The solver-as-operator rotation \emph{hides all of that} from the
+iteration. The Krylov loop sees only the \code{apply} action; the solver's
+operator-setting routine, its tolerances, its guess slot are compressed away,
+invisible behind the interface. Because real state is hidden---because the loop
+\emph{cannot} reach the preconditioner's internal apparatus even though it is
+there---the move is a genuine \emph{rotation} (\cref{ch:rotations}), not a typedef.
+
+The contrast sharpens it. If ``solver is an operator'' meant only that we wrote
+\code{Solver} as an alias for \code{Operator}, with no extra structure underneath,
+then the statement would hide nothing and buy nothing. It is precisely because the
+solver \emph{does} carry distinct apparatus---which the iteration is then prevented
+from touching---that wearing the operator interface is an act of abstraction. The
+chapter on rotations (\cref{ch:rotations}) makes this ``does it hide state?'' test the
+formal criterion for an honest rotation.
+
+\section{The constructed-operator factory: where the variant is consumed}
+
+So far each constructed operator has had one configuration. But a real solver must
+choose \emph{among} configurations: which Krylov method (\code{CG} / \code{GMRES} /
+\code{FGMRES}), which preconditioner (Jacobi / AMS / algebraic multigrid / a direct
+factorization), which side, which orthogonalization. These choices arrive as
+\emph{enums}---discrete flags read from a config file. Where do the enums get
+consumed?
+
+The answer is the \emph{constructed-operator factory}: a single function that takes
+the enum (and any context it needs), dispatches on it internally, and returns a
+\emph{uniformly typed} operator. The factory is the one place the variant is read.
+Before it, the code branches on ``which method?''; after it, the code holds one
+operator value and applies it---variant-free.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  % the enum coming in
+  \node[data, align=center, text width=24mm] (enum)
+    {variant enum\\\code{CG | GMRES |}\\\code{FGMRES | ...}};
+  % the factory
+  \node[stage, minimum width=34mm, minimum height=16mm, right=12mm of enum] (fac)
+    {\textbf{factory}\\[1pt]\footnotesize \code{ConfigureKrylovSolver}\\\footnotesize dispatch \emph{here, once}};
+  \draw[flow] (enum) -- (fac);
+  % a uniformly-typed operator out
+  \node[draw=simBlue, fill=simBgBlue, very thick, rounded corners=2pt,
+        minimum width=24mm, minimum height=12mm, right=14mm of fac] (op)
+        {\footnotesize\ttfamily Op[N -> N]};
+  \draw[flow] (fac) -- node[above,font=\scriptsize]{one type} (op);
+  % variant-free code after
+  \node[draw=simGreen, fill=simBgGreen, thick, rounded corners=2pt,
+        minimum width=30mm, minimum height=12mm, right=12mm of op, align=center,
+        font=\footnotesize] (after)
+        {downstream code:\\\code{apply(op, v)}\\\textbf{no enum in sight}};
+  \draw[flow] (op) -- (after);
+  % the "wall" after which variants are gone
+  \draw[simRust, very thick, densely dashed] ($(fac.east)+(0.7,1.7)$) -- ($(fac.east)+(0.7,-2.0)$);
+  \node[font=\scriptsize\bfseries, simRust, align=center] at ($(fac.east)+(0.7,-2.4)$)
+    {variant\\wall};
+  \node[font=\scriptsize\itshape, simGray] at ($(enum)+(0,-2.0)$) {variant-bearing};
+  \node[font=\scriptsize\itshape, simGray] at ($(after)+(0,-2.0)$) {variant-free};
+\end{tikzpicture}
+\caption[The factory: a variant enum in, a uniform operator out]{The
+constructed-operator factory is the single site at which a variant enum is consumed.
+To its left, code carries the enum and must branch on it; the factory dispatches on
+the enum \emph{once} and returns an operator of one uniform type. To its right---past
+the ``variant wall''---downstream code holds that single operator and applies it with
+\code{apply(op, v)}, never re-inspecting the enum. Palace's \code{ConfigureKrylovSolver}
+(Krylov method) and \code{ConfigurePreconditionerSolver} (preconditioner type) are exactly
+this: enum in, uniform solver-operator out, variant-free code after.}
+\label{fig:factory}
+\end{figure}
+
+\Cref{fig:factory} draws the factory as a ``variant wall.'' Palace has two of them,
+structurally identical: \code{ConfigureKrylovSolver} consumes the
+Krylov-method$\,\times\,$side$\,\times\,$orthogonalization$\,\times\,$restart axes and
+returns an iterative-solver operator; \code{ConfigurePreconditionerSolver} consumes the
+preconditioner-type$\,\times\,$multigrid$\,\times\,$scalar-field axes and returns a
+preconditioner operator. Both read a clutch of enums, dispatch once, and hand back a
+single uniformly typed value the rest of the solver applies without ever asking which
+method it got. A solver's signature schematically:
+
+\begin{lstlisting}[style=l4style]
+-- the factory: ONE place the krylov-method enum is read
+configure_krylov :: KrylovMethod -> Config -> Op[Tensor[N] -> Tensor[N]]
+-- downstream, the method is gone; only the uniform operator remains:
+let ksp = configure_krylov method cfg in   -- dispatch happens HERE, once
+let x   = apply ksp b in                    -- ... and never again
+\end{lstlisting}
+
+This is the procedural heart of \emph{variant absorption}, which the next section
+makes into a discipline. For now hold the single observation: the factory localizes
+the entire ``which variant?'' decision to one call. Everywhere else in the solver, an
+operator is just an operator.
+
+\section{Capability typing: distinguishing roles without runtime cost}
+
+A factory hands back ``a uniformly typed operator.'' But uniformity can go too far.
+Consider Palace's preconditioned Krylov solver: it holds \emph{two} operators of the
+\emph{same} underlying type \code{Op[N -> N]}---the \emph{true operator} $\mat{A}$ it is
+solving against, and the \emph{preconditioner-assembly operator} from which the
+preconditioner is built. Both are \code{Op[N -> N]}. Nothing in their type stops a
+careless caller from passing them in the wrong order. And if they \emph{are} swapped,
+the solve does not crash---it runs, and converges, to the \emph{wrong answer}. A wrong
+solve that converges is the worst kind of bug: silent.
+
+\emph{Capability typing} is the discipline that turns this silent runtime bug into a
+loud compile-time type error, at zero runtime cost.
+
+\begin{keyidea}
+A \emph{capability type} is a \emph{phantom-typed brand}: a marker attached to a value
+that records the value's intended \emph{role}, enforced by the type checker but with
+no runtime representation---no extra field, no allocation, no dispatch. Two values can
+share an underlying type yet carry distinct brands, so that using one where the other
+is required is a \emph{type error} rather than a silently-wrong computation. The brand
+costs nothing at runtime and is erased before the program runs; its entire job is to
+make a class of role-confusion mistakes \emph{unspeakable}.
+\end{keyidea}
+
+\subsection{The brand, concretely}
+
+Concretely, we take the underlying operator type and attach a phantom tag that
+distinguishes the role:
+
+\begin{lstlisting}[style=l4style]
+-- underlying type, shared:
+type Op[N -> N] = ...
+-- two BRANDED views, distinct at the type level, identical at runtime:
+type TrueOp       = Op[N -> N] & { __cap: "true" }         -- the operator we solve against
+type PcAssemblyOp = Op[N -> N] & { __cap: "pc_assembly" }  -- the operator the pc is built from
+-- smart constructors: runtime identities, type-level commitments
+as_true_op        :: Op[N -> N] -> TrueOp
+as_pc_assembly_op :: Op[N -> N] -> PcAssemblyOp
+\end{lstlisting}
+
+\noindent The tag \code{\_\_cap} is \emph{phantom}: there is no such field at runtime,
+no byte of storage, no branch. The smart constructors \code{as\_true\_op} and
+\code{as\_pc\_assembly\_op} are the identity function at runtime---they return their
+argument untouched. Their \emph{only} job is to commit a value to a role at the moment
+of construction, so that a downstream signature can demand a specific brand:
+
+\begin{lstlisting}[style=l4style]
+set_operators :: TrueOp -> PcAssemblyOp -> Solver -> Solver
+\end{lstlisting}
+
+\noindent Now passing a \code{PcAssemblyOp} where a \code{TrueOp} is required is
+rejected by the type checker---a compile-time error, caught before any number is
+computed---even though the two values are byte-for-byte identical at runtime. The
+permitted ``escape hatch'' is intended and useful: when you genuinely want to
+precondition the true operator against itself, you brand the \emph{one} operator
+\emph{both} ways (\code{as\_true\_op A} and \code{as\_pc\_assembly\_op A}); the
+discipline forbids passing one brand where the other is wanted, not applying both
+brands to one value.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  % LEFT: variant absorption -- hides axes of variation
+  \begin{scope}
+    \node[font=\bfseries\small, simInk] at (0,2.7) {Variant absorption};
+    \node[font=\scriptsize\itshape, simGray] at (0,2.3) {hides axes of \emph{variation}};
+    % the uniform operator, with variants collapsed inside
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=30mm, minimum height=22mm] (u) at (0,0.6) {};
+    \node[font=\ttfamily\scriptsize] at (u.north) [yshift=-3mm] {Op[N -> N]};
+    \node[font=\scriptsize, simGray, align=center] at (u.center)
+      {\code{CG}? \code{GMRES}?\\\code{Jacobi}? \code{AMG}?\\\emph{collapsed inside,}\\\emph{one type out}};
+    \node[font=\scriptsize\itshape, simGray, below=2mm of u, text width=40mm, align=center]
+      {many configurations $\to$ \emph{one} uniform type};
+  \end{scope}
+  % RIGHT: capability typing -- distinguishes axes of role
+  \begin{scope}[shift={(7.4,0)}]
+    \node[font=\bfseries\small, simInk] at (0,2.7) {Capability typing};
+    \node[font=\scriptsize\itshape, simGray] at (0,2.3) {distinguishes axes of \emph{role}};
+    % two branded operators, same underlying type, kept apart
+    \node[draw=simTeal, fill=simBgGreen, thick, rounded corners=2pt,
+          minimum width=26mm, minimum height=8mm] (tt) at (0,1.25) {};
+    \node[font=\ttfamily\scriptsize] at (tt.center) {TrueOp};
+    \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+          minimum width=26mm, minimum height=8mm] (pp) at (0,-0.1) {};
+    \node[font=\ttfamily\scriptsize] at (pp.center) {PcAssemblyOp};
+    % they share an underlying type (a thin bracket)
+    \draw[decorate, decoration={brace, amplitude=3pt, mirror}, simGray]
+      ($(tt.east)+(0.15,0)$) -- ($(pp.east)+(0.15,0)$)
+      node[midway, right=4pt, font=\scriptsize, simGray, align=left]
+      {same\\underlying\\\code{Op[N -> N]}};
+    % the "no swap" barrier between them
+    \node[font=\scriptsize\bfseries, simRust] at (0,0.58) {swap = type error};
+    \node[font=\scriptsize\itshape, simGray, below=4mm of pp, text width=40mm, align=center]
+      {one type $\to$ \emph{two} brands kept apart};
+  \end{scope}
+\end{tikzpicture}
+\caption[Capability brands versus variant axes]{The two disciplines are
+complementary, pulling in opposite directions on the same operator type.
+\emph{Left:} variant absorption \emph{hides} axes of \emph{variation}---\code{CG} vs
+\code{GMRES}, Jacobi vs multigrid---collapsing many configurations behind one uniform
+\code{Op[N -> N]}. \emph{Right:} capability typing \emph{distinguishes} axes of
+\emph{role}---\code{TrueOp} vs \code{PcAssemblyOp}---splitting one underlying type into
+two branded views the checker refuses to interchange. Absorption makes ``which
+configuration?'' unspeakable downstream; branding makes ``which role?'' unswappable. A
+single operator can be both absorbed (its variant hidden) and branded (its role
+fixed).}
+\label{fig:capvariant}
+\end{figure}
+
+\subsection{Background: where brands come from}
+
+The phantom-brand idea is borrowed, lightly, from typed functional programming, and
+you may meet it under several names. In Haskell, a \code{newtype} wraps an existing
+type in a distinct, zero-cost name the compiler keeps separate---the same
+representation, a different type. In Rust, a \emph{zero-sized marker type} (a field of
+a type with no data, such as \code{PhantomData}) tags a value with a role that exists
+only for the borrow checker and vanishes from the compiled binary. The word
+\emph{capability} comes from the security literature, where a capability is an
+unforgeable token of authority; here the ``authority'' is the role---holding a
+\code{TrueOp} is the authority to act as the operator the iteration solves against,
+holding a \code{PcAssemblyOp} is the authority to act as the source of the
+preconditioner. We use brands in their type-checking-only form: they constrain what
+the program can express, and then they are erased. \Citet{peytonjones2003} is the
+standard reference for the underlying type machinery.
+
+\subsection{Capability typing versus variant absorption}
+
+Capability typing and variant absorption are easy to confuse because both are about
+``many operators of the same type,'' but they pull in opposite directions, and seeing
+the contrast cleanly is worth the effort (\cref{fig:capvariant}).
+
+\begin{itemize}[nosep]
+  \item \textbf{Variant absorption hides axes of \emph{variation}.} \code{CG} versus
+  \code{GMRES}, Jacobi versus multigrid, left- versus right-side: these are
+  \emph{differences we want to disappear} behind a uniform interface, so downstream
+  code need not branch on them. Absorption \emph{collapses} many things into one type.
+  \item \textbf{Capability typing distinguishes axes of \emph{role}.} True operator
+  versus preconditioner-assembly operator: these are \emph{differences we want to
+  preserve}, because confusing them is a bug. Branding \emph{splits} one type into
+  several that the checker refuses to interchange.
+\end{itemize}
+
+A single operator can be \emph{both} at once. The preconditioner-assembly operator is
+\emph{absorbed} along its variation axes---it is uniform across real versus complex
+scalar field, uniform across which preconditioner algorithm sits inside it---and
+simultaneously \emph{branded} \code{PcAssemblyOp}, distinct from \code{TrueOp} along
+the role axis. Absorption answers ``which configuration is this?'' with ``don't ask,
+it's uniform''; branding answers ``which role does this play?'' with ``that, and the
+checker will hold you to it.'' They compose without conflict because they speak about
+different axes of the same value.
+
+\section{Variant absorption as a discipline}
+
+We have now used ``absorb the variant'' informally several times. It is time to make
+it a discipline with a checkable standard, because the failure mode---absorbing a
+variant \emph{partly}, while pretending to absorb it fully---is one of the most
+insidious ways a specification goes quietly wrong.
+
+The principle: when a piece of the machinery has \emph{orthogonal axes of
+variation}---preconditioner side, orthogonalization kind, fixed-versus-flexible,
+real-versus-complex scalar field---the form should absorb those axes
+\emph{parametrically}, as bindings of a parameter, rather than \emph{appending} them
+as special-case paragraphs bolted onto a base description. ``Here is \code{GMRES};
+oh, and for \code{FGMRES} replace this with that; oh, and for left-preconditioning add
+this step'' is the anti-pattern. The parametric form names a parameter once and lets
+its binding range over the variants.
+
+\subsection{The three levels of absorption}
+
+Absorption is not all-or-nothing; it holds at three nested levels, and a genuine
+absorption holds at \emph{all three} (\cref{fig:absorptionlevels}).
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[(a) Invariant level: the math unifies.] A single equation or recurrence covers
+  every variant, perhaps with the variant appearing as a parameter. Example: write the
+  solution update as $\vx = \vx_0 + W_m \vy_m$ with $W_m = V_m$ for \code{GMRES} and
+  $W_m = Z_m$ for \code{FGMRES}. One equation; the parameter $W$ selects the variant.
+  This is necessary but not sufficient.
+  \item[(b) Procedural level: the variant is mentioned once.] The procedure names the
+  variant at most once---at the binding or dispatch site (the factory call)---and never
+  re-inspects it. ``Let \code{op = configure(side); then each step apply(op, v)}'' is
+  procedurally absorbed: \code{side} appears once, at construction. A procedure that
+  re-tests the variant at the operator-application step \emph{and} the update step is
+  \emph{not} procedurally absorbed, even if its math unifies.
+  \item[(c) Primitive-sequence level: the operation chain has the same shape.] The
+  underlying sequence of primitive calls---which operations, in which order---is
+  identical across variants, with the variant binding only the \emph{operands}, not the
+  chain. ``$[\text{matvec},\,\text{dot},\,\text{axpy}]$ for every \code{side}, with the
+  matvec's operator argument changing'' is primitive-sequence absorbed. A variant that
+  forces one branch to run an extra primitive the others skip is \emph{not}.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+  % three nested bands, (a) outermost
+  \node[band, fill=simBgGold, draw=simGold, thick, minimum width=82mm, minimum height=46mm]
+    (a) at (0,0) {};
+  \node[font=\footnotesize\bfseries, simGold!75!black, anchor=north] at (a.north) [yshift=-1.5mm]
+    {(a) invariant level --- one equation covers all variants};
+  \node[band, fill=simBgBlue, draw=simBlue, thick, minimum width=66mm, minimum height=32mm]
+    (b) at (0,-2.5mm) {};
+  \node[font=\footnotesize\bfseries, simBlue, anchor=north] at (b.north) [yshift=-1.5mm]
+    {(b) procedural --- variant named once};
+  \node[band, fill=simBgGreen, draw=simGreen, thick, minimum width=50mm, minimum height=18mm]
+    (c) at (0,-5mm) {};
+  \node[font=\footnotesize\bfseries, simGreen, anchor=north] at (c.north) [yshift=-1.5mm]
+    {(c) primitive-sequence};
+  \node[font=\scriptsize, simInk, align=center] at (c.center) [yshift=-1mm]
+    {same op chain,\\operands differ};
+  % full absorption note
+  \node[font=\scriptsize\itshape, simGray, anchor=north, text width=74mm, align=center]
+    at (a.south) [yshift=-3mm]
+    {\textbf{Full absorption} = all three nested levels hold. The dangerous case is
+    reaching (a) but silently \emph{not} (b) or (c)---the form \emph{looks} uniform but
+    the operation chain secretly branches.};
+\end{tikzpicture}
+\caption[The three nested levels of variant absorption]{Absorption holds at three
+nested levels. \emph{(a)} The mathematical statement unifies into one
+parameter-bearing equation. \emph{(b)} The procedure mentions the variant at most
+once, at its binding site, and never re-inspects it. \emph{(c)} The underlying
+primitive-call sequence has the same shape across variants, the variant binding only
+the operands. Full absorption requires all three. The insidious failure is partial,
+\emph{undisclosed} absorption---reaching (a) while quietly violating (b) or (c)---which
+the next pitfall names.}
+\label{fig:absorptionlevels}
+\end{figure}
+
+\subsection{The anti-pattern: silent partial absorption}
+
+The three levels exist so that we can name precisely the way absorption goes wrong.
+
+\begin{pitfall}
+\textbf{Silent partial absorption} is the failure this entire discipline exists to
+catch. A form achieves invariant-level absorption (a)---one clean equation, looks
+uniform---but \emph{silently} fails procedural (b) or primitive-sequence (c)
+absorption: under the surface, the procedure re-inspects the variant at several sites,
+or the operation chain branches by variant, and the form's tidy appearance hides it.
+The reader sees ``$\vx = \vx_0 + W_m \vy_m$, one equation'' and believes the variant
+is handled; the actual computation forks three ways. The fix is honesty: if (b) or (c)
+genuinely cannot hold---because the variant is structural, like a flexible
+preconditioner forcing an extra threaded basis (\cref{wex:flexible})---then
+\emph{disclose} the residual divergence explicitly, listing the sites where the
+procedure or the primitive chain forks. A disclosed partial absorption is fine; a
+\emph{silent} one is a specification that lies about its own uniformity.
+\end{pitfall}
+
+The routes to genuine full absorption are the constructions of this chapter. A
+\emph{constructed operator} that internalizes the variant at construction time
+achieves (b) and (c) at once: the factory reads the enum once, the operator is
+applied uniformly, the primitive chain is one shape (\cref{fig:factory}). When even a
+constructed operator cannot help---because the variant is per-step, and the decision
+rule (\cref{fig:decisionrule}) routes it into the threaded state---then the absorption
+is genuinely partial, and the discipline demands you say so, in the open, rather than
+let a tidy equation imply a uniformity the operation chain does not have.
+
+\begin{remark}
+Notice how the pieces of this chapter fit together as one mechanism. The
+\emph{factory} (\cref{fig:factory}) is \emph{where} a variant is absorbed---the single
+site that reads the enum. The \emph{constructed operator} (\cref{fig:constructapply})
+is \emph{what} absorbs it---the value that internalizes the choice and is then applied
+uniformly. The \emph{decision rule} (\cref{fig:decisionrule}) tells you \emph{whether}
+absorption can succeed at all---no, if the variant is per-step. And \emph{capability
+typing} (\cref{fig:capvariant}) handles the orthogonal concern that survives
+absorption---the \emph{roles} the uniform operators play, which must stay distinct even
+after their variations are hidden. Absorption hides what varies; branding preserves
+what must not be confused.
+\end{remark}
+
+\section{Putting it together: the preconditioned solver}
+
+We can now read the whole construction surface of a real preconditioned Krylov solver
+as one coherent picture, with every piece of this chapter in its place. Palace's
+\code{BaseKspSolver} does exactly the following, and nothing in it should now be
+mysterious.
+
+At \emph{construction} (build-time stratum, run once): two factory calls
+(\cref{fig:factory}). \code{ConfigureKrylovSolver} consumes the
+Krylov-method$\,\times\,$side$\,\times\,$orthogonalization$\,\times\,$restart enums and
+returns a constructed iterative-solver operator \code{ksp}; \code{ConfigurePreconditionerSolver}
+consumes the preconditioner-type$\,\times\,$multigrid$\,\times\,$scalar-field enums and
+returns a constructed preconditioner operator \code{pc}. Both are \code{apply}-shaped
+(solver-as-operator, \cref{fig:solveroperator}); both have absorbed their variation
+axes parametrically inside the factory; after the two calls, no enum survives into the
+solve. The two operators are then \emph{branded}---the true operator \code{as\_true\_op},
+the preconditioner-source \code{as\_pc\_assembly\_op} (\cref{fig:capvariant})---so the
+binding step \code{set\_operators :: TrueOp -> PcAssemblyOp -> ...} cannot receive them
+swapped.
+
+At \emph{application} (run-time stratum, run many times): the solve folds the Krylov
+iteration to convergence, and at each step it asks the two constructed operators for
+their \code{apply} actions and nothing else---matrix--vector products from \code{ksp}'s
+operator, approximate-inverse actions from \code{pc}. The iteration never re-examines
+any enum, never sees either operator's internal algorithm, and never confuses their
+roles, because the construction phase settled all three concerns once and froze the
+result. The cleanly separated, frozen construction is exactly what makes the cheap,
+uniform, repeated application possible.
+
+This is the shape every solver in \cref{ch:gmres,ch:precond,ch:multigrid} wears. The Krylov methods of
+\cref{ch:gmres}, the preconditioners of \cref{ch:precond}, and the multigrid V-cycle
+of \cref{ch:multigrid} are all elaborations of this one surface: build constructed
+operators by reading enums in a factory; brand their roles; thread only the genuinely
+per-step state; apply the operators uniformly through a single \code{apply}
+interface. Operators as values is not one technique among many---it is the frame the
+entire numerical machinery hangs on.
+
+\summarysection
+A \emph{constructed operator} is a value built once, with its full configuration baked
+into immutable internal state, then applied many times as a pure function. The two
+phases live in two strata (\cref{ch:strata}): construction is expensive, build-time,
+and run once; application is cheap, run-time, run many times, and pure on the frozen
+internals. This is the first-class form of the currying and ``build once, apply many''
+of \cref{ch:language}; the \lstinline[style=l4style]|Op[in -> out]| spelling marks a
+held-and-applied value carrying named baked-in parameters. The \emph{decision rule} is
+load-bearing: a variant bound \emph{once at construction} (a fixed preconditioner) is
+absorbed by a constructed operator; a variant that changes \emph{per step} (a flexible
+preconditioner $\mat{M}_k$) cannot be---there is no single value to freeze---so it must
+enter the threaded \code{SimState} instead. This is exactly why \code{FGMRES} threads
+an extra basis \code{Z} that \code{GMRES} does not (\cref{ch:gmres}). A \emph{solver is
+an operator}: an approximate inverse wears the same \code{apply} interface as the thing
+it inverts, so a Krylov method needs only the black-box action $\vv \mapsto
+\mat{M}^{-1}\vv$ and never sees the preconditioner's algorithm---which is why one
+\code{GMRES} drives wildly different preconditioners. The
+\emph{constructed-operator factory} is the single site a variant enum is consumed and a
+uniformly typed operator returned (\code{ConfigureKrylovSolver},
+\code{ConfigurePreconditionerSolver}); after it, the code is variant-free.
+\emph{Capability typing} attaches a phantom-typed brand recording a value's \emph{role}
+(\code{TrueOp} vs \code{PcAssemblyOp}) at zero runtime cost, turning a role-swap into a
+type error rather than a silent wrong-but-convergent solve; it is complementary to
+\emph{variant absorption}, which hides axes of \emph{variation} where branding
+distinguishes axes of \emph{role}. Variant absorption is a checkable discipline with
+three nested levels---(a) the math unifies, (b) the variant is named once, (c) the
+primitive chain has one shape---with full absorption requiring all three and
+\emph{silent partial absorption} the anti-pattern it exists to catch.
+
+\furtherreading
+The constructed-operator and solver-as-operator patterns are standard in operator-algebra
+preconditioning frameworks; \citet{saad2003} (especially the chapter on preconditioned
+Krylov methods) motivates the central abstraction---that a Krylov method needs only the
+black-box action $\vv \mapsto \mat{M}^{-1}\vv$, so any approximation respecting that
+interface composes uniformly---and is the reference for the flexible-preconditioner
+distinction that drives \code{FGMRES}. The phantom-type and zero-cost-brand machinery
+behind capability typing is part of the type-system toolkit of typed functional
+programming; \citet{peytonjones2003} is the standard reference for the underlying
+mechanisms (\code{newtype} wrappers and phantom type parameters), which Rust mirrors
+with zero-sized marker types. The two disciplines---hiding variation and preserving
+role---meet again in \cref{ch:rotations}, where ``does the move hide real state?''
+becomes the formal test that separates an honest rotation from a mere renaming.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Two phases, two costs.} For the constructed Jacobi preconditioner of
+  \cref{wex:jacobi}, state the cost of \emph{construction} and the cost of a
+  \emph{single application}, each in terms of $N$. If a solve runs $k$ iterations,
+  write the total work as a function of $N$ and $k$, and identify which term is the
+  amortized construction. For what range of $k$ is constructing the operator clearly
+  worthwhile, and when would calling the inner multiply directly be just as good?
+  \item \textbf{Apply the rule.} For each variant below, decide whether it belongs in a
+  constructed operator or in the threaded \code{SimState}, and justify your answer with
+  the decision rule (\cref{fig:decisionrule}): (a) the time-step size $\Delta t$ in a
+  \emph{fixed}-step time integrator; (b) the preconditioner in a flexible Krylov
+  method, where an inner solve of varying accuracy is used each step; (c) the matrix
+  entries of an assembled stiffness operator, fixed for the whole solve; (d) an
+  adaptive damping parameter recomputed from the residual at each iteration.
+  \item \textbf{The mutating-operator trap.} A colleague proposes to support a flexible
+  preconditioner by giving the constructed \code{pc} an \emph{update} method that
+  overwrites its internal $\mat{M}$ each step, ``so we don't have to change the state
+  schema.'' Explain, using the value model of \cref{ch:language}, exactly which
+  guarantee this breaks, and what question becomes ill-posed once \code{pc} can mutate.
+  What is the honest cost of doing it correctly instead?
+  \item \textbf{Same interface, different insides.} The same \code{GMRES} drives a
+  Jacobi preconditioner, an incomplete factorization, and a multigrid V-cycle without
+  changing a line. Using \cref{fig:solveroperator}, name the single interface that
+  makes this possible, state precisely what \code{GMRES} asks of the preconditioner,
+  and explain what it is \emph{prevented} from asking. Why is being prevented from
+  seeing the preconditioner's algorithm a feature, not a limitation?
+  \item \textbf{Rotation or renaming?} Recall the test from \cref{ch:rotations} (and
+  the discussion in this chapter): a move is a genuine rotation only if it \emph{hides
+  real state}. The solver-as-operator move makes a \code{Solver} usable wherever an
+  \code{Operator} is expected. List two pieces of apparatus a real solver carries that
+  a bare operator does not, and explain why hiding them from the iteration makes this a
+  rotation rather than a typedef. What would have to be true for it to be \emph{only} a
+  renaming?
+  \item \textbf{Where the enum dies.} A solver reads a config flag
+  \code{method $\in$ \{CG, GMRES, FGMRES\}}. In a well-absorbed design, at how many sites
+  in the per-step iteration does \code{method} appear, and where is the one place it is
+  consumed? Sketch (in the notation) the factory call and one downstream apply, and mark
+  the ``variant wall'' of \cref{fig:factory}. Then describe what a \emph{silent partial
+  absorption} of this enum would look like and why a critic should reject it.
+  \item \textbf{Brand the binding.} Two operators \code{A} and \code{P}, both of type
+  \code{Op[N -> N]}, are to be passed to
+  \lstinline[style=l4style]|set_operators :: TrueOp -> PcAssemblyOp -> Solver -> Solver|.
+  (i) Write the two smart-constructor calls that brand them correctly. (ii) Explain why
+  swapping the arguments is now a compile-time error even though \code{A} and \code{P}
+  are byte-for-byte the same kind of value at runtime. (iii) Show how to legitimately
+  precondition \code{A} against itself, and explain why the brand discipline permits
+  this while still forbidding the accidental swap. (iv) What is the runtime cost of all
+  this branding?
+  \item \textbf{Absorption versus branding.} In one or two sentences each, state what
+  \emph{variant absorption} does and what \emph{capability typing} does, and identify
+  which axis of an operator each one speaks about. Then give a single operator that is
+  simultaneously absorbed along one axis and branded along another, and name both axes
+  explicitly (\cref{fig:capvariant}).
+  \item \textbf{The three levels, by hand.} Consider preconditioner side
+  $\in \{\text{LEFT},\text{RIGHT},\text{NONE}\}$ in a Krylov step. Suppose a draft
+  writes the step as one equation (level (a)) but, under the surface, the LEFT branch
+  computes \lstinline[style=l4style]|w = apply(pc, apply(A, v))|, the RIGHT branch
+  \lstinline[style=l4style]|w = apply(A, apply(pc, v))|, and NONE just
+  \lstinline[style=l4style]|w = apply(A, v)|. Which of levels (b) and (c) does this draft
+  fail, and why? Describe the constructed operator that would repair both at once, and
+  state what its construction freezes.
+\end{enumerate}

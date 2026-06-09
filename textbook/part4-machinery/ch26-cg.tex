@@ -1,0 +1,1081 @@
+\chapter{Conjugate Gradients}
+\label{ch:cg}
+
+\chapterorient{This chapter builds the single most important solver in the book.
+Conjugate gradients is the engine of every electrostatic and magnetostatic
+analysis and of the inner Poisson solves buried inside the larger pipelines---all
+the places where the operator is \emph{symmetric and positive definite}. We
+develop it from the ground a sophomore already stands on: solving
+$\mat{A}\vx=\vb$ is rolling a ball down a quadratic bowl. Steepest descent rolls
+badly, zig-zagging across a stretched valley; conjugate gradients fixes the
+zig-zag with one idea---search directions that do not interfere---and as a bonus
+reaches the exact answer in at most $N$ steps. We derive every coefficient,
+write the method as one \texttt{iterate\_while} of the shared step kernel from
+\cref{ch:krylov}, bound its convergence by the condition number, and end at the
+doorstep of preconditioning. Three worked examples carry numbers all the way
+through.}
+
+\section{The symmetric positive-definite setting}
+\label{sec:spd}
+
+The methods of \cref{ch:krylov} apply to any sparse system. Conjugate gradients
+is the specialist: it is the method to reach for when, and only when, the
+operator has a particular structure. We state that structure first, because
+everything that makes the method fast---and everything that makes it
+\emph{wrong} on the wrong system---follows from it.
+
+\begin{definition}[Symmetric positive-definite operator]
+\label{def:spd}
+A real linear operator $\mat{A}$ on $\Real^N$ is \emph{symmetric positive
+definite} (SPD) if it is symmetric, $\mat{A}=\mat{A}^{T}$, and positive
+definite, $\vx^{T}\mat{A}\vx>0$ for every nonzero $\vx\in\Real^N$. We write
+$\mat{A}=\mat{A}^{T}\succ0$.
+\end{definition}
+
+Symmetry says the operator is its own transpose; positive definiteness says the
+quadratic form $\vx^{T}\mat{A}\vx$ is strictly positive away from the origin.
+Together they make $\mat{A}$ behave, for the purposes of geometry, like a
+``stretched and rotated'' version of the identity: it has $N$ real positive
+eigenvalues and an orthogonal basis of eigenvectors, so it stretches space along
+$N$ perpendicular axes by $N$ positive factors and never flips or shears it.
+
+This is not an exotic case. It is the case the field theory of
+\cref{part:fieldtheory} hands us again and again. The electrostatic operator
+$-\Div(\varepsilon\Grad\,\cdot\,)$, discretized on an $\Hone$ finite-element
+space, is symmetric because the weak form $\int\varepsilon\,\Grad u\cdot\Grad v$
+is symmetric in $u$ and $v$, and positive definite because
+$\int\varepsilon\,\abs{\Grad u}^2>0$ for any non-constant $u$ when
+$\varepsilon>0$. The magnetostatic curl--curl operator is SPD on its physical
+subspace for the same reason. Whenever the physics is a minimization---store the
+least energy subject to the boundary data---the discretized operator is SPD, and
+conjugate gradients is the right tool.
+
+\begin{physicsbox}
+The SPD systems of this book are the \emph{energy-minimizing} ones. An
+electrostatic field arranges itself to minimize the stored electric energy
+$\tfrac12\int\varepsilon\abs{\vE}^2$ subject to the conductor voltages; a
+magnetostatic field minimizes $\tfrac12\int\nu\abs{\vB}^2$ subject to the
+currents. Discretize either and the energy becomes a quadratic
+$\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$ with $\mat{A}\succ0$; the
+physical equilibrium is its minimizer, and the minimizer solves
+$\mat{A}\vx=\vb$. Conjugate gradients does not just solve a linear system---it
+descends a literal energy landscape to the physical ground state.
+\end{physicsbox}
+
+\subsection{Solving is minimizing}
+
+The bridge from ``solve $\mat{A}\vx=\vb$'' to ``roll down a bowl'' is a single
+quadratic function. Define
+\begin{equation}
+\label{eq:phi}
+  \phi(\vx) \;=\; \tfrac12\,\vx^{T}\mat{A}\vx \;-\; \vb^{T}\vx .
+\end{equation}
+Its gradient is $\Grad\phi(\vx)=\mat{A}\vx-\vb$, using $\mat{A}=\mat{A}^{T}$ to
+fold the two halves of the symmetric form together. Setting the gradient to zero
+gives $\mat{A}\vx=\vb$. So the solution of the linear system is exactly the
+\emph{stationary point} of $\phi$. And because $\mat{A}\succ0$, the function
+$\phi$ is strictly convex---its graph is an upward bowl, an $N$-dimensional
+paraboloid with a single lowest point---so that stationary point is the unique
+\emph{global minimum}.
+
+\begin{proposition}[Linear solve as quadratic minimization]
+\label{prop:minimize}
+Let $\mat{A}=\mat{A}^{T}\succ0$. Then $\vx^\star$ minimizes
+$\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$ if and only if
+$\mat{A}\vx^\star=\vb$. The minimizer is unique.
+\end{proposition}
+
+\begin{proof}
+For any $\vx$ and direction $\mathbf{d}$, expand
+$\phi(\vx+\mathbf{d})=\phi(\vx)+\mathbf{d}^{T}(\mat{A}\vx-\vb)+\tfrac12\mathbf{d}^{T}\mat{A}\mathbf{d}$. At
+$\vx=\vx^\star$ with $\mat{A}\vx^\star=\vb$, the linear term vanishes and
+$\phi(\vx^\star+\mathbf{d})=\phi(\vx^\star)+\tfrac12\mathbf{d}^{T}\mat{A}\mathbf{d}>\phi(\vx^\star)$
+for every $\mathbf{d}\neq0$ (positive definiteness). So $\vx^\star$ is the strict global
+minimizer. Conversely, a minimizer has zero gradient $\mat{A}\vx-\vb=0$.
+Uniqueness is the strictness of the inequality.
+\end{proof}
+
+The quantity $\vr=\vb-\mat{A}\vx$ that appears throughout---the
+\emph{residual}---is, up to sign, the negative gradient:
+$\vr=-\Grad\phi(\vx)$. The residual points in the direction of steepest
+\emph{descent} of $\phi$. It measures how far $\mat{A}\vx$ falls short of $\vb$,
+and it is zero exactly at the solution. \Cref{fig:bowl} draws the bowl, its
+elliptical level sets, and the residual as the downhill arrow.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- left: the 3D bowl ---
+  \begin{scope}[xshift=0cm]
+    \begin{axis}[
+        width=6.6cm, height=6.0cm, view={35}{32},
+        domain=-1.6:1.6, y domain=-1.1:1.1, samples=24, samples y=18,
+        colormap={bluegold}{color=(simBgBlue) color=(simGold)},
+        xtick=\empty, ytick=\empty, ztick=\empty,
+        xlabel={}, ylabel={}, axis lines=none, clip=false]
+      \addplot3[surf, shader=interp, opacity=0.9, mesh/ordering=y varies]
+        {0.9*x*x + 2.6*y*y};
+      \node[font=\scriptsize, text=simInk] at (axis cs:0,0,0) {};
+    \end{axis}
+    \node[font=\scriptsize, text=simBlue] at (1.8,-1.9) {$\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$};
+  \end{scope}
+  % --- right: contours + residual arrow ---
+  \begin{scope}[xshift=8.2cm]
+    \begin{axis}[
+        width=6.4cm, height=6.0cm, axis equal image,
+        xtick=\empty, ytick=\empty, xlabel={}, ylabel={},
+        axis lines=middle, axis line style={simGray, -{Stealth[length=1.6mm]}},
+        xmin=-2.3, xmax=2.3, ymin=-1.7, ymax=1.7, clip=false]
+      \addplot[simBlue, thick, samples=80, domain=0:360, variable=\t]
+        ({sqrt(2.2)*cos(\t)}, {sqrt(0.8)*sin(\t)});
+      \addplot[simBlue!70, samples=80, domain=0:360, variable=\t]
+        ({sqrt(1.1)*cos(\t)}, {sqrt(0.4)*sin(\t)});
+      \addplot[simBlue!45, samples=80, domain=0:360, variable=\t]
+        ({sqrt(0.35)*cos(\t)}, {sqrt(0.13)*sin(\t)});
+      \node[circle, fill=simRust, inner sep=1.3pt, label={[font=\scriptsize,text=simRust]below:$\vx^\star$}] at (axis cs:0,0) {};
+      \coordinate (p) at (axis cs:1.35,0.78);
+      \node[circle, fill=simInk, inner sep=1.1pt] at (p) {};
+      \node[font=\scriptsize] at (axis cs:1.62,1.02) {$\vx$};
+      \draw[flow, simRust] (p) -- (axis cs:0.55,0.18)
+        node[midway, above right, font=\scriptsize, text=simRust] {$\vr=-\Grad\phi$};
+    \end{axis}
+  \end{scope}
+\end{tikzpicture}
+\caption[The quadratic bowl and its contours]{The function
+$\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$ for an SPD $\mat{A}$. \emph{Left:}
+the graph is an upward paraboloid---a bowl---with a single lowest point.
+\emph{Right:} its level sets are concentric ellipses centered on the minimizer
+$\vx^\star$, the solution of $\mat{A}\vx=\vb$. The ellipses are stretched along
+$\mat{A}$'s eigenvectors by the reciprocals of its eigenvalues; the more
+$\mat{A}$ stretches, the more eccentric they are. The residual $\vr=\vb-\mat{A}\vx
+= -\Grad\phi$ points in the direction of steepest descent---straight down the
+local slope, \emph{not}, in general, toward $\vx^\star$.}
+\label{fig:bowl}
+\end{figure}
+
+\subsection{Why steepest descent zig-zags}
+\label{sec:zigzag}
+
+The most obvious way to descend a bowl is to repeatedly step in the steepest
+downhill direction. That is \emph{steepest descent}: from the current $\vx$,
+compute the residual $\vr=\vb-\mat{A}\vx$ (the downhill direction), and move
+along it by the amount that minimizes $\phi$ on that line. The line-minimizing
+step length has a clean closed form. Along $\vx+\alpha\vr$,
+\[
+  \phi(\vx+\alpha\vr) = \phi(\vx) - \alpha\,\vr^{T}\vr
+    + \tfrac12\alpha^2\,\vr^{T}\mat{A}\vr,
+\]
+a parabola in $\alpha$ minimized at
+\begin{equation}
+\label{eq:sdstep}
+  \alpha = \frac{\vr^{T}\vr}{\vr^{T}\mat{A}\vr}
+         = \frac{\inner{\vr}{\vr}}{\inner{\mat{A}\vr}{\vr}} .
+\end{equation}
+Take the step, recompute the residual, repeat. It converges---$\phi$ decreases
+every step and the bowl has a floor---but on a stretched bowl it converges
+\emph{slowly}, and the reason is geometric and worth seeing.
+
+When you minimize $\phi$ exactly along a line, you stop at the point where the
+line is tangent to a level ellipse; there the new residual is
+\emph{perpendicular to the line you just walked}. So each steepest-descent step
+turns ninety degrees from the last. On a round bowl (eigenvalues all equal) the
+first residual already points at the center and one step finishes. On a stretched
+bowl (eigenvalues far apart) the downhill direction points mostly \emph{across}
+the long valley rather than \emph{along} it, so the iterate crabs back and forth,
+each step undoing part of the last, creeping toward the minimum in a long
+zig-zag. \Cref{fig:zigzag} (left) is the classic picture. The narrower the
+valley---the larger the ratio of largest to smallest eigenvalue---the worse the
+crabbing. That ratio is the \emph{condition number}, and it will govern
+everything.
+
+\begin{keyidea}
+Steepest descent stops, each step, where the new residual is perpendicular to the
+direction just travelled. On a stretched (ill-conditioned) bowl, consecutive
+perpendicular steps point mostly across the valley, so the iterate zig-zags and
+crawls. The cure is not a better step \emph{length}---\cref{eq:sdstep} is already
+optimal along its line---but a better set of \emph{directions}: directions chosen
+so that progress along one is never spoiled by the next. Building those
+directions is conjugate gradients.
+\end{keyidea}
+
+\section{Conjugacy: directions that do not interfere}
+\label{sec:conjugacy}
+
+The flaw in steepest descent is that minimizing along the new residual
+\emph{re-introduces} error along the old direction: the steps are coupled. We
+want a set of directions $\vp_0,\vp_1,\dots,\vp_{N-1}$ along which we can minimize
+\emph{one at a time}, with the guarantee that optimizing along $\vp_k$ never
+disturbs the optimization already done along $\vp_0,\dots,\vp_{k-1}$. The
+condition that makes the directions independent in exactly this sense is
+\emph{conjugacy}.
+
+\begin{definition}[$\mat{A}$-conjugate directions]
+\label{def:conjugate}
+Two nonzero vectors $\vp_i,\vp_j$ are \emph{conjugate with respect to $\mat{A}$}
+(or \emph{$\mat{A}$-orthogonal}) if
+\[
+  \inner{\mat{A}\vp_i}{\vp_j} = \vp_i^{T}\mat{A}\vp_j = 0,\qquad i\neq j .
+\]
+A set $\{\vp_k\}$ is $\mat{A}$-conjugate if its members are pairwise conjugate.
+\end{definition}
+
+Conjugacy is ordinary orthogonality measured in the \emph{energy inner product}
+$\inner{\vu}{\vv}_{\mat{A}}:=\vu^{T}\mat{A}\vv$, which is a genuine inner product
+precisely because $\mat{A}\succ0$. Its induced norm,
+$\norm{\vu}_{\mat{A}}:=\sqrt{\vu^{T}\mat{A}\vu}$, is the \emph{energy norm}, and
+it is the natural ruler for this problem: the quantity conjugate gradients
+actually drives down is the energy-norm error, as \cref{sec:converge} will show.
+Geometrically, $\mat{A}$-conjugate directions look skew in ordinary axes but are
+perpendicular once the bowl is un-stretched into a round one. \Cref{fig:conjugate}
+shows the two pictures side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- left: skew in standard coords ---
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (0,2.55) {standard axes: skew};
+    \begin{scope}[scale=0.95]
+      \draw[simBlue, thick] (0,0) ellipse (1.9 and 0.95);
+      \draw[simBlue!55] (0,0) ellipse (1.25 and 0.62);
+      \node[circle, fill=simRust, inner sep=1.2pt] at (0,0) {};
+      % two A-conjugate directions: skew here
+      \draw[flow, simGreen, thick] (0,0) -- (1.7,0)
+        node[right, font=\scriptsize, text=simGreen] {$\vp_0$};
+      \draw[flow, simRust, thick] (0,0) -- (-0.62,0.78)
+        node[above left, font=\scriptsize, text=simRust] {$\vp_1$};
+      \node[font=\scriptsize, text=simGray] at (0.0,-1.45) {$\vp_0^{T}\mat{A}\vp_1=0$};
+    \end{scope}
+  \end{scope}
+  \draw[simGray!50, thick] (3.7,-1.7) -- (3.7,2.7);
+  % --- right: orthogonal in A-coords ---
+  \begin{scope}[xshift=7.6cm]
+    \node[font=\small\bfseries, text=simGreen] at (0,2.55) {energy ($\mat{A}$) axes: orthogonal};
+    \begin{scope}[scale=0.95]
+      \draw[simGreen, thick] (0,0) circle (1.25);
+      \draw[simGreen!55] (0,0) circle (0.78);
+      \node[circle, fill=simRust, inner sep=1.2pt] at (0,0) {};
+      \draw[flow, simGreen, thick] (0,0) -- (1.25,0)
+        node[right, font=\scriptsize, text=simGreen] {$\vp_0$};
+      \draw[flow, simRust, thick] (0,0) -- (0,1.25)
+        node[above, font=\scriptsize, text=simRust] {$\vp_1$};
+      \draw[simGray] (0.22,0) -- (0.22,0.22) -- (0,0.22);
+      \node[font=\scriptsize, text=simGray] at (0.0,-1.55) {perpendicular here};
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}
+\caption[Conjugate directions in two coordinate systems]{$\mat{A}$-conjugate
+directions, drawn twice. \emph{Left:} in ordinary coordinates the level sets are
+ellipses and the two directions $\vp_0,\vp_1$ look \emph{skew}---they are not
+perpendicular in the usual sense. \emph{Right:} change to coordinates that
+un-stretch the bowl into a circle (the energy inner product
+$\inner{\vu}{\vv}_{\mat{A}}=\vu^{T}\mat{A}\vv$), and the same two directions are
+exactly \emph{perpendicular}. Conjugacy is orthogonality in the energy geometry.
+This is why minimizing along $\vp_1$ cannot spoil the work done along $\vp_0$:
+they are independent axes of the round bowl.}
+\label{fig:conjugate}
+\end{figure}
+
+\subsection{Why conjugate directions finish in \texorpdfstring{$N$}{N} steps}
+\label{sec:finite}
+
+The payoff of conjugacy is a theorem that has no analogue for steepest descent:
+with conjugate directions, exact minimization terminates after at most $N$ steps.
+The idea is exactly the independence we asked for.
+
+\begin{theorem}[Conjugate-direction termination]
+\label{thm:finite}
+Let $\{\vp_0,\dots,\vp_{N-1}\}$ be $\mat{A}$-conjugate (hence a basis of
+$\Real^N$). Starting from any $\vx_0$, set
+$\vx_{k+1}=\vx_k+\alpha_k\vp_k$ with $\alpha_k$ chosen to minimize $\phi$ along
+$\vp_k$. Then $\vx_N=\vx^\star$, the exact solution of $\mat{A}\vx=\vb$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Because the $\vp_k$ are a basis, write the initial error in them:
+$\vx^\star-\vx_0=\sum_{k}\delta_k\vp_k$. Apply $\mat{A}$ and take the energy inner
+product with $\vp_j$; conjugacy kills every cross term, leaving
+$\delta_j=\inner{\vp_j}{\mat{A}(\vx^\star-\vx_0)}/\inner{\mat{A}\vp_j}{\vp_j}
+=\inner{\vp_j}{\vr_0}/\inner{\mat{A}\vp_j}{\vp_j}$, where $\vr_0=\vb-\mat{A}\vx_0$.
+Separately, the line-minimizing step length along $\vp_j$ works out (next
+subsection) to exactly this same $\delta_j$. So the $j$-th step installs exactly
+the $j$-th coordinate of the error and never touches the others---each conjugate
+direction is corrected once, independently, and after $N$ corrections every
+coordinate is right.
+\end{proof}
+
+This is the finite-termination property: \emph{in exact arithmetic, conjugate
+gradients solves an $N\times N$ SPD system in at most $N$ steps}, because it lays
+the $N$ independent corrections down one at a time with no interference. In
+floating point the guarantee is softened (rounding spoils exact conjugacy), and
+in practice we stop far earlier---after a residual tolerance is met, typically in
+\emph{far fewer} than $N$ steps for a well-conditioned system, as
+\cref{sec:converge} quantifies. But the finite-termination theorem is the
+structural fact that distinguishes conjugate directions from steepest descent's
+endless crawl.
+
+\begin{keyidea}
+Conjugate directions are \emph{$\mat{A}$-orthogonal}: $\vp_i^{T}\mat{A}\vp_j=0$
+for $i\neq j$. Minimizing $\phi$ along each in turn corrects one independent
+coordinate of the error and disturbs none of the others, so an $N$-dimensional
+SPD system is solved exactly in at most $N$ such steps. This finite termination
+is what steepest descent, with its coupled perpendicular steps, can never
+promise.
+\end{keyidea}
+
+\section{Deriving the method}
+\label{sec:derive}
+
+We now have the goal---march along $\mat{A}$-conjugate directions---but not yet
+the directions. A naive plan would precompute a full conjugate basis (a
+Gram--Schmidt orthogonalization in the energy inner product, keeping every
+previous direction). That costs $O(N^2)$ storage and is hopeless for the
+million-unknown systems Palace solves. The miracle of conjugate gradients,
+derived in this section, is that for an SPD operator the conjugate directions can
+be built by a \emph{short recurrence}: each new direction needs only the current
+residual and the \emph{immediately previous} direction. Nothing older is kept.
+
+We build the method from three demands and read off each coefficient as the
+unique value that satisfies them.
+
+\subsection{The step length \texorpdfstring{$\alpha$}{alpha}}
+\label{sec:alpha}
+
+Suppose we have a current iterate $\vx_k$, its residual $\vr_k=\vb-\mat{A}\vx_k$,
+and a search direction $\vp_k$. We move to $\vx_{k+1}=\vx_k+\alpha_k\vp_k$ and ask
+for the $\alpha_k$ that minimizes $\phi$ along $\vp_k$---the line search of
+\cref{sec:zigzag}, now along $\vp_k$ instead of along the residual. The same
+parabola calculation gives
+\begin{equation}
+\label{eq:alpha}
+  \alpha_k = \frac{\inner{\vr_k}{\vp_k}}{\inner{\mat{A}\vp_k}{\vp_k}} .
+\end{equation}
+Equivalently---and this is the form the algorithm uses---we will show below that
+$\inner{\vr_k}{\vp_k}=\inner{\vr_k}{\vr_k}$, so
+\begin{equation}
+\label{eq:alpha2}
+  \boxed{\;\alpha_k = \frac{\inner{\vr_k}{\vr_k}}{\inner{\mat{A}\vp_k}{\vp_k}}\;}
+\end{equation}
+The denominator $\inner{\mat{A}\vp_k}{\vp_k}=\norm{\vp_k}_{\mat{A}}^2$ is the
+energy norm of the search direction, strictly positive because $\mat{A}\succ0$ and
+$\vp_k\neq0$, so the division is always safe until the residual vanishes.
+The numerator is just the squared length of the current residual---a quantity we
+need anyway to test convergence. One operator apply $\mat{A}\vp_k$ and two inner
+products give the step.
+
+\subsection{The residual update}
+\label{sec:residual}
+
+Having stepped, we need the new residual $\vr_{k+1}=\vb-\mat{A}\vx_{k+1}$. Do not
+recompute it from scratch with a fresh matrix-vector product---that would cost a
+second apply. Instead subtract the change:
+\[
+  \vr_{k+1} = \vb-\mat{A}(\vx_k+\alpha_k\vp_k)
+            = \vr_k - \alpha_k\,\mat{A}\vp_k .
+\]
+The product $\mat{A}\vp_k$ was already computed for the step length
+\eqref{eq:alpha2}, so the residual update is a single \code{axpy} (a
+scaled-vector add) and costs \emph{no} extra apply. This is the reason a conjugate
+gradient iteration needs exactly \emph{one} operator application per step---the
+governing cost metric of \cref{ch:krylov}. The recurrence
+\begin{equation}
+\label{eq:rupdate}
+  \vr_{k+1} = \vr_k - \alpha_k\,\mat{A}\vp_k
+\end{equation}
+also drives two orthogonality facts we now harvest.
+
+\subsection{The direction update and the short-recurrence miracle}
+\label{sec:beta}
+
+The new direction must be conjugate to all previous ones. We build it as the new
+residual plus a correction along the \emph{previous} direction only:
+\begin{equation}
+\label{eq:pupdate}
+  \vp_{k+1} = \vr_{k+1} + \beta_{k}\,\vp_k ,
+\end{equation}
+and choose $\beta_k$ to force conjugacy with $\vp_k$, i.e.
+$\inner{\mat{A}\vp_{k+1}}{\vp_k}=0$. Substituting \eqref{eq:pupdate} and solving,
+\[
+  \beta_k = -\,\frac{\inner{\mat{A}\vr_{k+1}}{\vp_k}}{\inner{\mat{A}\vp_k}{\vp_k}} .
+\]
+This forces conjugacy against $\vp_k$. The astonishing fact---the heart of the
+method---is that for an SPD operator, forcing conjugacy against the \emph{one}
+previous direction automatically delivers conjugacy against \emph{all} the older
+ones, for free. Two orthogonality relations make it happen, both consequences of
+the residual recurrence \eqref{eq:rupdate}:
+
+\begin{lemma}[CG orthogonalities]
+\label{lem:orth}
+Running the recurrences \eqref{eq:alpha2}, \eqref{eq:rupdate}, \eqref{eq:pupdate}
+from $\vp_0=\vr_0$ produces, for all valid indices,
+\begin{enumerate}[nosep, label=\textup{(\roman*)}]
+  \item mutually orthogonal residuals: $\inner{\vr_i}{\vr_j}=0$ for $i\neq j$;
+  \item $\mat{A}$-conjugate directions: $\inner{\mat{A}\vp_i}{\vp_j}=0$ for $i\neq j$.
+\end{enumerate}
+\end{lemma}
+
+The two facts feed each other by induction: orthogonal residuals make the
+direction built by \eqref{eq:pupdate} conjugate to \emph{every} prior direction
+(not just the last), and conjugate directions in turn make the next residual
+orthogonal to every prior residual. The full induction is in any of the further
+reading; the point for us is its consequence. Because the residuals are mutually
+orthogonal, the coefficient $\beta_k$ collapses to a ratio of \emph{consecutive
+residual norms}. Using \eqref{eq:rupdate} to rewrite
+$\mat{A}\vp_k=(\vr_k-\vr_{k+1})/\alpha_k$ and applying orthogonality term by term,
+the messy $\beta_k$ above simplifies to
+\begin{equation}
+\label{eq:beta}
+  \boxed{\;\beta_k = \frac{\inner{\vr_{k+1}}{\vr_{k+1}}}{\inner{\vr_k}{\vr_k}}\;}
+\end{equation}
+the celebrated Fletcher--Reeves form. (The same orthogonalities collapse
+$\inner{\vr_k}{\vp_k}$ to $\inner{\vr_k}{\vr_k}$, which is the identity promised
+in \cref{sec:alpha}.) No old direction, no old residual: $\beta_k$ is built from
+the squared residual norm we just computed and the one from the step before.
+
+\begin{keyidea}
+\textbf{The short-recurrence miracle.} For an SPD operator, a direction made
+conjugate to only the \emph{previous} direction is automatically conjugate to
+\emph{all} previous directions. Consequently conjugate gradients keeps just two
+vectors---the residual $\vr$ and the direction $\vp$---and two scalars---the step
+length $\alpha$ and the coefficient $\beta=\norm{\vr_{k+1}}^2/\norm{\vr_k}^2$. It
+never stores or re-orthogonalizes against the old directions, yet it builds a
+full conjugate basis. This $O(N)$-memory short recurrence is what makes CG
+practical at a million unknowns---and it is exactly what GMRES, on a
+\emph{non}-symmetric operator, cannot do (\cref{ch:gmres}).
+\end{keyidea}
+
+\section{The algorithm}
+\label{sec:algorithm}
+
+Collecting \eqref{eq:alpha2}, \eqref{eq:rupdate}, \eqref{eq:pupdate},
+\eqref{eq:beta} gives the whole method. We present it twice: first as ordinary
+pseudocode, then as the one \code{iterate\_while} of the shared step kernel, to
+make the tie to \cref{ch:fold} and \cref{ch:krylov} explicit.
+
+\subsection{As pseudocode}
+
+\begin{lstlisting}[style=l4style]
+-- Conjugate gradients: solve A x = b for SPD A.
+cg A b x0 tol =
+  let r0 = b - A x0                    -- initial residual
+      p0 = r0                          -- first direction is steepest descent
+  in loop with x = x0, r = r0, p = p0:
+       Ap    = A p                     -- THE one operator apply per step
+       alpha = <r,r> / <Ap,p>          -- step length          (eq 26.6)
+       x'    = x + alpha * p           -- advance the iterate
+       r'    = r - alpha * Ap          -- update residual, no new apply (eq 26.7)
+       if sqrt <r',r'> <= tol: return x'
+       beta  = <r',r'> / <r,r>         -- direction coefficient (eq 26.11)
+       p'    = r' + beta * p           -- new conjugate direction (eq 26.8)
+       continue with x = x', r = r', p = p'
+\end{lstlisting}
+
+Per step: one apply $\mat{A}\vp$, two inner products ($\inner{\vr}{\vr}$ and
+$\inner{\mat{A}\vp}{\vp}$; the next $\inner{\vr'}{\vr'}$ is reused as the
+following step's numerator), and three scaled-vector adds (the updates of $\vx$,
+$\vr$, and $\vp$). \Cref{fig:dataflow} draws this as a dataflow graph: one apply,
+two dots, three \code{axpy}s. That fixed, tiny per-step recipe---independent of
+$N$ beyond the vector lengths---is the whole computational kernel.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm and 9mm]
+  \node[data, minimum width=9mm] (r) {$\vr$};
+  \node[data, minimum width=9mm, below=10mm of r] (p) {$\vp$};
+  \node[opbox, right=of p] (ap) {\code{A·p}\\\scriptsize 1 apply};
+  \node[opbox, right=12mm of ap] (d2) {\code{<Ap,p>}\\\scriptsize dot};
+  \node[opbox, above=8mm of d2] (d1) {\code{<r,r>}\\\scriptsize dot};
+  \node[opbox, right=10mm of d2] (al) {$\alpha$};
+  \node[opbox, right=12mm of d1] (xu) {\code{x += a p}\\\scriptsize axpy};
+  \node[opbox, below=6mm of xu] (ru) {\code{r -= a Ap}\\\scriptsize axpy};
+  \node[opbox, below=6mm of ru] (be) {$\beta=\frac{<r',r'>}{<r,r>}$};
+  \node[opbox, right=10mm of ru] (pu) {\code{p = r'+b p}\\\scriptsize axpy};
+  \node[product, right=9mm of pu] (out) {$\vx',\vr',\vp'$};
+  \draw[flow] (r)-|(d1);
+  \draw[flow] (p)--(ap);
+  \draw[flow] (ap)--(d2);
+  \draw[flow] (ap.east) .. controls +(0.5,-0.7) and +(-0.5,0) .. (ru.west);
+  \draw[flow] (d1)--(al);  \draw[flow] (d2)--(al);
+  \draw[flow] (al) .. controls +(0,0.9) and +(0,0.9) .. (xu.north);
+  \draw[flow] (al) .. controls +(0.2,-0.3) and +(-0.2,0.3) .. (ru.east);
+  \draw[flow] (p) .. controls +(-0.5,0) and +(-0.6,-0.4) .. (xu.west);
+  \draw[flow] (xu)--(out);
+  \draw[flow] (ru)--(be);  \draw[flow] (ru) .. controls +(0.3,0) and +(-0.3,0.2) .. (pu.west);
+  \draw[flow] (be) .. controls +(0.6,0) and +(-0.3,-0.4) .. (pu.south);
+  \draw[flow] (pu)--(out);
+\end{tikzpicture}
+\caption[The CG step dataflow]{One conjugate-gradient step as a dataflow graph:
+\emph{one} operator apply $\mat{A}\vp$, \emph{two} inner products
+($\inner{\vr}{\vr}$ and $\inner{\mat{A}\vp}{\vp}$), and \emph{three}
+scaled-vector adds (\code{axpy}s) updating $\vx$, $\vr$, and $\vp$. The product
+$\mat{A}\vp$ feeds both the denominator of $\alpha$ and the residual update---it
+is computed once and reused, which is why a step costs a single apply. Compare the
+threaded-carry picture of \cref{fig:carry}: this graph is the \emph{body} of one
+\texttt{iterate\_while} step.}
+\label{fig:dataflow}
+\end{figure}
+
+\subsection{As one \texttt{iterate\_while} of the step kernel}
+\label{sec:iterate}
+
+\Cref{ch:fold} taught that every iterative algorithm in this book is one
+\code{iterate\_while}, and \cref{ch:krylov} taught that every Krylov solver is
+that combinator folding a single \code{krylov\_step}. Conjugate gradients is the
+canonical instance. We read the algorithm through the strata of \cref{ch:strata}.
+
+The \emph{carry} is the run-time \code{SimState}---the iterate $\vx$, the
+iteration count, the convergence flag, the residual statistics---exactly the
+five-field record that is uniform across every Krylov method. The
+\emph{ephemeral} workspace is the CG \code{Krylov} bundle: the residual $\vr$, the
+direction $\vp$, the optional preconditioned residual $\vz$, and the two scalars
+$\alpha,\beta$. It is solve-local scratch, born when the solve starts and
+discarded when it returns, threaded as a plain value beside the carry rather than
+through the monad. The \emph{predicate} reads the residual proxy folded into the
+carry and stops at tolerance---the discipline of \cref{ch:fold}, never reading a
+quantity the step has not yet produced. And the \emph{step} is one
+\code{krylov\_step}: apply once, update the scalars, update the three vectors,
+emit the residual norm as a demand-prunable output.
+
+\begin{lstlisting}[style=l4style]
+cg_solve :: OpParams -> SimState -> { final_state: SimState, trajectory: [...] }
+cg_solve op s0 =
+  iterate_while
+    s0                                 -- carry: the SimState (x, it, converged, ...)
+    (\s -> not s.converged && s.it < op.max_it)   -- predicate: pure on the carry
+    (\s -> krylov_step op krylov s)     -- step: one apply, fold the CG body
+-- where krylov_step performs, per call:
+--   Ap    = apply_linop op.T  krylov.p          -- the ONE apply
+--   alpha = dot(krylov.r, krylov.r) / dot(Ap, krylov.p)
+--   x'    = axpy  alpha krylov.p    s.x          -- iterate update
+--   r'    = axpy (-alpha) Ap        krylov.r     -- residual update
+--   beta  = dot(r', r') / dot(krylov.r, krylov.r)
+--   p'    = axpy  beta   krylov.p   r'           -- direction update
+--   outputs = { residual_norm: sqrt (dot(r',r')) }   -- demand-prunable
+\end{lstlisting}
+
+The coefficient $\beta=\norm{\vr'}^2/\norm{\vr}^2$ reads the previous step's
+residual-norm-squared. That single backward dependence is the
+\emph{recurrence carry} of \cref{ch:strata}'s fourth stratum---the scalar
+threaded from one inner step to the next and reborn at each solve. In the
+branch-in-body form (\cref{ch:fold}'s Form~A) it lives as a field of the workspace
+with an \lstinline[style=l4style]|if it == 0| guard for the first step (where
+$\vp_0=\vr_0$, no previous direction); the first-iteration-unrolling rotation
+splits it into a bootstrap step and a branch-free steady step
+(\code{iterate\_while\_with\_prev}), exactly as \cref{ch:fold} described.
+\Cref{fig:carry} draws the CG carry threading forward with the residual history
+peeling off into the trajectory.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  \node[data, minimum width=14mm, align=center] (s0) at (0,0) {\code{SimState}\\$\vx_0$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+        font=\scriptsize] (p0) at (2.2,0) {res$>$tol?};
+  \node[opbox, minimum width=15mm, align=center] (k0) at (4.6,0) {\code{krylov\_step}\\\scriptsize 1 apply};
+  \node[data, minimum width=14mm, align=center] (s1) at (7.2,0) {\code{SimState}\\$\vx_1$};
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+        font=\scriptsize] (p1) at (9.4,0) {res$>$tol?};
+  \node[font=\scriptsize, simGray] (more) at (11.0,0) {$\cdots$};
+  \draw[flow] (s0)--(p0);
+  \draw[flow] (p0)-- node[above,font=\scriptsize]{yes} (k0);
+  \draw[flow] (k0)-- node[above,font=\scriptsize]{\code{.state}} (s1);
+  \draw[flow] (s1)--(p1);
+  \draw[flow] (p1)-- node[above,font=\scriptsize]{yes} (more);
+  % ephemeral Krylov threaded below as plain value
+  \node[data, fill=simBgGreen, draw=simGreen, minimum width=20mm] (kr0) at (4.6,-1.5)
+    {\scriptsize\code{Krylov}: $\vr,\vp,\alpha,\beta$};
+  \draw[refedge, simGreen] (kr0.north) -- (k0.south);
+  \draw[backflow, simGreen] (k0.south east) .. controls +(0.6,-0.8) and +(0.6,0.4) .. (kr0.east)
+    node[midway, right=2mm, font=\scriptsize, text=simGreen] {plain value};
+  % trajectory of residual norms peeling off
+  \node[data, fill=simBgGold, draw=simGold, minimum width=40mm] (tj) at (6.5,-2.7)
+    {\code{trajectory}: $[\,\norm{\vr_0},\ \norm{\vr_1},\ \dots\,]$};
+  \draw[refedge, simGold!80!black] (k0.south) |- (tj.west);
+  % converged exit
+  \node[product] (fin) at (9.4,-1.5) {\code{final\_state}: $\vx^\star$};
+  \draw[backflow] (p1.south)--(fin.north);
+\end{tikzpicture}
+\caption[CG as one \texttt{iterate\_while}]{Conjugate gradients as a single
+\texttt{iterate\_while} (\cref{ch:fold}) folding one \code{krylov\_step}
+(\cref{ch:krylov}). The carry is the run-time \code{SimState}
+(\cref{ch:strata})---iterate $\vx$, counter, flags---threaded along the top; the
+predicate reads the residual proxy folded into the carry and exits at tolerance.
+The ephemeral \code{Krylov} workspace ($\vr,\vp,\alpha,\beta$) is threaded
+\emph{beside} the carry as a plain value (green), reborn at solve entry and
+discarded at return. Each step's residual norm peels off into the
+\code{trajectory} (gold)---computed only if a consumer reads it, by the
+demand-pruning of \cref{ch:fold}.}
+\label{fig:carry}
+\end{figure}
+
+This is the structural payoff of Parts~II and~III landing on a real solver:
+nothing in \cref{sec:algorithm} is new control structure. CG is the fold of
+\cref{ch:fold}, over the strata of \cref{ch:strata}, applying the operator of
+\cref{ch:krylov} once per step. What is special to CG lives entirely in the
+\emph{body}---the four coefficient formulas we derived---not in the loop.
+
+\section{Convergence}
+\label{sec:converge}
+
+Finite termination in $N$ steps (\cref{thm:finite}) is reassuring but useless as a
+performance promise: $N$ is in the millions, and rounding spoils exact conjugacy
+long before then. What makes CG \emph{fast} is that it usually drives the error
+below tolerance in \emph{far fewer} steps---and how many fewer is governed by one
+number, the condition number.
+
+\begin{definition}[Condition number]
+\label{def:kappa}
+For an SPD operator $\mat{A}$ with eigenvalues
+$0<\lambda_{\min}=\lambda_1\le\cdots\le\lambda_N=\lambda_{\max}$, the (spectral)
+\emph{condition number} is
+$\kappa=\kappa(\mat{A})=\lambda_{\max}/\lambda_{\min}$.
+\end{definition}
+
+$\kappa$ is the eccentricity of the bowl: $\kappa=1$ is a perfect round bowl (one
+step finishes), and large $\kappa$ is a long narrow valley (the steepest-descent
+zig-zag of \cref{sec:zigzag}). The central convergence result bounds the
+energy-norm error of the $k$-th CG iterate by a power that shrinks as $\kappa$
+shrinks.
+
+\begin{theorem}[CG energy-norm convergence]
+\label{thm:converge}
+Let $\vx^\star$ solve $\mat{A}\vx=\vb$ with $\mat{A}=\mat{A}^{T}\succ0$ and
+$\kappa=\kappa(\mat{A})$. The $k$-th conjugate-gradient iterate satisfies
+\begin{equation}
+\label{eq:bound}
+  \norm{\vx^\star-\vx_k}_{\mat{A}}
+  \;\le\; 2\!\left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^{\!k}
+  \norm{\vx^\star-\vx_0}_{\mat{A}} .
+\end{equation}
+\end{theorem}
+
+The structure of the proof is worth a sentence even though we do not give it in
+full: after $k$ steps the CG iterate is the \emph{best possible} approximation, in
+the energy norm, drawn from the degree-$k$ Krylov subspace
+$\operatorname{span}\{\vr_0,\mat{A}\vr_0,\dots,\mat{A}^{k}\vr_0\}$
+(\cref{ch:krylov})---that optimality is what conjugacy buys. Bounding the error
+then becomes a question about polynomials: how small can a degree-$k$ polynomial
+$q$ with $q(0)=1$ be made across the eigenvalue interval
+$[\lambda_{\min},\lambda_{\max}]$? The answer is given by Chebyshev polynomials,
+and it produces exactly the factor in \eqref{eq:bound}. The
+$\sqrt{\kappa}$---not $\kappa$---is the decisive feature: CG converges at the rate
+set by the \emph{square root} of the condition number, which is why it so
+dramatically outperforms steepest descent (whose analogous bound carries $\kappa$
+itself).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{semilogyaxis}[
+      width=12.2cm, height=7.0cm,
+      xlabel={iteration $k$}, ylabel={relative energy-norm error (bound)},
+      xmin=0, xmax=60, ymin=1e-8, ymax=3,
+      grid=both, grid style={simGray!18},
+      legend pos=north east, legend cell align=left,
+      legend style={font=\footnotesize, draw=simGray!40},
+      label style={font=\footnotesize}, tick label style={font=\scriptsize},
+      every axis plot/.append style={very thick}]
+    % bound 2*c^k with c=(sqrt(kappa)-1)/(sqrt(kappa)+1); written as 2*exp(k*ln c)
+    \addplot[simGreen, domain=0:60, samples=61]
+      {2*exp(x*ln((sqrt(10)-1)/(sqrt(10)+1)))};
+    \addlegendentry{$\kappa=10$ (well-conditioned)}
+    \addplot[simBlue, domain=0:60, samples=61]
+      {2*exp(x*ln((sqrt(100)-1)/(sqrt(100)+1)))};
+    \addlegendentry{$\kappa=100$}
+    \addplot[simGold, domain=0:60, samples=61]
+      {2*exp(x*ln((sqrt(1000)-1)/(sqrt(1000)+1)))};
+    \addlegendentry{$\kappa=1000$}
+    \addplot[simRust, domain=0:60, samples=61]
+      {2*exp(x*ln((sqrt(10000)-1)/(sqrt(10000)+1)))};
+    \addlegendentry{$\kappa=10000$ (ill-conditioned)}
+    \draw[simGray, densely dashed] (axis cs:0,1e-6)--(axis cs:60,1e-6)
+      node[pos=0.07, above, font=\scriptsize, text=simGray] {tol $=10^{-6}$};
+  \end{semilogyaxis}
+\end{tikzpicture}
+\caption[CG convergence versus condition number]{The CG energy-norm error bound
+$2\big((\sqrt\kappa-1)/(\sqrt\kappa+1)\big)^k$ of \cref{thm:converge}, for four
+condition numbers, on a log scale. A well-conditioned system ($\kappa=10$) reaches
+a $10^{-6}$ tolerance in a handful of steps; each tenfold increase in $\kappa$
+roughly triples the iteration count, because the rate depends on $\sqrt\kappa$.
+This is the entire motivation for preconditioning (\cref{ch:precond}): replace
+$\mat{A}$ by $\mat{M}^{-1}\mat{A}$ with a far smaller condition number and slide
+down to the green curve. The dependence on $\sqrt\kappa$ rather than $\kappa$ is
+CG's decisive advantage over steepest descent.}
+\label{fig:convplot}
+\end{figure}
+
+\Cref{fig:convplot} plots the bound for several condition numbers. The lesson is
+stark: a well-conditioned system converges in a handful of steps; a poorly
+conditioned one crawls. Since the operators Palace assembles are routinely
+ill-conditioned---fine meshes and material contrasts push $\kappa$ into the
+thousands or worse---raw CG is too slow, and the fix is to \emph{change the
+condition number}. That is preconditioning, the subject of \cref{ch:precond} and
+the reason \cref{sec:pcg} exists.
+
+\subsection{Clustered eigenvalues and superlinear convergence}
+\label{sec:cluster}
+
+The bound \eqref{eq:bound} is worst-case; CG often does much better, and the
+reason is the polynomial picture again. The error after $k$ steps is small if
+\emph{some} degree-$k$ polynomial with $q(0)=1$ is small on the spectrum---and a
+polynomial can be made small on a few tight \emph{clusters} of eigenvalues using
+far fewer degrees than it would need to be small across a whole wide interval.
+Concretely, if the spectrum consists of $m$ tight clusters, CG behaves as if
+$\kappa$ were the spread \emph{within} a cluster, and it ``uses up'' the
+outliers a few per step. The visible effect is \emph{superlinear convergence}: the
+residual drops slowly at first, then accelerates as CG eliminates the extreme
+eigenvalues and is left working only against the cluster. This is also why a good
+preconditioner---one that clusters the spectrum near $1$---helps so much more than
+the bare $\kappa$ improvement suggests.
+
+\section{Preconditioned conjugate gradients}
+\label{sec:pcg}
+
+If convergence is governed by $\kappa(\mat{A})$, the way to make CG fast is to
+solve a system with a smaller condition number that has the same solution.
+Preconditioning supplies a \emph{preconditioner} $\mat{M}\approx\mat{A}$, cheap to
+invert, such that $\mat{M}^{-1}\mat{A}$ is far better conditioned than $\mat{A}$.
+The full theory is \cref{ch:precond}; here we record only how the CG \emph{loop}
+changes, because the change is small and structural.
+
+The naive idea---run CG on $\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$---breaks the
+SPD requirement, since $\mat{M}^{-1}\mat{A}$ is generally not symmetric. The
+preconditioned conjugate gradient (PCG) algorithm finesses this by running CG in
+the inner product defined by $\mat{M}$, which keeps every operator effectively
+symmetric and recovers an honest CG. The upshot is the same recurrence with one
+extra vector and one extra apply per step: at each step, form the
+\emph{preconditioned residual} $\vz=\mat{M}^{-1}\vr$, and replace the residual
+inner products $\inner{\vr}{\vr}$ in $\alpha$ and $\beta$ by the
+\emph{$\mat{M}$-weighted} inner products $\inner{\vz}{\vr}$:
+\begin{align}
+\label{eq:pcg-alpha}
+  \vz_k &= \mat{M}^{-1}\vr_k, &
+  \alpha_k &= \frac{\inner{\vz_k}{\vr_k}}{\inner{\mat{A}\vp_k}{\vp_k}}, \\
+\label{eq:pcg-beta}
+  \beta_k &= \frac{\inner{\vz_{k+1}}{\vr_{k+1}}}{\inner{\vz_k}{\vr_k}}, &
+  \vp_{k+1} &= \vz_{k+1} + \beta_k\,\vp_k .
+\end{align}
+When $\mat{M}=\mat{I}$ this is exactly the unpreconditioned method of
+\cref{sec:algorithm}---$\vz=\vr$ and the formulas collapse back. The cost is one
+preconditioner apply $\vz=\mat{M}^{-1}\vr$ per step, on top of the one operator
+apply, and the storage of the extra vector $\vz$ (the optional \code{z?} field of
+the CG \code{Krylov} bundle in \cref{ch:strata}). \Cref{fig:pcg} overlays the
+extra apply on the dataflow of \cref{fig:dataflow}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=7mm and 11mm]
+  \node[data, minimum width=9mm] (r) {$\vr$};
+  \node[extern, right=of r] (M) {$\vz=\mat{M}^{-1}\vr$\\\scriptsize +1 apply};
+  \node[opbox, right=of M] (dot) {\code{<z,r>}\\\scriptsize dot};
+  \node[data, minimum width=9mm, below=12mm of r] (p) {$\vp$};
+  \node[opbox, right=of p] (ap) {\code{A·p}\\\scriptsize 1 apply};
+  \node[opbox, right=of ap] (dap) {\code{<Ap,p>}};
+  \node[opbox, right=10mm of dap] (al) {$\alpha,\beta$};
+  \node[opbox, right=10mm of dot] (upd) {\code{x,r,p}\\updates\\\scriptsize 3 axpy};
+  \node[product, below=10mm of upd] (out) {$\vx',\vr',\vp'$};
+  \draw[flow] (r)--(M); \draw[flow] (M)--(dot);
+  \draw[flow] (p)--(ap); \draw[flow] (ap)--(dap);
+  \draw[flow] (dot)--(al); \draw[flow] (dap)--(al);
+  \draw[flow] (al) .. controls +(0,0.6) and +(0.4,-0.2) .. (upd.east);
+  \draw[flow] (dot) .. controls +(0.4,0.3) and +(-0.4,0.2) .. (upd.west);
+  \draw[flow] (M.south) .. controls +(0,-0.5) and +(-0.6,0.4) .. (upd.south west)
+    node[midway, below left=-1mm, font=\scriptsize, text=simViolet] {$\vz$ into $\vp'$};
+  \draw[flow] (upd)--(out);
+\end{tikzpicture}
+\caption[Preconditioned CG: the extra apply]{Preconditioned conjugate gradients
+adds exactly one operation to the loop of \cref{fig:dataflow}: a preconditioner
+apply $\vz=\mat{M}^{-1}\vr$ (violet, dashed---an \emph{opaque} operator surface,
+\cref{ch:krylov}). The residual inner products $\inner{\vr}{\vr}$ become the
+$\mat{M}$-weighted products $\inner{\vz}{\vr}$ in both $\alpha$ and $\beta$, and
+the direction is built from $\vz$ rather than $\vr$. Everything else---the single
+operator apply $\mat{A}\vp$, the three \code{axpy}s, the short
+recurrence---is unchanged. PCG is CG with one extra apply and one extra vector.}
+\label{fig:pcg}
+\end{figure}
+
+\begin{pitfall}
+\textbf{Do not run CG on a non-SPD system.} Every guarantee in this
+chapter---finite termination, the energy-norm bound, even the line-minimizing step
+length being a \emph{minimum} rather than a saddle---rests on
+$\mat{A}=\mat{A}^{T}\succ0$ (\cref{def:spd}). Hand CG a non-symmetric operator and
+the energy ``inner product'' $\vu^{T}\mat{A}\vv$ is not symmetric, conjugacy is
+ill-defined, and the iteration can stall or diverge with no warning. Hand it a
+symmetric but \emph{indefinite} operator (negative eigenvalues---the
+time-harmonic Maxwell operator $\mat{K}-\omega^2\mat{M}$ above resonance is one)
+and the denominator $\inner{\mat{A}\vp}{\vp}$ can vanish or go negative,
+\emph{dividing by zero or stepping uphill}. The symptom is a residual that
+refuses to fall or suddenly blows up. The fix is to use the right method: GMRES
+(\cref{ch:gmres}) for non-symmetric systems, MINRES for symmetric-indefinite ones.
+A subtle trap: applying a non-SPD \emph{preconditioner} $\mat{M}$ inside PCG
+breaks SPD-ness just as surely as a non-SPD $\mat{A}$---the preconditioner must
+itself be SPD for \eqref{eq:pcg-alpha}--\eqref{eq:pcg-beta} to define an honest CG.
+\end{pitfall}
+
+\section{The load-bearing numerical note: reduction order}
+\label{sec:numerics}
+
+Every coefficient in CG---$\alpha$, $\beta$, the convergence test---is built from
+\emph{inner products}, $\inner{\vu}{\vv}=\sum_i u_i v_i$. An inner product is a
+\emph{global reduction}: it sums a product over all $N$ entries of the vectors.
+And floating-point addition is \emph{not associative}: $(a+b)+c$ and $a+(b+c)$ can
+differ in their last bits. So the value of an inner product---and therefore the
+exact $\alpha$, the exact $\beta$, the exact iterate $\vx_k$, and the exact
+iteration at which the residual first dips below tolerance---depends on the
+\emph{order} in which the reduction is summed.
+
+This is not a defect to be engineered away; it is a load-bearing property in the
+sense of \cref{ch:bigidea}. Different reduction orders (a different summation tree,
+a different thread count, a different device) give bit-different but equally valid
+CG runs: the mathematics is identical, the floating-point realization is not. Two
+runs of the ``same'' solve on two machines may take a different number of
+iterations and return iterates differing in their last bits. The converged answer
+is correct to tolerance either way; what is \emph{not} reproducible bit-for-bit is
+the trajectory. The Palace source records this explicitly, and we treat the
+reduction-order semantics in full in \cref{app:numerics}. The discipline for now is
+simply to \emph{name} it: an inner product is a reduction, a reduction has an
+order, and the order is observable in the last bits. When a downstream consumer
+demands bit-reproducibility, it must pin the reduction order---CG does not, and
+cannot, promise it for free.
+
+\section{Worked examples}
+
+\begin{workedexample}{CG on a $2\times2$ SPD system: two steps to exact}{2x2}
+We run unpreconditioned CG on a $2\times2$ SPD system and watch it reach the exact
+answer in two steps, as \cref{thm:finite} promises for $N=2$. Take
+\[
+  \mat{A}=\begin{pmatrix}4 & 1\\[1pt] 1 & 3\end{pmatrix},\qquad
+  \vb=\begin{pmatrix}1\\[1pt] 2\end{pmatrix},\qquad
+  \vx_0=\begin{pmatrix}0\\[1pt] 0\end{pmatrix}.
+\]
+$\mat{A}$ is symmetric, and its eigenvalues
+$\tfrac{7\pm\sqrt5}{2}\approx\{2.38,\,4.62\}$ are positive, so it is SPD. The
+exact solution is $\vx^\star=\mat{A}^{-1}\vb=\tfrac1{11}(1,7)^{T}
+\approx(0.0909,\,0.6364)^{T}$.
+
+\tcblower
+\textbf{Step 0.} Residual $\vr_0=\vb-\mat{A}\vx_0=(1,2)^{T}$; first direction
+$\vp_0=\vr_0=(1,2)^{T}$.
+\begin{align*}
+  \mat{A}\vp_0 &= (4\cdot1+1\cdot2,\;1\cdot1+3\cdot2)^{T}=(6,7)^{T}, &
+  \inner{\vr_0}{\vr_0} &= 1+4 = 5,\\
+  \inner{\mat{A}\vp_0}{\vp_0} &= 6\cdot1+7\cdot2 = 20, &
+  \alpha_0 &= \tfrac{5}{20} = 0.25.
+\end{align*}
+Update: $\vx_1=\vx_0+\alpha_0\vp_0=(0.25,\,0.5)^{T}$ and
+$\vr_1=\vr_0-\alpha_0\mat{A}\vp_0=(1,2)^{T}-0.25(6,7)^{T}=(-0.5,\,0.25)^{T}$.
+Check orthogonality (\cref{lem:orth}): $\inner{\vr_1}{\vr_0}=-0.5+0.5=0$.~\checkmark
+
+\textbf{Direction update.}
+$\inner{\vr_1}{\vr_1}=0.25+0.0625=0.3125$, so
+$\beta_0=\tfrac{0.3125}{5}=0.0625$, and
+$\vp_1=\vr_1+\beta_0\vp_0=(-0.5,0.25)^{T}+0.0625(1,2)^{T}=(-0.4375,\,0.375)^{T}$.
+Check conjugacy: $\mat{A}\vp_1=(-1.375,\,0.6875)^{T}$, and
+$\inner{\mat{A}\vp_1}{\vp_0}=-1.375+1.375=0$.~\checkmark
+
+\textbf{Step 1.}
+$\inner{\mat{A}\vp_1}{\vp_1}=(-1.375)(-0.4375)+(0.6875)(0.375)=0.8594$, so
+$\alpha_1=\tfrac{0.3125}{0.8594}=0.3636$.
+\[
+  \vx_2 = \vx_1+\alpha_1\vp_1
+        = (0.25,0.5)^{T}+0.3636\,(-0.4375,0.375)^{T}
+        = (0.0909,\,0.6364)^{T}.
+\]
+This is $\vx^\star$ to four places: in exactly $N=2$ steps the residual is zero
+and CG has landed on the solution. The two steps installed the two conjugate
+coordinates of the error, one each, with no interference---finite termination made
+arithmetic.
+\end{workedexample}
+
+\begin{workedexample}{Steepest descent versus CG on an ill-conditioned bowl}{zigzag}
+We put steepest descent and CG on the same stretched system and watch one
+zig-zag while the other finishes in two steps. Take the diagonal SPD operator
+\[
+  \mat{A}=\begin{pmatrix}10 & 0\\[1pt] 0 & 1\end{pmatrix},\qquad
+  \vb=\begin{pmatrix}0\\[1pt] 0\end{pmatrix},\qquad
+  \vx_0=\begin{pmatrix}1\\[1pt] 1\end{pmatrix},
+\]
+so $\vx^\star=0$ and $\phi(\vx)=5x_1^2+\tfrac12x_2^2$ is a valley ten times
+steeper across than along: $\kappa=10$. \Cref{fig:zigzag} plots both iterate
+paths on the contours.
+
+\tcblower
+\textbf{Steepest descent} (\cref{eq:sdstep}). From $\vx_0=(1,1)^{T}$,
+$\vr_0=-\mat{A}\vx_0=(-10,-1)^{T}$,
+$\alpha_0=\inner{\vr_0}{\vr_0}/\inner{\mat{A}\vr_0}{\vr_0}
+=\tfrac{101}{1010}=0.1$, giving $\vx_1=(0,\,0.9)^{T}$. The next residual
+$(0,-0.9)^{T}$ is \emph{perpendicular} to the last step, so the iterate turns
+ninety degrees and lands at $(0.818,0)^{T}$, then turns again. It crabs
+$(1,1)\to(0,0.9)\to(0.82,0)\to(0,0.74)\to\cdots$, the error shrinking by only a
+factor $\approx0.82$ per step---dozens of steps to reach $10^{-6}$.
+
+\textbf{Conjugate gradients}. The same first step gives $\vx_1=(0,0.9)^{T}$ and
+$\vr_1=(0,-0.9)^{T}$. But now $\beta_0=\inner{\vr_1}{\vr_1}/\inner{\vr_0}{\vr_0}
+=\tfrac{0.81}{101}=0.00802$, and the direction
+$\vp_1=\vr_1+\beta_0\vp_0=(-0.0802,\,-0.908)^{T}$ \emph{bends away} from the pure
+residual so as to be $\mat{A}$-conjugate to $\vp_0$. One step along it,
+$\alpha_1=0.901$, lands exactly on $\vx^\star=0$. \textbf{Two steps, done}---the
+same finite termination as \cref{wex:2x2}, now visibly beating the
+steepest-descent crawl on the identical bowl.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=12.4cm, height=7.2cm, axis equal image,
+      xlabel={$x_1$}, ylabel={$x_2$},
+      xmin=-0.55, xmax=1.15, ymin=-0.35, ymax=1.2,
+      label style={font=\footnotesize}, tick label style={font=\scriptsize},
+      legend pos=north west, legend cell align=left,
+      legend style={font=\footnotesize, draw=simGray!40}]
+    % elliptical contours of phi = 5 x1^2 + 0.5 x2^2 (levels 0.5, 2, 5)
+    \addplot[simGray!45, samples=80, domain=0:360, variable=\t, forget plot]
+      ({sqrt(0.5/5)*cos(\t)}, {sqrt(0.5/0.5)*sin(\t)});
+    \addplot[simGray!45, samples=80, domain=0:360, variable=\t, forget plot]
+      ({sqrt(2/5)*cos(\t)}, {sqrt(2/0.5)*sin(\t)});
+    \addplot[simGray!45, samples=80, domain=0:360, variable=\t, forget plot]
+      ({sqrt(5/5)*cos(\t)}, {sqrt(5/0.5)*sin(\t)});
+    % steepest descent zig-zag path
+    \addplot[simRust, very thick, mark=*, mark size=1.3pt]
+      coordinates {(1,1) (0,0.9) (0.818,0) (0,0.744) (0.676,0) (0,0.614)};
+    \addlegendentry{steepest descent (zig-zag)}
+    % CG path: 2 steps
+    \addplot[simBlue, very thick, mark=square*, mark size=1.6pt]
+      coordinates {(1,1) (0,0.9) (0,0)};
+    \addlegendentry{conjugate gradients (2 steps)}
+    \node[circle, fill=simGreen, inner sep=1.4pt,
+      label={[font=\scriptsize,text=simGreen]below right:$\vx^\star$}] at (axis cs:0,0) {};
+  \end{axis}
+\end{tikzpicture}
+\caption[Steepest descent versus CG on the contours]{The classic comparison, on
+the bowl $\phi=5x_1^2+\tfrac12 x_2^2$ ($\kappa=10$) of \cref{wex:zigzag}.
+\emph{Steepest descent} (rust) takes the locally steepest step each time and so
+turns ninety degrees at every iterate, zig-zagging down the valley and needing
+many steps. \emph{Conjugate gradients} (blue) takes the same first step, then
+bends its second direction to be $\mat{A}$-conjugate to the first and lands
+exactly on $\vx^\star$ (green) in \emph{two} steps---the finite termination of
+\cref{thm:finite}. The conjugacy correction is precisely the difference between
+the crawl and the finish.}
+\label{fig:zigzag}
+\end{figure}
+
+\begin{workedexample}{How many iterations for a target tolerance?}{count}
+The bound \eqref{eq:bound} lets us \emph{predict} the iteration count before
+running, given the condition number. Suppose an electrostatic solve assembles an
+operator with $\kappa=500$ and we want the relative energy-norm error below
+$\varepsilon=10^{-6}$. How many CG iterations does \cref{thm:converge} guarantee?
+
+\tcblower
+We need $k$ with $2\,c^{k}\le\varepsilon$, where
+$c=\dfrac{\sqrt\kappa-1}{\sqrt\kappa+1}$. With $\kappa=500$,
+$\sqrt\kappa=22.36$, so
+\[
+  c = \frac{22.36-1}{22.36+1} = \frac{21.36}{23.36} = 0.9144 .
+\]
+Solving $2\,c^{k}\le10^{-6}$:
+\[
+  k \;\ge\; \frac{\ln(\varepsilon/2)}{\ln c}
+    = \frac{\ln(5\times10^{-7})}{\ln(0.9144)}
+    = \frac{-14.51}{-0.0895}
+    \approx 162 .
+\]
+So the bound guarantees $10^{-6}$ within about \textbf{162 iterations}. Now
+precondition down to $\kappa=10$ (a realistic multigrid target,
+\cref{ch:precond}): $\sqrt\kappa=3.162$,
+$c=\tfrac{2.162}{4.162}=0.5195$, and
+\[
+  k \ge \frac{-14.51}{\ln(0.5195)} = \frac{-14.51}{-0.6548}\approx 23 .
+\]
+\textbf{162 iterations become 23}---a sevenfold speedup, each preconditioned
+iteration only modestly more expensive (one extra apply, \cref{sec:pcg}). And
+because the bound is worst-case, clustered spectra (\cref{sec:cluster}) routinely
+beat even these counts. This single calculation---iterations scale like
+$\sqrt\kappa$---is the entire economic case for the preconditioning of
+\cref{ch:precond}.
+\end{workedexample}
+
+\summarysection
+Conjugate gradients solves $\mat{A}\vx=\vb$ for a \emph{symmetric positive
+definite} operator $\mat{A}=\mat{A}^{T}\succ0$---the electrostatic, magnetostatic,
+and inner-Poisson systems of this book. Solving is minimizing the quadratic
+$\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$, whose level sets are ellipses
+and whose negative gradient is the residual $\vr=\vb-\mat{A}\vx$. Steepest
+descent takes the locally steepest step and zig-zags across an ill-conditioned
+valley; CG instead marches along \emph{$\mat{A}$-conjugate} directions
+($\vp_i^{T}\mat{A}\vp_j=0$), which correct independent error coordinates and reach
+the exact answer in at most $N$ steps. The method is built from four formulas: a
+step length $\alpha_k=\inner{\vr_k}{\vr_k}/\inner{\mat{A}\vp_k}{\vp_k}$, a residual
+update $\vr_{k+1}=\vr_k-\alpha_k\mat{A}\vp_k$ (no second apply), a direction update
+$\vp_{k+1}=\vr_{k+1}+\beta_k\vp_k$, and the coefficient
+$\beta_k=\inner{\vr_{k+1}}{\vr_{k+1}}/\inner{\vr_k}{\vr_k}$. The
+\emph{short-recurrence miracle}---conjugacy against the previous direction yields
+conjugacy against all---keeps the cost at \emph{one apply, two dots, three axpys}
+per step and the memory at $O(N)$. As a program, CG is one \code{iterate\_while}
+(\cref{ch:fold}) folding one \code{krylov\_step} (\cref{ch:krylov}): the carry is
+the run-time \code{SimState}, the ephemeral $\vr,\vp$ are the \code{Krylov}
+workspace, and $\beta$'s backward dependence is the recurrence carry
+(\cref{ch:strata}). Convergence is governed by the condition number $\kappa$: the
+energy-norm error shrinks like
+$\big((\sqrt\kappa-1)/(\sqrt\kappa+1)\big)^k$, so well-conditioned (or clustered)
+spectra converge fast and ill-conditioned ones crawl---the motivation for
+preconditioning (\cref{ch:precond}), which PCG folds in as one extra apply per
+step. Finally, the inner products are global reductions whose summation order
+changes the last bits, a load-bearing non-determinism (\cref{app:numerics}).
+
+\furtherreading
+The definitive textbook account of conjugate gradients, the Krylov-subspace
+optimality behind the convergence bound, and preconditioned CG is
+Saad~\citep{saad2003}; the polynomial (Chebyshev) argument for
+\cref{thm:converge} and the clustered-spectrum superlinear story are developed
+there in full. Trefethen and Bau~\citep{trefethenbau1997} give the cleanest short
+derivation of CG as the Krylov-subspace energy-norm minimizer and the most
+geometric treatment of the convergence rate's $\sqrt\kappa$ dependence; their
+Lectures~38 and~40 pair naturally with \cref{sec:converge}. For the numerical
+linear algebra---the orthogonality lemmas of \cref{lem:orth}, the stability of the
+recurrences in floating point, and the relationship to the Lanczos process of
+\cref{ch:krylovschur}---Golub and Van Loan~\citep{golubvanloan2013} is the
+standard reference.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item Verify directly that $\Grad\phi(\vx)=\mat{A}\vx-\vb$ for
+  $\phi(\vx)=\tfrac12\vx^{T}\mat{A}\vx-\vb^{T}\vx$ when $\mat{A}=\mat{A}^{T}$.
+  Where exactly does symmetry get used? Show that without symmetry the gradient is
+  $\tfrac12(\mat{A}+\mat{A}^{T})\vx-\vb$, and explain why CG therefore ``sees'' only
+  the symmetric part of a non-symmetric operator.
+  \item Run CG by hand on
+  $\mat{A}=\bigl(\begin{smallmatrix}2&0\\0&5\end{smallmatrix}\bigr)$,
+  $\vb=(2,5)^{T}$, $\vx_0=0$. How many steps does it take, and why fewer than the
+  generic $N=2$? (Relate your answer to the eigenvalue structure and
+  \cref{sec:cluster}.)
+  \item Derive the steepest-descent step length \eqref{eq:sdstep} by minimizing
+  $\phi(\vx+\alpha\vr)$ over $\alpha$. Then show the next residual satisfies
+  $\inner{\vr_{k+1}}{\vr_k}=0$, the perpendicularity that causes the zig-zag.
+  \item Show that the line-minimizing step length along $\vp_k$ is
+  \eqref{eq:alpha}, and then, assuming the orthogonality
+  $\inner{\vr_k}{\vp_{k-1}}=0$ and the direction update, prove
+  $\inner{\vr_k}{\vp_k}=\inner{\vr_k}{\vr_k}$, so \eqref{eq:alpha} becomes the
+  algorithm's form \eqref{eq:alpha2}.
+  \item Using the bound \eqref{eq:bound}, find the number of CG iterations
+  guaranteed to reach relative energy-norm error $10^{-4}$ for $\kappa=4$,
+  $\kappa=100$, and $\kappa=2500$. Confirm that each fourfold (then $25$-fold)
+  increase in $\kappa$ roughly doubles (then triples) the count, matching the
+  $\sqrt\kappa$ scaling.
+  \item Write the CG step of \cref{sec:iterate} explicitly in the
+  \code{iterate\_while\_with\_prev} form of \cref{ch:fold}: identify the bootstrap
+  step (where $\vp_0=\vr_0$ and there is no previous $\beta$), the steady step, and
+  the recurrence carry. Which stratum (\cref{ch:strata}) does the carry live in,
+  and why is it wrong to store it in \code{OpParams}?
+  \item Count the floating-point operations in one CG step as a function of $N$
+  (count the apply abstractly as ``one matvec''). Then count one PCG step. By how
+  much does preconditioning increase the per-step cost, and under what condition on
+  the iteration-count reduction does PCG still win overall? Tie your answer to
+  \cref{wex:count}.
+  \item \emph{(Reduction order.)} Two machines run the same CG solve but sum the
+  inner products in different orders. Argue that they may report different
+  iteration counts yet both return iterates correct to the stated tolerance.
+  Which fields of the \code{SolveResult} (\cref{ch:krylov}) are bit-reproducible
+  across the two runs, and which are not? (Forward-reference
+  \cref{app:numerics}.)
+\end{enumerate}

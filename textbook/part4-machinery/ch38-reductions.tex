@@ -1,0 +1,968 @@
+\chapter{Output Reductions: From Fields to Physical Quantities}
+\label{ch:reductions}
+
+\chapterorient{Every analysis in this book ends the same way. A driver has
+worked hard to produce a \emph{family of fields}---one potential per terminal,
+one scattered field per frequency, one eigenvector per resonant mode---and now
+that family must be boiled down to the single number, or small table, the
+engineer actually asked for: a capacitance, an S-matrix, a list of resonant
+frequencies and their quality factors. This last stage is the \texttt{reduce}
+of the skeleton (\cref{ch:situating}), and it is where the physics finally
+re-enters: a Gram matrix \emph{is} a capacitance, a projection \emph{is} an
+S-parameter, an eigenvalue's imaginary part \emph{is} a damping rate. The
+surprise of this chapter---the same surprise the whole book keeps finding---is
+that the dozen physical outputs Palace can produce are built from only
+\emph{three} reduction shapes. We meet all three in detail, compute two of them
+by hand, and close Part~IV by handing the assembled machinery forward to
+Part~V, where the modalities compose it.}
+
+\section{The setting: a solution family, and the answer hidden in it}
+\label{sec:red-setting}
+
+By the time we reach the reduce stage, the hard work is done. \Cref{ch:situating}
+drew the skeleton---\texttt{config} $\to$ \texttt{assemble} $\to$ \texttt{solve}
+$\to$ \texttt{reduce} $\to$ \texttt{product}---and Parts~II through~IV have now
+filled in every box but the last. Assembly turns the continuous physics into
+operators (\cref{ch:assembly}); the solve stage, in one of its four corners
+(\cref{ch:situating}), turns those operators into fields. What the solve hands
+to the reduce stage is never a single field. It is a \emph{family}:
+
+\begin{itemize}[nosep]
+  \item the electrostatic and magnetostatic drivers produce one solved field
+  \emph{per excitation}---per terminal held at unit voltage, per source carrying
+  unit current (\cref{ch:electrostatics}, \cref{ch:magnetostatics});
+  \item the driven driver produces one scattered field \emph{per frequency} in
+  the sweep, and within each, one column \emph{per driven port}
+  (\cref{ch:driven});
+  \item the eigenmode and boundary-mode drivers produce one eigenvector
+  \emph{per converged mode} (\cref{ch:eigenmodes}, \cref{ch:waveports}).
+\end{itemize}
+
+The reduce stage takes that family and collapses it to the product. The
+physical answer is, in a precise sense, already \emph{present} in the family---it
+is a pairing, a projection, or a per-item readout away. What the reduction does
+is extract it (\cref{fig:red-pipeline}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm and 12mm]
+  \node[stage] (solve) {\textbf{solve}};
+  \node[data, right=14mm of solve, align=center, text width=26mm] (fam)
+    {solution family\\[1pt]\footnotesize $\{\vx_i\}$, $\{\vE_j(\omega)\}$,
+     $\{(\lambda_m,\vx_m)\}$};
+  \node[stage, right=14mm of fam, fill=simBgGold, draw=simGold] (red)
+    {\textbf{reduce}};
+  \node[product, right=12mm of red, align=center, text width=24mm] (prod)
+    {physical\\product\\[1pt]\footnotesize $C$, $S$, $(f,Q)$, $\dots$};
+  \draw[flow] (solve) -- (fam);
+  \draw[flow] (fam) -- node[above,font=\scriptsize]{map-then-collect} (red);
+  \draw[flow] (red) -- (prod);
+  \node[font=\scriptsize\itshape, simGray, below=2mm of red, align=center]
+    {embarrassingly parallel:\\no inter-element state};
+\end{tikzpicture}
+\caption[The family-to-product pipeline]{The reduce stage in one picture. The
+solve produces not a single field but a \emph{family}---one member per
+excitation, per frequency, or per mode. The reduction maps a per-element
+computation over that family and collects the results into the small physical
+product. Because no element depends on another, every reduction in this chapter
+is a \texttt{map}-then-collect (or \texttt{map}-then-reduce), the embarrassingly
+parallel combinator of \cref{ch:combinators}: there is no state threaded between
+elements, so the work is independent and reorderable.}
+\label{fig:red-pipeline}
+\end{figure}
+
+That structural observation---\emph{every} reduction is a map over the family
+with no inter-element state---is worth stating up front, because it is what
+makes the reductions so uniform. None of them is a \texttt{fold}; none threads a
+running accumulator from one family member to the next. Each is the
+embarrassingly parallel \texttt{map} combinator of \cref{ch:combinators},
+followed by a collect into a matrix or a table. In the framework's vocabulary
+they are \emph{pure value-producing reductions}: no \code{Solve} monad, no
+convergence predicate, no carried state---post-processing readouts that take a
+solved family and return a value.
+
+\begin{keyidea}
+The reduce stage turns a \emph{solution family} into the user-facing physical
+quantity. Every reduction is a \texttt{map} over the family with \emph{no
+inter-element state}---embarrassingly parallel, never a fold
+(\cref{ch:combinators}). What varies between reductions is only the per-element
+computation and how the results are collected. There are exactly three
+collection \emph{shapes}, and the rest of the chapter is those three.
+\end{keyidea}
+
+\Cref{ch:situating} named the three shapes when it first sketched the framework;
+here we give each its full treatment. They are, in order: the \emph{rank-2
+symmetric Gram} (capacitance, inductance); the \emph{rank-2 port-projection}
+(S-parameters); and the \emph{rank-1 scalar-or-mode table} (energy and
+participation, eigenfrequency and $Q$, waveguide modes). \Cref{fig:red-taxonomy}
+is the hero figure of the chapter: the three shapes side by side, the taxonomy
+that organizes everything that follows.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== (a) symmetric Gram =====
+  \begin{scope}[shift={(0,0)}]
+    \foreach \i in {0,1,2}{
+      \foreach \j in {0,1,2}{
+        \node[draw=simGray, semithick,
+          fill={\ifnum\i=\j simBgRust\else simBgBlue\fi},
+          minimum size=7mm, inner sep=0pt]
+          (g\i\j) at (\j*0.72, -\i*0.72) {};}}
+    % mirror diagonal
+    \draw[densely dashed, simRust, semithick] (-0.5,0.5) -- (1.94,-1.94);
+    % an off-diagonal pair, mirrored
+    \node[font=\scriptsize, simBlue] at (1.44,0.0) {$G_{02}$};
+    \node[font=\scriptsize, simBlue] at (0.0,-1.44) {$G_{20}$};
+    \node[font=\scriptsize\bfseries, align=center] at (0.72,-2.55)
+      {\textsc{(a)} rank-2 Gram};
+    \node[font=\scriptsize, align=center] at (0.72,-3.05)
+      {$G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\,\vx_i$};
+    \node[font=\scriptsize, align=center] at (0.72,-3.5)
+      {\emph{symmetric}: $G_{ij}=G_{ji}$};
+    \node[font=\scriptsize\itshape, text=simRust, align=center] at (0.72,-4.0)
+      {capacitance,\\inductance};
+  \end{scope}
+
+  % ===== (b) non-symmetric projection =====
+  \begin{scope}[shift={(4.6,0)}]
+    \foreach \i in {0,1,2}{
+      \foreach \j in {0,1,2}{
+        \node[draw=simGray, semithick, fill=simBgGreen,
+          minimum size=7mm, inner sep=0pt]
+          (p\i\j) at (\j*0.72, -\i*0.72) {};}}
+    \node[font=\scriptsize, text=simGreen] at (0.72,0.6) {drive port $j\to$};
+    \node[font=\scriptsize, rotate=90, text=simGreen] at (-0.72,-0.72)
+      {receiver port $i\to$};
+    \node[font=\scriptsize\bfseries, align=center] at (0.72,-2.55)
+      {\textsc{(b)} rank-2 projection};
+    \node[font=\scriptsize, align=center] at (0.72,-3.05)
+      {$S_{ij}=\sigma_{ij}\,(\inner{\vs_i}{\vE_j}-\delta_{ij})$};
+    \node[font=\scriptsize, align=center] at (0.72,-3.5)
+      {\emph{not} symmetric, complex};
+    \node[font=\scriptsize\itshape, text=simGreen, align=center] at (0.72,-4.0)
+      {S-parameters};
+  \end{scope}
+
+  % ===== (c) rank-1 table =====
+  \begin{scope}[shift={(9.2,0)}]
+    \foreach \i in {0,1,2,3}{
+      \node[draw=simGray, semithick, fill=simBgGold,
+        minimum width=22mm, minimum height=5.5mm, inner sep=0pt]
+        (r\i) at (0, -\i*0.66) {};}
+    \node[font=\scriptsize] at (0,0)     {mode 1: $f_1,\,Q_1$};
+    \node[font=\scriptsize] at (0,-0.66) {mode 2: $f_2,\,Q_2$};
+    \node[font=\scriptsize] at (0,-1.32) {mode 3: $f_3,\,Q_3$};
+    \node[font=\scriptsize] at (0,-1.98) {$\vdots$};
+    \node[font=\scriptsize\bfseries, align=center] at (0,-2.55)
+      {\textsc{(c)} rank-1 table};
+    \node[font=\scriptsize, align=center] at (0,-3.05)
+      {one row per item};
+    \node[font=\scriptsize, align=center] at (0,-3.5)
+      {a \texttt{map}, no pairing};
+    \node[font=\scriptsize\itshape, text=simGold, align=center] at (0,-4.0)
+      {energy$+p$, $f{+}Q$,\\waveguide modes};
+  \end{scope}
+\end{tikzpicture}
+\caption[The three reduction shapes]{The three reduction shapes---the chapter's
+organizing taxonomy, first sketched in \cref{ch:situating}. \textsc{(a)} A
+\emph{rank-2 symmetric Gram} pairs a solution family with itself through an
+operator, $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\,\vx_i$; its symmetry (dashed
+mirror) is structural, so only the upper triangle is computed and the lower is
+copied ($G_{02}=G_{20}$). \textsc{(b)} A \emph{rank-2 projection} also yields a
+matrix, but it projects each driven field onto a basis of port modes; its two
+indices play different roles, it is complex, and it is in general \emph{not}
+symmetric. \textsc{(c)} A \emph{rank-1 table} is a one-dimensional list, one row
+per item, with no pairing at all---a pure \texttt{map}. The single most
+over-unified point in the design is the line between \textsc{(a)} and
+\textsc{(b)}: two matrix-shaped results are \emph{not} the same reduction
+(\cref{pit:gram-not-proj}).}
+\label{fig:red-taxonomy}
+\end{figure}
+
+\section{Shape 1: the symmetric Gram reduction}
+\label{sec:gram}
+
+The first shape is a \emph{Gram matrix}: a symmetric matrix of operator-weighted
+inner products formed by pairing a solution family with itself. It is the
+reduction behind both capacitance and inductance, and it is the cleanest
+instance in the book of ``one verb, two products.''
+
+\subsection{The verb}
+
+Given a solution family $\vx_0,\dots,\vx_{m-1}$, the assembled \emph{energy
+operator} $\Kop$ (symmetric positive-definite), and a scalar \emph{weight}
+function $w(i,j)$, the Gram reduction computes the $m\times m$ matrix
+\begin{equation}
+  \boxed{\;G_{ij} \;=\; w(i,j)\;\vx_j^{\!\top}\,\Kop\,\vx_i\;}
+  \label{eq:gram-entry}
+\end{equation}
+The entry $G_{ij}$ is an \emph{operator-weighted bilinear form} of family
+members $i$ and $j$, scaled by the weight. In the framework this verb is
+\code{gram\_reduce}, with the signature and body
+\begin{lstlisting}[style=l4style]
+gram_reduce :: LinOp -> [Tensor] -> (Int -> Int -> Scalar) -> Matrix
+gram_reduce k xs w =
+  symmetric_from_upper                          -- mirror lower triangle from upper
+    [ [ w i j * entry k xs i j | j <- [i .. m-1] ]   -- map over upper-triangle pairs
+      | i <- [0 .. m-1] ]
+  where
+    m = length xs
+    entry k xs i j
+      | i == j    = matrix_weighted_norm (xs!!i) k   -- diagonal: x_i^T K x_i
+      | otherwise = bilinear_form (xs!!j) k (xs!!i)  -- off-diag:  x_j^T K x_i
+\end{lstlisting}
+Two structural facts are baked into this body. First, each grid entry is
+\emph{independent}: the upper-triangle comprehension is a \texttt{map} over
+family pairs, with no state threaded between entries---the embarrassingly
+parallel pattern of \cref{sec:red-setting}. Second, the matrix is \emph{symmetric
+by construction}: the body computes only the upper triangle and mirrors the lower
+from it (\code{symmetric\_from\_upper}). The symmetry is not checked after the
+fact; it is guaranteed because $\Kop$ is symmetric, so $\vx_j^{\!\top}\Kop\vx_i
+=\vx_i^{\!\top}\Kop\vx_j$, and the verb exploits it to halve the work.
+
+\begin{notationbox}
+The diagonal and off-diagonal entries call two slightly different lower-layer
+verbs. On the diagonal, $G_{ii}=w(i,i)\,\vx_i^{\!\top}\Kop\vx_i$ is a
+\emph{self}-pairing---an operator-weighted squared norm, $\code{matrix\_weighted\_norm}$
+(its radicand). Off the diagonal, $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\vx_i$ is a
+\emph{cross}-pairing of two different members, the bilinear form
+$\code{bilinear\_form}$. They are the same expression $\vx_j^{\!\top}\Kop\vx_i$
+specialized to $i=j$ and $i\neq j$; the verb names them separately only because
+the self-case has a cheaper, symmetric implementation.
+\end{notationbox}
+
+\subsection{Two products, one weight apart}
+
+Here is the payoff. \emph{Capacitance and inductance are the same reduction.}
+They call the identical verb \code{gram\_reduce} on the identical operator-weighted
+bilinear form; they differ in exactly one place---the scalar weight $w(i,j)$---and
+in what the family members physically are.
+
+\paragraph{Capacitance.} The electrostatic driver holds each conductor $i$ at
+unit voltage and solves for the potential field $\vx_i=V_i$
+(\cref{ch:electrostatics}). The operator $\Kop$ is the
+$\varepsilon$-weighted energy operator (the discrete form of
+$\tfrac12\varepsilon\abs{\vE}^2$, \cref{ch:maxwell}, eq.~\eqref{eq:energy-density}).
+The weight is \emph{unity}:
+\begin{equation}
+  w(i,j) = 1,
+  \qquad
+  C_{ij} = V_j^{\!\top}\,\Kop\,V_i .
+  \label{eq:cap-gram}
+\end{equation}
+The diagonal entry $C_{ii}=V_i^{\!\top}\Kop V_i$ is exactly twice the electric
+field energy stored when conductor $i$ alone is at unit voltage---the energy form
+$C_{ii}=2U_e/V^2$ with $V=1$ that \cref{ch:maxwell} promised
+(eq.~\eqref{eq:energy-density}: $C=2U/V^2$). The off-diagonal $C_{ij}$ is the
+\emph{mutual} capacitance, the charge induced on conductor $i$ by a unit voltage
+on conductor $j$.
+
+\paragraph{Inductance.} The magnetostatic driver drives each source $i$ with
+unit current and solves for the vector potential field $\vx_i=\vA_i$
+(\cref{ch:magnetostatics}). The operator $\Kop$ is now the $\nu$-weighted
+curl--curl energy operator (the magnetic energy $\tfrac{1}{2\mu}\abs{\vB}^2$).
+The verb, the bilinear form, the symmetry, the map---all identical. The only
+change is the weight, which now \emph{normalizes by the currents}:
+\begin{equation}
+  w(i,j) = \frac{1}{I_i\,I_j},
+  \qquad
+  L_{ij} = \frac{1}{I_i I_j}\,\vA_j^{\!\top}\,\Kop\,\vA_i .
+  \label{eq:ind-gram}
+\end{equation}
+The diagonal $L_{ii}$ is the self-inductance ($L=2U_m/I^2$, \cref{ch:maxwell});
+the off-diagonal $L_{ij}$ is the mutual inductance between loops $i$ and $j$.
+
+Why does inductance need the current normalization that capacitance does not? An
+honest one-line answer: in electrostatics the excitation is a \emph{voltage} and
+we choose it to be unity, so dividing by it does nothing; in magnetostatics the
+natural excitation is a \emph{current}, and the energy bilinear form scales with
+the square of the driving current, so to recover the geometry-only quantity
+$L=2U_m/I^2$ we must divide out $I_iI_j$. The weight is exactly the
+``per-unit-excitation'' rescaling, trivial in one case and nontrivial in the
+other. \Cref{fig:gram-energy} draws the energy picture that underlies the
+diagonal.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=7mm]
+  % the field-energy picture for the Gram diagonal
+  \node[data, align=center, text width=22mm] (vi) {field $\vx_i$\\\footnotesize
+    (unit excitation $i$)};
+  \node[opbox, minimum width=20mm, right=10mm of vi] (Kx) {$\Kop\,\vx_i$};
+  \node[opbox, fill=simBgRust, draw=simRust, minimum width=30mm, right=10mm of Kx]
+    (form) {$\vx_i^{\!\top}\Kop\,\vx_i = 2U$};
+  \node[product, align=center, text width=26mm, right=10mm of form] (out)
+    {$G_{ii}=w(i,i)\cdot 2U$\\[1pt]\footnotesize $=C_{ii}$ or $L_{ii}$};
+  \draw[flow] (vi) -- node[above,font=\scriptsize]{apply $\Kop$} (Kx);
+  \draw[flow] (Kx) -- node[above,font=\scriptsize]{$\inner{\cdot}{\vx_i}$} (form);
+  \draw[flow] (form) -- node[above,font=\scriptsize]{$\times\,w$} (out);
+  \node[font=\scriptsize\itshape, simGray, below=2mm of form, align=center]
+    {$U=\tfrac12\!\int\!\varepsilon\abs{\vE}^2$ (elec.)\\
+     or $\tfrac{1}{2\mu}\!\int\!\abs{\vB}^2$ (mag.)};
+  \node[font=\scriptsize\itshape, simRust, below=10mm of out, align=center]
+    {$w=1$: capacitance\\$w=1/I_i^2$: inductance};
+\end{tikzpicture}
+\caption[The Gram diagonal is field energy]{The energy picture behind the Gram
+diagonal. Applying the energy operator $\Kop$ to a solved field $\vx_i$ and
+pairing the result back with $\vx_i$ yields $\vx_i^{\!\top}\Kop\vx_i$, which is
+\emph{twice the stored field energy} $2U$ (\cref{ch:maxwell},
+eq.~\eqref{eq:energy-density}). Scaling by the weight $w$ gives the physical
+diagonal: with $w=1$ this is the self-capacitance $C_{ii}=2U_e/V^2$ at unit
+voltage; with $w=1/I_i^2$ it is the self-inductance $L_{ii}=2U_m/I^2$ at unit
+current. The off-diagonal repeats the picture with two \emph{different} fields,
+$\vx_j^{\!\top}\Kop\vx_i$, giving mutual capacitance or inductance.}
+\label{fig:gram-energy}
+\end{figure}
+
+\begin{keyidea}
+The \textbf{symmetric Gram reduction} $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\vx_i$ is
+one verb (\code{gram\_reduce}) that produces \emph{two} physical products.
+Capacitance uses unit weight $w=1$ on the per-terminal potential family;
+inductance uses the current-normalized weight $w=1/(I_iI_j)$ on the per-source
+vector-potential family. Same operator-weighted bilinear form, same structural
+symmetry ($G_{ij}=G_{ji}$, computed on the upper triangle and mirrored), same
+embarrassingly parallel map---differing only in a scalar weight and in what the
+family physically is. The diagonal is twice the stored field energy; the
+off-diagonal is the mutual coupling.
+\end{keyidea}
+
+\subsection{Worked example: a two-terminal capacitance}
+
+\begin{workedexample}{A $2\times 2$ capacitance from a symmetric Gram}{cap2x2}
+A two-conductor electrostatic problem has been solved. The driver held conductor
+$1$ at unit voltage (conductor $2$ grounded) and solved for the potential field
+$V_1$; then it held conductor $2$ at unit voltage and solved for $V_2$. The
+discrete fields and the assembled energy operator $\Kop$ are given; we are to
+build the $2\times 2$ capacitance matrix.
+
+Suppose evaluating the operator-weighted bilinear form $\vx_j^{\!\top}\Kop\vx_i$
+on the three needed pairs gives the raw numbers (in femtofarads, with unit
+voltage so $w\equiv 1$):
+\[
+  V_1^{\!\top}\Kop V_1 = 4.20,\qquad
+  V_2^{\!\top}\Kop V_2 = 3.60,\qquad
+  V_2^{\!\top}\Kop V_1 = -1.10 .
+\]
+We compute the upper triangle and \emph{mirror} the off-diagonal---we never
+recompute $V_1^{\!\top}\Kop V_2$, because the symmetry of $\Kop$ guarantees it
+equals $V_2^{\!\top}\Kop V_1$:
+\[
+  C_{11}=4.20,\qquad
+  C_{22}=3.60,\qquad
+  C_{12}=C_{21}=-1.10 .
+\]
+The capacitance matrix is therefore
+\[
+  \mat{C} \;=\;
+  \begin{pmatrix} 4.20 & -1.10 \\ -1.10 & 3.60 \end{pmatrix}\ \si{\femto\farad}.
+\]
+
+\emph{Interpretation.} The diagonal entries are the \emph{self}-capacitances:
+held alone at unit voltage, conductor $1$ stores $\tfrac12 C_{11}V^2$ of field
+energy, conductor $2$ slightly less. The off-diagonal is the \emph{mutual}
+capacitance, and its \emph{sign is negative}---a universal feature of the
+Maxwell capacitance matrix. Raising conductor $2$'s voltage draws charge of the
+\emph{opposite} sign onto conductor $1$ through their mutual field, so the
+induced charge $Q_1=C_{11}V_1+C_{12}V_2$ falls as $V_2$ rises; the off-diagonal
+coupling is an inducement of opposite charge, hence $C_{12}<0$. The matrix is
+symmetric ($C_{12}=C_{21}$) because the underlying energy operator is symmetric:
+the charge that conductor $2$ induces on conductor $1$ per volt equals the charge
+conductor $1$ induces on conductor $2$ per volt---a reciprocity that the Gram
+construction makes automatic, not coincidental.
+
+\emph{The inductance contrast.} Had this been a magnetostatic problem with the
+same raw bilinear values but driving currents $I_1=2$, $I_2=5$ (in amperes), the
+weight $w(i,j)=1/(I_iI_j)$ would have rescaled each entry:
+$L_{11}=4.20/4=1.05$, $L_{22}=3.60/25=0.144$, and
+$L_{12}=L_{21}=-1.10/(2\cdot 5)=-0.110$ (in the corresponding units). Same verb,
+same symmetry, same fields-in; one weight closure swapped, and the energy form
+becomes an inductance instead of a capacitance.
+\end{workedexample}
+
+\section{Shape 2: the port-projection reduction}
+\label{sec:proj}
+
+The second shape is also a matrix indexed by two families---and it is tempting to
+file it under the first. Resist. The S-parameter matrix is a \emph{projection},
+not a Gram, and the difference is not cosmetic.
+
+\subsection{The verb}
+
+The driven driver solves the time-harmonic system at each frequency $\omega$,
+once per driven port, producing a family of complex scattered fields
+$\vE_j(\omega)$---one column per drive port $j$ (\cref{ch:driven}). The
+S-parameter reduction projects each of those fields onto every \emph{receiver}
+port's mode $\vs_i$, subtracts a self-reflection on the diagonal, and scales by
+an impedance/de-embedding factor:
+\begin{equation}
+  \boxed{\;S_{ij} \;=\; \sigma_{ij}\,\bigl(\inner{\vs_i}{\vE_j(\omega)} - \delta_{ij}\bigr)\;}
+  \label{eq:sparam-entry}
+\end{equation}
+where $\inner{\vs_i}{\vE_j}$ is the linear projection of the drive-$j$ field onto
+receiver mode $i$, $\delta_{ij}$ is the Kronecker delta (the self-term, $1$ when
+$i=j$ and $0$ otherwise), and $\sigma_{ij}$ is the port-kind scale (an impedance
+ratio for lumped ports, a de-embedding phase for wave ports). The framework verb
+is \code{sparameter\_reduce}:
+\begin{lstlisting}[style=l4style]
+sparameter_reduce :: [PortMode] -> [(Int, Tensor)] -> Matrix
+sparameter_reduce ports family =
+  matrix_from_columns
+    [ [ scale ports i j * (project (ports!!i) e - selfterm i j)  -- entry S_ij
+        | i <- [0 .. p-1] ]                                      -- over receivers i
+      | (j, e) <- family ]                                       -- one column per drive port j
+  where
+    p             = length ports
+    project s e   = port_dot s e            -- linear functional s_i . E
+    selfterm i j  = if i == j then 1 else 0 -- the -1 self-reflection on the diagonal
+    scale i j     = port_scale (ports!!i) (ports!!j)  -- impedance / de-embed
+\end{lstlisting}
+The reduction is applied once per swept frequency; the $\omega$ index rides as an
+outer family axis that the driven composition root owns, so the verb itself is
+the per-port reduction at a single $\omega$.
+
+\subsection{Why this is rank-2 like a Gram but deliberately not a Gram}
+
+Both \code{gram\_reduce} and \code{sparameter\_reduce} produce square matrices
+indexed by a port-like family. That shared \emph{output rank} is the whole of
+their resemblance, and reading more into it is the single most over-unified
+mistake the design could make.
+
+\begin{pitfall}
+\label{pit:gram-not-proj}
+\textbf{Two reductions producing matrices are not the same reduction.} It is
+sorely tempting to unify \code{gram\_reduce} and \code{sparameter\_reduce} under
+one ``matrix reduction'' verb, since both yield a $p\times p$ array indexed by
+ports. Three structural facts forbid it.
+\begin{itemize}[nosep]
+  \item \emph{The Gram is a self-pairing; the projection is not.} The Gram pairs
+  a family \emph{with itself} through an operator, $\vx_j^{\!\top}\Kop\vx_i$. The
+  S-matrix projects one family (the solved drive fields $\vE_j$) onto a
+  \emph{different} basis (the port modes $\vs_i$)---two families in different
+  roles, not one family paired with itself.
+  \item \emph{The Gram is symmetric; the projection is not.} The Gram's symmetry
+  $G_{ij}=G_{ji}$ is structural (\cref{sec:gram}) and the verb \emph{computes
+  only the upper triangle}. The S-matrix has no such guarantee---every entry is
+  computed independently---and its near-symmetry $S_{ij}\approx S_{ji}$, where it
+  holds at all, is reciprocity \emph{physics}, not a construction the reduction
+  imposes. There is no \code{symmetric\_from\_upper} in the projection body.
+  \item \emph{The Gram is real and energy-valued; the projection is complex and
+  has an inhomogeneous diagonal.} S-parameters are complex (magnitude and phase),
+  and the diagonal carries the $-\delta_{ij}$ self-reflection term, which has no
+  analogue in the Gram. Forcing one verb would either smuggle a false symmetry
+  into the S-matrix or burden the Gram with a self-term and complex arithmetic it
+  does not need.
+\end{itemize}
+The right move---which the framework makes---is two verbs that happen to share an
+output rank. \emph{Sharing a shape is not sharing a meaning.}
+\end{pitfall}
+
+The port modes $\vs_i$ themselves are not produced by the driven driver; they
+come from the \emph{boundary-mode} analysis (\cref{ch:waveports}), which solves a
+small two-dimensional eigenproblem on each port's cross-section to find its
+propagation modes. The driven reduction consumes those modes as the basis it
+projects onto. \Cref{fig:proj} draws the projection.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the solved field as an arrow in "field space"
+  \draw[->, simGray] (0,0) -- (0,3.2) node[above,font=\scriptsize]{};
+  \draw[->, simGray] (0,0) -- (4.6,0) node[right,font=\scriptsize]{};
+  % port mode basis vectors
+  \draw[-{Stealth[length=2.4mm]}, very thick, simGreen] (0,0) -- (3.4,0.0)
+    node[right,font=\scriptsize,simGreen]{$\vs_1$ (port 1 mode)};
+  \draw[-{Stealth[length=2.4mm]}, very thick, simGreen] (0,0) -- (0.0,2.6)
+    node[above,font=\scriptsize,simGreen]{$\vs_2$ (port 2 mode)};
+  % the solved driven field E_j
+  \draw[-{Stealth[length=2.6mm]}, very thick, simRust] (0,0) -- (2.7,1.7)
+    node[above right,font=\scriptsize,simRust]{$\vE_j(\omega)$ (drive $j$)};
+  % projections (dashed drops)
+  \draw[densely dashed, simBlue] (2.7,1.7) -- (2.7,0)
+    node[midway,right,font=\scriptsize,simBlue]{};
+  \draw[densely dashed, simBlue] (2.7,1.7) -- (0,1.7);
+  \node[font=\scriptsize, simBlue] at (2.7,-0.28) {$\inner{\vs_1}{\vE_j}$};
+  \node[font=\scriptsize, simBlue] at (-0.6,1.7) {$\inner{\vs_2}{\vE_j}$};
+  % annotation
+  \node[font=\scriptsize\itshape, simGray, align=left] at (3.2,2.6)
+    {each projection\\$=$ one $S_{\bullet j}$\\(before $-\delta$, scale)};
+\end{tikzpicture}
+\caption[Port projection of a driven field]{The S-parameter reduction as a
+\emph{linear projection}. The driven driver's solved field $\vE_j(\omega)$ (rust)
+for drive port $j$ is projected onto the basis of \emph{port modes} $\vs_i$
+(green, supplied by the boundary-mode analysis, \cref{ch:waveports}). Each
+projection $\inner{\vs_i}{\vE_j}$ (blue drop) becomes one column entry
+$S_{ij}$---after subtracting the diagonal self-reflection $\delta_{ij}$ and
+applying the impedance/de-embed scale $\sigma_{ij}$. Unlike the Gram of
+\cref{fig:gram-energy}, the two index families are \emph{different} (drive fields
+vs.\ port modes), the operation is a projection rather than an energy
+self-pairing, and the result is complex and not symmetric.}
+\label{fig:proj}
+\end{figure}
+
+\section{Shape 3: the rank-1 scalar and mode tables}
+\label{sec:tables}
+
+The third shape is the simplest in form and the most populous in membership: a
+\emph{table}---a one-dimensional list with one row per item, each row a few
+scalars (or, in one case, a few small fields). There is no matrix, no pairing of
+a family with itself, just a \texttt{map} over a collection producing one tuple
+per element. Three distinct products live here, and we take them in turn.
+
+\subsection{Energy and participation, per domain}
+\label{sec:energy-table}
+
+The most driver-agnostic reduction in the book asks, of \emph{any} field-bearing
+analysis: where does the field energy sit? Given a solved field and a configured
+map of domain-restricted energy operators $\{i\mapsto \mat{M}_i\}$, the
+\emph{domain-energy} reduction computes, per domain, the energy in that domain
+and the fraction of the total it represents:
+\begin{equation}
+  \mathrm{energy}_i \;=\; \tfrac12\,\inner{\text{field}}{\mat{M}_i\,\text{field}},
+  \qquad
+  p_i \;=\; \frac{\mathrm{energy}_i}{e_{\text{total}}},
+  \label{eq:energy-part}
+\end{equation}
+where $\mat{M}_i$ is the energy operator restricted to domain $i$ (an SPD form,
+the domain-local piece of the global energy operator of \cref{ch:maxwell},
+eq.~\eqref{eq:energy-density}) and $e_{\text{total}}$ is the whole-domain total.
+The participation factor $p_i$ is the headline number---it says what fraction of
+the electric (or magnetic) field energy lives in each material region, the
+quantity a designer inspects to see whether energy is concentrating where it
+should. The verb is \code{domain\_energy\_reduce}; it is a \texttt{map} over the
+domain map with no inter-domain state.
+
+This reduction is \emph{driver-agnostic}: it cares only that a field exists and
+that domain operators are configured, so it runs identically as a post-process of
+the electrostatic, eigenmode, driven, or transient analyses. It runs once per
+field kind---electric ($\tfrac12\inner{\vE}{\mat{M}_i\vE}$) and magnetic
+($\tfrac12\inner{\vB}{\mat{M}_i\vB}$)---producing one table per kind. The field
+may be complex (in the driven and eigenmode cases), but the energy form is a real
+nonnegative number, so the table is real. When the configured domains
+\emph{partition} the field's support, the participations sum to one,
+$\sum_i p_i = 1$; this is the natural sanity check on the table.
+\Cref{fig:energy-bars} shows a typical participation table as a bar chart.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.82\linewidth, height=46mm,
+    ybar, bar width=10mm,
+    ymin=0, ymax=0.7,
+    ylabel={participation $p_i$}, ylabel style={font=\scriptsize},
+    xlabel={material domain}, xlabel style={font=\scriptsize},
+    symbolic x coords={substrate, dielectric, air, metal},
+    xtick=data, xticklabel style={font=\scriptsize},
+    ytick={0,0.2,0.4,0.6}, yticklabel style={font=\scriptsize},
+    nodes near coords, nodes near coords style={font=\scriptsize},
+    every node near coord/.append style={/pgf/number format/fixed,
+      /pgf/number format/precision=2},
+    enlarge x limits=0.18,
+    axis lines=left,
+  ]
+  \addplot[fill=simBgGold, draw=simGold] coordinates {
+    (substrate,0.52) (dielectric,0.31) (air,0.13) (metal,0.04)};
+\end{axis}
+\end{tikzpicture}
+\caption[Energy participation per domain]{An electric-energy participation table,
+drawn as a bar chart. Each bar is one row of the rank-1 table: the fraction
+$p_i=\mathrm{energy}_i/e_{\text{total}}$ of the total field energy stored in
+material domain $i$ (\cref{eq:energy-part}). Here most of the energy sits in the
+substrate and dielectric, very little in the surrounding air, and almost none in
+the metal---a typical signature for a planar device. The four participations sum
+to $1.00$ because the configured domains partition the field's support; that sum
+is the table's natural sanity check. The reduction is \emph{driver-agnostic}: any
+analysis that produces a field can be post-processed this way.}
+\label{fig:energy-bars}
+\end{figure}
+
+\subsection{Eigenfrequency and quality factor, per mode}
+\label{sec:fq-table}
+
+The eigenmode driver hands back a family of converged eigenpairs
+$(\lambda_m,\vx_m)$ (\cref{ch:eigenvalues}). The \emph{eigenfrequency--$Q$}
+reduction turns each into a row $(f_m,Q_m)$ of a per-mode table. Two pieces of
+work happen per row, and both \emph{undo} a transform the solve stage applied.
+
+First, the \emph{eigenvalue un-transform}. \Cref{ch:eigenvalues} bent the
+spectrum with a shift to make the wanted low eigenvalues easy to find; the
+eigenvalue the library returns is therefore in transformed coordinates, and we
+must map it back to a physical angular frequency $\omega_m$. For the lossless
+\emph{linear} problem $\lambda=\omega^2$, so $\omega=\sqrt\lambda$; for the lossy
+\emph{quadratic} problem $\lambda=i\omega$, so $\omega=\lambda/i=-i\lambda$. The
+\emph{eigenfrequency} is the real part of the recovered $\omega$:
+\begin{equation}
+  f_m \;=\; \Re\,\omega_m .
+  \label{eq:eigfreq}
+\end{equation}
+
+Second, the \emph{quality factor}. $Q$ measures how slowly a mode loses
+energy---the ratio of energy stored to energy dissipated per cycle, equivalently
+the ratio of the oscillation rate to the decay rate. In the lossy problem the
+imaginary part of $\omega$ \emph{is} the decay rate (the loss rate $\kappa_m$),
+so
+\begin{equation}
+  Q_m \;=\; \frac{\omega_m}{\kappa_m},
+  \qquad
+  \kappa_m = \text{(loss rate from }\Im\,\omega_m\text{)} .
+  \label{eq:qfactor}
+\end{equation}
+A lossless mode has $\kappa_m=0$ and rings forever; its $Q$ is infinite. That is
+not a numerical accident to be papered over but a physical fact, and the
+reduction guards it explicitly: the verb \code{eigenfreq\_qfactor\_reduce}
+returns $Q=\infty$ when $\kappa=0$ rather than dividing by zero.
+\begin{lstlisting}[style=l4style]
+eigenfreq_qfactor_reduce ptype kappa eigs =
+  [ let omega = untransform ptype lambda        -- omega = sqrt(mu) | lambda/i
+        f     = re omega                         -- eigenfrequency  f_m = Re omega
+        k     = kappa mode                       -- loss rate kappa_m
+        q     = if k == 0 then infinity else f / abs k  -- Q = omega/kappa, guarded
+    in  (f, q)
+  | (lambda, mode) <- eigs ]                      -- map over modes, no inter-mode state
+\end{lstlisting}
+The two halves are the two scalar projections of each mode; the mode-\emph{field}
+recovery ($\vx_m$ itself, and $\vB=-\Curl\vx_m/(i\omega)$) is a separate field
+readout, not part of this scalar table. \Cref{fig:omega-plane} shows where $f$
+and $Q$ live in the complex $\omega$-plane.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % complex omega-plane
+  \draw[->, simGray] (-0.4,0) -- (5.2,0) node[right,font=\scriptsize]{$\Re\,\omega$ (frequency)};
+  \draw[->, simGray] (0,-0.4) -- (0,2.7) node[above,font=\scriptsize]{$\Im\,\omega$ (loss rate $\kappa$)};
+  % the eigenvalue omega_m
+  \coordinate (w) at (3.8,1.1);
+  \fill[simRust] (w) circle (2.2pt);
+  \node[font=\scriptsize, simRust, anchor=south west] at (w) {$\omega_m$};
+  % vector from origin
+  \draw[-{Stealth[length=2.2mm]}, thick, simBlue] (0,0) -- (w);
+  % drop to real axis: f
+  \draw[densely dashed, simGreen, thick] (w) -- (3.8,0);
+  \node[font=\scriptsize, simGreen] at (1.9,-0.32) {$f_m=\Re\,\omega_m$};
+  % horizontal to imag axis: kappa
+  \draw[densely dashed, simRust, thick] (w) -- (0,1.1);
+  \node[font=\scriptsize, simRust, anchor=east] at (0,1.1) {$\kappa_m$};
+  % distance-to-real-axis annotation
+  \node[font=\scriptsize\itshape, simGray, align=left] at (4.2,2.1)
+    {$Q_m=\dfrac{\Re\,\omega_m}{\Im\,\omega_m}$:\\high $Q$ $=$\\close to real axis};
+  % an arc indicating small angle = high Q
+  \draw[simGray, densely dotted] (1.2,0) arc (0:16:1.2);
+\end{tikzpicture}
+\caption[Eigenfrequency and $Q$ in the complex plane]{Reading $f$ and $Q$ from a
+complex eigenvalue. The recovered angular frequency $\omega_m$ is a point in the
+complex plane: its \emph{real} part is the oscillation frequency
+$f_m=\Re\,\omega_m$ (\cref{eq:eigfreq}), its \emph{imaginary} part is the loss
+rate $\kappa_m$ (the decay). The quality factor $Q_m=\Re\,\omega_m/\Im\,\omega_m$
+is large precisely when $\omega_m$ sits \emph{close to the real axis}---a small
+imaginary part means slow decay, a sharp long-ringing resonance. A purely real
+$\omega_m$ (on the axis) is lossless: $\kappa_m=0$, $Q_m=\infty$, the guarded
+case in the verb.}
+\label{fig:omega-plane}
+\end{figure}
+
+\begin{workedexample}{Eigenfrequency and $Q$ from a complex eigenvalue}{fq}
+A lossy eigenmode solve returns a converged eigenpair whose recovered angular
+frequency is the complex number
+\[
+  \omega_m \;=\; \omega_r + i\,\omega_i
+            \;=\; 2\pi\,(\SI{5.000}{\giga\hertz}) \;+\; i\,(2\pi\cdot\SI{2.5}{\mega\hertz}).
+\]
+That is, the real part corresponds to a \SI{5}{\giga\hertz} oscillation and the
+imaginary part to a \SI{2.5}{\mega\hertz} decay rate. We want the eigenfrequency
+$f_m$ and the quality factor $Q_m$.
+
+\emph{Eigenfrequency.} The frequency is the real part, divided by $2\pi$ to go
+from angular to ordinary frequency:
+\[
+  f_m \;=\; \frac{\Re\,\omega_m}{2\pi} \;=\; \SI{5.000}{\giga\hertz}.
+\]
+
+\emph{Quality factor.} With the energy/loss convention $Q=\Re\,\omega/(2\,\Im\,\omega)$
+(equivalently $\omega_r/(2\omega_i)$, the form in which $Q$ counts radians of
+oscillation per e-folding of amplitude),
+\[
+  Q_m \;=\; \frac{\omega_r}{2\,\omega_i}
+        \;=\; \frac{2\pi\cdot 5.000\times 10^{9}}{2\cdot 2\pi\cdot 2.5\times 10^{6}}
+        \;=\; \frac{5.000\times 10^{9}}{5.0\times 10^{6}}
+        \;=\; 1000 .
+\]
+A $Q$ of $1000$ is a respectably sharp resonance: the mode rings for about $1000$
+radians---some $160$ full cycles---before its amplitude decays by a factor of
+$e$. The factor of $2$ in the denominator is the standard convention relating the
+amplitude decay rate to the \emph{energy} decay rate (energy goes as amplitude
+squared, so it decays twice as fast); different texts place the $2$ differently,
+which is why the verb takes the loss-rate convention $\kappa$ as a parameter
+rather than hard-coding it.
+
+\emph{The lossless limit.} Now let the loss vanish, $\omega_i\to 0$. The mode
+sits exactly on the real axis of \cref{fig:omega-plane}, the denominator goes to
+zero, and $Q_m\to\infty$. A lossless cavity rings forever. The reduction does not
+divide by zero and emit a \texttt{NaN}; it tests $\kappa=0$ and returns
+$Q=\infty$, the honest physical answer. This guard is the one piece of
+control flow in an otherwise-arithmetic reduction, and it exists because the
+infinite-$Q$ case is real, not exceptional---an ideal lossless resonator is the
+limit every low-loss design approaches.
+\end{workedexample}
+
+\subsection{Waveguide propagation modes, per mode}
+\label{sec:wg-table}
+
+The boundary-mode driver (\cref{ch:waveports}) solves a small two-dimensional
+eigenproblem on a port's cross-section and hands back converged eigenpairs. The
+\emph{waveguide-mode} reduction turns each into a table row---but this is the one
+rank-1 table whose rows carry \emph{fields}, not just scalars. Per mode it
+produces:
+\begin{itemize}[nosep]
+  \item the \emph{propagation constant} $k_n$, recovered from the eigenvalue by
+  the same shift-invert un-transform the eigenmode reduction uses
+  (\cref{ch:eigenvalues})---it says how fast the mode travels down the guide, and
+  whether it travels at all;
+  \item the \emph{effective index} $n_{\text{eff}}=k_n/\omega$, the propagation
+  constant normalized by the operating frequency (a dimensionless ratio
+  comparing the mode's phase velocity to the speed of light);
+  \item the \emph{transverse fields} $(\vE_t,\vE_n)$, recovered from the
+  eigenvector and \emph{power-normalized} so the mode carries unit Poynting power
+  ($\abs{P}=1$); and, for propagating modes only, the longitudinal magnetic field
+  \begin{equation}
+    \vB_z \;=\; \frac{\Curl\vE_t}{i\,\omega},
+    \label{eq:Bz}
+  \end{equation}
+  the curl of the transverse electric field divided by $i\omega$---a direct
+  discrete reading of Faraday's law (\cref{ch:maxwell}, eq.~\eqref{eq:faraday}).
+\end{itemize}
+The verb is \code{waveguide\_mode\_reduce}; like its scalar-only siblings it is a
+\texttt{map} over the converged modes with no inter-mode state, and the operating
+frequency $\omega$ rides as a fixed parameter (the $n_{\text{eff}}$ divisor and
+the $\vB_z$ scale), not a per-mode datum. The conditional $\vB_z$---present for
+propagating modes, absent for evanescent ones---is the one place a table row's
+shape varies by content; the framework records it as an optional field.
+\Cref{fig:wg-table} sketches such a table, fields and all.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % header
+  \node[font=\scriptsize\bfseries] at (0,0.55)   {mode};
+  \node[font=\scriptsize\bfseries] at (1.4,0.55)  {$k_n$};
+  \node[font=\scriptsize\bfseries] at (2.8,0.55)  {$n_{\text{eff}}$};
+  \node[font=\scriptsize\bfseries] at (4.9,0.55)  {transverse $\vE_t$};
+  \node[font=\scriptsize\bfseries] at (7.0,0.55)  {$\vB_z$};
+  \draw[simGray, semithick] (-0.6,0.3) -- (7.7,0.3);
+  % --- row 1 (propagating) ---
+  \node[font=\scriptsize] at (0,0)   {$1$};
+  \node[font=\scriptsize] at (1.4,0) {$31.4$};
+  \node[font=\scriptsize] at (2.8,0) {$1.50$};
+  \node[font=\scriptsize] at (7.0,0) {\checkmark};
+  \draw[simGray, thin] (4.3,-0.25) rectangle (5.5,0.25);
+  \draw[-{Stealth[length=1.3mm]}, simRust] (4.55,-0.13) -- (4.55,0.13);
+  \draw[-{Stealth[length=1.3mm]}, simRust] (4.85,-0.13) -- (4.85,0.13);
+  \draw[-{Stealth[length=1.3mm]}, simRust] (5.15,-0.13) -- (5.15,0.13);
+  % --- row 2 (propagating) ---
+  \node[font=\scriptsize] at (0,-1.05)   {$2$};
+  \node[font=\scriptsize] at (1.4,-1.05) {$22.1$};
+  \node[font=\scriptsize] at (2.8,-1.05) {$1.06$};
+  \node[font=\scriptsize] at (7.0,-1.05) {\checkmark};
+  \draw[simGray, thin] (4.3,-1.30) rectangle (5.5,-0.80);
+  \draw[-{Stealth[length=1.3mm]}, simBlue] (4.55,-1.18) -- (4.70,-0.92);
+  \draw[-{Stealth[length=1.3mm]}, simBlue] (4.90,-1.18) -- (5.05,-0.92);
+  \draw[-{Stealth[length=1.3mm]}, simBlue] (5.20,-1.18) -- (5.30,-0.92);
+  % --- row 3 (evanescent) ---
+  \node[font=\scriptsize] at (0,-2.10)   {$3$};
+  \node[font=\scriptsize] at (1.4,-2.10) {$i\,8.0$};
+  \node[font=\scriptsize] at (2.8,-2.10) {---};
+  \node[font=\scriptsize] at (7.0,-2.10) {---};
+  \node[font=\scriptsize\itshape, simGray] at (4.9,-2.10) {(evanescent: no field)};
+  % footnote
+  \node[font=\scriptsize\itshape, simGreen, anchor=west] at (-0.6,-2.85)
+    {modes 1--2 propagate ($k_n$ real); mode 3 is evanescent ($k_n$ imaginary)};
+\end{tikzpicture}
+\caption[A waveguide-mode table carrying fields]{The waveguide-mode reduction
+produces a rank-1 table whose rows carry \emph{fields}. Each converged mode
+yields a propagation constant $k_n$, an effective index
+$n_{\text{eff}}=k_n/\omega$, the power-normalized transverse field pattern
+$\vE_t$ (the little arrow cartoons), and---for propagating modes only---the
+longitudinal field $\vB_z=\Curl\vE_t/(i\omega)$. Modes $1$ and $2$ propagate
+($k_n$ real, $n_{\text{eff}}$ defined, $\vB_z$ present, marked \checkmark); mode
+$3$ is \emph{evanescent} ($k_n$ imaginary), carries no propagating power, and has
+no $\vB_z$. The conditional $\vB_z$ is the one place a table row's shape depends
+on its content---recorded as an optional field. This is the only rank-1 table
+whose entries are not purely scalar.}
+\label{fig:wg-table}
+\end{figure}
+
+\section{The taxonomy, and what it buys}
+\label{sec:taxonomy}
+
+We have now met all three shapes in full, and the organizing payoff of the
+chapter can be stated plainly. \emph{Every} user-facing physical output Palace
+produces is one of three reduction shapes (\cref{fig:red-taxonomy}):
+
+\begin{itemize}[nosep]
+  \item the \textbf{rank-2 symmetric Gram} $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\vx_i$
+  ---capacitance and inductance, one verb differing only in the weight $w$;
+  \item the \textbf{rank-2 port-projection}
+  $S_{ij}=\sigma_{ij}(\inner{\vs_i}{\vE_j}-\delta_{ij})$ ---S-parameters, a
+  linear projection, complex, deliberately not a Gram (\cref{pit:gram-not-proj});
+  \item the \textbf{rank-1 scalar-or-mode table}---energy and participation
+  (per domain), eigenfrequency and $Q$ (per mode), and waveguide modes (per mode,
+  carrying fields), each a pure \texttt{map} with no pairing.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\caption[The reduction shapes and their products]{The three reduction shapes and
+the products each yields. The \emph{shape} column is the structural taxonomy; the
+\emph{verb} column is the framework combinator; the \emph{per-item} column is the
+computation mapped over the solution family. Reading down the \emph{shape} column,
+two reductions produce matrices (Gram, projection) and four produce
+tables---and the matrix pair is two genuinely different reductions, not one.}
+\label{tab:red-shapes}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Shape & Verb & Per-item computation & Product \\
+\midrule
+rank-2 Gram & \code{gram\_reduce} & $w(i,j)\,\vx_j^{\!\top}\Kop\vx_i$ & capacitance \\
+rank-2 Gram & \code{gram\_reduce} & $w{=}1/(I_iI_j)$, same form & inductance \\
+rank-2 projection & \code{sparameter\_reduce} & $\sigma_{ij}(\inner{\vs_i}{\vE_j}-\delta_{ij})$ & S-parameters \\
+rank-1 table & \code{domain\_energy\_reduce} & $(\tfrac12\inner{f}{\mat{M}_if},\,p_i)$ & energy, participation \\
+rank-1 table & \code{eigenfreq\_qfactor\_reduce} & $(\Re\,\omega_m,\,\omega_m/\kappa_m)$ & eigenfrequency, $Q$ \\
+rank-1 table & \code{waveguide\_mode\_reduce} & $(k_n,n_{\text{eff}},\vE_t,\vB_z)$ & waveguide modes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:red-shapes} collects them. The lesson is the book's recurring refrain,
+now at the output stage: a small handful of shapes, specialized by a weight, a
+basis, or a per-item formula, produce the entire menu of physical answers. The
+taxonomy is not a tidy-minded over-unification---we were careful in
+\cref{pit:gram-not-proj} to keep the Gram and the projection distinct---but a
+genuine structural economy: there really are only three ways the machinery
+collapses a field family into an answer.
+
+\begin{keyidea}
+The \textbf{three reduction shapes} produce \emph{every} physical output:
+the rank-2 symmetric Gram (capacitance, inductance), the rank-2 port-projection
+(S-parameters), and the rank-1 scalar-or-mode table (energy/participation,
+eigenfrequency/$Q$, waveguide modes). Two shapes yield matrices and one yields
+tables; the two matrix reductions are \emph{different} reductions that merely
+share an output rank. Each is an embarrassingly parallel \texttt{map} over the
+solution family---the last and simplest stage of every analysis, and the place
+where the physics re-enters as a capacitance, a scattering coefficient, or a
+resonant frequency.
+\end{keyidea}
+
+\section{Closing Part IV: the machinery is assembled}
+\label{sec:bridge}
+
+This chapter closes Part~IV, and with it the long climb up the machinery. It is
+worth standing back to see how far we have come, and where Part~V takes us.
+
+Part~II built the \emph{field theory}: Maxwell's equations, the weak form, the
+finite-element function spaces, and the assembly that turns continuous physics
+into discrete operators $\Kop,\Mop,\Cop$. Part~III built the \emph{calculus}: the
+abstract vocabulary of tensors, records, folds, combinators, monads, and
+operators in which the whole simulator can be written down precisely. Part~IV
+built the \emph{numerical machinery}: the Krylov solvers (\cref{ch:krylov,ch:cg,ch:gmres}),
+their orthogonalization and rotation kernels (\cref{ch:orthog,ch:givens}), the
+preconditioners and multigrid that make them converge (\cref{ch:precond,ch:smoothers,ch:multigrid}),
+the eigenvalue machinery and its spectral transforms (\cref{ch:eigenvalues,ch:krylovschur,ch:deflation}),
+the time integrators (\cref{ch:time}), the adaptive-refinement outer loop
+(\cref{ch:amr}), and now the output reductions that turn solved fields into
+physical products.
+
+Every box of the skeleton (\cref{ch:situating}) is now filled with real
+machinery. What remains is to \emph{compose} it. That is Part~V---the
+\emph{modalities}. Each modality chapter takes one of the six drivers and walks
+its full path through the assembled machinery: which function space it assembles
+on, which solve corner it occupies, which solver it calls, and---the subject of
+this chapter---which reduction shape produces its answer. The electrostatic
+driver (\cref{ch:electrostatics}) composes a fixed-operator family solve with a
+unit-weight Gram; the magnetostatic (\cref{ch:magnetostatics}) swaps the space
+and the Gram weight; the driven (\cref{ch:driven}) swaps in an operator-varying
+sweep and the port-projection; the eigenmode (\cref{ch:eigenmodes}) calls the
+black-box eigensolver and reduces to an $(f,Q)$ table; the boundary-mode
+(\cref{ch:waveports}) does the same on a cross-section and reduces to a waveguide
+table. The reductions of this chapter are the last stage of each of those paths.
+The parts are all on the bench; Part~V assembles the machines.
+
+\summarysection
+The \texttt{reduce} stage turns a driver's solution \emph{family} into the
+user-facing physical product. Every reduction is an embarrassingly parallel
+\texttt{map} over the family with no inter-element state---never a fold
+(\cref{ch:combinators}). There are exactly three reduction \emph{shapes}. The
+\textbf{rank-2 symmetric Gram} $G_{ij}=w(i,j)\,\vx_j^{\!\top}\Kop\vx_i$
+(\code{gram\_reduce}) produces capacitance ($w=1$, per-terminal potentials) and
+inductance ($w=1/(I_iI_j)$, per-source vector potentials) from one verb, its
+symmetry structural and its diagonal twice the stored field energy. The
+\textbf{rank-2 port-projection}
+$S_{ij}=\sigma_{ij}(\inner{\vs_i}{\vE_j}-\delta_{ij})$
+(\code{sparameter\_reduce}) produces S-parameters by projecting each driven field
+onto the port modes; it is complex, non-symmetric, and deliberately \emph{not} a
+Gram---sharing an output rank is not sharing a meaning. The \textbf{rank-1
+scalar-or-mode table} produces energy and participation per domain
+(\code{domain\_energy\_reduce}, driver-agnostic), eigenfrequency and $Q$ per mode
+(\code{eigenfreq\_qfactor\_reduce}, with the $\kappa{=}0\Rightarrow Q{=}\infty$
+guard), and waveguide modes per mode (\code{waveguide\_mode\_reduce}, the one
+table carrying fields). These three shapes, specialized by a weight, a basis, or
+a per-item formula, produce the simulator's entire menu of physical answers---and
+they are the last stage of each modality in Part~V.
+
+\furtherreading
+The physical meanings of the reduced quantities are standard electromagnetics:
+Griffiths~\citep{griffiths2017} for capacitance, inductance, and stored field
+energy (the Gram diagonal); Pozar~\citep{pozar2011} for S-parameters, quality
+factors, and waveguide propagation modes (the microwave quantities, including the
+de-embedding and impedance scalings of the port projection). For the
+finite-element side---how the energy operators $\Kop,\mat{M}_i$ are assembled and
+why the diagonal of the Gram is exactly twice the discrete field energy---Jin's
+finite-element electromagnetics text~\citep{jin2014} is the natural companion,
+and it treats the divergence-free projection and the spurious-mode cleanup that
+keep the eigenfrequency table honest. The structural observation that all of
+these are one of three \texttt{map}-shaped reductions is this book's own, distilled
+from reading Palace's postprocessing side by side; \cref{ch:situating} states the
+taxonomy and this chapter fills it in.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{One verb, two products.} Write down the Gram reduction entry
+  $G_{ij}$ and the weight $w(i,j)$ for capacitance and for inductance. In one
+  sentence each, explain why capacitance's weight is trivial ($w=1$) but
+  inductance's ($w=1/(I_iI_j)$) is not.
+  \item \textbf{Mirror, don't recompute.} A three-terminal capacitance problem
+  needs the full $3\times 3$ matrix $\mat{C}$. How many distinct bilinear-form
+  evaluations $\vx_j^{\!\top}\Kop\vx_i$ does \code{gram\_reduce} actually perform,
+  and which entries are filled by \code{symmetric\_from\_upper} instead? What
+  property of $\Kop$ licenses the mirroring?
+  \item \textbf{Sign of the off-diagonal.} In \cref{wex:cap2x2} the mutual
+  capacitance $C_{12}$ came out negative. Explain physically why the off-diagonal
+  of a Maxwell capacitance matrix is always negative, using the relation
+  $Q_1=C_{11}V_1+C_{12}V_2$.
+  \item \textbf{Not a Gram.} Give the three structural reasons (from
+  \cref{pit:gram-not-proj}) that the S-parameter matrix is not a Gram matrix,
+  even though both are square and port-indexed. For each reason, name the specific
+  feature of \code{sparameter\_reduce}'s body that a unified ``matrix reduction''
+  verb would have to violate.
+  \item \textbf{The $Q$ guard.} Recompute $Q_m$ from \cref{wex:fq} if the loss
+  rate were $\omega_i=2\pi\cdot\SI{5}{\mega\hertz}$ instead of \SI{2.5}{\mega\hertz}.
+  Then take $\omega_i\to 0$: what does the reduction return, and why is that the
+  physically correct answer rather than a numerical failure?
+  \item \textbf{Two undone transforms.} The eigenfrequency--$Q$ reduction
+  ``un-transforms'' the eigenvalue twice over. Name the two transforms it undoes:
+  one applied by the eigenvalue \emph{solve} stage (\cref{ch:eigenvalues}) and one
+  implicit in the lossy problem's eigenvalue convention $\lambda=i\omega$. What
+  does each contribute to the final $(f,Q)$ row?
+  \item \textbf{Driver-agnostic energy.} The domain-energy reduction is the one
+  reduction that runs identically as a post-process of \emph{any} field-bearing
+  analysis. State the minimal precondition it needs from the driver above it, and
+  explain why the participation factors sum to one only when the configured
+  domains partition the field's support.
+  \item \textbf{Place the products.} For each of the six Palace analyses, name its
+  product and the reduction shape (Gram / projection / table) that produces it.
+  Which shape is used by the most analyses, and why is that unsurprising given
+  that a table is just a \texttt{map} with no pairing?
+\end{enumerate}

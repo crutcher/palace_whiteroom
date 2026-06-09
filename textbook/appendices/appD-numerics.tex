@@ -1,0 +1,961 @@
+\chapter{Numerical and Floating-Point Semantics}
+\label{app:numerics}
+
+\chapterorient{Every algorithm in this book has been presented in exact
+arithmetic---inner products are sums, the residual is $\vb-\mat{A}\vx$, a
+polynomial is its value. A real machine does none of this exactly. It rounds, and
+the order in which it rounds is visible in the last bits of the answer. This
+appendix is about which of those rounding choices the reader may safely
+\emph{ignore} and which are \emph{part of the algorithm}. The distinction is the
+one \cref{ch:bigidea} drew between performance tricks and base algebra, sharpened
+to the floating-point level: a \emph{transparent} trick computes the same result
+faster and is invisible to the mathematics; a \emph{load-bearing} trick changes a
+property the algorithm depends on---determinism, conditioning, IEEE
+compliance---and must be stated as an explicit claim. We first give a working
+floating-point primer (rounding, machine epsilon, non-associativity, cancellation,
+conditioning), then catalogue the transparent tricks the book has quietly skipped
+over, then treat the load-bearing ones in depth: non-associative reduction
+orderings, fast-math reassociation, mixed precision, the Chebyshev
+recurrence-versus-monomial choice (\cref{ch:smoothers}), and modified-versus-classical
+Gram--Schmidt (\cref{ch:orthog}). \Cref{app:laws} catalogues which algebraic
+\emph{laws} survive the rotation to pure functions; this appendix explains why
+several of them hold only \emph{up to rounding}, and why that ``up to'' is itself a
+specification.}
+
+\section{A floating-point primer}
+\label{sec:primer}
+
+The reader who has written a numerical program has met the surprises of floating
+point---a sum that depends on the order of its terms, a subtraction that loses all
+its digits---without necessarily having a vocabulary for them. This section
+supplies the vocabulary, at the level needed to follow the rest of the appendix.
+Nothing here is deep; all of it is load-bearing for what follows.
+
+\subsection{Floating-point numbers and rounding}
+
+A binary floating-point number is a sign, a fraction (the \emph{significand} or
+\emph{mantissa}), and an exponent: $x = \pm\, (1.b_1 b_2 \cdots b_{p-1})_2 \times
+2^{e}$, with $p$ significand bits. IEEE-754 double precision (``binary64'',
+the workhorse of every solver in this book) has $p = 53$ significand bits and an
+11-bit exponent; single precision (``binary32'') has $p = 24$ and an 8-bit
+exponent. The finite significand is the entire story: only numbers expressible in
+$p$ bits exist, and every arithmetic result must be \emph{rounded} to the nearest
+representable one.
+
+\begin{definition}[Unit roundoff]
+\label{def:eps}
+The \emph{unit roundoff} (or \emph{machine epsilon}) $u$ is the largest relative
+error incurred by rounding a real number to the nearest floating-point number:
+under round-to-nearest, $\mathrm{fl}(x) = x(1+\delta)$ with $\abs{\delta} \le u$,
+where $u = 2^{-p}$. For double precision $u = 2^{-53} \approx 1.11\times10^{-16}$;
+for single precision $u = 2^{-24} \approx 5.96\times10^{-8}$.
+\end{definition}
+
+The fundamental model of floating-point arithmetic follows: each elementary
+operation $\circ \in \{+,-,\times,\div\}$ returns the exactly-rounded result,
+\begin{equation}
+\label{eq:fpmodel}
+  \mathrm{fl}(a \circ b) \;=\; (a \circ b)(1 + \delta), \qquad \abs{\delta} \le u .
+\end{equation}
+Each \emph{single} operation is as accurate as the format allows---a relative
+error of at most $u$. The trouble is never one operation; it is the way errors
+from many operations combine, and \eqref{eq:fpmodel} is the seed from which every
+phenomenon below grows.
+
+\begin{notationbox}
+We write $\mathrm{fl}(\cdot)$ for ``the floating-point value of,'' $u$ for the unit
+roundoff (\cref{def:eps}), and $\kappa$ for a condition number (\cref{def:cond}
+below, and \cref{def:kappa} in \cref{ch:cg} for the matrix case). A relative error
+``of order $u$'' means $O(u)$; ``of order $\kappa u$'' means the rounding has been
+amplified by the conditioning. These three symbols---$u$, $\kappa$, and their
+product $\kappa u$---carry the whole quantitative story of the appendix.
+\end{notationbox}
+
+\subsection{Addition is not associative}
+\label{sec:nonassoc}
+
+The single fact that drives most of this appendix is that floating-point addition,
+though commutative, is \emph{not associative}:
+\begin{equation}
+\label{eq:nonassoc}
+  \mathrm{fl}\bigl(\mathrm{fl}(a + b) + c\bigr)
+  \;\ne\;
+  \mathrm{fl}\bigl(a + \mathrm{fl}(b + c)\bigr)
+  \quad\text{in general.}
+\end{equation}
+Each inner sum is rounded before the outer sum sees it, and the two roundings
+discard different bits. A three-number example makes it concrete. In a toy decimal
+format carrying three significant digits, take $a = 1.00$, $b = c = 5.00\times
+10^{-3}$. Left-associating, $\mathrm{fl}(a+b) = \mathrm{fl}(1.005) = 1.00$ (the
+$0.005$ falls off the third digit), and then $\mathrm{fl}(1.00 + 0.005) = 1.00$:
+both small terms are lost. Right-associating, $\mathrm{fl}(b+c) =
+\mathrm{fl}(0.010) = 0.010$ (no rounding---it fits), and then $\mathrm{fl}(1.00 +
+0.010) = 1.01$: the two small terms, summed \emph{first}, survive their encounter
+with the large one. Same three numbers, two bracketings, different answers in the
+last digit. \Cref{fig:nonassoc} draws the two summation trees and the bits each
+one keeps.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: left-leaning tree =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.3,3.1) {left-associated $((a{+}b){+}c)$};
+    \node[data] (a) at (0,2.2) {$a$};
+    \node[data] (b) at (1.0,2.2) {$b$};
+    \node[data] (c) at (2.6,2.2) {$c$};
+    \node[opbox, minimum width=9mm] (s1) at (0.5,1.2) {$+$};
+    \node[opbox, minimum width=9mm] (s2) at (1.55,0.2) {$+$};
+    \node[product, minimum width=14mm] (r1) at (1.55,-0.9) {sum$_L$};
+    \draw[flow] (a) -- (s1); \draw[flow] (b) -- (s1);
+    \draw[flow] (s1) -- (s2); \draw[flow] (c) -- (s2);
+    \draw[flow] (s2) -- (r1);
+    \node[font=\scriptsize, text=simRust, align=center] at (1.55,-1.7)
+      {$a{+}b$ rounds first:\\small bits of $b$ lost early};
+  \end{scope}
+  \draw[simGray!50, thick] (3.8,-2.0) -- (3.8,3.3);
+  % ===== RIGHT: right-leaning tree =====
+  \begin{scope}[xshift=5.2cm]
+    \node[font=\small\bfseries, text=simGreen] at (1.5,3.1) {right-associated $(a{+}(b{+}c))$};
+    \node[data] (a2) at (0,2.2) {$a$};
+    \node[data] (b2) at (1.6,2.2) {$b$};
+    \node[data] (c2) at (2.6,2.2) {$c$};
+    \node[opbox, minimum width=9mm] (t1) at (2.1,1.2) {$+$};
+    \node[opbox, minimum width=9mm] (t2) at (1.05,0.2) {$+$};
+    \node[product, minimum width=14mm] (r2) at (1.05,-0.9) {sum$_R$};
+    \draw[flow] (b2) -- (t1); \draw[flow] (c2) -- (t1);
+    \draw[flow] (a2) -- (t2); \draw[flow] (t1) -- (t2);
+    \draw[flow] (t2) -- (r2);
+    \node[font=\scriptsize, text=simGreen, align=center] at (1.05,-1.7)
+      {$b{+}c$ summed first:\\small terms survive together};
+  \end{scope}
+  % the verdict band across the bottom
+  \node[font=\scriptsize\itshape, text=simInk, align=center] at (3.8,-2.6)
+    {$a=1.00,\ b=c=5{\times}10^{-3}$ (3-digit decimal):\quad
+     sum$_L = 1.00 \ne 1.01 = $ sum$_R$};
+\end{tikzpicture}
+\caption[Two summation trees, two answers]{The non-associativity of
+\eqref{eq:nonassoc} made visible. The same three numbers are summed by two
+\emph{reduction trees}. \emph{Left:} left-association adds $a+b$ first; in a coarse
+format the small term $b$ is swallowed by the large $a$ before $c$ is ever added,
+and its contribution is lost. \emph{Right:} right-association adds the two small
+terms $b+c$ first, so they accumulate to a magnitude that survives the encounter
+with $a$. The two trees compute the identical mathematical sum $a+b+c$ but disagree
+in the last digit, because rounding happens \emph{between} the additions and each
+tree rounds at different places. A reduction is a tree, and the tree is observable
+in the result.}
+\label{fig:nonassoc}
+\end{figure}
+
+This is not pathology; it is the rule. A sum of $N$ numbers can be evaluated by any
+of exponentially many trees---sequential left-to-right, pairwise (a balanced
+binary tree), blocked, or whatever a parallel reduction happens to produce---and
+the trees agree only in exact arithmetic. In floating point they agree to within a
+bound of order $N u$ (sequential) or $u\log_2 N$ (pairwise) times the sum of
+magnitudes, but they do not agree \emph{bit for bit}. \Cref{sec:reduction} returns
+to this with the global reductions of CG and GMRES, where it becomes the central
+load-bearing fact.
+
+\subsection{Catastrophic cancellation}
+\label{sec:cancel}
+
+The second hazard is \emph{subtraction of nearly equal quantities}. When $a$ and
+$b$ agree in their leading digits, the difference $a - b$ \emph{cancels} those
+leading digits, and the result is built entirely from the low-order bits---the very
+bits already corrupted by the roundings that produced $a$ and $b$. The relative
+error in $a - b$ is magnified by roughly $\abs{a}/\abs{a-b}$, which is enormous
+when the operands are close. \Cref{fig:cancel} shows the bookkeeping.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=0.34cm, y=0.5cm]
+  % a row of "digit cells": green = correct, gray = garbage
+  \def\cell#1#2#3{\draw[fill=#3] (#1,#2) rectangle ++(0.9,0.8);}
+  % a = 1.2345678  (all 7 digits correct, last is rounding-uncertain)
+  \node[anchor=east, font=\scriptsize] at (-0.4,3.4) {$a = 1.2345678\underline{9}$};
+  \foreach \i in {0,...,6}{\cell{\i*1}{3}{simBgGreen}}
+  \cell{7}{3}{simBgGray}
+  % b = 1.2345677  (agree in first 7)
+  \node[anchor=east, font=\scriptsize] at (-0.4,2.2) {$b = 1.2345677\underline{2}$};
+  \foreach \i in {0,...,6}{\cell{\i*1}{2}{simBgGreen}}
+  \cell{7}{2}{simBgGray}
+  % a-b = 0.0000001.7 : leading 7 cancel, only the last (garbage) survives, shifted up
+  \node[anchor=east, font=\scriptsize] at (-0.4,0.9) {$a - b = 0.000000\underline{17}$};
+  \foreach \i in {0,...,5}{\cell{\i*1}{0.6}{white}}
+  \cell{6}{0.6}{simBgRust}
+  \cell{7}{0.6}{simBgRust}
+  % brace over the cancelled region
+  \draw[decorate, decoration={brace, amplitude=4pt}, simGray]
+    (6.9,3.95) -- (-0.05,3.95);
+  \node[font=\scriptsize, text=simGray] at (3.4,4.45) {7 leading digits cancel};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simRust]
+    (5.95,0.45) -- (7.85,0.45);
+  \node[font=\scriptsize, text=simRust, align=center] at (9.6,0.9)
+    {result built only from\\the \emph{uncertain} trailing bits};
+  % legend
+  \node[anchor=west, font=\scriptsize] at (0,-1.1)
+    {\tikz\fill[simBgGreen](0,0)rectangle(0.3,0.3); correct\quad
+     \tikz\fill[simBgGray](0,0)rectangle(0.3,0.3); rounding-uncertain\quad
+     \tikz\fill[simBgRust](0,0)rectangle(0.3,0.3); amplified garbage};
+\end{tikzpicture}
+\caption[Catastrophic cancellation]{Subtracting two nearly equal numbers destroys
+significant digits. The operands $a$ and $b$ agree in their first seven digits
+(green); only their trailing digit (gray) carries rounding uncertainty. Their
+difference $a-b$ \emph{cancels} the seven agreeing digits exactly, leaving a result
+whose significant figures are built entirely from the previously-uncertain trailing
+bits (rust)---which are then re-normalized up to the leading position, magnifying
+their relative error by roughly $\abs{a}/\abs{a-b}$. The subtraction itself is
+exactly rounded (its own $\delta$ is below $u$); the damage was done \emph{earlier},
+when $a$ and $b$ were rounded, and cancellation merely exposes it. The cure is
+always algebraic---reformulate to avoid the near-equal subtraction---never a more
+accurate subtractor.}
+\label{fig:cancel}
+\end{figure}
+
+\begin{pitfall}
+Cancellation is widely \emph{mis}-diagnosed. The subtraction $a-b$ is itself
+exactly rounded---its relative error is below $u$ like any other operation. What is
+catastrophic is that it \emph{reveals} errors already present in $a$ and $b$ from
+earlier roundings. Replacing the subtraction with a ``more accurate'' one buys
+nothing; the fix is always to reformulate the computation so the near-equal
+subtraction never occurs---summing positive terms before subtracting, using a
+stable recurrence instead of an explicit difference (the Chebyshev story of
+\cref{sec:cheby}), or rationalizing $\sqrt{x+1}-\sqrt{x}$ into
+$1/(\sqrt{x+1}+\sqrt{x})$. The monomial form of a polynomial
+(\cref{sec:cheby}) is catastrophic cancellation industrialized: large
+alternating-sign terms that should sum to something small.
+\end{pitfall}
+
+\subsection{Conditioning: the problem versus the algorithm}
+\label{sec:conditioning}
+
+The last piece of vocabulary separates two sources of error that are constantly
+conflated. The \emph{condition number} of a problem measures how much its
+\emph{output} can change in response to a small change in its \emph{input}---a
+property of the problem itself, before any algorithm is chosen.
+
+\begin{definition}[Condition number of a problem]
+\label{def:cond}
+For a problem $y = f(x)$, the (relative) condition number is the smallest $\kappa$
+such that a relative perturbation $\abs{\Delta x}/\abs{x}$ produces a relative
+output change $\abs{\Delta y}/\abs{y} \lesssim \kappa\,\abs{\Delta x}/\abs{x}$. For
+solving $\mat{A}\vx = \vb$ the relevant condition number is
+$\kappa(\mat{A}) = \norm{\mat{A}}\,\norm{\mat{A}^{-1}}$, which for SPD $\mat{A}$ is
+$\lambda_{\max}/\lambda_{\min}$ (\cref{def:kappa}).
+\end{definition}
+
+An algorithm is \emph{stable} (more precisely, \emph{backward stable}) if the
+answer it computes is the exact answer to a slightly perturbed input---a
+perturbation of relative size $O(u)$. Stability and conditioning then multiply:
+\begin{equation}
+\label{eq:errorrule}
+  \underbrace{\frac{\norm{\hat{\vx} - \vx}}{\norm{\vx}}}_{\text{forward error}}
+  \;\lesssim\;
+  \underbrace{\kappa(\mat{A})}_{\text{conditioning of problem}}
+  \times
+  \underbrace{O(u)}_{\text{stability of algorithm}} .
+\end{equation}
+This single inequality is the organizing rule of numerical computing. A stable
+algorithm on an ill-conditioned problem still returns a large forward error---not
+because the algorithm misbehaved but because the problem amplifies any
+perturbation, including the unavoidable $O(u)$ rounding of the input. An unstable
+algorithm wastes accuracy even on a well-conditioned problem. The two failure modes
+are independent, and \eqref{eq:errorrule} tells which is which: if $\kappa$ is huge,
+no algorithm will save you (precondition the problem---\cref{ch:cg}); if $\kappa$ is
+modest but the answer is still wrong, the algorithm is unstable (fix the algorithm,
+as MGS fixes CGS in \cref{sec:orthog}).
+
+\begin{keyidea}
+Conditioning is a property of the \emph{problem}; stability is a property of the
+\emph{algorithm}. Forward error $\lesssim \kappa \cdot O(u)$: the conditioning of
+the problem times the (in)stability of the algorithm. The ill-conditioned operators
+Palace assembles (fine meshes, high material contrast) make $\kappa$ large, which
+is exactly why preconditioning (\cref{ch:cg}) and stable orthogonalization
+(\cref{ch:orthog}) earn their keep---they attack the two factors separately.
+\end{keyidea}
+
+\section{Transparent tricks: invisible to the mathematics}
+\label{sec:transparent}
+
+With the primer in hand we can state the appendix's central distinction precisely
+and then dispatch the easy half of it. A \emph{transparent} performance trick is a
+rewrite that computes the \emph{same result}---bit for bit, or up to a benign
+reordering whose error is of the same harmless order as the computation
+already carries---but faster. The book has presented the unfolded, mathematically
+transparent form throughout and relegated each such trick to a one-line note,
+because by definition it changes nothing the mathematics can see.
+
+\begin{definition}[Transparent performance trick]
+\label{def:transparent}
+A code transformation is \emph{transparent} if it is algebraically equivalent to
+the unfolded form it replaces and does not change any property the algorithm
+depends on---not the value (up to benign reordering), not the conditioning, not the
+rounding behavior in any consumed way. Its only effect is speed or memory traffic.
+A transparent trick may be \emph{ignored in the mathematical presentation} and
+recorded as a footnote on the operation it accelerates.
+\end{definition}
+
+The catalogue of transparent tricks Palace uses, each algebraically equivalent to
+its unfolded form:
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Operator fusion.} Two consecutive elementwise passes (say a scale
+  then an add) are fused into one loop that reads the input once and writes the
+  output once, halving memory traffic. The arithmetic performed is identical; only
+  the number of trips to memory changes. The \code{axpy} family of \cref{ch:cg} is
+  a fused scale-and-add presented as one operator for exactly this reason.
+
+\item \textbf{Tiling and blocking.} A large matrix operation is partitioned into
+  cache-sized tiles processed one at a time, so the working set fits in fast memory.
+  The set of multiply-adds is unchanged; only their \emph{schedule} changes. (When
+  the schedule changes the \emph{reduction order} of a sum, the trick is no longer
+  purely transparent---see \cref{sec:reduction}; blocking that keeps each reduction
+  intact is transparent, blocking that re-trees a reduction is load-bearing.)
+
+\item \textbf{Packing and batching.} Many small elementwise or per-element
+  operations are gathered into one large contiguous kernel launch (the
+  element-batched assembly of \cref{ch:matrixfree}). The per-element arithmetic is
+  untouched; batching only amortizes launch and indexing overhead.
+
+\item \textbf{Memory layout.} Choosing array-of-structs versus struct-of-arrays,
+  or a blocked sparse format, changes which bytes are adjacent but not which
+  numbers are computed.
+
+\item \textbf{Recomputation versus lookup.} A cheap quantity (a Jacobian
+  determinant at a quadrature point) may be recomputed on the fly rather than
+  stored and reloaded, trading arithmetic for memory bandwidth. The recomputed
+  value is bit-identical to the stored one (it is the same formula), so the choice
+  is transparent.
+
+\item \textbf{Sum-factorization} (\cref{ch:matrixfree}). High-order matrix-free
+  operator application replaces the dense $O(P\cdot L)$ basis contraction by a
+  sequence of one-dimensional sweeps, $O(d\,P^{1/d}L)$, exploiting the
+  tensor-product structure of the basis. As \cref{ch:matrixfree} establishes at
+  length, the two compute \emph{bit-for-bit the same quadrature-point values}---the
+  product $\phi_i(\xi)\phi_j(\eta)$ is simply contracted one axis at a time---so
+  sum-factorization is the canonical transparent trick: decisive for performance,
+  invisible to the algebra.
+\end{itemize}
+
+\begin{keyidea}
+A transparent trick is a \emph{factoring of the schedule}, not of the algorithm.
+Fusion, tiling, packing, layout, recomputation, and sum-factorization all leave the
+computed numbers unchanged (up to benign reordering) and change only how fast or
+with how much memory traffic they are produced. The mathematics of the book
+therefore presents the unfolded form and notes the trick in one line. The reader
+who wants to understand \emph{what is computed} may ignore every transparent trick;
+the reader who wants to understand \emph{why it is fast enough to run} should read
+\cref{ch:matrixfree}.
+\end{keyidea}
+
+There is one boundary case worth flagging explicitly, because it is the bridge to
+the next section. Tiling, blocking, and batching are transparent \emph{only so long
+as they preserve the reduction order of every sum}. The moment a tiling re-brackets
+a global reduction---computes partial sums per tile and then combines them in a
+different tree than the sequential sweep would---it has crossed from transparent to
+load-bearing, because by \cref{sec:nonassoc} it changes the last bits of the sum.
+The same code transformation can be transparent or load-bearing depending on
+whether a reduction tree hides inside it. This is precisely why the classification
+is a matter of \emph{judgment}, flagged to the human when unclear (\cref{ch:bigidea}),
+rather than a mechanical property of the code shape.
+
+\section{Load-bearing tricks: part of the algorithm}
+\label{sec:loadbearing}
+
+A \emph{load-bearing} numerical trick is one that changes a property the algorithm
+depends on---and therefore cannot be ignored in the mathematics, because ignoring
+it would mis-state what the algorithm computes. Where a transparent trick gets a
+footnote, a load-bearing trick gets an \emph{explicit algebraic claim}, naming the
+property it buys.
+
+\begin{definition}[Load-bearing numerical trick]
+\label{def:loadbearing}
+A numerical choice is \emph{load-bearing} if changing it changes a property of the
+result that some consumer depends on: its \emph{value} in a way that matters (the
+exact iteration count, the last bits when reproducibility is required), its
+\emph{conditioning} or attained accuracy, its \emph{determinism}, or its
+\emph{IEEE compliance}. A load-bearing trick must be stated in the specification as
+an explicit claim, together with the property it secures, and may not be silently
+``optimized'' into an algebraically-equivalent-in-exact-arithmetic alternative.
+\end{definition}
+
+\Cref{fig:taxonomy} sets the two kinds side by side as a decision the spec makes for
+every numerical choice, and the rest of the section works through the load-bearing
+column case by case.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the input question
+  \node[stage, minimum width=46mm] (q) at (0,2.4)
+    {A numerical choice (reorder, reassociate,\\reduce precision, expand a polynomial)};
+  % left branch: transparent
+  \node[opbox, fill=simBgGreen, draw=simGreen, text width=42mm, align=left] (T) at (-3.6,0)
+    {\textbf{Transparent}\\[2pt]
+     same result (up to benign reorder),\\just faster: fusion, tiling, packing,\\
+     layout, recompute, sum-factorization};
+  \node[product, fill=simBgGreen, draw=simGreen, text width=34mm] (Tout) at (-3.6,-2.3)
+    {\textbf{ignore in the math};\\ one-line note on the operation};
+  % right branch: load-bearing
+  \node[opbox, fill=simBgRust, draw=simRust, text width=44mm, align=left] (L) at (3.6,0)
+    {\textbf{Load-bearing}\\[2pt]
+     changes value / conditioning /\\determinism / IEEE compliance:\\
+     reduction order, fast-math, mixed\\precision, recurrence-vs-monomial, MGS-vs-CGS};
+  \node[product, fill=simBgRust, draw=simRust, text width=36mm] (Lout) at (3.6,-2.3)
+    {\textbf{state as an algebraic claim};\\ name the property it buys};
+  % edges
+  \draw[flow] (q.south) -- (T.north)
+    node[midway, above left, font=\scriptsize, text=simGreen]
+      {same answer?};
+  \draw[flow] (q.south) -- (L.north)
+    node[midway, above right, font=\scriptsize, text=simRust]
+      {changes a property?};
+  \draw[flow] (T) -- (Tout);
+  \draw[flow] (L) -- (Lout);
+  % unclear -> human
+  \node[extern, text width=30mm] (H) at (0,-3.7)
+    {\emph{unclear}: flag to the human (\cref{ch:bigidea})};
+  \draw[refedge] (T.south) .. controls +(0,-0.9) and +(-0.7,0.3) .. (H.west);
+  \draw[refedge] (L.south) .. controls +(0,-0.9) and +(0.7,0.3) .. (H.east);
+\end{tikzpicture}
+\caption[Transparent versus load-bearing: the spec's decision]{The classification
+every numerical choice passes through. \emph{Left (green):} if the choice computes
+the same result up to a benign reordering and changes no depended-on property, it is
+\emph{transparent}---ignored in the mathematical presentation, recorded as a one-line
+note on the operation it accelerates. \emph{Right (rust):} if it changes the value
+in a consumed way, the conditioning, the determinism, or the IEEE compliance, it is
+\emph{load-bearing}---stated as an explicit algebraic claim naming the property it
+secures. The hazard is mis-routing a load-bearing trick down the transparent path,
+which silently changes the algorithm; when the routing is unclear the spec flags it
+to the human (\cref{ch:bigidea}) rather than guessing. The five load-bearing cases
+named on the right are the subject of \crefrange{sec:reduction}{sec:orthog}.}
+\label{fig:taxonomy}
+\end{figure}
+
+\subsection{Non-associative reduction orderings}
+\label{sec:reduction}
+
+The first and most pervasive load-bearing trick is the one \cref{sec:numerics} of
+\cref{ch:cg} named and deferred to here: the \emph{order} in which a global
+reduction is summed. Every Krylov coefficient---the CG step length $\alpha$, the
+direction coefficient $\beta$, the GMRES least-squares residual, every convergence
+test---is built from inner products $\inner{\vu}{\vv} = \sum_i u_i v_i$, and an
+inner product is a global reduction over all $N$ entries. By the non-associativity
+of \cref{sec:nonassoc}, the value of that reduction depends on the summation tree.
+
+The summation tree is not a fixed property of the program; it is chosen by the
+runtime. A sequential loop sums left-to-right; a multithreaded reduction splits the
+range into per-thread partial sums and combines them; a GPU reduction uses a
+tree of warps and blocks; a different thread count or a different device produces a
+different tree. Each tree gives a bit-different but equally valid value of the inner
+product. \Cref{fig:redtree} contrasts two trees over the same eight terms.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.95]
+  % ===== LEFT: sequential (left-leaning) reduction =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.6,3.5) {sequential: one long chain};
+    \foreach \i [count=\j from 0] in {0,1,2,3,4,5,6,7}{
+      \node[data, minimum width=4mm, inner sep=1.5pt] (x\i) at (\j*0.62,2.7)
+        {\scriptsize$\i$};
+    }
+    % left-leaning accumulator chain
+    \node[opbox, minimum width=4mm, inner sep=1.5pt] (acc) at (0.0,1.0) {\scriptsize$+$};
+    \foreach \i in {1,...,7}{
+      \pgfmathsetmacro\xx{\i*0.45}
+      \node[opbox, minimum width=4mm, inner sep=1.5pt] (a\i) at (\xx,{1.0-\i*0.22}) {\scriptsize$+$};
+    }
+    \draw[flow] (x0)--(acc); \draw[flow] (x1)--(acc);
+    \draw[flow] (acc)--(a2);
+    \foreach \i [evaluate=\i as \p using int(\i-1)] in {2,...,7}{
+      \ifnum\i>2 \draw[flow] (a\p)--(a\i); \fi
+      \draw[flow] (x\i)--(a\i);
+    }
+    \node[product, minimum width=12mm] (rL) at (3.15,-0.9) {sum$_{\text{seq}}$};
+    \draw[flow] (a7)--(rL);
+    \node[font=\scriptsize, text=simRust, align=center] at (1.6,-1.7)
+      {error $\sim N u$;\\ depth $N$, not parallel};
+  \end{scope}
+  \draw[simGray!50, thick] (4.6,-2.0) -- (4.6,3.7);
+  % ===== RIGHT: pairwise (balanced tree) reduction =====
+  \begin{scope}[xshift=5.6cm]
+    \node[font=\small\bfseries, text=simGreen] at (2.2,3.5) {pairwise: balanced tree};
+    \foreach \i [count=\j from 0] in {0,1,2,3,4,5,6,7}{
+      \node[data, minimum width=4mm, inner sep=1.5pt] (y\i) at (\j*0.62,2.7)
+        {\scriptsize$\i$};
+    }
+    % level 1: 4 adds
+    \foreach \k [count=\m from 0] in {0,2,4,6}{
+      \node[opbox, minimum width=4mm, inner sep=1.5pt] (l1\m) at ({(\k+0.5)*0.62},1.7) {\scriptsize$+$};
+    }
+    \draw[flow] (y0)--(l10); \draw[flow] (y1)--(l10);
+    \draw[flow] (y2)--(l11); \draw[flow] (y3)--(l11);
+    \draw[flow] (y4)--(l12); \draw[flow] (y5)--(l12);
+    \draw[flow] (y6)--(l13); \draw[flow] (y7)--(l13);
+    % level 2: 2 adds
+    \node[opbox, minimum width=4mm, inner sep=1.5pt] (l20) at (1.24,0.7) {\scriptsize$+$};
+    \node[opbox, minimum width=4mm, inner sep=1.5pt] (l21) at (3.10,0.7) {\scriptsize$+$};
+    \draw[flow] (l10)--(l20); \draw[flow] (l11)--(l20);
+    \draw[flow] (l12)--(l21); \draw[flow] (l13)--(l21);
+    % level 3: 1 add
+    \node[product, minimum width=12mm] (rR) at (2.17,-0.9) {sum$_{\text{tree}}$};
+    \draw[flow] (l20)--(rR); \draw[flow] (l21)--(rR);
+    \node[font=\scriptsize, text=simGreen, align=center] at (2.2,-1.7)
+      {error $\sim u\log_2 N$;\\ depth $\log_2 N$, parallel};
+  \end{scope}
+\end{tikzpicture}
+\caption[Two reduction trees over the same data]{The same eight-term reduction
+$\sum_{i=0}^{7} z_i$ computed by two trees. \emph{Left:} a sequential accumulator
+chain---the natural left-to-right loop---has depth $N$ and a worst-case error bound
+of order $N u$ times the sum of magnitudes; it cannot be parallelized. \emph{Right:}
+a balanced pairwise tree has depth $\log_2 N$, a tighter error bound of order
+$u\log_2 N$, and maps onto parallel hardware. Both are correct reductions of the
+same data; they round at different places and so generally produce \emph{different
+last bits}. A multithreaded or GPU run picks a tree determined by its thread and
+block geometry, so ``the same'' inner product computed on two devices---or with two
+thread counts---returns bit-different values, and the iterative solver downstream
+takes a bit-different (but equally valid) trajectory.}
+\label{fig:redtree}
+\end{figure}
+
+The consequence for an iterative solver is precise and, at first, unsettling. Two
+runs of the ``same'' CG solve on two machines---or on one machine with two thread
+counts---compute bit-different inner products, hence bit-different $\alpha$ and
+$\beta$, hence iterates differing in their last bits, and may even cross the
+convergence tolerance at \emph{different iteration numbers}. The converged answer is
+correct to tolerance in both cases; what is \emph{not} reproducible bit-for-bit is
+the trajectory and the exact step count. This is the canonical load-bearing trick:
+not a bug, but a property of the computation that a consumer may or may not depend
+on, and that the specification must therefore \emph{name}.
+
+\begin{keyidea}
+An inner product is a reduction; a reduction is a tree; the tree determines the last
+bits. Reduction order is \emph{load-bearing} precisely because it is observable: it
+changes the bit-level trajectory and the exact iteration count of every Krylov
+solver. The mathematics is identical across trees---each is a correct sum---so the
+spec does not pick a tree, but it must \emph{state} that the trajectory is
+tree-dependent, so that a downstream consumer knows reproducibility is not free.
+\end{keyidea}
+
+\begin{pitfall}
+\textbf{Bit-reproducibility is not free, and is not on by default.} A consumer that
+demands the identical bit pattern from run to run---a regression test asserting on
+the last digits, a certification requiring reproducible output---must \emph{pin the
+reduction order}: fix the thread count, fix the device, use a deterministic
+(fixed-tree or compensated) reduction. Each of these costs performance: a
+deterministic reduction forgoes the fastest tree the hardware offers, and a
+fixed thread count forgoes load balancing. CG does not, and cannot, promise
+bit-reproducibility for free---the same property that lets it run fast on any device
+geometry is the property that makes its last bits device-dependent. The trade is
+explicit: \emph{determinism costs throughput}, and the spec records reduction order
+as the place that bill comes due.
+\end{pitfall}
+
+\subsection{Fast-math and reassociation flags}
+\label{sec:fastmath}
+
+A compiler in its default mode honors \eqref{eq:fpmodel} operation by operation and
+preserves the parenthesization the source code wrote---it will not turn
+$(a+b)+c$ into $a+(b+c)$, because by \cref{sec:nonassoc} that would change the
+result. The various \emph{fast-math} flags (\code{-ffast-math},
+\code{-funsafe-math-optimizations}, and their relatives) lift this restriction:
+they license the compiler to treat floating-point arithmetic as if it were
+associative, distributive, and exact, enabling reassociation, vectorization across
+reduction boundaries, contraction of $a\cdot b + c$ into a fused multiply-add,
+flushing denormals to zero, and assuming no NaNs or infinities appear.
+
+\begin{table}[t]
+\centering
+\caption[What fast-math buys and breaks]{The fast-math bargain. Each license the
+flag grants buys a performance opportunity and breaks a guarantee. The flags are
+\emph{load-bearing}: enabling them changes the computed last bits and can change
+which branch a NaN-guard takes, so they are a specification decision, not a free
+optimization. Palace and the solvers of this book are compiled \emph{without}
+unsafe fast-math precisely because the reduction-order and recurrence-stability
+properties of \crefrange{sec:reduction}{sec:orthog} depend on the standard model
+holding.}
+\label{tab:fastmath}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.30\linewidth}p{0.30\linewidth}p{0.32\linewidth}@{}}
+\toprule
+License granted & Buys & Breaks \\
+\midrule
+Reassociation ($+,\times$ associative) & vectorized / tree reductions, loop
+  fusion & bit-reproducibility; a pinned reduction order (\cref{sec:reduction}) \\
+Fused multiply-add contraction & one rounding instead of two; throughput &
+  the exact $\mathrm{fl}(a\cdot b)$ a stable formula may rely on \\
+Flush denormals to zero & no slow-path denormal handling & gradual underflow; tiny
+  residuals snap to $0$ \\
+Assume no NaN / Inf & cheaper comparisons, no guard code & NaN-propagation
+  diagnostics; divergence detection \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:fastmath} lays out the trade. The point for the specification is that
+fast-math reassociation is \emph{exactly} the reduction-order freedom of
+\cref{sec:reduction}, granted to the compiler rather than the runtime: it lets the
+compiler pick a summation tree the source did not write. That makes it load-bearing
+for the same reason---it changes last bits and reproducibility---and additionally
+hazardous because the ``assume no NaN/Inf'' license can silently delete the very
+guard code that an algorithm uses to detect divergence or a singular operator. A
+solver that relies on a NaN propagating to its convergence check (a crude but real
+divergence detector) will, under fast-math, march past the divergence unnoticed.
+The disposition in this book: the standard model \eqref{eq:fpmodel} is assumed to
+hold, unsafe fast-math is off, and any place that genuinely wants a fused
+multiply-add or a relaxed reduction states it explicitly as the load-bearing choice
+it is.
+
+\subsection{Mixed precision: single apply, double accumulate}
+\label{sec:mixed}
+
+The third load-bearing trick trades precision for speed deliberately and in a
+controlled place. Many operator applies and elementwise kernels can be carried in
+\emph{single} precision---halving memory traffic and, on GPUs, often doubling or
+quadrupling arithmetic throughput---provided the \emph{accumulation} that follows is
+carried in \emph{double}. The pattern is ``single-precision apply, double-precision
+accumulate,'' and it is the workhorse of modern mixed-precision iterative solvers.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm and 13mm]
+  % single-precision lane (top)
+  \node[data, fill=simBgGray, minimum width=14mm] (vin) {$\vv$\\\scriptsize fp32};
+  \node[opbox, fill=simBgRust, draw=simRust, right=of vin, minimum width=22mm]
+    (apply) {operator apply\\$\mat{A}\vv$\\\scriptsize \textbf{fp32}, fast};
+  \node[data, fill=simBgGray, minimum width=16mm, right=of apply] (prod)
+    {products $u_i v_i$\\\scriptsize fp32};
+  \draw[flow] (vin) -- (apply);
+  \draw[flow] (apply) -- (prod);
+  % the precision-promotion boundary
+  \draw[densely dashed, simViolet, thick] (prod.north east)++(0.35,0.7)
+    -- ($(prod.south east)+(0.35,-0.7)$);
+  \node[font=\scriptsize, text=simViolet, anchor=south, rotate=90] at
+    ($(prod.east)+(0.55,0)$) {promote fp32$\to$fp64};
+  % double-precision accumulate (right)
+  \node[opbox, fill=simBgBlue, draw=simBlue, right=18mm of prod, minimum width=24mm]
+    (acc) {reduction\\$\sum_i u_i v_i$\\\scriptsize \textbf{fp64}, accurate};
+  \node[product, right=of acc, minimum width=16mm] (out) {$\alpha,\beta,\norm{\vr}$\\\scriptsize fp64};
+  \draw[flow] (prod) -- (acc);
+  \draw[flow] (acc) -- (out);
+  % annotations
+  \node[font=\scriptsize, text=simRust, align=center, below=2mm of apply]
+    {bulk work:\\cheap, low precision};
+  \node[font=\scriptsize, text=simBlue, align=center, below=2mm of acc]
+    {the reduction:\\full precision};
+\end{tikzpicture}
+\caption[Single-precision apply, double-precision accumulate]{The mixed-precision
+dataflow. The expensive bulk work---the operator apply $\mat{A}\vv$ and the
+elementwise products $u_i v_i$ (rust)---is carried in single precision (fp32),
+where it is cheap in both memory bandwidth and throughput. At the
+\emph{accumulation} boundary (violet, dashed) the products are promoted to double
+precision (fp64), and the global reduction $\sum_i u_i v_i$ that forms each Krylov
+coefficient is summed in double (blue). This is load-bearing, not transparent: the
+result is \emph{not} the bit-equal double-precision answer, and the soundness of the
+trade rests on the conditioning argument of \cref{sec:conditioning}---the
+single-precision apply injects a relative error of order $u_{32}\sim 6\times10^{-8}$
+that the conditioning of the problem amplifies, so the trick is safe only while
+$\kappa\,u_{32}$ stays below the target tolerance.}
+\label{fig:mixed}
+\end{figure}
+
+Why accumulate in double? Because the accumulation is the global reduction of
+\cref{sec:reduction}, and a reduction of $N$ single-precision terms accumulates an
+error of order $N u_{32}$---which, for $N$ in the millions and $u_{32}\approx
+6\times10^{-8}$, overwhelms the answer. Promoting the running sum to double drops
+the accumulation error to order $N u_{64} \approx N\cdot10^{-16}$, negligible again,
+while the bulk arithmetic stays cheap. The single-precision \emph{apply} still
+injects a relative error of order $u_{32}$ into each matrix-vector product, and here
+the conditioning rule \eqref{eq:errorrule} governs: that error is amplified by
+$\kappa(\mat{A})$, so the mixed-precision solve attains a forward accuracy of order
+$\kappa\,u_{32}$ rather than $\kappa\,u_{64}$. The trade is sound \emph{exactly
+when} $\kappa\,u_{32}$ is comfortably below the solve tolerance---a well-conditioned
+or well-preconditioned system can run its applies in single and lose nothing
+visible; an ill-conditioned one cannot.
+
+\begin{keyidea}
+Mixed precision is the conditioning rule \eqref{eq:errorrule} turned into an
+engineering knob. Do the \emph{bulk} arithmetic (the apply, the products) in single
+precision for speed, but carry the \emph{accumulation} (the reduction) in double so
+the global sum does not lose its low bits. The result is load-bearing---it is not
+the double-precision answer---and it is sound only while $\kappa\,u_{32}$ stays below
+tolerance. This is why mixed-precision iterative refinement and single/double Krylov
+solvers pair so naturally with preconditioning (\cref{ch:cg}): the preconditioner
+shrinks $\kappa$, which is exactly what buys the headroom to drop the apply to
+single precision.
+\end{keyidea}
+
+\subsection{The Chebyshev recurrence versus the monomial form}
+\label{sec:cheby}
+
+The fourth load-bearing trick is a case where two algebraically identical
+evaluations of the \emph{same polynomial} differ by everything that matters
+numerically. The Chebyshev smoother of \cref{ch:smoothers} applies a fixed-degree
+polynomial $p_k(\mat{D}^{-1}\mat{A})$ to the residual. There are two ways to
+evaluate it, and the choice between them is the algorithm.
+
+The \emph{monomial form} writes the polynomial out in powers and sums them:
+\begin{equation}
+\label{eq:monomial}
+  p_k(\mat{B})\,\vr \;=\; \sum_{j=0}^{k} c_j\,\mat{B}^{j}\vr,
+  \qquad \mat{B} = \mat{D}^{-1}\mat{A},
+\end{equation}
+forming $\mat{B}\vr, \mat{B}^2\vr, \dots$ and accumulating with the coefficients
+$c_j$. The \emph{three-term recurrence} (a Clenshaw/Horner-style evaluation) never
+forms the powers or the coefficients; it threads three vectors through a short loop,
+as \cref{ch:smoothers} derives. In exact arithmetic the two compute the identical
+vector. In floating point they could not be more different.
+
+The monomial form \eqref{eq:monomial} is numerically catastrophic for the degrees in
+use. The high powers $\mat{B}^{j}\vr$ grow enormous (their size is governed by the
+largest eigenvalue raised to the $j$), the coefficients $c_j$ alternate in sign and
+also grow large, and the sum of large alternating-sign terms collapsing to a modest
+result is catastrophic cancellation (\cref{sec:cancel}) at industrial scale: the
+answer is built from the differences of huge numbers whose low bits are pure
+rounding noise. The three-term recurrence sidesteps this entirely---it evaluates the
+same polynomial through a sequence of moderate, well-scaled intermediate vectors,
+never forming a large power or a large coefficient, so no cancellation occurs. This
+is the stability that Phillips and Fischer analyze and that Palace follows
+directly~\citep[\S2]{phillipsfischer2022}. \Cref{fig:cheby} plots the divergence.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+  width=12.0cm, height=6.6cm,
+  xlabel={polynomial degree $k$},
+  ylabel={relative error $\norm{\hat{p}_k(\mat{B})\vr - p_k(\mat{B})\vr}/\norm{p_k(\mat{B})\vr}$},
+  ymode=log, ymin=1e-17, ymax=1e6,
+  xmin=1, xmax=20,
+  grid=both, grid style={simGray!18},
+  legend pos=north west, legend cell align=left,
+  legend style={font=\footnotesize, draw=simGray!40},
+  label style={font=\footnotesize}, tick label style={font=\scriptsize},
+  ytick={1e-16,1e-12,1e-8,1e-4,1e0,1e4},
+  every axis plot/.append style={very thick}]
+  % monomial: error blows up roughly like (cond)^k * u -> exponential growth
+  \addplot[simRust, mark=*, mark size=1.2pt] coordinates {
+    (1,2e-16)(2,1e-15)(3,8e-15)(4,9e-14)(5,1e-12)(6,2e-11)(7,3e-10)(8,5e-9)
+    (9,8e-8)(10,1e-6)(11,2e-5)(12,3e-4)(13,5e-3)(14,8e-2)(15,1.0)(16,1e1)
+    (17,2e2)(18,4e3)(19,7e4)(20,1e6)};
+  \addlegendentry{monomial $\sum_j c_j \mat{B}^j\vr$ (unstable)}
+  % recurrence: stays flat at machine precision (grows only mildly with k)
+  \addplot[simGreen, mark=triangle*, mark size=1.4pt] coordinates {
+    (1,2e-16)(2,2e-16)(3,3e-16)(4,3e-16)(5,4e-16)(6,4e-16)(7,5e-16)(8,5e-16)
+    (9,6e-16)(10,6e-16)(11,7e-16)(12,7e-16)(13,8e-16)(14,8e-16)(15,9e-16)
+    (16,9e-16)(17,1.0e-15)(18,1.1e-15)(19,1.2e-15)(20,1.3e-15)};
+  \addlegendentry{three-term recurrence (stable)}
+  % machine-epsilon reference + the "answer is garbage" line at 1.0
+  \addplot[simGray, densely dashed, domain=1:20, samples=2] {2.2e-16};
+  \node[font=\scriptsize, text=simGray, anchor=west] at (axis cs:1.2,5e-16) {machine $u$};
+  \addplot[simInk, densely dotted, domain=1:20, samples=2] {1.0};
+  \node[font=\scriptsize, text=simInk, anchor=west] at (axis cs:1.2,2.2) {no digits left};
+\end{semilogyaxis}
+\end{tikzpicture}
+\caption[Chebyshev recurrence versus monomial evaluation]{Relative error of the two
+evaluations of the same degree-$k$ Chebyshev polynomial, as the degree grows, on a
+log scale (schematic of the Phillips--Fischer experiment). The \emph{monomial form}
+(rust) accumulates error that grows roughly geometrically in $k$---the high powers
+$\mat{B}^j\vr$ and the alternating coefficients $c_j$ produce catastrophic
+cancellation (\cref{sec:cancel}), and by a modest degree the result has \emph{no
+correct digits left} (the dotted line at relative error $1$). The \emph{three-term
+recurrence} (green) evaluates the identical polynomial through well-scaled
+intermediate vectors and stays pinned near machine precision $u$ for every degree.
+The two forms are equal in exact arithmetic and not interchangeable in floating
+point: the sequentiality of the recurrence is load-bearing, not a convenience, and
+choosing the monomial form ``to vectorize the powers'' silently destroys the
+smoother~\citep{phillipsfischer2022}.}
+\label{fig:cheby}
+\end{figure}
+
+\begin{pitfall}
+The recurrence form looks like a \emph{sequential bottleneck} begging to be
+parallelized: each step reads the previous step's vectors. The temptation is to
+``unroll'' it into the monomial form \eqref{eq:monomial}, where the powers
+$\mat{B}^j\vr$ can be precomputed independently. \emph{Do not}---this is the same
+trap as replacing MGS with CGS (\cref{sec:orthog}). The sequentiality of the
+recurrence is not an obstacle to the algorithm; it \emph{is} the algorithm's
+stability. Expanding to monomials trades a true sequential dependency for
+catastrophic cancellation, computing the same polynomial in exact arithmetic and
+garbage in floating point. The spec records the recurrence form as a load-bearing
+algebraic claim (``evaluate $p_k$ by the three-term recurrence, not the monomial
+expansion''), with the property it buys (floating-point stability) named
+explicitly.
+\end{pitfall}
+
+\subsection{Modified versus classical Gram--Schmidt}
+\label{sec:orthog}
+
+The fifth load-bearing trick closes the loop with \cref{ch:orthog}, where it was
+derived in full; here we file it in the taxonomy. Orthogonalizing a vector against a
+basis can subtract the projections \emph{all at once against the original}
+(classical Gram--Schmidt, CGS) or \emph{one at a time against the running residual}
+(modified Gram--Schmidt, MGS). The two compute the identical orthogonal residual in
+exact arithmetic---both are the projection $(\mat{I} - \mat{Q}\mat{Q}^{\!\top})\vw$.
+In floating point they are not interchangeable: CGS loses orthogonality
+\emph{quadratically} in the basis condition number, $\eta\sim\kappa^2 u$, while MGS
+loses it only \emph{linearly}, $\eta\sim\kappa u$ (\cref{ch:orthog},
+\cref{def:cond} here for $\kappa$).
+
+The structural fact, drawn in full in \cref{ch:orthog}, is that CGS's independence
+(all projections read the same input, so they fan out in parallel) is exactly what
+makes it unstable, and MGS's sequential dependency (each projection reads the
+freshly-cleaned residual) is exactly what makes it stable. The sequential dependency
+is \emph{load-bearing}: it cannot be optimized into the parallel CGS form without
+silently degrading the basis, and the degradation surfaces only later as a solver
+that stalls or a spurious eigenvalue. The ``twice is enough'' repair (CGS2:
+re-run the parallel classical pass a second time) recovers full orthogonality
+$\eta\sim u$ at double the cost, recovering MGS-grade stability while keeping
+batched, parallel-friendly reductions---the sweet spot of \cref{ch:orthog}'s
+trade-off table. The cross-reference is the point: this is the same
+transparent-versus-load-bearing decision, and MGS's column order lands firmly in the
+load-bearing column, which is why \cref{ch:orthog} treats the order as a sequential
+obstruction rather than an inefficiency to be removed.
+
+\section{How the book has handled this throughout}
+\label{sec:throughout}
+
+The distinction of this appendix has been operating, quietly, in every chapter. The
+governing rule was stated in \cref{ch:bigidea}: a significant fraction of Palace's
+C++ exists because it was tuned for CPU cache and SIMD, a cost model that is not the
+target's, and most of that code shape is a \emph{performance trick} to be separated
+from the \emph{base algebra}. This appendix is the floating-point refinement of that
+separation.
+
+The mechanism throughout has been uniform. The pure-function form the book presents
+(the ``L1 form,'' in the layered vocabulary) is always the \emph{unfolded} form---the
+mathematics with every transparent trick removed. Sum-factorization is presented as a
+dense contraction and footnoted (\cref{ch:matrixfree}); fusion is presented as
+separate scale-and-add operators conceptually and fused only in the note; tiling and
+layout never appear in the algebra at all. A reader who follows only the unfolded
+forms computes the right answer, just slower---which is the definition of transparent
+(\cref{def:transparent}).
+
+The load-bearing tricks, by contrast, each earned an \emph{explicit note} at the
+point of use, stating the property bought:
+\begin{itemize}[leftmargin=1.4em, nosep]
+\item CG's inner products carry the reduction-order note (\cref{ch:cg},
+  \cref{sec:numerics}): the trajectory is tree-dependent; reproducibility must be
+  bought.
+\item The Chebyshev smoother carries the recurrence-versus-monomial note
+  (\cref{ch:smoothers}): the three-term recurrence is the stable evaluation; the
+  sequentiality is load-bearing.
+\item The orthogonalizer carries the MGS-versus-CGS note (\cref{ch:orthog}): the
+  column order is a sequential dependency, not an inefficiency.
+\item The preconditioned and mixed-precision solvers carry the conditioning note
+  (this appendix, \cref{sec:mixed}): the attainable accuracy is $\kappa$ times the
+  apply precision.
+\end{itemize}
+That asymmetry---transparent tricks footnoted, load-bearing tricks claimed---is the
+book's consistent discipline, and \cref{app:laws} relies on it: several of the
+algebraic ``laws'' catalogued there (commutativity of a reduction, associativity of
+an accumulation) hold \emph{only up to rounding}, and the reason a law is qualified
+``up to reduction order'' rather than asserted outright is exactly the load-bearing
+status of \cref{sec:reduction}. The non-law is the specification.
+
+\section{Practical guidance: when to care}
+\label{sec:guidance}
+
+The appendix closes with the engineering question a reader actually faces: of all
+this, when does it matter? The honest answer is that for most of a simulation it does
+not, and knowing \emph{where} it does is the skill.
+
+\begin{itemize}[leftmargin=1.4em]
+\item \textbf{Iterative-solver convergence.} Reduction order, fast-math, and mixed
+  precision all perturb the Krylov trajectory. The \emph{converged} answer is robust
+  (it is correct to tolerance regardless), but the \emph{iteration count} and the
+  \emph{last bits} are not. Care when the iteration count is itself a measured
+  quantity, when a tolerance is set near machine precision (where the trajectory
+  noise approaches the signal), or when a solve is near the edge of converging at
+  all---there the choice of reduction order can decide convergence versus stagnation.
+
+\item \textbf{Eigenvalue accuracy.} Orthogonalization quality is load-bearing for
+  eigensolvers in a way it is not for linear solves. A linear solve tolerates a
+  somewhat degraded Krylov basis (it re-converges); an eigensolver reads the basis
+  directly, and a lost-orthogonality basis manufactures \emph{spurious eigenvalues}
+  (\cref{ch:orthog}). Care: use CGS2 or re-orthogonalized MGS whenever eigenvalues
+  are the product, never bare CGS.
+
+\item \textbf{Reproducibility requirements.} If a downstream consumer asserts on
+  exact bits---a regression test, a certification, a bit-exact replay---reduction
+  order must be pinned and fast-math disabled, at a throughput cost
+  (\cref{sec:reduction}). Care: decide reproducibility as a requirement \emph{up
+  front}, because retrofitting determinism onto a solver tuned for the fastest tree
+  is expensive.
+
+\item \textbf{When \emph{not} to care.} For a single well-conditioned solve whose
+  output is a field or a scalar reported to engineering precision, with no
+  bit-exact reproducibility requirement, every transparent trick may be taken freely
+  and the load-bearing ones tuned for speed: single-precision applies, the fastest
+  reduction tree, aggressive fusion. The vast majority of a simulation lives here.
+  The discipline is not paranoia everywhere; it is knowing the handful of places---near
+  convergence, at eigenvalues, under reproducibility mandates---where the last bits
+  stop being noise and start being the answer.
+\end{itemize}
+
+\begin{keyidea}
+\textbf{The one rule to carry away.} A \emph{transparent} trick is invisible to the
+mathematics---it computes the same result faster, so the book presents the unfolded
+form and ignores the trick. A \emph{load-bearing} trick \emph{is} the
+mathematics---it changes determinism, conditioning, or IEEE compliance, so the book
+states it as an explicit algebraic claim naming the property it buys. Mis-classifying
+a load-bearing trick as transparent (replacing MGS by CGS, the recurrence by
+monomials, double accumulation by single, a pinned reduction by the fastest tree)
+silently changes the algorithm. When in doubt, the choice is flagged to the human,
+because the cost of guessing wrong is an answer that is plausibly, invisibly, wrong.
+\end{keyidea}
+
+\summarysection
+
+A real machine rounds, and the order in which it rounds is observable in the last
+bits. This appendix separated the rounding choices that the mathematics may
+\emph{ignore} from those that \emph{are} the mathematics. The primer
+(\cref{sec:primer}) established the working facts: the unit roundoff $u$
+(\cref{def:eps}), the non-associativity of floating-point addition
+(\cref{eq:nonassoc}), catastrophic cancellation (\cref{sec:cancel}), and the
+conditioning rule, forward error $\lesssim \kappa\cdot O(u)$ (\cref{eq:errorrule}),
+which separates a property of the \emph{problem} from a property of the
+\emph{algorithm}. \emph{Transparent} tricks (\cref{sec:transparent})---fusion,
+tiling, packing, layout, recomputation, sum-factorization---compute the same result
+faster and are footnoted, not stated. \emph{Load-bearing} tricks
+(\cref{sec:loadbearing}) change a depended-on property and are stated as claims:
+non-associative reduction order makes the Krylov trajectory device-dependent and
+bit-reproducibility a paid-for property (\cref{sec:reduction}); fast-math grants the
+compiler the same reordering freedom and breaks reproducibility and NaN-guards
+(\cref{sec:fastmath}); mixed precision does the bulk work in single and the
+accumulation in double, sound only while $\kappa\,u_{32}$ stays below tolerance
+(\cref{sec:mixed}); the Chebyshev three-term recurrence is the stable evaluation and
+the monomial form is catastrophic cancellation (\cref{sec:cheby}); and the MGS
+column order is a load-bearing sequential dependency, not an inefficiency
+(\cref{sec:orthog}). The book has applied this discipline throughout
+(\cref{sec:throughout})---unfolded forms for the transparent, explicit notes for the
+load-bearing---and \cref{app:laws} depends on it, since several algebraic laws hold
+only ``up to reduction order,'' a qualification that is itself a specification. The
+practical lesson (\cref{sec:guidance}): care near convergence, at eigenvalues, and
+under reproducibility mandates; elsewhere, take the speed.
+
+\furtherreading
+
+The standard reference for the analysis of every phenomenon in this appendix---the
+floating-point model \eqref{eq:fpmodel}, error bounds for summation and inner
+products, the stability of Gram--Schmidt and of polynomial evaluation---is Higham's
+treatment as developed in the numerical-linear-algebra texts; the conditioning and
+stability framing of \cref{sec:conditioning}, including the forward-error rule
+\eqref{eq:errorrule} and the backward-stability viewpoint, follows
+Trefethen and Bau~\citep{trefethenbau1997}, whose first lectures are the cleanest
+short account of conditioning, stability, and floating point in print. The
+summation-tree error bounds, the quantitative loss-of-orthogonality results for CGS
+versus MGS ($\kappa^2 u$ versus $\kappa u$), the ``twice is enough''
+re-orthogonalization theorem, and the matrix condition number are developed in full
+in Golub and Van Loan~\citep{golubvanloan2013}, the definitive matrix-computations
+reference and the source for the orthogonalization trade-off of \cref{ch:orthog}.
+The load-bearing stability of the Chebyshev three-term recurrence over its monomial
+expansion, the coefficient formulas, and the analysis Palace follows directly are due
+to Phillips and Fischer~\citep{phillipsfischer2022}; their \S2 is the precise
+statement that the sequentiality of the recurrence is part of the algorithm. For the
+broader principle---separating performance tricks from base algebra, of which this
+appendix is the floating-point instance---see \cref{ch:bigidea}; for the algebraic
+laws that this appendix qualifies ``up to rounding,'' see \cref{app:laws}.

@@ -1,0 +1,978 @@
+\chapter{Time Integration}
+\label{ch:time}
+
+% local: velocity unknown in the first-order recast (no \vv in simbook)
+\providecommand{\vv}{\mathbf{v}}
+
+\chapterorient{Of the six analyses, the transient one is the odd member out: it
+does not solve a problem, it \emph{marches} one. Where electrostatics maps a
+family of independent solves and the driven analysis sweeps a band of independent
+frequencies, the transient analysis threads a single field-state forward in time,
+each step beginning exactly where the last one ended. This chapter is the
+machinery of that march. We recast the second-order semi-discrete system as a
+first-order one so off-the-shelf integrators apply; we explain why
+electromagnetics almost always wants an \emph{implicit} integrator, and why each
+implicit step therefore hides a linear solve; we present the integrators Palace
+uses without drowning in their tableaux; and---the structural payoff---we show
+that the whole march is one instance of the \code{fold\_solve} combinator of
+\cref{ch:combinators}, with a single clean algebraic law that makes checkpointing
+and restart fall out for free.}
+
+\section{From a second-order system to a first-order march}
+\label{sec:time-firstorder}
+
+The transient analysis begins where \cref{ch:reductions-pde} left it. Discretizing
+the time-domain wave equation \emph{in space only}---the method of lines---turned
+Maxwell's time-domain system into a large \emph{second-order} system of ordinary
+differential equations in the degree-of-freedom vector $\vs(t)$:
+\begin{equation}
+  \Mop\,\ddot\vs + \Cop\,\dot\vs + \Kop\,\vs = \vJ(t),
+  \label{eq:time-secondorder}
+\end{equation}
+with $\Mop$ the $\varepsilon$-weighted mass, $\Cop$ the $\sigma$-weighted damping,
+$\Kop$ the curl--curl stiffness, and $\vJ(t)$ the discretized forcing
+$-\partial_t\vJ_{\text{src}}$ (\cref{sec:transient}). This is the equation of a
+damped oscillator, with $\Mop$ the inertia, $\Kop$ the restoring stiffness, and
+$\Cop$ the energy-bleeding damping---the mechanical analogy is exact. Our task in
+this chapter is to produce the field history $\vs(t_0), \vs(t_1), \vs(t_2),\dots$
+by advancing \cref{eq:time-secondorder} one time step at a time.
+
+\subsection{Why first order}
+
+Standard time integrators---the routines a numerical library ships---are written
+for \emph{first-order} systems of the form
+\begin{equation}
+  \dot\vy = \vF(\vy, t),
+  \label{eq:time-firstorder-abstract}
+\end{equation}
+``the rate of change of the state is a known function of the state and the time.''
+A second-order system does not match this shape: it involves $\ddot\vs$, a
+\emph{second} derivative. The remedy is the standard one, and it costs nothing but
+bookkeeping. Carry the velocity as an extra unknown. Define
+$\vv \equiv \dot\vs$ and stack the position and velocity into a \emph{doubled}
+state vector $\vy = (\vs, \vv)$. Then \cref{eq:time-secondorder} becomes a pair of
+first-order equations: the top one is the \emph{definition} $\dot\vs = \vv$, and
+the bottom one is \cref{eq:time-secondorder} solved for $\ddot\vs = \dot\vv$:
+\begin{equation}
+  \frac{d}{dt}\begin{pmatrix}\vs\\\vv\end{pmatrix}
+  =
+  \underbrace{\begin{pmatrix}
+    \vv\\
+    \Mop^{-1}\bigl(\vJ(t) - \Cop\,\vv - \Kop\,\vs\bigr)
+  \end{pmatrix}}_{\displaystyle \vF(\vy, t)},
+  \qquad
+  \vy = \begin{pmatrix}\vs\\\vv\end{pmatrix}.
+  \label{eq:time-recast}
+\end{equation}
+This \emph{is} the first-order form \cref{eq:time-firstorder-abstract}: the doubled
+state $\vy$ has rate $\vF(\vy, t)$, a known function of $\vy$ and $t$. The price is
+that the state vector is now twice as long; the prize is that every integrator
+ever written for $\dot\vy = \vF(\vy, t)$ now applies unchanged.
+\Cref{fig:recast} draws the recast: one second-order box becomes a two-component
+first-order box, with the velocity threaded between the two halves.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm]
+  % --- LEFT: the second-order system ---
+  \node[stage, minimum width=42mm, minimum height=15mm, align=center] (so) at (0,0)
+    {\textbf{second order}\\[2pt]$\Mop\ddot\vs + \Cop\dot\vs + \Kop\vs = \vJ(t)$};
+  \node[font=\scriptsize\itshape, text=simRust, above=1mm of so]
+    {one $\ddot\vs$: library integrators don't fit};
+  % arrow
+  \node[right=14mm of so] (mid) {};
+  \draw[flow] (so.east) -- node[above, font=\scriptsize]{$\vv \equiv \dot\vs$}
+    node[below, font=\scriptsize]{recast} ($(so.east)+(2.0,0)$);
+  % --- RIGHT: the first-order doubled system ---
+  \node[stage, minimum width=30mm, minimum height=9mm, align=center,
+        fill=simBgGreen, draw=simGreen] (s) at (5.7,0.7) {$\dot\vs = \vv$};
+  \node[stage, minimum width=44mm, minimum height=9mm, align=center,
+        fill=simBgGreen, draw=simGreen] (v) at (6.6,-0.8)
+    {$\dot\vv = \Mop^{-1}(\vJ - \Cop\vv - \Kop\vs)$};
+  \node[font=\scriptsize\itshape, text=simGreen, above=1mm of s]
+    {first order in $\vy = (\vs,\vv)$};
+  % thread velocity from top into bottom and stiffness from bottom into top
+  \draw[refedge] (s.south) -- node[left, font=\scriptsize]{$\vs$} (v.north west);
+  \draw[backflow] (v.north east) .. controls +(0,8mm) and +(0,-8mm) ..
+    (s.east) node[pos=0.5, right, font=\scriptsize]{$\vv$};
+\end{tikzpicture}
+\caption[The second-order to first-order recast]{The recast of
+\cref{sec:time-firstorder}. The semi-discrete transient system is second order in
+$\vs$ (left), so no off-the-shelf integrator---all written for $\dot\vy =
+\vF(\vy,t)$---fits it directly. Introducing the velocity $\vv \equiv \dot\vs$ as a
+second unknown and stacking $(\vs, \vv)$ into a doubled state turns it into the
+first-order pair (right): the top equation is the definition of $\vv$, the bottom
+is the original system solved for $\dot\vv$. The doubled state is twice as long;
+in exchange every first-order integrator now applies. This recast is the first
+thing Palace's \code{TimeDependentFirstOrderOperator} does.}
+\label{fig:recast}
+\end{figure}
+
+\begin{notationbox}
+Throughout this chapter $\vy = (\vs, \vv)$ is the \emph{doubled} first-order state
+(position and velocity); $\vF(\vy, t)$ is its rate \cref{eq:time-recast}; $\Delta
+t$ is the time step; and $\vy_n \approx \vy(t_n)$ is the numerical state at time
+$t_n = t_0 + n\,\Delta t$. We write $\lambda$ for a scalar decay rate when we study
+a single mode in isolation. The three operators $\Mop, \Cop, \Kop$ are the
+assembled mass, damping, and stiffness of \cref{ch:reductions-pde}, held fixed for
+the whole march.
+\end{notationbox}
+
+Palace performs exactly this recast: it builds a
+\code{TimeDependentFirstOrderOperator} encoding $\vF(\vy, t)$ from the three
+assembled matrices and hands it to a library integrator constructed once, outside
+the time loop.\footnote{The first-order operator is assembled from $\Mop,\Cop,\Kop$
+and the integrator chosen at construction
+(\code{palace/models/timeoperator.cpp:311-335}); the loop that advances it lives in
+the driver (\code{palace/drivers/transientsolver.cpp:77}). We return to the loop in
+\cref{sec:fold-march}.} Everything that follows is about \emph{what one step of
+that integrator does}, and how the steps chain together.
+
+\section{Explicit and implicit steps, and why electromagnetics needs implicit}
+\label{sec:explicit-implicit}
+
+An integrator advances the state from $\vy_n$ to $\vy_{n+1}$ over one step
+$\Delta t$. The simplest possible rule is \emph{forward (explicit) Euler}: read the
+rate at the current state and step along it,
+\begin{equation}
+  \vy_{n+1} = \vy_n + \Delta t\,\vF(\vy_n, t_n).
+  \label{eq:fwd-euler}
+\end{equation}
+Everything on the right is \emph{known}---it is built entirely from $\vy_n$, the
+state we already hold---so $\vy_{n+1}$ is computed by a single evaluation of
+$\vF$. No system is solved; the step is cheap. This is the defining feature of an
+\emph{explicit} method: the new state is an explicit formula in the old one.
+
+The alternative is to evaluate the rate at the \emph{new}, as-yet-unknown state.
+\emph{Backward (implicit) Euler} does exactly this:
+\begin{equation}
+  \vy_{n+1} = \vy_n + \Delta t\,\vF(\vy_{n+1}, t_{n+1}).
+  \label{eq:bwd-euler}
+\end{equation}
+Now $\vy_{n+1}$ appears on \emph{both} sides. The rule no longer hands us the
+answer; it defines the answer \emph{implicitly}, as the solution of an equation.
+For our linear transient system $\vF$ is affine in $\vy$, so
+\cref{eq:bwd-euler} rearranges into a linear system in $\vy_{n+1}$,
+\begin{equation}
+  \bigl(\mat I - \Delta t\,\mat J\bigr)\,\vy_{n+1} = \vy_n + \Delta t\,\vg_{n+1},
+  \label{eq:implicit-solve}
+\end{equation}
+where $\mat J$ is the (constant) Jacobian of $\vF$ and $\vg_{n+1}$ collects the
+forcing. The shape is the headline of the section: \textbf{every implicit step is a
+linear solve}. The matrix $\mat I - \Delta t\,\mat J$---built from the same
+$\Mop, \Cop, \Kop$ that assembled the operator---must be inverted (in the
+matrix-free sense of \cref{ch:krylov}: solved, not literally inverted) once per
+step. That solve is a \code{ksp\_solve}, the Krylov solve of
+\cref{ch:krylov,ch:cg,ch:gmres}, sitting inside the time loop.
+
+\begin{keyidea}
+An \emph{explicit} step evaluates the rate at the state it already knows: it is a
+formula, cheap, no solve. An \emph{implicit} step evaluates the rate at the
+unknown new state: it is an equation, and solving it for a linear system means a
+linear solve every step---a \code{ksp\_solve} (\cref{ch:krylov}) nested inside the
+time march. Implicit steps cost more per step; the next subsection shows why
+electromagnetics pays the cost anyway.
+\end{keyidea}
+
+\subsection{Stiffness: the explicit step's fatal step-size limit}
+
+If implicit steps are so much more expensive, why use them? Because the explicit
+step's cheapness is illusory for the systems we integrate. The spatial operator
+$\Kop$, assembled from a fine finite-element mesh, has an enormous spread of
+eigenvalues: the smallest correspond to the slow physical modes we care about, the
+largest to fast modes living on the smallest mesh elements. A system with such a
+spread is called \emph{stiff}, and stiffness is poison to explicit methods.
+
+The cleanest way to see why is to watch a single mode. Diagonalize the system and
+each mode evolves independently as a scalar decay $\dot y = -\lambda y$, with
+$\lambda > 0$ the mode's decay rate; the stiff modes are the ones with very large
+$\lambda$. Apply forward Euler \cref{eq:fwd-euler} to this scalar equation:
+\begin{equation}
+  y_{n+1} = y_n + \Delta t\,(-\lambda y_n) = (1 - \lambda\,\Delta t)\,y_n.
+  \label{eq:fe-scalar}
+\end{equation}
+Each step multiplies $y$ by the \emph{amplification factor} $g = 1 - \lambda\Delta
+t$. The true solution $y(t) = y_0 e^{-\lambda t}$ decays, so a faithful numerical
+solution must \emph{also} decay: we need $|g| < 1$. That demands
+\begin{equation}
+  |1 - \lambda\,\Delta t| < 1
+  \qquad\Longleftrightarrow\qquad
+  \Delta t < \frac{2}{\lambda}.
+  \label{eq:fe-stability}
+\end{equation}
+The step is bounded by $2/\lambda$, and $\lambda$ here is the \emph{largest}
+eigenvalue in the system. One fast mode on one tiny element---a mode physically
+irrelevant to the answer---pins $\Delta t$ to a minuscule value, and the explicit
+march must take an absurd number of tiny steps to cross a physically interesting
+interval. This is the stiffness catastrophe.
+
+Backward Euler suffers no such limit. Apply \cref{eq:bwd-euler} to $\dot y =
+-\lambda y$:
+\begin{equation}
+  y_{n+1} = y_n + \Delta t\,(-\lambda y_{n+1})
+  \quad\Longrightarrow\quad
+  y_{n+1} = \frac{1}{1 + \lambda\,\Delta t}\,y_n,
+  \qquad g = \frac{1}{1 + \lambda\,\Delta t}.
+  \label{eq:be-scalar}
+\end{equation}
+For \emph{every} $\lambda > 0$ and \emph{every} $\Delta t > 0$, the denominator
+exceeds $1$, so $|g| < 1$: the numerical solution decays no matter how large the
+step. The fast modes are damped, the slow modes are tracked, and $\Delta t$ is
+chosen for \emph{accuracy on the modes we care about}, not forced small by modes we
+do not. This unconditional stability is why electromagnetic transient solvers are
+almost always implicit, and it is what \cref{wex:stiff} makes concrete with
+numbers.
+
+\begin{keyidea}
+The assembled spatial operator is \emph{stiff}: its largest eigenvalue is huge, set
+by the smallest mesh element. An explicit step is stable only for $\Delta t <
+2/\lambda_{\max}$---a fast, physically irrelevant mode pins the step size to a
+crawl. An implicit (backward-Euler-type) step is stable for \emph{any} $\Delta t$,
+so the step is chosen for accuracy, not stability. The per-step linear solve buys
+freedom from the stiffness limit. That trade---a solve per step in exchange for big
+steps---is why electromagnetics integrates implicitly.
+\end{keyidea}
+
+\subsection{Stability regions and A-stability}
+
+The scalar test $\dot y = -\lambda y$ generalizes into a standard diagnostic. Let
+$\lambda$ range over the \emph{complex} plane (a mode may oscillate as well as
+decay, $\lambda = a + ib$), feed $z = \lambda\,\Delta t$ into the method's
+amplification factor $g(z)$, and ask: for which $z$ is $|g(z)| \le 1$? That set is
+the method's \emph{stability region}---the values of $z$ for which the method does
+not amplify. A method is useful for a given step exactly when every mode's $z$
+lands inside it.
+
+\Cref{fig:stability} draws the two Euler regions in the $z$-plane. Forward Euler's
+region is a single disk of radius $1$ centered at $z = -1$: a bounded set, so
+large $\lambda\Delta t$ falls outside it and blows up---the limit
+\cref{eq:fe-stability} read geometrically. Backward Euler's region is the
+\emph{entire complex plane outside} the disk of radius $1$ centered at $+1$, which
+contains the whole left half-plane $\Re(z) < 0$ where the physical decaying modes
+live. A method whose stability region contains the entire left half-plane is called
+\emph{A-stable}: it is stable for every decaying mode at every step size. Backward
+Euler is A-stable; forward Euler is not. A-stability is the precise property the
+stiffness argument was groping toward, and it is the property every integrator in
+this chapter possesses.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: forward Euler region (disk |1+z|<=1) =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simRust] at (0,2.5) {forward Euler};
+    \draw[->, simGray] (-2.6,0) -- (1.4,0) node[right, font=\scriptsize]{$\Re z$};
+    \draw[->, simGray] (0,-1.9) -- (0,1.9) node[above, font=\scriptsize]{$\Im z$};
+    \fill[simRust!20, draw=simRust, thick] (-1,0) circle (1);
+    \node[font=\scriptsize, text=simRust] at (-1,0) {stable};
+    \node[font=\scriptsize, text=simGray] at (-1,-1.35) {disk, $|1+z|\le 1$};
+    \node[font=\scriptsize, text=simRust!80!black, align=center] at (0.55,1.45)
+      {outside:\\blows up};
+  \end{scope}
+  \draw[simGray!50, thick] (2.0,-2.0) -- (2.0,2.7);
+  % ===== RIGHT: backward Euler region (everything outside |1-z|<1) =====
+  \begin{scope}[xshift=5.4cm]
+    \node[font=\small\bfseries, text=simGreen] at (0,2.5) {backward Euler};
+    % shade the whole left half (the important part) lightly green
+    \fill[simBgGreen] (-2.6,-1.9) rectangle (0,1.9);
+    \draw[->, simGray] (-2.6,0) -- (2.0,0) node[right, font=\scriptsize]{$\Re z$};
+    \draw[->, simGray] (0,-1.9) -- (0,1.9) node[above, font=\scriptsize]{$\Im z$};
+    % the UNSTABLE disk |1-z|<1 centered at +1
+    \fill[white, draw=simGreen, thick, dashed] (1,0) circle (1);
+    \node[font=\scriptsize, text=simGray, align=center] at (1.0,0) {un-\\stable};
+    \node[font=\scriptsize, text=simGreen, align=center] at (-1.4,1.0)
+      {stable\\(all of $\Re z<0$)};
+    \node[font=\scriptsize, text=simGreen!60!black] at (-1.3,-1.55) {A-stable};
+  \end{scope}
+\end{tikzpicture}
+\caption[Stability regions of the two Euler methods]{The stability regions in the
+$z = \lambda\,\Delta t$ plane (\cref{sec:explicit-implicit}). \emph{Forward Euler}
+(left) is stable only on the disk $|1+z|\le 1$---a \emph{bounded} set, so a stiff
+mode with large $\lambda\Delta t$ falls outside and the step blows up. \emph{Backward
+Euler} (right) is stable \emph{everywhere except} the small disk $|1-z|<1$; its
+region contains the entire left half-plane $\Re z<0$ where every physically decaying
+mode lives. A method whose region contains all of $\Re z<0$ is \emph{A-stable}.
+Backward Euler is A-stable and forward Euler is not---the geometric statement of
+why the implicit step has no step-size limit.}
+\label{fig:stability}
+\end{figure}
+
+\subsection{Accuracy: order, and the truncation error}
+
+Stability says the march does not blow up; \emph{accuracy} says it lands near the
+true trajectory. The standard measure is the \emph{order} $p$ of a method: the
+local truncation error---the error committed in a single step from exact data---is
+$O(\Delta t^{p+1})$, and the global error accumulated over a fixed interval is
+$O(\Delta t^{p})$. A first-order method ($p=1$, like both Eulers) halves its global
+error when you halve the step; a second-order method ($p=2$) quarters it. Higher
+order buys accuracy faster, at the cost of more work or more storage per step.
+
+Order and stability are \emph{independent} axes, and a good integrator wants both:
+high order for accuracy and A-stability for the stiff transient system. The plain
+Eulers give one or the other---backward Euler is A-stable but only first order;
+nothing here is high order. The integrators Palace actually uses, next, are the
+ones engineered to be \emph{both} A-stable \emph{and} second order, with one extra
+feature the plain methods lack.
+
+\section{The integrators Palace uses}
+\label{sec:integrators}
+
+Palace offers a small menu of implicit integrators, selected at construction. We
+present the \emph{idea} of each---what property it is engineered for---without
+reproducing the Butcher tableaux that specify their coefficients; the tableaux are
+in any numerical-methods reference, and the ideas are what matter for reading the
+spec.
+
+\subsection{Generalized-$\alpha$: tunable numerical damping}
+
+The workhorse is the \emph{generalized-$\alpha$} method. It is second-order
+accurate and A-stable---the two properties the plain Eulers could not combine---and
+it adds a third, decisive feature: \emph{tunable, frequency-selective numerical
+damping}. A pure second-order A-stable method (the trapezoidal rule) tracks every
+mode without damping, which sounds ideal but is not: the highest-frequency modes a
+mesh can represent are numerical junk---unresolved, aliased, physically
+meaningless---and an undamped method lets them oscillate forever, polluting the
+solution. Generalized-$\alpha$ damps them on purpose.
+
+The point is best seen in its \emph{spectral-radius} curve, \cref{fig:genalpha}.
+The method exposes a single dial, a high-frequency spectral radius $\rho_\infty \in
+[0,1]$, that sets how aggressively the infinitely-fast modes are damped while
+leaving the low, resolved modes essentially untouched. Set $\rho_\infty = 1$ and no
+mode is damped (the trapezoidal limit); set $\rho_\infty = 0$ and the
+fastest modes are annihilated in one step (the maximally dissipative limit); in
+between, the low modes pass with amplification near $1$ and the high modes are
+selectively bled away. The dial lets the analyst keep the physics and discard the
+numerical noise, with one number, without touching accuracy on the resolved
+band.\footnote{Palace constructs a \code{GeneralizedAlphaSolver} (alongside
+\code{SDIRK23Solver} and the SUNDIALS \code{ARKStepSolver}) at
+\code{palace/models/timeoperator.cpp:311-335}; the choice is a configuration token,
+the integrator library-owned.}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.74\linewidth, height=52mm,
+    xlabel={mode frequency $\;\omega\,\Delta t$ (low $\to$ high)},
+    ylabel={amplification $|g|$},
+    xmin=0, xmax=40, ymin=0, ymax=1.10,
+    axis lines=left, ytick={0,0.5,1},
+    xtick={0,10,20,30,40},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.98,0.97)},
+      anchor=north east, legend cell align=left},
+    every axis plot/.append style={very thick, samples=120, domain=0:40},
+  ]
+  % rho_inf = 1: trapezoidal, no damping -> |g| stays 1
+  \addplot[simTeal] {1};
+  \addlegendentry{$\rho_\infty=1$: no damping (trapezoidal)}
+  % rho_inf = 0.5: high modes damped toward 0.5
+  \addplot[simBlue] {0.5 + 0.5/(1 + (x/5)^2)};
+  \addlegendentry{$\rho_\infty=0.5$: moderate damping}
+  % rho_inf = 0: high modes annihilated
+  \addplot[simRust] {1/(1 + (x/5)^2)};
+  \addlegendentry{$\rho_\infty=0$: maximal damping}
+  % mark the resolved band
+  \draw[simGray, dashed] (axis cs:7,0) -- (axis cs:7,1.10);
+  \node[font=\scriptsize, text=simGray, anchor=south west]
+    at (axis cs:7.5,0.05) {resolved $\to$ unresolved};
+\end{axis}
+\end{tikzpicture}
+\caption[Numerical damping of generalized-$\alpha$]{The frequency-selective damping
+of generalized-$\alpha$ (\cref{sec:integrators}), drawn as the per-step
+amplification $|g|$ against mode frequency. The single dial $\rho_\infty$ sets the
+high-frequency behavior: at $\rho_\infty = 1$ (teal) no mode is damped, the
+undamped trapezoidal limit; at $\rho_\infty = 0$ (rust) the fastest modes are
+annihilated in one step; intermediate values (blue) bleed the high modes away while
+leaving the low, \emph{resolved} modes (left of the dashed line) essentially
+untouched at $|g|\approx 1$. This is the feature the plain Eulers lack: the analyst
+keeps the resolved physics and discards the unresolved numerical noise with one
+number.}
+\label{fig:genalpha}
+\end{figure}
+
+\subsection{SDIRK and ARKStep}
+
+The other two menu items are Runge--Kutta-family methods. \emph{SDIRK}---singly
+diagonally implicit Runge--Kutta---takes a small number of internal stages per
+step, each stage an implicit solve, but arranges the stages so they share a
+\emph{single} matrix factorization (the ``singly diagonal'' structure means every
+stage solves a system with the same $\mat I - \gamma\Delta t\,\mat J$, so the
+preconditioner is built once and reused across stages). SDIRK methods reach second
+order and beyond while staying A-stable, at the cost of several solves per step
+rather than one---the price of higher accuracy bought stage by stage.
+\emph{ARKStep} is the additive Runge--Kutta integrator from the SUNDIALS library,
+designed to split a system into a stiff part it treats implicitly and a non-stiff
+part it treats explicitly---an implicit-explicit (IMEX) method---and to adapt its
+step size automatically to a requested error tolerance.
+
+For our purposes the three integrators share the structure that matters and differ
+only in details we do not need:
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[All are implicit.] Every one solves at least one linear system per step (or
+  per stage)---a \code{ksp\_solve} nested in the march. None escapes the per-step
+  solve, because none escapes A-stability, and A-stability for these methods
+  requires the implicit evaluation.
+  \item[All are A-stable.] Each is stable on the whole stiff transient system at a
+  step chosen for accuracy, not pinned by the largest eigenvalue. This is the
+  non-negotiable property; it is why the menu has no explicit entry.
+  \item[They differ in order, stage count, and damping control.]
+  Generalized-$\alpha$ offers the damping dial; SDIRK trades stages for order;
+  ARKStep adapts the step and splits stiff from non-stiff. These are knobs on a
+  shared frame, not different algorithms.
+\end{description}
+
+\begin{notationbox}
+The key fact to carry forward is structural, not numerical: \emph{whichever}
+integrator is chosen, one step is an opaque routine that consumes the current
+state and the step size and returns the next state, performing one or more
+\code{ksp\_solve}s internally. The framework does not look inside that routine---it
+quantifies over it. That opacity is exactly what lets the next section treat
+``one step'' as a single black box and focus on how the steps \emph{chain}.
+\end{notationbox}
+
+\section{The march is a state-threaded fold}
+\label{sec:fold-march}
+
+We now reach the chapter's structural payoff, the reason the transient analysis was
+promised as the canonical example back in \cref{ch:fold} and given a combinator
+name in \cref{ch:combinators}. Strip away the integrator's internals---treat one
+step as an opaque operator \code{time\_step\_op} that advances the state---and look
+at how the march is assembled from steps. It is a \emph{fold}.
+
+\subsection{Why a fold and not a map}
+
+Recall the fundamental split of \cref{ch:combinators}. A \code{map} runs a family
+of \emph{independent} computations: no carry between elements, so they reorder and
+parallelize. A \code{fold} threads a \emph{carry} through a chain: each step
+consumes what the last produced, so the steps are strictly ordered. The transient
+march is unambiguously the second. The field-state at $t_{n+1}$ is computed
+\emph{from} the field-state at $t_n$ by one time step; step $n+1$ cannot begin
+until step $n$ has finished, because step $n$'s output is step $n+1$'s input. The
+state is threaded forward along a single timeline. This is the
+\emph{state-threaded fold}, the combinator \code{fold\_solve}.
+
+Contrast it, as \cref{ch:combinators} did, with the \code{solve\_family} of
+electrostatics. There the several solves shared one operator and depended on
+nothing but their own right-hand side---independent, a map, embarrassingly
+parallel. Here the steps share one operator \emph{and} a threaded state, and the
+state makes them sequential. The presence or absence of the carry is the entire
+difference, and it is visible in the type. \Cref{fig:fold-vs-map} sets the two side
+by side on the same timeline: the map fans out, the fold lines up.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: the transient FOLD (carry threaded) =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simGreen] at (2.4,2.5) {transient: a \code{fold} (carry threaded)};
+    \node[data, minimum width=9mm] (s0) at (-0.3,1.1) {$\vy_0$};
+    \foreach \i/\x in {1/1.1,2/2.6,3/4.1}{
+      \node[opbox, minimum width=11mm] (g\i) at (\x,1.1) {step};
+    }
+    \node[data, minimum width=9mm] (s3) at (5.4,1.1) {$\vy_3$};
+    \draw[flow] (s0.east) -- (g1.west);
+    \draw[flow] (g1.east) -- node[above,font=\scriptsize]{$\vy_1$} (g2.west);
+    \draw[flow] (g2.east) -- node[above,font=\scriptsize]{$\vy_2$} (g3.west);
+    \draw[flow] (g3.east) -- (s3.west);
+    % each step hides a ksp_solve
+    \foreach \i/\x in {1/1.1,2/2.6,3/4.1}{
+      \node[extern, minimum width=11mm, minimum height=5mm, font=\scriptsize]
+        (k\i) at (\x,-0.1) {\code{ksp}};
+      \draw[refedge] (g\i.south) -- (k\i.north);
+    }
+    \node[font=\scriptsize, text=simRust, align=center] at (2.4,-0.95)
+      {each step reads the prior $\vy$ \emph{and} hides an implicit solve:\\
+       strictly ordered---cannot overlap timesteps};
+  \end{scope}
+  \draw[simGray!50, thick] (6.2,-1.3) -- (6.2,2.7);
+  % ===== RIGHT: the electrostatic MAP (no carry) =====
+  \begin{scope}[xshift=7.0cm]
+    \node[font=\small\bfseries, text=simBlue] at (2.0,2.5) {electrostatic: a \code{map} (no carry)};
+    \node[data, minimum width=11mm] (fam) at (2.0,1.6) {one $\Kop$};
+    \foreach \i/\x in {1/0.4,2/2.0,3/3.6}{
+      \node[opbox, minimum width=10mm] (m\i) at (\x,0.6) {solve};
+      \node[product, minimum width=10mm, minimum height=5mm] (r\i) at (\x,-0.5) {$\vx_{\i}$};
+      \draw[flow] (fam.south) -- (m\i.north);
+      \draw[flow] (m\i.south) -- (r\i.north);
+    }
+    \node[font=\scriptsize, text=simGreen, align=center] at (2.0,-1.15)
+      {no arrows \emph{between} solves:\\independent, reorderable, parallel};
+  \end{scope}
+\end{tikzpicture}
+\caption[The transient fold versus the electrostatic map]{The transient march
+(left) as a state-threaded \code{fold}, beside the electrostatic family (right) as
+an independent \code{map}. In the fold the doubled state $\vy_0 \to \vy_1 \to \vy_2
+\to \vy_3$ is threaded forward---each step consumes the prior state, so the steps
+are strictly ordered and \emph{cannot} overlap---and each step additionally hides
+an implicit \code{ksp\_solve} (\cref{sec:explicit-implicit}). In the map the
+several solves share one operator $\Kop$ but carry nothing between them, so they
+fan out and parallelize. The horizontal carry arrows, present on the left and
+absent on the right, are the whole difference: \code{fold\_solve} versus
+\code{solve\_family}.}
+\label{fig:fold-vs-map}
+\end{figure}
+
+\subsection{\texttt{fold\_solve}, in the calculus}
+
+In the vocabulary of \cref{ch:combinators}, the march is one expression. Capture
+the operator once, seed the state once, and \code{foldl} the opaque per-step
+operator over the schedule of times:
+\begin{lstlisting}[style=l4style]
+fold_solve :: OpParams -> TimeState -> [Time] -> TimeState
+fold_solve op s0 schedule = foldl (\s t -> time_step_op op s t) s0 schedule
+
+-- the opaque per-step operator the fold quantifies over:
+-- advances the field-state one step; bottoms out in the library integrator
+time_step_op :: OpParams -> TimeState -> Time -> TimeState
+\end{lstlisting}
+Read the signature and the whole structure of the march is there. The seed
+\code{s0} and the result are both a \code{TimeState}---the field-state carried
+forward. The step \lstinline[style=l4style]|time_step_op op s t| reads \code{s},
+the prior carry; \emph{that read} is what makes this a fold and forbids reordering
+at the type level. The operator \code{op} (the captured $\Mop,\Cop,\Kop$ and the
+chosen integrator) is bound once, before the fold, and threaded unchanged into
+every step---the construction hoist of \cref{sec:integrators} made structural.
+And \code{time\_step\_op} is \emph{opaque}: it bottoms out in the library
+integrator step of \cref{sec:integrators}, which the combinator only quantifies
+over. \code{fold\_solve} owns the loop; the library owns one step.
+
+This is one of the four solve corners of \cref{ch:situating,ch:combinators}---the
+\emph{state-threaded fold} corner---and the same combinator drives the
+adaptive-mesh-refinement loop of \cref{ch:amr}, where each refinement pass begins
+from the mesh the last pass produced. The transient march is simply its purest
+instance.
+
+\begin{keyidea}
+The time-march is a \emph{sequential fold}: each step begins where the last ended.
+It is the \code{fold\_solve} combinator---\lstinline[style=l4style]|foldl time_step_op s0 schedule|---threading
+a single field-state carry forward along one timeline, with the operator captured
+once outside the loop and each opaque step hiding an implicit \code{ksp\_solve}.
+This is the genuinely sequential corner of the simulator: unlike the electrostatic
+map, the transient fold cannot overlap its timesteps, because step $n+1$'s input is
+step $n$'s output. \emph{Implicit steps cost a linear solve; the carry makes the
+march serial.}
+\end{keyidea}
+
+Two laws follow immediately from \code{fold\_solve} being a left fold, and they are
+the opposite of the map's laws. The map of electrostatics \emph{distributes} over
+concatenation, $f(a \mathbin{+\!\!+} b) = f\,a \mathbin{+\!\!+} f\,b$---the algebraic
+license for splitting the family across machines. The fold instead
+\emph{threads} through concatenation, which is the subject of the next section and
+the cleanest gift the fold structure gives us. First, though, note the
+\emph{non}-laws: the schedule does not commute (permuting the timesteps changes the
+trajectory) and the steps do not fuse (each is an opaque integrator step with its
+own internal state advance). A fold is not a map wearing a disguise; the carry is
+real, and the type records it.
+
+\section{Checkpoint and resume: the schedule-split law}
+\label{sec:checkpoint}
+
+The single most useful algebraic fact about \code{fold\_solve} is the law that a
+left fold satisfies over a concatenated list. Split the schedule into a prefix
+$a$ and a suffix $b$; then folding the whole is the same as folding the prefix and
+folding the suffix \emph{from the state the prefix produced}:
+\begin{equation}
+  \boxed{\;\code{fold\_solve}\ \code{op}\ \vy_0\ (a \mathbin{+\!\!+} b)
+  \;=\;
+  \code{fold\_solve}\ \code{op}\ \bigl(\code{fold\_solve}\ \code{op}\ \vy_0\ a\bigr)\ b\;}
+  \label{eq:schedule-split}
+\end{equation}
+This is the standard identity $\code{foldl}\,(a \mathbin{+\!\!+} b) = \code{foldl}\,b
+\circ \code{foldl}\,a$, specialized to the captured-operator march. Read it
+operationally and it says something an engineer cares about a great deal:
+\textbf{a march can be checkpointed and resumed}. Run the prefix $a$, save the
+final state $\vy_{|a|} = \code{fold\_solve}\ \code{op}\ \vy_0\ a$ to disk, and stop.
+Later, load $\vy_{|a|}$ and run the suffix $b$ seeded from it. The law guarantees
+the result is \emph{bit-for-bit} the same trajectory as the uninterrupted run---the
+split changed nothing, because the only thing that crosses the split point is the
+carry, and the carry is exactly what we saved.
+
+\Cref{fig:checkpoint} draws the equality. The top row is the uninterrupted march;
+the bottom row splits it, saving the carry at the cut and resuming from it. The two
+produce the same final state because the carry threaded across the cut is the same
+value either way.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== TOP: uninterrupted march =====
+  \node[font=\small\bfseries, text=simInk, anchor=west] at (-0.3,2.5)
+    {one uninterrupted march};
+  \node[data, minimum width=8mm] (u0) at (0,1.7) {$\vy_0$};
+  \foreach \i/\x in {1/1.0,2/2.2,3/3.4,4/4.6}{
+    \node[opbox, minimum width=8mm, minimum height=5mm] (us\i) at (\x,1.7) {};
+  }
+  \node[data, minimum width=8mm] (u4) at (5.6,1.7) {$\vy_4$};
+  \draw[flow] (u0)--(us1); \draw[flow] (us1)--(us2); \draw[flow] (us2)--(us3);
+  \draw[flow] (us3)--(us4); \draw[flow] (us4)--(u4);
+  \node[font=\scriptsize, text=simGray] at (2.8,1.15) {schedule $a \mathbin{+\!\!+} b$};
+  % ===== BOTTOM: split + checkpoint =====
+  \node[font=\small\bfseries, text=simGreen, anchor=west] at (-0.3,0.3)
+    {split: run $a$, save carry, resume $b$};
+  \node[data, minimum width=8mm] (b0) at (0,-0.5) {$\vy_0$};
+  \foreach \i/\x in {1/1.0,2/2.2}{
+    \node[opbox, minimum width=8mm, minimum height=5mm] (bs\i) at (\x,-0.5) {};
+  }
+  % the checkpoint
+  \node[product, minimum width=10mm, fill=simBgGold, draw=simGold] (ckpt) at (3.4,-0.5) {$\vy_2$};
+  \foreach \i/\x in {3/4.6,4/5.6}{
+    \node[opbox, minimum width=8mm, minimum height=5mm] (bs\i) at (\x,-0.5) {};
+  }
+  \node[data, minimum width=8mm] (b4) at (6.6,-0.5) {$\vy_4$};
+  \draw[flow] (b0)--(bs1); \draw[flow] (bs1)--(bs2); \draw[flow] (bs2)--(ckpt);
+  \draw[flow] (ckpt)--(bs3); \draw[flow] (bs3)--(bs4); \draw[flow] (bs4)--(b4);
+  \node[font=\scriptsize, text=simGreen] at (1.6,-1.05) {fold $a$};
+  \node[font=\scriptsize, text=simRust] at (5.1,-1.05) {fold $b$ from $\vy_2$};
+  % save-to-disk callout
+  \node[font=\scriptsize, text=simGold!75!black, align=center] at (3.4,-1.5)
+    {save / load\\(checkpoint)};
+  % equality brace
+  \node[font=\Large, text=simGray] at (6.3,0.6) {$=$};
+\end{tikzpicture}
+\caption[Checkpoint and resume as a schedule split]{The schedule-split law
+\cref{eq:schedule-split} drawn as checkpoint-and-resume. \emph{Top}: an
+uninterrupted march folds the whole schedule $a \mathbin{+\!\!+} b$ from $\vy_0$ to
+$\vy_4$. \emph{Bottom}: the same march split at the midpoint---fold the prefix $a$
+to the carry $\vy_2$, \emph{save it} (the gold checkpoint), stop, then later load
+$\vy_2$ and fold the suffix $b$ from it. The two produce the identical $\vy_4$,
+because the only thing crossing the cut is the carry, and the carry is exactly what
+is saved. This is why long runs can be checkpointed against faults and resumed
+without changing the answer: it is a clean algebraic property of the fold, not an
+engineering approximation.}
+\label{fig:checkpoint}
+\end{figure}
+
+\begin{keyidea}
+Splitting the time schedule and resuming from the saved state yields \emph{exactly}
+the same trajectory: $\code{fold\_solve}\ \code{op}\ \vy_0\ (a\mathbin{+\!\!+}b) =
+\code{fold\_solve}\ \code{op}\ (\code{fold\_solve}\ \code{op}\ \vy_0\ a)\ b$. This
+is the fold's thread-through law---the carry is the only thing that crosses a split
+point, so saving the carry \emph{is} a checkpoint. Long runs survive faults
+(checkpoint, restart from disk), expensive runs split across job-scheduler windows,
+and none of it perturbs the result. Restartability is not bolted on; it is what the
+fold structure means.
+\end{keyidea}
+
+This is the practical reason the fold's sequentiality, which sounded like pure cost
+in \cref{sec:fold-march}, comes with a genuine compensation. A map parallelizes but
+has no notion of ``resume''---there is no carry to save. A fold serializes but is
+\emph{restartable}, because the carry it threads is precisely the minimal state
+needed to continue. The same property---a single carry threaded forward---that
+forbids parallelism across timesteps is what makes a checkpoint a single saved
+value rather than a replay of the whole history.
+
+\section{Reading the results}
+\label{sec:time-readout}
+
+The fold produces a \emph{trajectory}: the field-state at each step. From it the
+transient driver reads the physical products, and here the demand-driven pruning of
+\cref{ch:fold} earns its keep. If a consumer reads only the final state, the
+intermediate states are pruned and the fold degenerates to a bare carry-threading
+loop; if a consumer reads the per-step outputs---and the transient driver does, at
+every step---the trajectory materializes. What the driver reads at each step is:
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The field trajectory.] From each step's state the electric and magnetic
+  fields $\vE, \vB$ are recovered (the \code{GetE}/\code{GetB} of the time
+  operator) and written out---the ``movie'' the transient analysis exists to
+  produce, a frame per step.
+  \item[Port voltages and currents.] Integrating the fields against the port modes
+  gives a time-domain voltage and current at each terminal: the waveforms an
+  engineer reads off an oscilloscope, computed step by step.
+  \item[Energy versus time.] The field energy
+  $\tfrac12(\vs^{\!\top}\Mop\,\vs + \dots)$, evaluated at each step, traces how
+  energy enters with the pulse, sloshes between electric and magnetic forms, and
+  bleeds away through loss and radiation. \Cref{fig:energy} draws a representative
+  trajectory: an injected pulse rings up the stored energy, which then decays as
+  the damping $\Cop$ and the ports carry it off.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.80\linewidth, height=50mm,
+    xlabel={time $t$}, ylabel={},
+    xmin=0, xmax=10, ymin=-1.15, ymax=1.25,
+    axis lines=left, xtick={0,2,4,6,8,10}, ytick={-1,0,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.98,0.97)},
+      anchor=north east, legend cell align=left},
+    every axis plot/.append style={very thick, samples=120, domain=0:10},
+  ]
+  % injected pulse: a modulated gaussian
+  \addplot[simRust] {0.9*exp(-2*(x-1.5)^2)*cos(deg(6*(x-1.5)))};
+  \addlegendentry{drive $\vJ(t)$ (a pulse)}
+  % a field component: rings up then decays
+  \addplot[simBlue] {0.8*(1-exp(-3*x))*exp(-0.35*x)*cos(deg(4*x-1))};
+  \addlegendentry{field $E(t)$ (rings, decays)}
+  % energy: rises then decays monotonically
+  \addplot[simGreen, densely dashed] {0.95*(1-exp(-2.2*x))*exp(-0.5*x)};
+  \addlegendentry{stored energy (rise then decay)}
+\end{axis}
+\end{tikzpicture}
+\caption[A transient field and energy trajectory]{A representative readout of the
+transient march (\cref{sec:time-readout}). The pulse drive $\vJ(t)$ (rust) injects
+a short burst; a field component $E(t)$ (blue) rings up as the pulse arrives and
+then decays as energy leaves the system; the stored energy (green, dashed) rises
+with the injection and decays monotonically thereafter, bled away by the damping
+$\Cop$ and carried off through the ports. Each curve is sampled once per fold step,
+so the resolution of the readout is exactly the resolution of the march---one frame
+per timestep.}
+\label{fig:energy}
+\end{figure}
+
+\subsection{A bridge to the frequency domain}
+
+One readout deserves a forward pointer. A transient run injects a \emph{broadband}
+pulse---a superposition of many frequencies at once (\cref{sec:transient})---and
+records the time-domain response. Taking the Fourier transform of an input
+waveform and the corresponding output waveform, and dividing, recovers the
+frequency response across the whole band of the pulse \emph{in a single run}. This
+is the time-domain route to the same S-parameters the driven analysis
+(\cref{ch:reductions}) computes frequency by frequency: where the driven analysis
+sweeps a \code{frequency\_sweep} map, one frequency per solve, the transient
+analysis folds one march and Fourier-transforms the result. The two analyses
+compute the same physics by the two routes of the harmonic rule
+(\cref{ch:reductions-pde})---a single frequency at a time, or all frequencies at
+once through a pulse. The transient driver and its products are studied in full in
+\cref{ch:transient}.
+
+\section{Worked examples}
+
+\begin{workedexample}{Stiffness made concrete: explicit blows up, implicit
+survives}{stiff}
+We make the stiffness argument of \cref{sec:explicit-implicit} numerical on the
+scalar test equation $\dot y = -\lambda y$ with a \emph{stiff} rate $\lambda = 100$
+and a modest step $\Delta t = 0.05$. The exact solution from $y_0 = 1$ is
+$y(t) = e^{-100 t}$, which decays to nothing almost instantly.
+
+\medskip
+\emph{Explicit Euler.} The amplification factor \cref{eq:fe-scalar} is
+\[
+  g_{\text{exp}} = 1 - \lambda\,\Delta t = 1 - 100\cdot 0.05 = 1 - 5 = -4.
+\]
+Each step multiplies $y$ by $-4$. The stability bound \cref{eq:fe-stability} demands
+$\Delta t < 2/\lambda = 0.02$, and our step $0.05$ violates it, so $|g| = 4 > 1$ and
+the numerical solution \emph{grows} while the true one decays:
+\[
+  y_0 = 1,\quad y_1 = -4,\quad y_2 = 16,\quad y_3 = -64,\quad y_4 = 256,\ \dots
+\]
+an explosive oscillation, the exact opposite of $e^{-100t}\to 0$. To make explicit
+Euler stable we would have to shrink $\Delta t$ below $0.02$---and on a real mesh
+$\lambda_{\max}$ is far larger than $100$, forcing $\Delta t$ smaller still.
+
+\medskip
+\emph{Implicit (backward) Euler.} The amplification factor \cref{eq:be-scalar} is
+\[
+  g_{\text{imp}} = \frac{1}{1 + \lambda\,\Delta t} = \frac{1}{1 + 5} = \frac{1}{6}
+  \approx 0.167.
+\]
+Now $|g| < 1$ for our step---indeed for \emph{any} step---so the solution decays as
+it should:
+\[
+  y_0 = 1,\quad y_1 = \tfrac16 \approx 0.167,\quad y_2 = \tfrac1{36} \approx 0.028,
+  \quad y_3 \approx 0.0046,\ \dots
+\]
+monotone toward zero, tracking the true decay. \Cref{fig:stiff} plots the two
+against the exact solution: explicit Euler oscillates out of the frame, implicit
+Euler decays cleanly. The implicit step paid for itself with one solve (here a
+trivial scalar division; on the full system, a \code{ksp\_solve}) and in exchange
+removed the step-size limit entirely. This single picture is the whole reason
+electromagnetic transient solvers are implicit.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.78\linewidth, height=52mm,
+    xlabel={step $n$ \;($t = 0.05\,n$)}, ylabel={$y_n$},
+    xmin=0, xmax=6, ymin=-9, ymax=9,
+    axis lines=middle, xtick={1,2,3,4,5}, ytick={-8,-4,0,4,8},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize, at={(axis description cs:0.5,-0.06)}},
+    ylabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.5,-0.22)},
+      anchor=north, legend columns=3, column sep=5pt},
+    every axis plot/.append style={very thick, mark=*, mark size=1.5pt},
+  ]
+  % explicit Euler: 1, -4, 16, -64(clip), ... oscillating blowup
+  \addplot[simRust] coordinates {(0,1) (1,-4) (2,8.8) (3,-8.8)};
+  \addlegendentry{explicit Euler ($g=-4$)}
+  % implicit Euler: 1, 1/6, 1/36, ... decay
+  \addplot[simBlue] coordinates {(0,1) (1,0.167) (2,0.028) (3,0.0046) (4,0.0008) (5,0.0001)};
+  \addlegendentry{implicit Euler ($g=\tfrac16$)}
+  % exact: e^{-100 t} = e^{-5 n}
+  \addplot[simGreen, dashed, mark=none, samples=60, domain=0:6] {exp(-5*x)};
+  \addlegendentry{exact $e^{-100t}$}
+\end{axis}
+\end{tikzpicture}
+\caption[Explicit blow-up versus implicit stability]{The stiff test of
+\cref{wex:stiff}: $\dot y = -\lambda y$, $\lambda = 100$, $\Delta t = 0.05$
+(violating the explicit bound $\Delta t < 0.02$). \emph{Explicit Euler} (rust)
+amplifies by $g = -4$ each step and oscillates explosively out of the frame---the
+later points $\pm 64, \pm 256$ are clipped. \emph{Implicit Euler} (blue) contracts
+by $g = \tfrac16$ each step and decays cleanly onto the exact solution (green,
+dashed). The implicit step is unconditionally stable; the explicit step is useless
+here without a step ten times smaller. This is the stiffness catastrophe, and its
+cure, in one plot.}
+\label{fig:stiff}
+\end{figure}
+
+\begin{workedexample}{Marching a two-degree-of-freedom oscillator}{twodof}
+We now run the real machinery---the recast, the per-step implicit solve, and the
+state threading---on the smallest non-trivial system: a two-degree-of-freedom
+mass--spring--damper, $\Mop\ddot\vs + \Cop\dot\vs + \Kop\vs = \vJ(t)$ with
+\[
+  \Mop = \begin{psmallmatrix}1 & 0\\ 0 & 1\end{psmallmatrix},\quad
+  \Cop = \begin{psmallmatrix}0.2 & 0\\ 0 & 0.2\end{psmallmatrix},\quad
+  \Kop = \begin{psmallmatrix}2 & -1\\ -1 & 2\end{psmallmatrix},\quad
+  \vJ(t) = \begin{psmallmatrix}1\\ 0\end{psmallmatrix}\ (\text{constant}),
+\]
+starting from rest, $\vs_0 = \vv_0 = (0,0)$. This is a hand-sized stand-in for the
+semi-discrete transient system; $\Kop$ is the stiffness coupling the two degrees of
+freedom.
+
+\medskip
+\emph{Recast.} The doubled state is $\vy = (\vs, \vv) \in \mathbb R^4$, with rate
+$\vF(\vy) = (\vv,\ \Mop^{-1}(\vJ - \Cop\vv - \Kop\vs))$ as in
+\cref{eq:time-recast}. Since $\Mop = \mat I$ here, $\dot\vv = \vJ - \Cop\vv -
+\Kop\vs$.
+
+\medskip
+\emph{One implicit step.} Take backward Euler with $\Delta t = 0.1$. The step
+\cref{eq:bwd-euler} couples the two halves: $\vs_{n+1} = \vs_n + \Delta t\,\vv_{n+1}$
+and $\vv_{n+1} = \vv_n + \Delta t\,(\vJ - \Cop\vv_{n+1} - \Kop\vs_{n+1})$.
+Substituting the first into the second eliminates $\vs_{n+1}$ and leaves a
+\emph{linear system} for $\vv_{n+1}$ alone:
+\[
+  \underbrace{\bigl(\mat I + \Delta t\,\Cop + \Delta t^2\,\Kop\bigr)}_{\displaystyle \mat A}
+  \,\vv_{n+1}
+  = \vv_n + \Delta t\,\bigl(\vJ - \Kop\,\vs_n\bigr).
+\]
+This is the implicit step's linear solve, the $2\times 2$ stand-in for the
+\code{ksp\_solve} (\cref{sec:explicit-implicit}). With our numbers,
+\[
+  \mat A = \mat I + 0.1\,\Cop + 0.01\,\Kop
+  = \begin{psmallmatrix}1.04 & -0.01\\ -0.01 & 1.04\end{psmallmatrix}.
+\]
+The matrix $\mat A$ is \emph{fixed for the whole march}---it is built from the
+captured $\Mop,\Cop,\Kop$ and $\Delta t$, none of which change---so its
+factorization is computed once and reused every step. This is the
+operator-capture-once hoist of \code{fold\_solve} (\cref{sec:fold-march}) in
+miniature: \code{op} is bound before the fold; every step reads the same $\mat A$.
+
+\medskip
+\emph{Thread the state forward.} Starting from $\vy_0 = \mathbf 0$, solve for
+$\vv_1$ then set $\vs_1 = \Delta t\,\vv_1$, feed $\vy_1 = (\vs_1, \vv_1)$ into the
+next step, and repeat. Three steps:
+\begin{center}
+\setlength{\tabcolsep}{7pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}clll@{}}
+\toprule
+step $n$ & RHS $\vv_n + \Delta t(\vJ - \Kop\vs_n)$ & solve $\vv_{n+1} = \mat A^{-1}(\cdot)$ & $\vs_{n+1} = \vs_n + \Delta t\,\vv_{n+1}$ \\
+\midrule
+0 & $(0.100,\ 0.000)$ & $(0.0961,\ 0.0009)$ & $(0.00961,\ 0.00009)$ \\
+1 & $(0.1854,\ 0.0105)$ & $(0.1784,\ 0.0118)$ & $(0.02745,\ 0.00127)$ \\
+2 & $(0.2589,\ 0.0264)$ & $(0.2492,\ 0.0278)$ & $(0.05237,\ 0.00405)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Each row's input is the previous row's output---the carry $\vy_n \to \vy_{n+1}$
+threaded forward, exactly the fold of \cref{sec:fold-march}. The driven coordinate
+$s^{(1)}$ climbs steadily toward its static deflection while the coupled coordinate
+$s^{(2)}$ follows through the off-diagonal stiffness; with the damping $\Cop$
+present, the march settles rather than oscillating forever. Three points are the
+whole chapter in miniature: \emph{(i)} the recast doubled $\mathbb R^2$ into $\mathbb
+R^4$; \emph{(ii)} each step \emph{solved a linear system} $\mat A\vv_{n+1} =
+\text{RHS}$, with $\mat A$ fixed and factored once; \emph{(iii)} the state was
+\emph{threaded} from each step into the next---a \code{fold\_solve}, not a map. Were
+we to checkpoint after step~1, saving $\vy_1$, and resume, the schedule-split law
+\cref{eq:schedule-split} guarantees we would land on the identical $\vy_3$.
+\end{workedexample}
+
+\summarysection
+The transient analysis marches the semi-discrete second-order system $\Mop\ddot\vs
++ \Cop\dot\vs + \Kop\vs = \vJ(t)$ forward in time. First it is recast as a
+first-order system $\dot\vy = \vF(\vy, t)$ in the doubled state $\vy = (\vs,
+\dot\vs)$, so standard integrators apply. Because the assembled spatial operator is
+\emph{stiff}, explicit steps are limited to a tiny $\Delta t < 2/\lambda_{\max}$,
+so electromagnetics integrates \emph{implicitly}: each implicit step is a linear
+solve---a \code{ksp\_solve} (\cref{ch:krylov})---and the methods used
+(generalized-$\alpha$ with its tunable numerical damping, SDIRK, ARKStep) are all
+A-stable, trading a per-step solve for freedom from the stiffness limit.
+Structurally, the whole march is the \code{fold\_solve} combinator of
+\cref{ch:combinators}: a state-threaded \code{foldl} of an opaque per-step operator,
+each step beginning where the last ended, the operator captured once outside the
+loop. The fold's thread-through law,
+$\code{fold\_solve}\,\code{op}\,\vy_0\,(a\mathbin{+\!\!+}b) =
+\code{fold\_solve}\,\code{op}\,(\code{fold\_solve}\,\code{op}\,\vy_0\,a)\,b$, makes
+checkpoint-and-restart exact: the carry is the only thing crossing a split point.
+The march is genuinely sequential---it cannot overlap its timesteps, the price of
+the carry the electrostatic map does not pay.
+
+\furtherreading
+The recast, stability regions, A-stability, order, and the stiffness phenomenon are
+standard material in any numerical-ODE or matrix-computations
+reference; Golub and Van Loan~\citep{golubvanloan2013} cover the linear-algebra
+machinery of the per-step solve and the eigenvalue spread that makes a system
+stiff. Jin's finite-element electromagnetics text~\citep{jin2014} treats the
+time-domain finite-element formulation and the specific integrators used for
+Maxwell's equations, including the generalized-$\alpha$ family and its numerical
+damping. The per-step linear solve is a Krylov solve in the sense of
+\cref{ch:krylov}, for which Saad~\citep{saad2003} is the standard reference; the
+fold structure and its laws are developed in \cref{ch:fold,ch:combinators}, and the
+transient driver that wraps the march is \cref{ch:transient}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \emph{The recast preserves the system.} Starting from the doubled
+  first-order form \cref{eq:time-recast}, eliminate $\vv$ by differentiating the
+  top equation and substituting, and recover the original second-order system
+  \cref{eq:time-secondorder}. Conclude that the recast adds no physics---it only
+  changes the shape of the unknowns.
+  \item \emph{The explicit step-size bound.} For the scalar test $\dot y =
+  -\lambda y$ with $\lambda = 50$, find the largest $\Delta t$ for which explicit
+  Euler is stable. If a mesh refinement raises $\lambda_{\max}$ by a factor of $4$,
+  by what factor must $\Delta t$ shrink? What does this say about explicit methods
+  on fine meshes?
+  \item \emph{Backward Euler is A-stable.} Show that for $\dot y = -\lambda y$ with
+  \emph{any} complex $\lambda$ in the left half-plane ($\Re\lambda > 0$, decaying)
+  and \emph{any} $\Delta t > 0$, the backward-Euler factor $g = 1/(1 +
+  \lambda\Delta t)$ satisfies $|g| < 1$. (Hint: $|1 + \lambda\Delta t|^2 = (1 +
+  \Delta t\,\Re\lambda)^2 + (\Delta t\,\Im\lambda)^2$.)
+  \item \emph{Map versus fold, by the type.} Explain why \code{solve\_family}
+  (electrostatics) can be evaluated on three machines in any order but
+  \code{fold\_solve} (transient) cannot, citing the one feature of the
+  \code{fold\_solve} signature that forbids reordering. Which line of the signature
+  is it?
+  \item \emph{Checkpoint exactness.} Using the schedule-split law
+  \cref{eq:schedule-split}, argue that a transient run checkpointed after every
+  $K$ steps and resumed produces \emph{exactly} the same final state as an
+  uninterrupted run, for any $K$. What single quantity must the checkpoint save?
+  Why does an electrostatic \code{solve\_family} have no analogous ``resume''?
+  \item \emph{One implicit step by hand.} For the two-degree-of-freedom system of
+  \cref{wex:twodof}, take \emph{one} backward-Euler step of size $\Delta t = 0.2$
+  (rather than $0.1$) from rest. Form the step matrix $\mat A = \mat I + \Delta
+  t\,\Cop + \Delta t^2\Kop$, write the right-hand side, and solve the $2\times 2$
+  system for $\vv_1$. Confirm $\mat A$ depends only on $\Delta t$ and the operators,
+  not on the step index---the operator-capture-once property.
+  \item \emph{Numerical damping, qualitatively.} Generalized-$\alpha$ with
+  $\rho_\infty = 0$ annihilates the highest-frequency modes in one step, while
+  $\rho_\infty = 1$ preserves them. For a transient simulation polluted by ringing
+  on the smallest mesh elements (unresolved high modes), which setting would you
+  choose, and what is the risk of choosing $\rho_\infty$ too small (too much
+  damping)?
+  \item \emph{The two routes to S-parameters.} The driven analysis computes a
+  frequency response by sweeping one frequency per solve (a \code{frequency\_sweep}
+  map); the transient analysis computes the same response by one pulsed march
+  followed by a Fourier transform. Give one reason to prefer each route. (Consider:
+  how many frequencies you want, and whether the response is needed at a few sharp
+  frequencies or across a broad band.)
+\end{enumerate}

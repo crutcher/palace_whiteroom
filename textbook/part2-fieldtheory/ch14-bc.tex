@@ -1,0 +1,1379 @@
+\chapter{Boundary Conditions and the Helmholtz Decomposition}
+\label{ch:bc}
+
+\chapterorient{The assembly machinery of the last three chapters handed us a
+linear system $\mat{K}\vx=\vb$ built term by term from the weak form. But two
+things stand between that raw system and a physically correct answer. First, the
+boundary conditions: the weak form of \cref{ch:weak} split them into
+\emph{essential} and \emph{natural}, and the essential half---the voltages on
+conductors, the tangential field on metal walls---was deferred to ``the discrete
+setting.'' This is that setting. We make essential conditions concrete as an
+operation on the assembled matrix: identify the constrained degrees of freedom,
+zero their rows and columns, and lift any nonzero boundary data into the
+right-hand side. Second, the fields the solver produces may not be physical: the
+curl--curl operator has an enormous null space of gradient fields, and an
+eigensolver left to its own devices will happily return them. The cure is a
+\emph{projection}---the discrete Helmholtz decomposition---that strips the
+gradient part off a field and keeps only the divergence-free remainder. Both are
+\emph{finishing operations}: post-compositions that act on the assembled system,
+cleanly separable from the assembly fold that produced it. They close Part~II.}
+
+\section{Two finishing operations}
+
+The previous chapters built an operator. Out of the mesh, the materials, and a
+short list of weak-form terms $(Q,\diffop)$, the assembly fold of
+\cref{ch:assembly} produced a sparse matrix $\mat{K}$ and, where there is a
+source, a load vector $\vb$. We are nearly ready to solve $\mat{K}\vx=\vb$. Two
+operations remain, and this chapter is about both. They are different in
+character but share a structural signature, and naming that shared signature is
+the first order of business.
+
+The first operation \emph{imposes the essential boundary conditions}. The weak
+form of \cref{ch:weak} taught us that boundary conditions come in two flavors.
+\emph{Natural} (Neumann/impedance) conditions take care of themselves: they enter
+as boundary integrals during assembly, and a homogeneous one contributes nothing
+at all---you get it for free by doing nothing. \emph{Essential} (Dirichlet)
+conditions are the work. They fix the value of the solution on part of the
+boundary---a conductor held at a known voltage, the tangential electric field
+forced to zero on a perfectly conducting wall---and that constraint must be
+\emph{built into the discrete system by hand}, after assembly, by operating on
+the rows and columns of $\mat{K}$ that belong to the constrained unknowns.
+
+The second operation \emph{projects a field onto the physical subspace}. Some of
+the operators we assemble---the curl--curl operator above all---are singular:
+they annihilate an entire subspace of fields, the gradients. A solver handed such
+an operator can drift into that null space and return a field that is
+mathematically a solution but physically meaningless. The remedy is to project
+the iterate, at each step, onto the subspace orthogonal to the null space---the
+\emph{divergence-free} fields. That projection is the discrete realization of a
+classical theorem, the Helmholtz decomposition, and it is the second half of the
+chapter.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  \node[stage, text width=26mm, align=center] (asm)
+    {\textbf{assemble}\\[1pt]\footnotesize fold over terms\\\scriptsize(\cref{ch:assembly})};
+  \node[product, right=12mm of asm, text width=22mm, align=center] (raw)
+    {raw system\\[1pt]\footnotesize $\mat{K}\vx=\vb$};
+  \node[opbox, right=12mm of raw, text width=30mm] (bc)
+    {\textbf{impose essential BC}\\[1pt]\scriptsize zero rows/cols, lift RHS};
+  \node[opbox, below=11mm of bc, text width=30mm] (proj)
+    {\textbf{divergence-free project}\\[1pt]\scriptsize strip the gradient part};
+  \node[stage, right=12mm of bc, text width=20mm, align=center, fill=simBgGreen, draw=simGreen] (solve)
+    {\textbf{solve}\\[1pt]\footnotesize (\cref{ch:krylov})};
+  \draw[flow] (asm) -- (raw);
+  \draw[flow] (raw) -- (bc);
+  \draw[flow] (bc) -- (solve);
+  \draw[flow] (proj.east) -- ++(6mm,0) |- (solve.west);
+  \draw[refedge] (raw.south) |- (proj.west);
+  \node[font=\scriptsize\itshape, simGray, below=1mm of asm.south] {the fold};
+  \node[font=\scriptsize\itshape, simRust] at ($(bc.north)+(0,5mm)$) {finishing operations (this chapter)};
+\end{tikzpicture}
+\caption[Where the finishing operations sit]{The two finishing operations of this
+chapter sit \emph{between} the assembly fold and the solve. Essential-boundary
+elimination acts on the assembled operator $\mat{K}$ and its right-hand side
+$\vb$; the divergence-free projection acts on field iterates during (or before)
+the solve. Both are \emph{post-compositions}: separable from the assembly that
+produced the raw system, they neither inspect nor depend on which weak-form terms
+were folded in.}
+\label{fig:finishing}
+\end{figure}
+
+What unifies them is that both are \emph{post-compositions} on the assembled
+system (\cref{fig:finishing}). Neither is part of the assembly fold. Essential
+elimination consumes the finished operator $\mat{K}$ and does not care which
+weak-form terms went into it; the divergence-free projection consumes a field and
+a few auxiliary operators and likewise does not crack open the assembly. This
+separability is not an accident of implementation---it is the reason the
+simulator can assemble once and then apply boundary conditions and projections as
+modular, swappable stages. We will make the claim precise for each operation in
+turn.
+
+\begin{keyidea}
+The assembled system $\mat{K}\vx=\vb$ is not yet ready to solve. Two
+\emph{finishing operations} stand between assembly and solution, and both are
+\emph{separable post-compositions} on the assembled operator---not steps inside
+the assembly fold. \textbf{(1)~Essential-boundary elimination} forces the
+solution to take prescribed values on the Dirichlet boundary, by zeroing the
+constrained rows and columns of $\mat{K}$ and lifting the boundary data into
+$\vb$. \textbf{(2)~Divergence-free projection} removes the unphysical gradient
+component of a field, the discrete Helmholtz decomposition, so that singular
+operators like curl--curl are solved on the subspace where they are well-posed.
+\end{keyidea}
+
+\section{Essential boundary conditions on the discrete system}
+\label{sec:essential}
+
+\subsection{The essential degrees of freedom}
+
+Recall from \cref{ch:galerkin} that the discrete unknown $\vx$ is a vector of
+\emph{degrees of freedom} (DoFs): one number per basis function, the coefficient
+that scales that basis function in the finite-element expansion of the solution.
+For an $\Hone$ (nodal) space, a DoF is the value of the potential at a mesh
+vertex; for an $\Hcurl$ (Nédélec) space, a DoF is the circulation of the field
+along a mesh edge. The full set of DoFs indexes the rows and columns of
+$\mat{K}$.
+
+An essential boundary condition pins some of those DoFs to known values. On a
+conductor held at voltage $V$, every $\Hone$ DoF whose vertex lies on that
+conductor must equal $V$. On a perfectly conducting (PEC) wall, the tangential
+electric field vanishes, which means every $\Hcurl$ DoF whose edge lies in that
+wall must equal zero (the edge circulation of a field with no tangential
+component is zero). In both cases a geometrically identifiable subset of the DoFs
+is \emph{constrained}: its values are dictated by the boundary condition, not by
+the equation.
+
+\begin{definition}[Essential and free DoFs]
+\label{def:essdof}
+Let the full DoF index set be $\{0,1,\dots,N-1\}$. The \emph{essential} (or
+constrained) DoF set $E$ is the set of indices whose values are prescribed by an
+essential boundary condition. The \emph{free} DoF set is its complement
+$F = \{0,\dots,N-1\}\setminus E$. The two are disjoint and exhaust the index set:
+$E\cup F = \{0,\dots,N-1\}$, $E\cap F=\emptyset$.
+\end{definition}
+
+The map from boundary geometry to the essential set $E$---walk the boundary
+elements carrying the essential attribute, collect every DoF they touch---is a
+purely combinatorial pre-pass, run once before any matrix is touched. We treat
+$E$ as given. \Cref{fig:partition} shows the partition on a small mesh: the
+boundary DoFs (essential, dark) form a thin shell, and the interior DoFs (free,
+light) are everything else.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % domain
+  \fill[simBgBlue] (0,0) rectangle (5,3);
+  % grid lines
+  \foreach \x in {0,1,2,3,4,5}{\draw[simGray!40] (\x,0)--(\x,3);}
+  \foreach \y in {0,1,2,3}{\draw[simGray!40] (0,\y)--(5,\y);}
+  % boundary (essential) nodes: dark, on the perimeter
+  \foreach \x in {0,1,2,3,4,5}{
+    \fill[simBlue] (\x,0) circle (2.6pt);
+    \fill[simBlue] (\x,3) circle (2.6pt);}
+  \foreach \y in {1,2}{
+    \fill[simBlue] (0,\y) circle (2.6pt);
+    \fill[simBlue] (5,\y) circle (2.6pt);}
+  % interior (free) nodes: light
+  \foreach \x in {1,2,3,4}{
+    \foreach \y in {1,2}{
+      \fill[simRust] (\x,\y) circle (2.6pt);}}
+  % labels
+  \node[simBlue, font=\small, below left] at (0,0) {};
+  \node[font=\small\bfseries, simBlue] at (2.5,3.45) {essential DoFs $E$ (boundary)};
+  \node[font=\small\bfseries, simRust] at (2.5,1.5) {};
+  \node[font=\small\bfseries, simRust, anchor=west] at (5.4,1.5) {free DoFs $F$ (interior)};
+  \draw[refedge] (5.35,1.5) -- (4,1.5);
+  % a constrained value callout
+  \node[font=\scriptsize, simBlue, anchor=east] at (-0.3,1.5) {$x_i=V$};
+  \draw[refedge] (-0.3,1.5) -- (0,1);
+\end{tikzpicture}
+\caption[The free/essential DoF partition]{The degrees of freedom on a small
+$\Hone$ mesh split into two disjoint groups. The \emph{essential} DoFs $E$ (blue,
+on the boundary) carry prescribed values---here a conductor voltage $x_i=V$---and
+are not solved for. The \emph{free} DoFs $F$ (rust, interior) are the genuine
+unknowns. Imposing the essential condition means reducing the system to the free
+block, with the influence of the prescribed boundary values moved to the
+right-hand side.}
+\label{fig:partition}
+\end{figure}
+
+\subsection{Scalar value versus tangential trace}
+\label{sec:scalarvstrace}
+
+The two physical pictures---a conductor at fixed voltage and a PEC wall forcing
+tangential $\vE$ to zero---feel different, but they produce essential DoF sets in
+exactly the same way, once you remember what a DoF \emph{is} in each space. The
+difference is entirely in the trace operator the boundary condition constrains.
+
+In an $\Hone$ (nodal) space the relevant trace is the boundary \emph{value} of the
+function. A DoF is a point value at a vertex, so ``$u=u_0$ on the conductor''
+constrains every DoF whose vertex lies on the conductor. In an $\Hcurl$ (Nédélec)
+space the relevant trace is the \emph{tangential component} of the field on the
+boundary surface. A DoF is an edge circulation $\int_e \vu\cdot\mathrm{d}\boldsymbol{\ell}$,
+and an edge lying \emph{in} a boundary face sees only the tangential part of the
+field; so ``tangential $\vE=0$ on the PEC wall'' constrains every edge DoF whose
+edge lies in that wall. In both cases the recipe is the same: walk the boundary
+entities carrying the essential attribute, collect the DoFs they own, and add them
+to $E$. That the constrained quantity is a point value in one space and a
+tangential circulation in the other never surfaces in the elimination---by the
+time \texttt{eliminate\_essential\_bc} runs, $E$ is just a list of indices.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % --- H1 nodal: value at vertices ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, simBlue] at (1.5,2.9) {$\Hone$: nodal value};
+    \draw[simGray!50] (0,0) rectangle (3,2.2);
+    \draw[simGray!40] (1.5,0)--(1.5,2.2);
+    \draw[simGray!40] (0,1.1)--(3,1.1);
+    % bottom boundary face highlighted
+    \draw[simBlue, line width=2pt] (0,0)--(3,0);
+    % boundary vertices (essential): on the bottom edge
+    \foreach \x in {0,1.5,3}{\fill[simBlue] (\x,0) circle (3pt);}
+    % interior vertices
+    \fill[simRust] (1.5,1.1) circle (3pt);
+    \foreach \x in {0,1.5,3}{\fill[simRust] (\x,2.2) circle (2.4pt);}
+    \foreach \x in {0,3}{\fill[simRust] (\x,1.1) circle (2.4pt);}
+    \node[font=\scriptsize, simBlue, below] at (1.5,-0.15) {value $u=u_0$ pinned};
+    \node[font=\scriptsize, simRust] at (2.3,1.35) {free node};
+  \end{scope}
+  % divider
+  \draw[simGray,densely dashed] (4.0,-0.5)--(4.0,3.0);
+  % --- Hcurl edge: tangential circulation ---
+  \begin{scope}[shift={(5.2,0)}]
+    \node[font=\small\bfseries, simGreen] at (1.5,2.9) {$\Hcurl$: edge circulation};
+    \draw[simGray!50] (0,0) rectangle (3,2.2);
+    \draw[simGray!40] (1.5,0)--(1.5,2.2);
+    \draw[simGray!40] (0,1.1)--(3,1.1);
+    % bottom boundary face highlighted
+    \draw[simGreen, line width=2pt] (0,0)--(3,0);
+    % boundary edges (essential): the two bottom edges -> arrows along them
+    \draw[-{Stealth[length=2mm]}, simGreen, very thick] (0.1,0)--(1.4,0);
+    \draw[-{Stealth[length=2mm]}, simGreen, very thick] (1.6,0)--(2.9,0);
+    % an interior edge (free)
+    \draw[-{Stealth[length=2mm]}, simRust, very thick] (1.5,1.2)--(1.5,2.1);
+    \node[font=\scriptsize, simGreen, below] at (1.5,-0.15) {tangential $\vu\cdot\boldsymbol{\ell}=0$};
+    \node[font=\scriptsize, simRust, anchor=west] at (1.6,1.6) {free edge};
+  \end{scope}
+\end{tikzpicture}
+\caption[Essential DoFs for the scalar and vector spaces]{The essential DoF set is
+collected the same way in both function spaces; only the constrained trace
+differs. In an $\Hone$ nodal space (left) a DoF is a point value at a vertex, so a
+Dirichlet value condition $u=u_0$ pins every vertex DoF on the boundary face
+(blue). In an $\Hcurl$ Nédélec space (right) a DoF is the circulation along an
+edge, so a tangential-trace condition (PEC wall, tangential $\vE=0$) pins every
+\emph{edge} DoF lying in the boundary face. In both cases the constrained DoFs are
+collected into $E$ and eliminated identically; the elimination never knows which
+kind of trace was constrained.}
+\label{fig:trace}
+\end{figure}
+
+\Cref{fig:trace} sets the two side by side. The practical consequence is uniformity:
+the same \texttt{eliminate\_essential\_bc} and \texttt{eliminate\_rhs} serve the
+electrostatic (nodal) and magnetostatic/eigenmode (edge) pipelines without
+modification, because the only space-specific work---deciding which DoFs are
+constrained---happens in the combinatorial pre-pass that builds $E$, upstream of
+the matrix surgery.
+
+\subsection{Why this is a post-composition, not part of assembly}
+
+Here is the central structural point, and it echoes the slogan of
+\cref{fig:finishing}. The assembly fold of \cref{ch:assembly} knows nothing about
+boundary conditions. It walks the list of weak-form terms, and for each term it
+adds an element contribution into the global matrix; it would produce the very
+same $\mat{K}$ whether or not any DoF is later constrained. Essential elimination
+is applied \emph{afterward}, to the finished matrix, as a separate operation:
+\[
+  \mat{K}_{\mathrm{BC}} \;=\; \texttt{eliminate\_essential\_bc}\bigl(\mat{K},\,E,\,\text{policy}\bigr),
+  \qquad
+  \mat{K} = \texttt{assemble}(\text{space},\,\text{terms}).
+\]
+The elimination consumes $\mat{K}$ as an opaque square operator together with the
+index set $E$. It never asks which terms were folded to build $\mat{K}$, nor in
+what representation it is stored. This is what it means to be a \emph{separable
+post-composition}: it factors cleanly behind the assembly, and the two compose
+without either needing to know the other's internals.
+
+\begin{pitfall}
+A natural instinct is to ``bake the boundary conditions into assembly''---to skip
+the constrained DoFs while folding, so that $\mat{K}$ comes out already reduced.
+Resist it. Keeping elimination as a separate post-composition is what lets the
+\emph{same} assembled operator feed a Dirichlet solve, a Neumann solve, or an
+eigenvalue problem, each with its own essential set and its own diagonal policy.
+It also lets us reason about the two stages independently: assembly is a fold;
+elimination is a projection. Fusing them couples two concerns that have no
+business being coupled.
+\end{pitfall}
+
+\subsection{Eliminating the essential DoFs}
+
+Now the operation itself. Partition the unknown vector and the matrix along the
+free/essential split of \cref{def:essdof}. Writing the unknown as
+$\vx=(\vx_F,\vx_E)$ and ordering rows and columns so that free DoFs come first,
+the assembled system $\mat{K}\vx=\vb$ has the block structure
+\begin{equation}
+  \begin{bmatrix} \mat{K}_{FF} & \mat{K}_{FE} \\[2pt]
+                  \mat{K}_{EF} & \mat{K}_{EE} \end{bmatrix}
+  \begin{bmatrix} \vx_F \\[2pt] \vx_E \end{bmatrix}
+  =
+  \begin{bmatrix} \vb_F \\[2pt] \vb_E \end{bmatrix}.
+  \label{eq:blocksys}
+\end{equation}
+The block $\mat{K}_{FF}$ couples free DoFs to free DoFs---the genuine interior
+physics. The off-diagonal blocks $\mat{K}_{FE}$ and $\mat{K}_{EF}$ couple free to
+essential. The essential values $\vx_E$ are \emph{known}; only $\vx_F$ is to be
+solved for.
+
+The first row block of \cref{eq:blocksys} reads
+$\mat{K}_{FF}\vx_F + \mat{K}_{FE}\vx_E = \vb_F$. Since $\vx_E$ is known, move its
+contribution to the right:
+\begin{equation}
+  \mat{K}_{FF}\,\vx_F \;=\; \vb_F - \mat{K}_{FE}\,\vx_E.
+  \label{eq:reduced}
+\end{equation}
+This reduced system is the honest problem: a smaller, square, well-posed system
+on the free DoFs alone, with the known boundary data appearing as a forcing term
+$-\mat{K}_{FE}\vx_E$ on the right. If we could re-index the unknowns at will we
+would simply solve \cref{eq:reduced} and be done.
+
+In practice the simulator keeps the full $N\times N$ index space---re-indexing a
+sparse matrix is expensive and entangles boundary handling with storage---and
+realizes the same reduction \emph{in place}. The operation
+\texttt{eliminate\_essential\_bc} produces a fresh operator equal to $\mat{K}$
+with the essential rows and columns zeroed and the eliminated diagonal set by a
+\emph{policy}:
+\begin{equation}
+  \texttt{eliminate\_essential\_bc}(\mat{K},E,\text{policy})
+  \;=\;
+  \begin{bmatrix} \mat{K}_{FF} & \mathbf{0} \\[2pt]
+                  \mathbf{0} & \mat{D} \end{bmatrix},
+  \qquad
+  \mat{D} =
+  \begin{cases}
+    \mat{I}_E & \text{(policy } \mathtt{DIAG\_ONE}),\\
+    \mathbf{0}_E & \text{(policy } \mathtt{DIAG\_ZERO}).
+  \end{cases}
+  \label{eq:elim}
+\end{equation}
+Three things happen. The off-diagonal coupling blocks $\mat{K}_{FE}$ and
+$\mat{K}_{EF}$ are zeroed---this decouples the essential DoFs from the free ones,
+so the essential equations no longer pollute the free block and vice versa. The
+free--free block $\mat{K}_{FF}$ is preserved exactly---the interior physics is
+untouched. And the essential diagonal is overwritten with the identity or with
+zero, depending on the policy. \Cref{fig:elim} shows the matrix before and after.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.78]
+  % ---- before ----
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries] at (1.9,4.3) {before: $\mat{K}$};
+    % FF block (large, top-left)
+    \fill[simBgBlue] (0,1.2) rectangle (2.8,4);
+    \node[simBlue,font=\small] at (1.4,2.6) {$\mat{K}_{FF}$};
+    % FE block (top-right strip)
+    \fill[simBgRust] (2.8,1.2) rectangle (3.8,4);
+    \node[simRust,font=\scriptsize] at (3.3,2.6) {$\mat{K}_{FE}$};
+    % EF block (bottom-left strip)
+    \fill[simBgRust] (0,0) rectangle (2.8,1.2);
+    \node[simRust,font=\scriptsize] at (1.4,0.6) {$\mat{K}_{EF}$};
+    % EE block (bottom-right)
+    \fill[simBgGray] (2.8,0) rectangle (3.8,1.2);
+    \node[simGray,font=\scriptsize] at (3.3,0.6) {$\mat{K}_{EE}$};
+    \draw[simInk,thick] (0,0) rectangle (3.8,4);
+    \draw[simGray] (2.8,0)--(2.8,4);
+    \draw[simGray] (0,1.2)--(3.8,1.2);
+  \end{scope}
+  % arrow
+  \node[font=\Large] at (5,2) {$\longrightarrow$};
+  \node[font=\scriptsize,simGray,above] at (5,2.2) {eliminate};
+  % ---- after ----
+  \begin{scope}[shift={(6.4,0)}]
+    \node[font=\small\bfseries] at (1.9,4.3) {after: $\mat{K}_{\mathrm{BC}}$};
+    \fill[simBgBlue] (0,1.2) rectangle (2.8,4);
+    \node[simBlue,font=\small] at (1.4,2.6) {$\mat{K}_{FF}$};
+    % zeroed FE
+    \fill[white] (2.8,1.2) rectangle (3.8,4);
+    \node[simGray,font=\scriptsize] at (3.3,2.6) {$\mathbf{0}$};
+    % zeroed EF
+    \fill[white] (0,0) rectangle (2.8,1.2);
+    \node[simGray,font=\scriptsize] at (1.4,0.6) {$\mathbf{0}$};
+    % diagonal D
+    \fill[simBgGreen] (2.8,0) rectangle (3.8,1.2);
+    \node[simGreen,font=\scriptsize] at (3.3,0.6) {$\mat{D}$};
+    \draw[simInk,thick] (0,0) rectangle (3.8,4);
+    \draw[simGray] (2.8,0)--(2.8,4);
+    \draw[simGray] (0,1.2)--(3.8,1.2);
+    % diagonal hint inside D
+    \draw[simGreen,thick] (2.85,1.15)--(3.75,0.05);
+  \end{scope}
+\end{tikzpicture}
+\caption[Essential-BC elimination on the matrix blocks]{Essential elimination as a
+block operation. The assembled $\mat{K}$ (left) couples free and essential DoFs
+through the off-diagonal blocks $\mat{K}_{FE}$, $\mat{K}_{EF}$. Elimination
+(right) \emph{zeroes} those coupling blocks and the essential--essential block,
+\emph{preserves} the free--free block $\mat{K}_{FF}$ exactly, and writes a chosen
+diagonal $\mat{D}$ on the essential block---the identity $\mat{I}_E$ under the
+\texttt{DIAG\_ONE} policy (so each essential equation reads $x_i=b_i$) or zero
+under \texttt{DIAG\_ZERO}. The interior physics in $\mat{K}_{FF}$ is never
+touched.}
+\label{fig:elim}
+\end{figure}
+
+The two policies serve two purposes. \texttt{DIAG\_ONE} sets the essential
+diagonal to the identity, so each essential row becomes the trivial equation
+$1\cdot x_i = b_i$: the matrix is non-singular on the essential block, and the
+prescribed value rides in through the right-hand side. This is the
+\emph{solve-side} convention---it is what you use when the eliminated operator
+will be inverted by a linear solver. \texttt{DIAG\_ZERO} leaves the essential
+diagonal at zero, the \emph{energy/mass-block} convention used when the essential
+block must contribute no spurious unit eigenvalues, as when assembling the blocks
+of a generalized eigenvalue problem.
+
+There is a clean algebraic way to see what elimination is. Let $\mat{P}_F$ be the
+diagonal $0/1$ matrix that projects onto the free DoFs ($1$ on free indices, $0$
+on essential). Then the \texttt{DIAG\_ZERO} elimination is exactly the two-sided
+projection
+\begin{equation}
+  \texttt{eliminate\_essential\_bc}(\mat{K},E,\mathtt{DIAG\_ZERO})
+  \;=\; \mat{P}_F\,\mat{K}\,\mat{P}_F,
+  \label{eq:pfproj}
+\end{equation}
+because left-multiplying by $\mat{P}_F$ zeroes the essential rows and
+right-multiplying zeroes the essential columns. This makes the operation
+\emph{linear} in $\mat{K}$, and linearity in turn gives a sharp statement of
+separability: elimination distributes over the assembly fold's term-sum. If
+$\mat{K}=\mat{K}_1+\mat{K}_2$ is the sum of two assembled term-contributions, then
+under \texttt{DIAG\_ZERO},
+\[
+  \texttt{eliminate\_essential\_bc}(\mat{K}_1+\mat{K}_2,E)
+  = \texttt{eliminate\_essential\_bc}(\mat{K}_1,E)
+  + \texttt{eliminate\_essential\_bc}(\mat{K}_2,E).
+\]
+The \texttt{DIAG\_ONE} policy is the same projection plus the constant $\mat{I}_E$
+on the essential block---an affine, not linear, map---so it distributes up to that
+one added identity. Either way, elimination factors through the free-block
+projection \emph{regardless of how the matrix was assembled}, which is the precise
+content of ``separable post-composition.''
+
+\subsection{Inhomogeneous Dirichlet data: lifting into the right-hand side}
+\label{sec:lifting}
+
+When the prescribed boundary values are zero---a grounded conductor, a PEC
+wall---the forcing term $-\mat{K}_{FE}\vx_E$ in \cref{eq:reduced} vanishes,
+because $\vx_E=\mathbf{0}$. The reduced system is just
+$\mat{K}_{FF}\vx_F=\vb_F$ and there is nothing more to do.
+
+But the interesting essential conditions are \emph{inhomogeneous}: a capacitor
+plate held at $V\neq 0$, a port driven at a nonzero amplitude. Then $\vx_E\neq
+\mathbf{0}$, and the term $-\mat{K}_{FE}\vx_E$ in \cref{eq:reduced} is a genuine,
+nonzero load. This is the discrete face of the ``inhomogeneous essential''
+condition we flagged back in the parallel-plate example of \cref{ch:weak}: a
+problem with no volume source and no surface charge ($f=g=0$, an empty $\ell$)
+still produces a nonzero right-hand side, driven entirely by the imposed
+boundary values. The mechanism that produces it is called \emph{lifting}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, node distance=7mm]
+  % a known boundary value
+  \node[data, fill=simBgBlue, draw=simBlue, text width=20mm] (xe)
+    {known boundary\\data $\vx_{\mathrm{ess}}$};
+  % apply K
+  \node[opbox, right=14mm of xe, text width=22mm] (apply)
+    {apply operator\\$\mat{K}\cdot\vx_{\mathrm{ess}}$};
+  % subtract from b
+  \node[opbox, right=14mm of apply, text width=24mm] (sub)
+    {subtract from RHS\\$\vb \leftarrow \vb - \mat{K}\vx_{\mathrm{ess}}$};
+  \node[product, right=14mm of sub, text width=18mm, align=center] (out)
+    {lifted RHS\\$\vb'$};
+  \draw[flow] (xe) -- (apply);
+  \draw[flow] (apply) -- (sub);
+  \draw[flow] (sub) -- (out);
+  % the b feeding in
+  \node[data, above=8mm of sub, font=\scriptsize\itshape] (b) {original $\vb$};
+  \draw[flow] (b) -- (sub);
+  % annotation
+  \node[font=\scriptsize\itshape, simRust, below=8mm of apply.south, text width=40mm, align=center]
+    {the boundary value is ``lifted'' off the unknown and recast as a known forcing on the interior};
+  \draw[refedge] (apply.south) -- ++(0,-3mm);
+\end{tikzpicture}
+\caption[Lifting an inhomogeneous Dirichlet condition into the RHS]{Lifting. A
+known boundary value $\vx_{\mathrm{ess}}$ on the essential DoFs is not an unknown
+to solve for---it is data. The operation \texttt{eliminate\_rhs} applies the
+assembled operator to it, $\mat{K}\,\vx_{\mathrm{ess}}$, and \emph{subtracts the
+result from the right-hand side}, $\vb\leftarrow\vb-\mat{K}\vx_{\mathrm{ess}}$.
+The boundary value's influence on the interior equations is thereby moved from the
+matrix (where it was a coupling) to the load vector (where it is a known source).
+The essential rows of $\vb'$ are then pinned to the boundary data, matching the
+identity diagonal that \texttt{eliminate\_essential\_bc} installed.}
+\label{fig:lifting}
+\end{figure}
+
+Lifting is exactly the move from \cref{eq:reduced}, performed on the full index
+space. Let $\vx_{\mathrm{ess}}$ be the true-DoF vector that holds the prescribed
+boundary values on the essential DoFs (and zero elsewhere). The operation
+\texttt{eliminate\_rhs} computes
+\begin{equation}
+  \vb' \;=\; \vb \;-\; \mat{K}\,\vx_{\mathrm{ess}},
+  \label{eq:liftalg}
+\end{equation}
+then overwrites the essential rows of $\vb'$ with the boundary data itself
+(matching the identity diagonal of the \texttt{DIAG\_ONE} policy). Read against
+\cref{eq:reduced}: on a free row $i\in F$, the product $\mat{K}\vx_{\mathrm{ess}}$
+contributes $\sum_{j\in E}\mat{K}_{ij}(\vx_{\mathrm{ess}})_j = (\mat{K}_{FE}\vx_E)_i$,
+which is exactly the term being subtracted. On an essential row, the pin
+overwrites whatever was there with the prescribed value, so the essential equation
+reads $1\cdot x_i = (\vx_{\mathrm{ess}})_i$. The two operations together---
+\texttt{eliminate\_essential\_bc} on the operator, \texttt{eliminate\_rhs} on the
+right-hand side---realize the full Dirichlet treatment of \cref{eq:reduced}
+without ever re-indexing the matrix.
+
+Algebraically, \cref{eq:liftalg} is just one matrix--vector product
+($\mat{K}\vx_{\mathrm{ess}}$) and one scaled vector addition ($\vb-(\cdot)$,
+an \texttt{axpy} with coefficient $-1$). It carries no SPD or invertibility
+requirement on $\mat{K}$; it simply moves a known quantity from one side of the
+equation to the other. Notice, too, that lifting is a \emph{one-shot}
+preparation, not a projector: apply it twice and you subtract
+$\mat{K}\vx_{\mathrm{ess}}$ twice, which is wrong. It is performed exactly once,
+on the way into the solve.
+
+\begin{workedexample}{Lifting a nonzero Dirichlet value in 1-D}{lift1d}
+We carry the whole essential-BC machinery through on a system small enough to
+write out completely. Discretize the 1-D Poisson problem $-u''=0$ on $[0,1]$ with
+the boundary conditions $u(0)=0$ and $u(1)=V$ (an inhomogeneous Dirichlet datum
+at the right end), using a uniform grid with two interior nodes. The standard
+finite-difference/finite-element stiffness on nodes $x_0,x_1,x_2,x_3$ (with
+$x_0=0$, $x_3=1$, spacing $h=\tfrac13$) is, up to the factor $1/h$,
+\[
+  \mat{K} =
+  \begin{bmatrix}
+     1 & -1 &  0 &  0\\
+    -1 &  2 & -1 &  0\\
+     0 & -1 &  2 & -1\\
+     0 &  0 & -1 &  1
+  \end{bmatrix},
+  \qquad \vb = \mathbf{0}.
+\]
+The essential set is $E=\{0,3\}$ (the two endpoints); the free set is $F=\{1,2\}$
+(the two interior nodes). The prescribed boundary data is
+$\vx_{\mathrm{ess}}=(0,\,?,\,?,\,V)^{\!\top}$, with the interior entries
+irrelevant (they will be masked out).
+
+\medskip\noindent\textbf{Reduced system, by hand.}
+Writing $\vx=(x_0,x_1,x_2,x_3)$ with $x_0=0$, $x_3=V$ known, the two interior
+equations (rows $1$ and $2$) are
+\[
+  -x_0 + 2x_1 - x_2 = 0, \qquad -x_1 + 2x_2 - x_3 = 0.
+\]
+Substituting $x_0=0$ and $x_3=V$ and moving the known terms to the right gives the
+reduced free system \cref{eq:reduced}:
+\[
+  \begin{bmatrix} 2 & -1\\ -1 & 2\end{bmatrix}
+  \begin{bmatrix} x_1\\ x_2\end{bmatrix}
+  =
+  \begin{bmatrix} 0\\ V\end{bmatrix}.
+\]
+The right-hand side entry $V$ in the second equation is precisely the lifted term
+$-(\mat{K}_{FE}\vx_E)_2 = -(-1)\cdot V = V$. Solving:
+$x_1 = V/3$, $x_2 = 2V/3$. Together with the endpoints this is the exact
+linear potential $u(x)=Vx$ sampled at the four nodes
+$(0,\,V/3,\,2V/3,\,V)$---as it must be, since the solution of $-u''=0$ with these
+boundary values is the straight line from $0$ to $V$.
+
+\medskip\noindent\textbf{The same thing via the two operations.}
+Now reproduce the result through \texttt{eliminate\_rhs} and
+\texttt{eliminate\_essential\_bc} on the full $4\times4$ system, without
+re-indexing. First lift the RHS with $\vx_{\mathrm{ess}}=(0,0,0,V)^{\!\top}$:
+\[
+  \mat{K}\,\vx_{\mathrm{ess}} =
+  \begin{bmatrix} 1&-1&0&0\\-1&2&-1&0\\0&-1&2&-1\\0&0&-1&1\end{bmatrix}
+  \begin{bmatrix}0\\0\\0\\V\end{bmatrix}
+  = \begin{bmatrix}0\\0\\-V\\V\end{bmatrix},
+  \qquad
+  \vb' = \vb - \mat{K}\vx_{\mathrm{ess}} =
+  \begin{bmatrix}0\\0\\V\\-V\end{bmatrix}.
+\]
+On the free rows $\{1,2\}$ this gives $\vb'_1=0$, $\vb'_2=V$---exactly the
+right-hand side of the reduced system above. (The essential rows $\{0,3\}$ are
+then pinned to the boundary data $0$ and $V$.) Second, eliminate the operator with
+\texttt{DIAG\_ONE}: zero rows/columns $0$ and $3$ and set their diagonal to $1$,
+producing
+\[
+  \mat{K}_{\mathrm{BC}} =
+  \begin{bmatrix} 1&0&0&0\\ 0&2&-1&0\\ 0&-1&2&0\\ 0&0&0&1\end{bmatrix}.
+\]
+Solving $\mat{K}_{\mathrm{BC}}\vx=\vb'$ with $\vb'=(0,0,V,-V)^{\!\top}$ after
+pinning the essential rows to $(0,\dots,V)$ recovers the free block
+$\bigl[\begin{smallmatrix}2&-1\\-1&2\end{smallmatrix}\bigr]
+(x_1,x_2)^{\!\top}=(0,V)^{\!\top}$ and hence $x_1=V/3$, $x_2=2V/3$ again. The
+matrix-level operations reproduce the by-hand reduction exactly, which is the
+whole point: \texttt{eliminate\_essential\_bc} and \texttt{eliminate\_rhs} are a
+re-indexing-free implementation of \cref{eq:reduced}.
+\end{workedexample}
+
+\subsection{Natural conditions, by contrast}
+\label{sec:natural}
+
+It is worth setting the essential machinery beside the natural conditions to see
+how little the latter cost. Recall the boundary split of \cref{ch:weak}: Green's
+identity produced a boundary integral $\oint_\bdry v\,(\varepsilon\Grad u)\cdot
+\vn\,\mathrm{d}S$, and we disposed of it in two ways. On the Dirichlet part we
+forced the test functions to vanish and the integral dropped---the essential
+condition, which then had to be imposed on the discrete system by the elimination
+we just built. On the Neumann part the integrand was a \emph{known} flux $g$, and
+the surviving integral $\oint_{\Gamma_N} g\,v\,\mathrm{d}S$ moved to the
+right-hand side as a source.
+
+That natural-BC surface term is assembled \emph{during} assembly, not after. It is
+just another weak-form term---a boundary integrator $(g,\text{value})$ on the
+surface $\Gamma_N$, folded into $\vb$ exactly like a volume source---and the
+assembly machinery of \cref{ch:assembly} handles it with no special case. A
+\emph{homogeneous} Neumann condition ($g=0$) contributes nothing; it is enforced
+by doing nothing at all. This is the asymmetry the pitfall in \cref{ch:weak}
+warned about, now visible in implementation terms: the natural condition is a row
+in the integrator list, while the essential condition is a post-assembly surgery
+on rows and columns.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % essential side
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, simBlue] at (1.6,2.6) {essential (Dirichlet)};
+    \node[stage, fill=simBgBlue, draw=simBlue, text width=30mm, align=center] (e1) at (1.6,1.7)
+      {value $u=u_0$ prescribed};
+    \node[opbox, text width=34mm, below=4mm of e1] (e2)
+      {enforced on the \emph{discrete system}:\\zero rows/cols, lift RHS};
+    \node[font=\scriptsize\itshape, simRust, below=3mm of e2] (e3)
+      {\emph{after} assembly --- a post-composition};
+    \draw[flow] (e1) -- (e2);
+    \draw[flow] (e2) -- (e3);
+  \end{scope}
+  % divider
+  \draw[simGray, densely dashed] (3.7,-0.7) -- (3.7,2.8);
+  % natural side
+  \begin{scope}[shift={(5.0,0)}]
+    \node[font=\small\bfseries, simGreen] at (1.8,2.6) {natural (Neumann)};
+    \node[stage, fill=simBgGreen, draw=simGreen, text width=30mm, align=center] (n1) at (1.8,1.7)
+      {flux $(\varepsilon\Grad u)\cdot\vn = g$ prescribed};
+    \node[opbox, text width=34mm, below=4mm of n1] (n2)
+      {enters the \emph{weak form}:\\boundary integrator $\to \vb$};
+    \node[font=\scriptsize\itshape, simRust, below=3mm of n2] (n3)
+      {\emph{during} assembly --- $g=0$ costs nothing};
+    \draw[flow] (n1) -- (n2);
+    \draw[flow] (n2) -- (n3);
+  \end{scope}
+\end{tikzpicture}
+\caption[Essential versus natural, in the discrete setting]{The two boundary-
+condition types impose themselves at different stages. An \emph{essential}
+condition (left) prescribes the field's \emph{value} and must be enforced on the
+assembled system, after the fold, by zeroing rows/columns and lifting the data
+into the right-hand side---the work of \cref{sec:essential}. A \emph{natural}
+condition (right) prescribes a \emph{flux} and enters the weak form as a boundary
+integrator folded into $\vb$ \emph{during} assembly; a homogeneous one ($g=0$)
+costs nothing. ``Essential'' means ``you enforce it''; ``natural'' means ``the
+weak form enforces it for you.''}
+\label{fig:essvsnat}
+\end{figure}
+
+\section{The Helmholtz decomposition}
+\label{sec:helmholtz}
+
+We turn to the second finishing operation. To motivate it we need a classical
+theorem about vector fields, and its discrete face.
+
+\subsection{The continuous decomposition}
+
+A foundational fact of vector calculus is that any reasonable vector field on a
+domain can be split into two pieces of complementary character: a part with no
+divergence and a part that is a pure gradient.
+
+\begin{theorem}[Helmholtz decomposition]
+\label{thm:helmholtz}
+Let $\vF$ be a (sufficiently smooth) vector field on a bounded domain $\dom$ with
+appropriate boundary conditions. Then $\vF$ decomposes uniquely as
+\begin{equation}
+  \vF \;=\; \vF_{\mathrm{df}} \;+\; \Grad\psi,
+  \label{eq:helmholtz}
+\end{equation}
+where $\vF_{\mathrm{df}}$ is \emph{divergence-free} ($\Div\vF_{\mathrm{df}}=0$)
+and $\Grad\psi$ is a \emph{gradient} (and hence curl-free, $\Curl\Grad\psi=0$).
+The two parts are orthogonal in the $\Ltwo$ inner product.
+\end{theorem}
+
+The two pieces are sometimes called the \emph{solenoidal} (divergence-free) and
+\emph{irrotational} (gradient) components. Physically they are the field's
+``circulating'' part and its ``spreading'' part: a magnetic field is purely
+solenoidal ($\Div\vB=0$ always), while an electrostatic field is purely
+irrotational ($\vE=-\Grad V$). A general field mixes the two, and
+\cref{thm:helmholtz} says the mixture separates cleanly and uniquely.
+\Cref{fig:helmholtz} shows the decomposition on a small field.
+
+The orthogonality claim is worth a moment, because it is the property the discrete
+projector inherits and the reason the decomposition is \emph{unique}. The two
+parts are $\Ltwo$-orthogonal:
+\begin{equation}
+  \inner{\vF_{\mathrm{df}}}{\Grad\psi}_{\Ltwo(\dom)}
+  = \int_\dom \vF_{\mathrm{df}}\cdot\Grad\psi \dV = 0.
+  \label{eq:helmorth}
+\end{equation}
+The reason is Green's first identity (\cref{ch:weak}) run backwards. Integrate by
+parts: $\int_\dom \vF_{\mathrm{df}}\cdot\Grad\psi
+= -\int_\dom (\Div\vF_{\mathrm{df}})\,\psi
++ \oint_\bdry \psi\,(\vF_{\mathrm{df}}\cdot\vn)\,\mathrm{d}S$. The volume term
+vanishes because $\vF_{\mathrm{df}}$ is divergence-free ($\Div\vF_{\mathrm{df}}=0$),
+and the boundary term vanishes under the boundary conditions that accompany the
+decomposition (either $\psi=0$ or $\vF_{\mathrm{df}}\cdot\vn=0$ on $\bdry$). So a
+divergence-free field is $\Ltwo$-orthogonal to every gradient---which is precisely
+what makes ``the gradient part'' well-defined: it is the orthogonal projection of
+$\vF$ onto the gradient subspace, and $\vF_{\mathrm{df}}$ is whatever remains.
+Uniqueness follows immediately: if $\vF=\vF_{\mathrm{df}}+\Grad\psi
+=\vF'_{\mathrm{df}}+\Grad\psi'$ were two decompositions, their difference
+$\vF_{\mathrm{df}}-\vF'_{\mathrm{df}}=\Grad(\psi'-\psi)$ would be both
+divergence-free and a gradient, hence orthogonal to itself, hence zero. The
+discrete projector of \cref{sec:divfree} reproduces this orthogonality---but in a
+\emph{weighted} inner product, the $\mat{M}$-inner-product, because the discrete
+mass operator $\mat{M}$ encodes the material coefficient $\varepsilon$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0,
+    vec/.style={-{Stealth[length=2mm]}, thick}]
+  % --- the full field F (left) ---
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries] at (1.5,3.5) {$\vF$ (mixed)};
+    \draw[simGray!50] (0,0) rectangle (3,3);
+    \foreach \x in {0.5,1.5,2.5}{
+      \foreach \y in {0.5,1.5,2.5}{
+        % a swirling-plus-spreading field
+        \pgfmathsetmacro{\dx}{0.32*cos(120*\x+60*\y) + 0.20*(\x-1.5)}
+        \pgfmathsetmacro{\dy}{0.32*sin(120*\x+60*\y) + 0.20*(\y-1.5)}
+        \draw[vec,simInk] (\x,\y) -- ++(\dx,\dy);}}
+  \end{scope}
+  % equals
+  \node[font=\Large] at (3.7,1.5) {$=$};
+  % --- divergence-free part (middle) ---
+  \begin{scope}[shift={(4.4,0)}]
+    \node[font=\small\bfseries, simBlue] at (1.5,3.5) {$\vF_{\mathrm{df}}$ (curl)};
+    \draw[simGray!50] (0,0) rectangle (3,3);
+    \foreach \x in {0.5,1.5,2.5}{
+      \foreach \y in {0.5,1.5,2.5}{
+        \pgfmathsetmacro{\dx}{0.32*cos(120*\x+60*\y)}
+        \pgfmathsetmacro{\dy}{0.32*sin(120*\x+60*\y)}
+        \draw[vec,simBlue] (\x,\y) -- ++(\dx,\dy);}}
+  \end{scope}
+  % plus
+  \node[font=\Large] at (8.1,1.5) {$+$};
+  % --- gradient part (right) ---
+  \begin{scope}[shift={(8.8,0)}]
+    \node[font=\small\bfseries, simRust] at (1.5,3.5) {$\Grad\psi$ (spread)};
+    \draw[simGray!50] (0,0) rectangle (3,3);
+    \foreach \x in {0.5,1.5,2.5}{
+      \foreach \y in {0.5,1.5,2.5}{
+        \pgfmathsetmacro{\dx}{0.20*(\x-1.5)}
+        \pgfmathsetmacro{\dy}{0.20*(\y-1.5)}
+        \draw[vec,simRust] (\x,\y) -- ++(\dx,\dy);}}
+    % a contour of psi
+    \draw[simRust!50,densely dotted] (1.5,1.5) circle (0.5);
+    \draw[simRust!50,densely dotted] (1.5,1.5) circle (1.0);
+  \end{scope}
+\end{tikzpicture}
+\caption[The Helmholtz decomposition of a vector field]{The Helmholtz
+decomposition \cref{eq:helmholtz} splits a vector field $\vF$ (left, mixed) into a
+\emph{divergence-free} part $\vF_{\mathrm{df}}$ (middle, purely circulating---it
+swirls but neither spreads from nor converges to any point) and a \emph{gradient}
+part $\Grad\psi$ (right, purely spreading---it points along the steepest ascent of
+a scalar potential $\psi$, whose level sets are the dotted contours). The two
+parts are $\Ltwo$-orthogonal. The divergence-free part is what the physics of a
+magnetic or resonant field demands; the gradient part is the unphysical
+contamination a singular operator can introduce.}
+\label{fig:helmholtz}
+\end{figure}
+
+\subsection{Its de Rham meaning}
+
+The decomposition is not an isolated trick; it is a face of the de Rham complex of
+\cref{ch:derham}. Recall the ladder of spaces and operators
+\[
+  \Hone \xrightarrow{\ \Grad\ } \Hcurl \xrightarrow{\ \Curl\ }
+  \Hdiv \xrightarrow{\ \Div\ } \Ltwo,
+\]
+with the defining \emph{exactness} property that the range of each operator is the
+kernel of the next: $\Curl\Grad = 0$ and $\Div\Curl = 0$, and (on a
+topologically simple domain) the inclusions are equalities. Look at the middle
+slot, $\Hcurl$. The gradient part of \cref{eq:helmholtz} lives in
+$\mathrm{Range}(\Grad)$, the image of the gradient operator coming \emph{into}
+$\Hcurl$ from $\Hone$. Exactness says this image is exactly $\mathrm{Ker}(\Curl)$,
+the curl-free fields. So the Helmholtz split of an $\Hcurl$ field is precisely its
+decomposition into
+\begin{equation}
+  \Hcurl \;=\; \underbrace{\mathrm{Range}(\Grad)}_{\text{gradients}\,=\,\mathrm{Ker}(\Curl)}
+  \;\oplus\;
+  \underbrace{(\text{divergence-free complement})}_{\vF_{\mathrm{df}}},
+  \label{eq:hcurlsplit}
+\end{equation}
+the gradient part being the kernel of the curl. This is the structural reason the
+decomposition matters for us: the operators we solve live on $\Hcurl$, and their
+null space \emph{is} the gradient subspace of \cref{eq:hcurlsplit}.
+
+\begin{keyidea}
+The Helmholtz decomposition \cref{eq:helmholtz} is the de Rham complex read at the
+$\Hcurl$ slot. The gradient part of an $\Hcurl$ field is its component in
+$\mathrm{Range}(\Grad)$, which by exactness of the complex
+(\cref{ch:derham}) is exactly $\mathrm{Ker}(\Curl)$---the fields the curl
+annihilates. Removing the gradient part is therefore the same as removing the
+curl operator's null space. The discrete projector of the next section is a
+matrix realization of this removal.
+\end{keyidea}
+
+\section{The discrete divergence-free projector}
+\label{sec:divfree}
+
+We now build the operator that removes the gradient part from a discrete field.
+It is the workhorse $\mathtt{divfree\_project}$, and it is, like essential
+elimination, a separable post-composition---but a richer one, because it carries
+an inner linear solve.
+
+\subsection{The projector and its apply}
+
+Let $\mat{G}$ be the discrete gradient operator (the matrix that takes the
+$\Hone$ DoFs of a scalar potential to the $\Hcurl$ DoFs of its gradient---the de
+Rham interpolator of \cref{ch:derham}), and let $\mat{M}$ be the
+$\varepsilon$-weighted $\Hone$ mass operator (symmetric positive definite). The
+discrete divergence-free projector is
+\begin{equation}
+  \boxed{\;
+  \mat{P} \;=\; \mat{I} \;-\; \mat{G}\,\bigl(\mat{G}^{\!\top}\mat{M}\,\mat{G}\bigr)^{-1}\,\mat{G}^{\!\top}\mat{M}.
+  \;}
+  \label{eq:projector}
+\end{equation}
+This is an $\mat{M}$-orthogonal projection onto the divergence-free subspace. Read
+it from right to left as a recipe: $\mat{G}^{\!\top}\mat{M}$ measures the (weak)
+divergence of the input field; $(\mat{G}^{\!\top}\mat{M}\mat{G})^{-1}$ solves a
+Poisson-type system for a scalar potential $\psi$; $\mat{G}$ takes the gradient of
+that potential, materializing the gradient component; and $\mat{I}-(\cdots)$
+subtracts it off, leaving the divergence-free remainder. The middle factor
+$(\mat{G}^{\!\top}\mat{M}\mat{G})^{-1}$ is the $\mat{M}$-weighted normal-equations
+inverse: $\psi$ is chosen so that $\mat{G}\psi$ is the $\mat{M}$-orthogonal
+projection of the input onto the gradient subspace.
+
+\begin{notationbox}
+The triple product $\mat{G}^{\!\top}\mat{M}\mat{G}$ is the Poisson-type stiffness
+on the scalar ($\Hone$) space---it is what you get by sandwiching the mass
+operator between the gradient and its transpose. In Palace it is never formed as a
+matrix: the inner solve is posed against $\mat{M}$ directly, with $\mat{G}^{\!\top}$
+applied on the right-hand side (as a weak-divergence operator) and $\mat{G}$
+applied to the solution. The boxed form \cref{eq:projector} is the algebra; the
+implementation realizes it factor by factor, which is why the four-step apply
+below mentions $\mat{M}$, $\mat{G}$, and a weak-divergence operator separately
+rather than the triple product.
+\end{notationbox}
+
+In practice we never form $\mat{P}$ as a matrix and we rarely apply the full
+$\mat{P}$; we apply it to a field $\vy$ to extract the divergence-free part
+$\vy'=\mat{P}\vy$. The apply runs in four steps, shown as a pipeline in
+\cref{fig:projapply}:
+
+\begin{enumerate}\setlength\itemsep{2pt}
+  \item \textbf{Weak divergence.} Compute $\vr = \mat{G}^{\!\top}\mat{M}\,\vy$, an
+  $\Hone$-side residual measuring the divergence of $\vy$. (In Palace this is one
+  application of a weak-divergence operator, the $\varepsilon$-weighted
+  Nédélec-to-$\Hone$ map; its sign convention is load-bearing and discussed below.)
+  \item \textbf{Essential-BC zeroing.} Zero $\vr$ on the essential boundary DoFs of
+  the scalar space, $\vr\leftarrow \mat{Z}_{\mathrm{bdr}}\vr$. This pins the inner
+  Poisson problem and removes the pure-Neumann null space (a constant shift in
+  $\psi$ that would otherwise leave the solve singular).
+  \item \textbf{Inner Poisson solve.} Solve $\mat{M}\psi = \vr$ for the scalar
+  potential $\psi$. This is itself an iterative \texttt{ksp\_solve}
+  (\cref{ch:krylov})---a conjugate-gradient solve against the SPD operator
+  $\mat{M}$, preconditioned. The projector therefore \emph{contains a solver}: it
+  is a constructed operator carrying an inner solver as a sub-component
+  (\cref{ch:operators}).
+  \item \textbf{Gradient correction.} Form the gradient $\mat{G}\psi$ and subtract
+  it: $\vy' = \vy - \mat{G}\psi$ (an \texttt{apply\_linop} followed by an
+  \texttt{axpy}). The result $\vy'$ is the divergence-free component.
+\end{enumerate}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  \node[data, text width=12mm, align=center] (y) {field $\vy$};
+  \node[opbox, right=9mm of y, text width=20mm] (wd)
+    {\textbf{1.}\,weak div\\$\mat{G}^{\!\top}\mat{M}\vy$};
+  \node[opbox, right=8mm of wd, text width=18mm] (z)
+    {\textbf{2.}\,zero BC\\$\mat{Z}_{\mathrm{bdr}}$};
+  \node[extern, right=8mm of z, text width=22mm] (solve)
+    {\textbf{3.}\,inner solve\\$\mat{M}\psi=\vr$\\[1pt]\scriptsize \texttt{ksp\_solve}};
+  \node[opbox, below=10mm of solve, text width=20mm] (grad)
+    {\textbf{4.}\,gradient\\$\mat{G}\psi$};
+  \node[product, left=8mm of grad, text width=22mm, align=center] (sub)
+    {subtract\\$\vy'=\vy-\mat{G}\psi$};
+  \node[data, left=8mm of sub, text width=18mm, align=center] (out)
+    {divergence-free $\vy'$};
+  \draw[flow] (y) -- (wd);
+  \draw[flow] (wd) -- (z);
+  \draw[flow] (z) -- (solve);
+  \draw[flow] (solve) -- (grad);
+  \draw[flow] (grad) -- (sub);
+  \draw[flow] (sub) -- (out);
+  % the original y feeding the subtract
+  \draw[flow, simGray, densely dashed] (y.south) |- (sub.north);
+  \node[font=\scriptsize\itshape, simViolet, above=1mm of solve.north]
+    {the inner Krylov solve};
+\end{tikzpicture}
+\caption[The four-step divergence-free projector apply]{The
+$\mathtt{divfree\_project}$ apply as a pipeline. Given a field $\vy$, step~1
+computes its weak divergence $\mat{G}^{\!\top}\mat{M}\vy$; step~2 zeroes that
+residual on the essential boundary DoFs (pinning the inner problem); step~3
+\emph{solves} a Poisson-type system $\mat{M}\psi=\vr$ for the scalar potential
+$\psi$---an inner \texttt{ksp\_solve} (\cref{ch:krylov}), the dashed/violet box,
+which makes the projector a constructed operator carrying its own solver; step~4
+forms the gradient $\mat{G}\psi$ and subtracts it from the original $\vy$,
+leaving the divergence-free component $\vy'$. Steps 1, 2, 4 are cheap whole-field
+operations; the cost lives in the inner solve of step~3.}
+\label{fig:projapply}
+\end{figure}
+
+The defining property is that the output is annihilated by the weak divergence:
+$\mat{G}^{\!\top}\mat{M}\,\vy' = 0$. That is the discrete statement of
+``divergence-free.'' And the part removed, $\mat{G}\psi$, is a discrete
+gradient---the kernel of the discrete curl, by the de Rham exactness of
+\cref{ch:derham}. So the projector strips exactly the curl operator's null space,
+which is what \cref{eq:hcurlsplit} promised.
+
+\begin{workedexample}{Walking the four-step apply on numbers}{fourstep}
+To make the pipeline of \cref{fig:projapply} concrete, run all four steps on a
+minimal instance with no essential boundary (so step~2 is the identity and we can
+watch steps 1, 3, 4 do the work). Take a field space of dimension $2$ and a scalar
+space of dimension $1$, with
+\[
+  \mat{M} = \mat{I}_2,
+  \qquad
+  \mat{G} = \begin{bmatrix}1\\1\end{bmatrix},
+  \qquad
+  \mat{G}^{\!\top}\mat{M} = \begin{bmatrix}1 & 1\end{bmatrix},
+\]
+the same data as \cref{wex:projcheck}. Project the field
+$\vy=(3,1)^{\!\top}$---a mix of a circulating part along $(1,-1)$ and a gradient
+part along $(1,1)$.
+
+\medskip\noindent\textbf{Step 1 --- weak divergence.}
+$\vr = \mat{G}^{\!\top}\mat{M}\,\vy = \begin{bmatrix}1&1\end{bmatrix}
+\begin{bmatrix}3\\1\end{bmatrix} = 4$. The field has nonzero weak divergence, so it
+is not already divergence-free---there is a gradient part to remove.
+
+\medskip\noindent\textbf{Step 2 --- essential-BC zeroing.}
+With no essential boundary, $\mat{Z}_{\mathrm{bdr}}=\mat{I}$ and $\vr$ passes
+through unchanged: $\vr = 4$.
+
+\medskip\noindent\textbf{Step 3 --- inner Poisson solve.}
+Solve $(\mat{G}^{\!\top}\mat{M}\mat{G})\,\psi = \vr$, i.e.\ $2\psi = 4$, giving
+$\psi = 2$. (In the implementation this is the inner \texttt{ksp\_solve} against
+$\mat{M}$; here the scalar system is $1\times1$ and solves in closed form.) The
+scalar potential whose gradient is the irrotational part of $\vy$ is $\psi=2$.
+
+\medskip\noindent\textbf{Step 4 --- gradient correction.}
+Form $\mat{G}\psi = \begin{bmatrix}1\\1\end{bmatrix}\cdot 2 = (2,2)^{\!\top}$ and
+subtract: $\vy' = \vy - \mat{G}\psi = (3,1)^{\!\top} - (2,2)^{\!\top} =
+(1,-1)^{\!\top}$.
+
+\medskip\noindent\textbf{Check.}
+The output $\vy'=(1,-1)^{\!\top}$ is exactly the antidiagonal (circulating)
+component of $\vy$. Verify it is divergence-free:
+$\mat{G}^{\!\top}\mat{M}\,\vy' = \begin{bmatrix}1&1\end{bmatrix}
+\begin{bmatrix}1\\-1\end{bmatrix} = 0$, as the defining property demands. And the
+removed part $\mat{G}\psi=(2,2)^{\!\top}$ is a pure gradient, along $(1,1)$. This
+matches the closed-form projector of \cref{wex:projcheck}:
+$\mat{P}\,\vy=\tfrac12\bigl[\begin{smallmatrix}1&-1\\-1&1\end{smallmatrix}\bigr]
+\bigl[\begin{smallmatrix}3\\1\end{smallmatrix}\bigr]=\tfrac12(2,-2)^{\!\top}
+=(1,-1)^{\!\top}$---the four-step apply and the boxed formula agree, as they must.
+The point of running the steps separately is that the implementation never forms
+$\mat{P}$: it walks exactly steps 1--4, and the expensive one is step~3, the inner
+solve that here was a trivial $2\psi=4$ but in production is a full
+preconditioned CG solve on the scalar space.
+\end{workedexample}
+
+\begin{notationbox}
+\emph{A sign subtlety, recorded.} In Palace the weak-divergence operator carries a
+built-in $-1$ (its bilinear form is $a(\vu,v)=-(\varepsilon\vu,\Grad v)$, so it is
+the negated gradient transpose, $\mat{G}^{\!\top}$ up to that sign). The
+implementation then \emph{adds} the correction, $\vy'\leftarrow\vy+\mat{G}\psi$,
+and the two minus signs combine so that the net effect still removes the gradient
+part. The algebra of \cref{eq:projector} is written with the conventional sign
+($\vy-\mat{G}\psi$); the source's two-negatives bookkeeping is equivalent. We note
+it because a single flipped sign here would invert the correction and the
+projector would \emph{amplify} the gradient part instead of removing it.
+\end{notationbox}
+
+\subsection{It is a constructed operator with an inner solve}
+
+Step 3 deserves emphasis. The projector is not a fixed sparse matrix; it is a
+\emph{constructed operator}---a structured value assembled once at solver setup,
+carrying the operators $\mat{M}$, $\mat{G}$, the weak-divergence operator, the
+essential-boundary DoF set, and, crucially, an \emph{inner linear solver} bound to
+$\mat{M}$. Applying the projector invokes that inner solver. This makes
+$\mathtt{divfree\_project}$ the first operator we have met whose own definition
+contains a solve-to-tolerance, and it foreshadows the constructed-operator
+machinery of \cref{ch:operators}: operators that carry other operators (and other
+solvers) as sub-components, applied opaquely. The inner conjugate-gradient
+iteration is sequential---a recurrence that does not parallelize across its
+steps---but that sequentiality is \emph{interior} to the inner solve; the
+projector itself is a fixed four-step straight-line composition around it.
+
+The construction-versus-apply split is the same one we saw for assembly, lifted one
+level. There is a \emph{setup} phase, run once: build $\mat{M}$ and the
+weak-divergence operator by assembly (themselves folds over weak-form terms on the
+scalar space), interpolate the discrete gradient $\mat{G}$ from the de Rham
+structure, compute the essential-boundary DoF set, and configure the inner solver
+with its preconditioner, tolerance, and iteration cap. None of this depends on the
+field being projected; it is bound into the constructed value $\mat{P}$ at solver
+setup. Then there is the \emph{apply} phase, run once per field (and, in an
+eigensolve, once per iterate): the four cheap-plus-one-expensive steps of
+\cref{fig:projapply}. Keeping the two phases separate is what makes the per-iterate
+projection affordable---the operators are assembled and the solver is set up exactly
+once, and each projection reuses them.
+
+The inner solve is also where the projector's cost concentrates, and where its one
+genuine subtlety lives. The idempotence law $\mat{P}^2=\mat{P}$ of
+\cref{wex:projcheck} rested on the middle factor being the \emph{exact} inverse
+$(\mat{G}^{\!\top}\mat{M}\mat{G})^{-1}$. In practice the inner CG solve is only
+approximate, converged to a tolerance, so $\mat{P}$ is an \emph{approximate}
+projector: $\mat{P}^2\approx\mat{P}$, and $\mat{G}^{\!\top}\mat{M}\,\vy'\approx 0$,
+both up to that tolerance. This is why the inner solve must be converged
+tightly---loose tolerances leave a residual gradient component that the eigensolver
+will happily amplify back into a spurious mode. The mass operator $\mat{M}$ is SPD,
+so CG is the natural choice and a good preconditioner (an algebraic multigrid
+$\mat{V}$-cycle on $\mat{M}$) makes the solve cheap; but cheap and \emph{loose} are
+different knobs, and only the first may be turned.
+
+\begin{remark}[The projector is a separable post-composition too]
+Like essential elimination, the divergence-free projection consumes its inputs
+opaquely. The four-step apply treats $\mat{M}$, $\mat{G}$, and the weak-divergence
+operator as given operators and the field $\vy$ as a given vector; it never inspects
+how any of them were assembled, nor which weak-form terms produced the curl--curl
+operator it is guarding. So although the projector is structurally richer than
+\texttt{eliminate\_essential\_bc}---it carries an inner solver where elimination
+carries only an index set---it occupies the same architectural slot: a finishing
+post-composition that acts on assembled objects and composes cleanly behind the
+assembly fold.
+\end{remark}
+
+\subsection{Verifying the projector properties}
+
+A projector must satisfy $\mat{P}^2=\mat{P}$ (applying it twice is the same as
+once) and must annihilate the subspace it projects out (here, the gradients:
+$\mat{P}\,\mat{G}\psi = 0$ for any $\psi$). Both follow from the algebraic form
+\cref{eq:projector}, and both are worth seeing concretely.
+
+\begin{workedexample}{$\mat{P}$ is a projector and kills gradients}{projcheck}
+We verify the two projector laws, first symbolically from \cref{eq:projector},
+then on a tiny numerical instance.
+
+\medskip\noindent\textbf{Symbolic: idempotence.}
+Abbreviate the middle inverse as $\mat{S}=(\mat{G}^{\!\top}\mat{M}\mat{G})^{-1}$,
+so that $\mat{P}=\mat{I}-\mat{G}\,\mat{S}\,\mat{G}^{\!\top}\mat{M}$. Compute
+$\mat{P}^2$:
+\[
+  \mat{P}^2 = \bigl(\mat{I}-\mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}\bigr)
+              \bigl(\mat{I}-\mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}\bigr)
+            = \mat{I} - 2\,\mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}
+              + \mat{G}\mat{S}\underbrace{\mat{G}^{\!\top}\mat{M}\mat{G}}_{=\,\mat{S}^{-1}}\mat{S}\,\mat{G}^{\!\top}\mat{M}.
+\]
+In the last term the inner $\mat{G}^{\!\top}\mat{M}\mat{G}$ is exactly
+$\mat{S}^{-1}$, so $\mat{S}\,\mat{S}^{-1}\,\mat{S}=\mat{S}$ and the term collapses
+to $\mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}$. Hence
+\[
+  \mat{P}^2 = \mat{I} - 2\,\mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}
+              + \mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}
+            = \mat{I} - \mat{G}\mat{S}\mat{G}^{\!\top}\mat{M} = \mat{P}.
+\]
+The cancellation of the middle inverse against the triple product is the entire
+content of the projector law; it is why the recipe must use the \emph{exact}
+inverse $\mat{S}$ (and why the inner solve must be converged tightly).
+
+\medskip\noindent\textbf{Symbolic: gradients are killed.}
+Apply $\mat{P}$ to a gradient $\mat{G}\psi$:
+\[
+  \mat{P}\,\mat{G}\psi
+  = \mat{G}\psi - \mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}\mat{G}\psi
+  = \mat{G}\psi - \mat{G}\mat{S}\,\mat{S}^{-1}\psi
+  = \mat{G}\psi - \mat{G}\psi = 0,
+\]
+again using $\mat{G}^{\!\top}\mat{M}\mat{G}=\mat{S}^{-1}$. So every gradient is in
+the kernel of $\mat{P}$: $\mathrm{Ker}(\mat{P})=\mathrm{Range}(\mat{G})$, exactly
+the curl null space of \cref{eq:hcurlsplit}.
+
+\medskip\noindent\textbf{Numerical instance.}
+Take the smallest nontrivial case: $\mat{M}=\mat{I}_2$ (the $2\times2$ identity,
+so the $\mat{M}$-inner-product is ordinary $\Ltwo$), and a discrete gradient with
+a single scalar DoF, $\mat{G}=\bigl[\begin{smallmatrix}1\\1\end{smallmatrix}\bigr]$
+(the gradient subspace is the diagonal line spanned by $(1,1)$). Then
+\[
+  \mat{G}^{\!\top}\mat{M}\mat{G} = \begin{bmatrix}1&1\end{bmatrix}\begin{bmatrix}1\\1\end{bmatrix} = 2,
+  \qquad \mat{S} = \tfrac12,
+  \qquad
+  \mat{G}\mat{S}\mat{G}^{\!\top}\mat{M}
+  = \tfrac12\begin{bmatrix}1\\1\end{bmatrix}\begin{bmatrix}1&1\end{bmatrix}
+  = \tfrac12\begin{bmatrix}1&1\\1&1\end{bmatrix}.
+\]
+Therefore
+\[
+  \mat{P} = \mat{I} - \tfrac12\begin{bmatrix}1&1\\1&1\end{bmatrix}
+          = \tfrac12\begin{bmatrix}1&-1\\-1&1\end{bmatrix}.
+\]
+Check idempotence directly:
+$\mat{P}^2=\tfrac14\bigl[\begin{smallmatrix}2&-2\\-2&2\end{smallmatrix}\bigr]
+=\tfrac12\bigl[\begin{smallmatrix}1&-1\\-1&1\end{smallmatrix}\bigr]=\mat{P}$. Check
+that gradients die: for any scalar $\psi$,
+$\mat{P}\,\mat{G}\psi = \tfrac12\bigl[\begin{smallmatrix}1&-1\\-1&1\end{smallmatrix}\bigr]
+\bigl[\begin{smallmatrix}\psi\\\psi\end{smallmatrix}\bigr]
+= \tfrac12\bigl[\begin{smallmatrix}\psi-\psi\\-\psi+\psi\end{smallmatrix}\bigr]=\mathbf{0}$.
+And the projection of a general field is its divergence-free (here, orthogonal-to-
+diagonal) part: $\mat{P}\,(a,b)^{\!\top}=\tfrac12(a-b,\,b-a)^{\!\top}$, which is
+the component of $(a,b)$ along the antidiagonal $(1,-1)$---perpendicular, in the
+$\mat{M}=\mat{I}$ inner product, to the gradient direction $(1,1)$. The projector
+keeps the circulating part and discards the spreading part, exactly as
+\cref{fig:helmholtz} drew it.
+\end{workedexample}
+
+\section{Why the projection is needed: the curl--curl null space}
+\label{sec:nullspace}
+
+We can now say precisely why a simulator bothers with all of this. The curl--curl
+operator of the magnetostatic and eigenmode problems (\cref{ch:reductions-pde})
+is, by construction, singular: it has an enormous null space.
+
+Recall the curl--curl stiffness $\mat{K}$ assembled from the bilinear form
+$\int_\dom \nu\,(\Curl\vu)\cdot(\Curl\vv)$ of \cref{ch:weak}. Any gradient field
+$\vu=\Grad\phi$ has zero curl ($\Curl\Grad\phi=0$, de Rham exactness,
+\cref{ch:derham}), so it contributes nothing to the form: $\mat{K}\,\Grad\phi=0$.
+The entire gradient subspace---which, on a fine mesh, is a substantial fraction of
+all the DoFs---lies in the null space of $\mat{K}$. The operator is hugely
+rank-deficient (\cref{fig:nullspace}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % the whole Hcurl space as a big ellipse
+  \draw[simInk,thick] (0,0) ellipse (3.6 and 2.2);
+  \node[font=\small,simInk] at (0,2.55) {$\Hcurl$ (all field DoFs)};
+  % the gradient null-space as a big shaded sub-blob
+  \begin{scope}
+    \clip (0,0) ellipse (3.6 and 2.2);
+    \fill[simBgRust] (-3.6,-2.2) rectangle (0.4,2.2);
+  \end{scope}
+  \draw[simRust,thick] (0.4,-2.16) -- (0.4,2.16);
+  \node[font=\small,simRust,align=center] at (-1.7,0)
+    {$\mathrm{Ker}(\mat{K})$\\$=\mathrm{Range}(\Grad)$\\[1pt]\scriptsize gradient null space\\\scriptsize(spurious zero modes)};
+  % the physical divergence-free subspace
+  \node[font=\small,simBlue,align=center] at (1.9,0)
+    {divergence-\\free part\\[1pt]\scriptsize the physics};
+  % an eigensolver "drifting" into the null space
+  \draw[backflow] (2.6,1.3) .. controls (1.0,1.6) and (-0.8,1.4) .. (-2.2,0.9);
+  \node[font=\scriptsize\itshape,simRust] at (0.2,1.75) {solver drifts in};
+  % the projector pushing back out
+  \draw[depedge] (-2.0,-0.9) .. controls (-0.6,-1.5) and (1.0,-1.4) .. (2.4,-0.9);
+  \node[font=\scriptsize\itshape,simBlue] at (0.2,-1.75) {$\mat{P}$ projects out};
+\end{tikzpicture}
+\caption[The curl--curl gradient null space]{Why the projection is needed. The
+curl--curl operator $\mat{K}$ annihilates every gradient field
+($\mat{K}\Grad\phi=0$, de Rham exactness), so its null space is the entire
+gradient subspace $\mathrm{Range}(\Grad)$ (rust)---a large fraction of all the
+field DoFs. These are \emph{spurious zero modes}: eigensolutions with eigenvalue
+zero that carry no physics. An eigensolver or iterative solver, left unguarded,
+drifts into this subspace (dashed) and returns garbage or stalls. The
+divergence-free projector $\mat{P}$ pushes every iterate back onto the physical
+divergence-free subspace (blue), so the solve sees only the well-posed part of the
+operator.}
+\label{fig:nullspace}
+\end{figure}
+
+For a solver this is poison in two ways. An \emph{eigensolver}
+(\cref{ch:eigenmodes}) looking for the resonant modes
+$\mat{K}\vx=\lambda\mat{M}\vx$ will find, in addition to the physical modes, a
+flood of spurious modes with eigenvalue $\lambda\approx 0$---the gradient null
+space, masquerading as zero-frequency ``resonances'' that are nothing of the kind.
+They swamp the spectrum near zero and bury the physical low-frequency modes the
+analysis actually wants. An \emph{iterative linear solver} fares no better: the
+null space makes the operator singular (or, after a tiny regularization,
+catastrophically ill-conditioned), and a Krylov method either stalls or wanders
+into the null space and returns a contaminated answer.
+
+\begin{pitfall}
+The curl--curl operator's gradient null space is not a numerical artifact to be
+regularized away with a small diagonal shift---it is a structural feature of the
+physics and the de Rham complex. A shift would perturb the physical spectrum and
+still leave near-null modes to confuse the solver. The correct cure is to
+\emph{project the null space out} with $\mat{P}$, restricting the solve to the
+divergence-free subspace where the operator is genuinely well-posed. Eigensolvers
+in particular must project \emph{every} iterate (the initial vector and each
+subsequent candidate), or the spurious modes creep back in.
+\end{pitfall}
+
+The remedy is the projector $\mat{P}$ of \cref{sec:divfree}. By construction its
+range is the divergence-free subspace and its kernel is exactly the gradient null
+space $\mathrm{Range}(\mat{G})=\mathrm{Ker}(\mat{K})$. Applying $\mat{P}$ to a
+field removes precisely the troublesome component and leaves the physical part. In
+the eigenmode analysis (\cref{ch:eigenmodes}) the projector is threaded into the
+eigenvalue iteration: the initial vector is projected once, and every candidate
+eigenvector is projected at each step, so the iteration is confined to the
+divergence-free subspace throughout and never sees the spurious modes
+(\cref{fig:eigproj}). The projector is the guardrail that keeps the eigensolver on
+the physical manifold.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  \node[data, text width=16mm, align=center] (v0) {start vector $\vv_0$};
+  \node[opbox, right=8mm of v0, text width=14mm, fill=simBgGreen, draw=simGreen] (p0)
+    {$\mat{P}$ project};
+  \node[stage, right=8mm of p0, text width=24mm, align=center] (step)
+    {eigen step\\[1pt]\footnotesize (\cref{ch:eigenmodes})};
+  \node[opbox, right=8mm of step, text width=14mm, fill=simBgGreen, draw=simGreen] (pk)
+    {$\mat{P}$ project};
+  \node[product, right=8mm of pk, text width=16mm, align=center] (conv)
+    {converged?};
+  \draw[flow] (v0) -- (p0);
+  \draw[flow] (p0) -- (step);
+  \draw[flow] (step) -- (pk);
+  \draw[flow] (pk) -- (conv);
+  % loop back
+  \draw[backflow] (conv.south) -- ++(0,-7mm) -| node[below, pos=0.25, font=\scriptsize]{no: next candidate} (step.south);
+  % output
+  \node[data, right=8mm of conv, text width=16mm, align=center, fill=simBgBlue, draw=simBlue] (out) {physical mode};
+  \draw[flow] (conv) -- node[above, font=\scriptsize]{yes} (out);
+  \node[font=\scriptsize\itshape, simGreen, above=1mm of pk.north] {every iterate stays divergence-free};
+\end{tikzpicture}
+\caption[The projector inside the eigenvalue loop]{How the divergence-free
+projector guards an eigensolve. The initial vector $\vv_0$ is projected once, and
+\emph{every} candidate produced by the eigen step (\cref{ch:eigenmodes}) is
+projected again with $\mat{P}$ before the convergence test and before it feeds the
+next iteration (green boxes). Because $\mathrm{Ker}(\mat{P})$ is exactly the
+gradient null space, the iteration is confined to the divergence-free subspace
+throughout: the spurious zero modes of \cref{fig:nullspace} can never re-enter, and
+the solver converges to the physical resonances alone. Projecting only the initial
+vector is not enough---rounding and the iteration itself would let the null space
+leak back in, which is why the projection sits \emph{inside} the loop.}
+\label{fig:eigproj}
+\end{figure}
+
+\section{Closing Part II}
+
+With boundary conditions imposed and fields projected onto their physical
+subspace, the discretized problem is complete. Let us take stock of what Part~II
+has built. We began (\cref{ch:weak}) by turning strong-form PDEs into weak forms,
+$a(u,v)=\ell(v)$, drawn from a single four-operator family
+$(Q,\diffop)$. We chose finite-element spaces for each differential operator and
+saw them interlock as the de Rham complex (\cref{ch:functionspaces},
+\cref{ch:derham}). We assembled the bilinear forms into sparse operators by a fold
+over terms (\cref{ch:galerkin}, \cref{ch:assembly}), and we saw how that fold
+runs matrix-free on the reference element (\cref{ch:refelement},
+\cref{ch:matrixfree}). And in this chapter we performed the two finishing
+operations---essential-BC elimination and divergence-free projection---that turn
+the raw assembled system into a well-posed, physical one.
+
+The result is a concrete linear-algebra problem: an operator $\mat{K}$, a
+right-hand side $\vb$, perhaps a mass operator $\mat{M}$ for an eigenproblem, all
+finished and ready. What we have \emph{not} done is solve it. Every analysis in
+this book ends in a solve---a linear solve, an eigenvalue solve, a time march---and
+those solves are where the simulator spends its time and where its deepest
+structure lives. Part~III turns to the calculus that performs them: the
+combinators and folds that express a Krylov iteration, a time integrator, an
+eigenvalue sweep as compositions of pure, immutable-tensor operations. Part~II
+built the problem; Part~III builds the machine that answers it.
+
+\summarysection
+Two finishing operations stand between the assembled system $\mat{K}\vx=\vb$ and
+its solution, and both are \emph{separable post-compositions}---not steps inside
+the assembly fold. \textbf{(1)~Essential boundary conditions.} The constrained
+(Dirichlet) DoFs form an \emph{essential set} $E$; the rest are \emph{free}.
+Imposing the condition partitions the system into free/essential blocks and
+reduces it to the free block, $\mat{K}_{FF}\vx_F=\vb_F-\mat{K}_{FE}\vx_E$. In
+place, \texttt{eliminate\_essential\_bc} zeroes the essential rows and columns and
+sets the eliminated diagonal by a policy (\texttt{DIAG\_ONE} for the solve-side,
+\texttt{DIAG\_ZERO} for the energy/mass-block), which is the free-block projection
+$\mat{P}_F\mat{K}\mat{P}_F$ up to the chosen diagonal. A nonzero (inhomogeneous)
+boundary value is handled by \emph{lifting}: \texttt{eliminate\_rhs} forms
+$\vb\leftarrow\vb-\mat{K}\vx_{\mathrm{ess}}$, moving the known boundary
+contribution into the right-hand side---a single matrix--vector product and an
+\texttt{axpy}. Natural (Neumann) conditions, by contrast, enter during assembly as
+boundary integrators and cost nothing when homogeneous. \textbf{(2)~Helmholtz
+decomposition and divergence-free projection.} Any vector field splits uniquely as
+$\vF=\vF_{\mathrm{df}}+\Grad\psi$ (divergence-free plus gradient), and at the
+$\Hcurl$ slot of the de Rham complex the gradient part is exactly the kernel of
+the curl. The discrete projector
+$\mat{P}=\mat{I}-\mat{G}(\mat{G}^{\!\top}\mat{M}\mat{G})^{-1}\mat{G}^{\!\top}\mat{M}$
+is an $\mat{M}$-orthogonal projection onto the divergence-free subspace; its apply
+runs weak-divergence $\to$ essential-zeroing $\to$ inner Poisson solve $\to$
+gradient subtract, and so is a constructed operator carrying an inner
+\texttt{ksp\_solve}. The projection is needed because the curl--curl operator has
+a huge gradient null space ($\mat{K}\Grad\phi=0$); without projection,
+eigensolvers return spurious zero modes and iterative solvers stall. Both finishing
+operations close the discretization that Part~II built.
+
+\furtherreading
+The variational treatment of boundary conditions---essential versus natural, the
+trial/test-space constraint, and the lifting of inhomogeneous data---is developed
+in any rigorous finite-element text; for the vector ($\Hcurl$, $\Hdiv$) case
+specific to Maxwell problems, Monk~\citep{monk2003} is the standard reference, with
+careful treatment of tangential-trace boundary conditions and the discrete spaces
+on which they live. The Helmholtz decomposition and its de Rham reading are the
+heart of finite-element exterior calculus; Arnold, Falk, and
+Winther~\citep{arnold2006feec} give the definitive modern account, in which the
+divergence-free projection is the Hodge decomposition at the relevant slot of the
+discrete complex. The auxiliary-space and projection techniques that make the
+curl--curl null space tractable for iterative solvers---the practical engine behind
+the inner Poisson solve of \cref{sec:divfree}---are the subject of Hiptmair and
+Xu~\citep{hiptmairxu2007}, whose AMS (auxiliary-space Maxwell solver) preconditioner
+is built on exactly the discrete-gradient and mass operators that appear in
+\cref{eq:projector}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{(Reading the partition.)} On the mesh of \cref{fig:partition}, the
+  essential set $E$ is the boundary nodes and the free set $F$ is the interior.
+  If the bottom edge is held at voltage $V$ and the top edge grounded ($0$), with
+  the side edges insulating (homogeneous Neumann), which nodes are in $E$ and which
+  in $F$? Which essential nodes carry $V$, which carry $0$, and what happens to the
+  side-edge nodes?
+
+  \item \textbf{(The two policies.)} Explain in one or two sentences why the
+  \texttt{DIAG\_ONE} policy (essential diagonal $=\mat{I}_E$) is appropriate when
+  the eliminated operator will be inverted by a linear solver, while
+  \texttt{DIAG\_ZERO} (essential diagonal $=\mathbf{0}$) is used for the blocks of
+  a generalized eigenvalue problem. What would go wrong if you used
+  \texttt{DIAG\_ZERO} for the linear solve, or \texttt{DIAG\_ONE} for an eigenvalue
+  block? (Hint: think about what eigenvalue an identity diagonal block contributes.)
+
+  \item \textbf{(Lifting, by hand.)} Repeat \cref{wex:lift1d} but with both ends
+  inhomogeneous: $u(0)=a$, $u(1)=b$. Form $\vx_{\mathrm{ess}}=(a,0,0,b)^{\!\top}$,
+  compute $\mat{K}\vx_{\mathrm{ess}}$ and the lifted RHS
+  $\vb'=\vb-\mat{K}\vx_{\mathrm{ess}}$, and solve the reduced free system. Confirm
+  the answer is the linear interpolant $u(x)=a+(b-a)x$ sampled at the nodes.
+
+  \item \textbf{(Separability.)} Suppose $\mat{K}=\mat{K}_1+\mat{K}_2$ is the sum
+  of two assembled term-contributions (say a stiffness plus a mass term). Using the
+  projection form \cref{eq:pfproj}, show that under the \texttt{DIAG\_ZERO} policy
+  $\texttt{eliminate\_essential\_bc}(\mat{K}_1+\mat{K}_2,E)
+  =\texttt{eliminate\_essential\_bc}(\mat{K}_1,E)+\texttt{eliminate\_essential\_bc}(\mat{K}_2,E)$.
+  Then explain why the same distributivity fails for \texttt{DIAG\_ONE}, and state
+  the corrected identity (the identity $\mat{I}_E$ is added once, not twice).
+
+  \item \textbf{(Idempotence of the projector.)} Verify $\mat{P}^2=\mat{P}$ for the
+  numerical instance of \cref{wex:projcheck} by direct matrix multiplication of
+  $\mat{P}=\tfrac12\bigl[\begin{smallmatrix}1&-1\\-1&1\end{smallmatrix}\bigr]$. Then
+  construct a second instance with $\mat{M}=\mathrm{diag}(2,1)$ (a nontrivial
+  $\mat{M}$-inner-product) and the same
+  $\mat{G}=\bigl[\begin{smallmatrix}1\\1\end{smallmatrix}\bigr]$: compute
+  $\mat{G}^{\!\top}\mat{M}\mat{G}$, $\mat{S}$, and $\mat{P}$, and confirm $\mat{P}$
+  is still idempotent and still annihilates $\mat{G}\psi$. (You will find $\mat{P}$
+  is no longer symmetric---it is $\mat{M}$-orthogonal, not ordinary-orthogonal.)
+
+  \item \textbf{(Why gradients are killed.)} Using only the identity
+  $\mat{G}^{\!\top}\mat{M}\mat{G}=\mat{S}^{-1}$, give the two-line proof that
+  $\mat{P}\,\mat{G}\psi=0$ for every $\psi$ (i.e.\
+  $\mathrm{Ker}(\mat{P})\supseteq\mathrm{Range}(\mat{G})$). Then explain, in one
+  sentence each, why this is exactly the statement that $\mat{P}$ removes the
+  curl--curl null space, and why the inner solve in step~3 of
+  \cref{fig:projapply} must be converged tightly for the cancellation to hold.
+
+  \item \textbf{(Spurious modes.)} The curl--curl eigenproblem
+  $\mat{K}\vx=\lambda\mat{M}\vx$ has every discrete gradient $\mat{G}\phi$ as an
+  eigenvector. What is its eigenvalue $\lambda$? Explain why these modes cluster at
+  the bottom of the spectrum and why an eigensolver seeking the lowest physical
+  resonances is exactly the one most confused by them. How does projecting every
+  iterate with $\mat{P}$ remove the problem?
+
+  \item \textbf{(Natural versus essential, bookkeeping.)} A driven-cavity problem
+  has a PEC wall (tangential $\vE=0$, essential), an impedance wall (a natural
+  Robin-type condition contributing a boundary mass term), and a port (an
+  inhomogeneous essential excitation). For each of the three, state: (i) whether it
+  is imposed during assembly or as a post-composition, (ii) whether it touches the
+  operator $\mat{K}$, the right-hand side $\vb$, or both, and (iii) whether a
+  homogeneous version of it would cost anything. Organize your answer as a small
+  table.
+\end{enumerate}

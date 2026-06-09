@@ -1,0 +1,1081 @@
+\chapter{Deflation and Nonlinear Eigenproblems}
+\label{ch:deflation}
+
+\chapterorient{The last two chapters found a \emph{few} eigenpairs of a giant
+pencil. But the engineer rarely wants only the fundamental mode---they want the
+fundamental \emph{and} its first several overtones, ten or twenty resonances
+peeled off the bottom of the spectrum. How do you stop the iteration from
+finding the same lowest mode over and over? The answer is \emph{deflation}: once
+a pair has converged, project it out of the search so the iteration is forced to
+find the \emph{next} one. That single idea---compute eigenpairs one at a time,
+locking each as you go---carries us into the chapter's harder half. When the
+cavity is filled with a lossy, dispersive material, the operator itself depends
+on the frequency you are solving for: a \emph{nonlinear eigenproblem}
+$\mat{T}(\lambda)\vx=\mathbf 0$ in which the resonance feeds back into the
+equation that defines it. Linearization can no longer save us. We meet the
+deflated quasi-Newton method Palace actually runs---Newton's method on the
+eigenvalue, with each found mode deflated through an augmented system---and watch
+its inner linear solve split into a tiny dense block and a huge sparse one.}
+
+\section{Why one eigenpair is never enough}
+\label{sec:def-why}
+
+The Krylov--Schur machine of \cref{ch:krylovschur} already finds several
+eigenpairs at once: its thick-restart loop locks each converged Ritz pair and
+keeps iterating for the rest, and SLEPc's \code{EPSSolve} returns the requested
+batch in one opaque call. So why a whole chapter on finding eigenpairs ``one at a
+time''? Two reasons, and they pull in opposite directions until deflation
+reconciles them.
+
+The first is that \emph{locking is deflation}---the chapter is, in part, the
+constructive account of a mechanism \cref{ch:krylovschur} used and named but did
+not open. When Krylov--Schur ``locks'' a converged Ritz vector, it must thereafter
+keep the growing Krylov basis \emph{orthogonal} to that vector, or the next
+expansion step would simply re-grow the direction it just converged and the
+solver would spin in place rediscovering the same mode. Locking, orthogonalizing
+against the locked set, and ``purging'' a converged direction from the active
+subspace are three names for one act: \emph{removing an already-found eigenvector
+from the space the iteration is allowed to search}. That act is deflation, and
+\cref{sec:def-locking} makes it explicit.
+
+The second reason is sharper, and it is why deflation gets promoted from a
+subroutine to a top-level algorithm. The clean black-box eigensolve of
+\cref{ch:eigenvalues,ch:krylovschur} assumed a \emph{linear} or at worst
+\emph{polynomial} pencil---$\Kop\vx=\lambda\Mop\vx$, or the quadratic
+$(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$ that linearization turns back into
+a generalized linear problem (\cref{ch:eigenvalues}). For a genuinely
+\emph{nonlinear} eigenproblem---one whose operator depends on $\lambda$ in a way
+no polynomial captures---there is no linearization, no single library call that
+returns a batch, and no Krylov basis whose Ritz values are the answers. The only
+practical route known is to hunt the eigenpairs \emph{one at a time} with a
+Newton-like iteration, deflating each as it converges. Deflation stops being a
+bookkeeping detail inside the eigensolver and becomes the load-bearing
+scaffolding of the whole method.
+
+\begin{keyidea}
+Deflation \emph{peels eigenpairs off the spectrum one at a time}: once a pair has
+converged, it is projected out of the search space so the iteration is forced to
+find the next one, never re-finding what it already has. For a linear pencil this
+is the ``locking'' inside Krylov--Schur (\cref{ch:krylovschur}); for a
+\emph{nonlinear} eigenproblem $\mat{T}(\lambda)\vx=\mathbf 0$---whose operator
+\emph{depends on its own eigenvalue}---it becomes the top-level algorithm, because
+no linearization and no single library call can return the modes as a batch.
+\end{keyidea}
+
+We take the two halves in order: first deflation on the familiar linear problem,
+where every step can be checked against the power iteration of
+\cref{ch:eigenvalues}; then the nonlinear eigenproblem and the deflated
+quasi-Newton method Palace runs on it.
+
+\section{Deflation on a linear problem}
+\label{sec:def-linear}
+
+Strip the problem to its bones. We have a symmetric matrix $\mat{A}$, we have
+just found its dominant eigenpair $(\mu_1,\vu_1)$ by the power iteration of
+\cref{ch:eigenvalues}, and we want the \emph{next} one, $(\mu_2,\vu_2)$. If we
+simply restart power iteration from a fresh vector, it converges straight back to
+$\vu_1$---the dominant direction is still dominant, and iteration has no memory of
+having found it. We must change the problem so that $\vu_1$ is no longer there to
+be found.
+
+\subsection{Subtracting a rank-one piece}
+\label{sec:def-ranköne}
+
+For a symmetric matrix the cleanest construction is to \emph{subtract the found
+eigenpair out of the operator}. If $\mat{A}$ is symmetric with orthonormal
+eigenvectors, the dominant pair contributes a rank-one term $\mu_1\vu_1\vu_1^{\!\top}$
+to its spectral decomposition $\mat{A}=\sum_i \mu_i\vu_i\vu_i^{\!\top}$. Remove
+exactly that term:
+\begin{equation}
+  \boxed{\;\mat{A}_1 \;=\; \mat{A} \;-\; \mu_1\,\vu_1\vu_1^{\!\top}.\;}
+  \label{eq:deflate-rank1}
+\end{equation}
+The deflated matrix $\mat{A}_1$ has \emph{exactly the same eigenvectors and
+eigenvalues as $\mat{A}$, except that $\mu_1$ has been replaced by zero}. To see
+it, apply $\mat{A}_1$ to each eigenvector. On $\vu_1$:
+\begin{equation}
+  \mat{A}_1\vu_1
+    = \mat{A}\vu_1 - \mu_1\vu_1(\vu_1^{\!\top}\vu_1)
+    = \mu_1\vu_1 - \mu_1\vu_1
+    = \mathbf 0,
+\end{equation}
+using $\vu_1^{\!\top}\vu_1=1$: the dominant eigenvalue is annihilated, sent to
+zero. On any other eigenvector $\vu_j$ ($j\neq1$), orthogonality
+$\vu_1^{\!\top}\vu_j=0$ kills the correction term entirely:
+\begin{equation}
+  \mat{A}_1\vu_j
+    = \mat{A}\vu_j - \mu_1\vu_1(\vu_1^{\!\top}\vu_j)
+    = \mu_j\vu_j - \mathbf 0
+    = \mu_j\vu_j .
+\end{equation}
+Every other pair survives untouched. So $\mat{A}_1$'s spectrum is
+$\{0,\mu_2,\mu_3,\dots\}$: the former runner-up $\mu_2$ is now the largest in
+magnitude (assuming $\abs{\mu_2}>0$), and \emph{power iteration on $\mat{A}_1$
+converges to $\vu_2$}---the exact pair we wanted next. We found the second
+eigenpair by finding the ``dominant'' one of a deflated operator.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    name=before,
+    width=0.84\linewidth, height=30mm,
+    xlabel={}, title={\footnotesize original spectrum of $\mat{A}$},
+    title style={font=\footnotesize, yshift=-1.5mm},
+    xmin=-0.6, xmax=9, ymin=0, ymax=1.5,
+    axis lines=left, ytick=\empty, xtick={1,3,5,7.5},
+    xticklabels={$\mu_4$,$\mu_3$,$\mu_2$,$\mu_1$},
+    xticklabel style={font=\scriptsize}, clip=false,
+  ]
+  \addplot[ycomb, very thick, simBlue, mark=*, mark size=2pt] coordinates {
+    (1,0.6)(3,0.85)(5,1.0)(7.5,1.25)};
+  \node[font=\scriptsize\itshape, simRust, anchor=south] at (axis cs:7.5,1.25)
+    {dominant: power iter.\ finds this};
+\end{axis}
+\begin{axis}[
+    name=after, at={(before.south west)}, anchor=north west, yshift=-11mm,
+    width=0.84\linewidth, height=30mm,
+    title={\footnotesize after deflating $(\mu_1,\vu_1)$: spectrum of
+      $\mat{A}_1=\mat{A}-\mu_1\vu_1\vu_1^{\!\top}$},
+    title style={font=\footnotesize, yshift=-1.5mm},
+    xmin=-0.6, xmax=9, ymin=0, ymax=1.5,
+    axis lines=left, ytick=\empty, xtick={0,1,3,5},
+    xticklabels={$0$,$\mu_4$,$\mu_3$,$\mu_2$},
+    xticklabel style={font=\scriptsize}, clip=false,
+  ]
+  \addplot[ycomb, very thick, simBlue, mark=*, mark size=2pt] coordinates {
+    (1,0.6)(3,0.85)(5,1.0)};
+  \addplot[ycomb, very thick, simGray, mark=o, mark size=2pt] coordinates {(0,1.25)};
+  \node[font=\scriptsize\itshape, simGray, anchor=south] at (axis cs:0,1.25)
+    {$\mu_1\to 0$};
+  \node[font=\scriptsize\itshape, simRust, anchor=south] at (axis cs:5,1.0)
+    {now dominant: finds $\vu_2$};
+\end{axis}
+\end{tikzpicture}
+\caption[Deflating one eigenpair sends it to zero]{Deflation by rank-one
+subtraction. \emph{Top:} the original spectrum of $\mat{A}$; power iteration
+finds the dominant pair $(\mu_1,\vu_1)$ at the right. \emph{Bottom:} subtracting
+$\mu_1\vu_1\vu_1^{\!\top}$ replaces $\mu_1$ with $0$ (grey, open) and leaves every
+other eigenvalue exactly where it was. The former runner-up $\mu_2$ is now the
+largest in magnitude, so power iteration on the deflated operator $\mat{A}_1$
+converges to $\vu_2$. Repeating---deflate, iterate, deflate---peels the spectrum
+off one pair at a time.}
+\label{fig:deflate-spectrum}
+\end{figure}
+
+\Cref{fig:deflate-spectrum} draws the move. Repeat it---deflate $(\mu_2,\vu_2)$ to
+form $\mat{A}_2=\mat{A}_1-\mu_2\vu_2\vu_2^{\!\top}$, iterate for $\vu_3$, and so
+on---and the spectrum is peeled off the top one eigenpair at a time. Each pair,
+once found, is gone from the deflated operator and cannot be found again.
+
+\subsection{Deflation as a projection: locking the search space}
+\label{sec:def-locking}
+
+The rank-one subtraction is concrete but special: it leans on symmetry (so that
+the spectral decomposition has orthonormal $\vu_i$) and it modifies the operator.
+The form that generalizes---and the form that matches what Krylov--Schur's locking
+actually does---works on the \emph{search space} instead of the operator. Rather
+than alter $\mat{A}$, we forbid the iteration from looking in the directions we
+have already found.
+
+Collect the converged eigenvectors as the columns of a tall thin matrix
+$\mat{X}=[\,\vu_1\mid\cdots\mid\vu_k\,]$, the \emph{locked} set. Let $\mat{P}$ be
+the orthogonal projector \emph{onto the complement} of their span:
+\begin{equation}
+  \mat{P} \;=\; \mat{I} - \mat{X}\mat{X}^{\!\top}
+  \qquad(\text{with } \mat{X}^{\!\top}\mat{X}=\mat{I}_k).
+  \label{eq:deflate-proj}
+\end{equation}
+Applying $\mat{P}$ to any vector strips out its component along the locked
+directions: $\mat{P}\vu_i=\mathbf 0$ for each locked $\vu_i$, while $\mat{P}\vv=\vv$
+for any $\vv$ already orthogonal to all of them. Now run the iteration on the
+\emph{projected} operator $\mat{P}\mat{A}\mat{P}$, or---cheaper and equivalent for
+iteration---apply $\mat{P}$ to the iterate after every step:
+\begin{equation}
+  \vv_{k+1} \;=\; \mat{P}\,\frac{\mat{A}\vv_k}{\norm{\mat{A}\vv_k}}.
+  \label{eq:deflate-iterate}
+\end{equation}
+Each step re-orthogonalizes the iterate against the locked set, continually
+sweeping out any component that has drifted back into a found direction. The
+iteration physically \emph{cannot} converge to a locked eigenvector, because that
+direction is projected to zero the instant it appears. It is forced to find the
+next pair in the orthogonal complement.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % the locked direction (horizontal), the complement (vertical)
+  \draw[->, simGray] (-0.3,0) -- (5.2,0)
+    node[right,font=\scriptsize]{$\vu_1$ (locked)};
+  \draw[->, simGray] (0,-0.3) -- (0,3.6)
+    node[above,font=\scriptsize]{complement $\vu_1^\perp$};
+  % the locked subspace shaded
+  \fill[simGray!12] (0,-0.25) rectangle (5.0,0.25);
+  \node[font=\scriptsize\itshape, simGray] at (3.6,-0.5) {forbidden: $\mat{P}\vu_1=\mathbf 0$};
+  % an iterate that has drifted, with a component along u1
+  \draw[-{Stealth[length=2.4mm]}, very thick, simBlue] (0,0) -- (2.6,2.0);
+  \node[font=\scriptsize, simBlue] at (2.85,2.15) {$\mat{A}\vv_k$};
+  % its projection onto the complement (drop the horizontal part)
+  \draw[-{Stealth[length=2.4mm]}, very thick, simRust] (0,0) -- (0,2.0);
+  \node[font=\scriptsize, simRust, anchor=east] at (-0.1,2.0) {$\mat{P}\,\mat{A}\vv_k$};
+  % the projection drop (dotted)
+  \draw[densely dotted, simGray] (2.6,2.0) -- (0,2.0);
+  \draw[densely dotted, simGray] (2.6,2.0) -- (2.6,0);
+  % the swept-out component
+  \draw[-{Stealth[length=2mm]}, simGreen, thick] (0.05,0.12) -- (2.5,0.12);
+  \node[font=\scriptsize, simGreen] at (1.3,0.42) {swept out each step};
+  % converged next eigenvector lies in complement
+  \draw[-{Stealth[length=2.4mm]}, very thick, simViolet, densely dashed] (0,0) -- (0,3.0);
+  \node[font=\scriptsize, simViolet, anchor=east] at (-0.1,3.0) {$\vu_2$ (next)};
+\end{tikzpicture}
+\caption[Deflation projects the iterate off the locked directions]{Deflation as a
+projection. The found eigenvector $\vu_1$ is \emph{locked}; the projector
+$\mat{P}=\mat{I}-\mat{X}\mat{X}^{\!\top}$ kills any component along it (grey band:
+$\mat{P}\vu_1=\mathbf 0$). When the operator pushes the iterate $\mat{A}\vv_k$
+(blue) partly back toward the locked direction, applying $\mat{P}$ drops that
+component (green) and leaves only the part in the orthogonal complement
+($\mat{P}\,\mat{A}\vv_k$, rust). The iteration therefore cannot reconverge to
+$\vu_1$; it is steered into the complement, where the next eigenvector $\vu_2$
+(violet, dashed) lives. This is exactly the ``locking'' Krylov--Schur applies to
+its converged Ritz vectors (\cref{ch:krylovschur}).}
+\label{fig:deflate-project}
+\end{figure}
+
+\Cref{fig:deflate-project} shows the geometry. This projection form is what
+Krylov--Schur's locking does (\cref{ch:krylovschur}): the converged Ritz vectors
+are held aside, and every new Arnoldi/Lanczos column is orthogonalized against
+them before it joins the active basis. ``Keep the search space orthogonal to the
+locked vectors'' and ``deflate the found eigenpairs'' are the same instruction.
+The block form---locking several at once into $\mat{X}$ and projecting against the
+whole block---is how a solver computes eigenpairs not just one at a time but in
+\emph{groups}, deflating a converged batch and continuing for the next.
+
+\begin{notationbox}
+Two equivalent ways to deflate $k$ converged eigenvectors $\mat{X}=[\vu_1\mid
+\cdots\mid\vu_k]$ from a linear problem:
+\begin{itemize}[nosep]
+  \item \textbf{Operator deflation} (symmetric case): subtract the found spectral
+  mass, $\mat{A}_k=\mat{A}-\sum_{i=1}^k\mu_i\vu_i\vu_i^{\!\top}$, sending each found
+  $\mu_i$ to $0$.
+  \item \textbf{Search-space deflation} (general): project with
+  $\mat{P}=\mat{I}-\mat{X}\mat{X}^{\!\top}$ after each step, forbidding the
+  iteration from drifting back into $\operatorname{span}(\mat{X})$.
+\end{itemize}
+Both enforce one contract: an already-found eigenvector cannot be found again.
+The projection form is the one that survives into the nonlinear method of
+\cref{sec:def-nleps}, generalized to an \emph{oblique} (non-orthogonal) projector.
+\end{notationbox}
+
+\subsection{A worked deflation}
+\label{sec:def-worked1}
+
+The whole mechanism fits in a few lines of arithmetic on a $2\times2$ matrix,
+where we can carry power iteration by hand and watch the second eigenpair appear
+only after deflation.
+
+\begin{workedexample}{Find the second eigenpair by deflation}{deflate2x2}
+Take the symmetric matrix
+\[
+  \mat{A} = \begin{psmallmatrix} 3 & 1 \\ 1 & 3 \end{psmallmatrix},
+\]
+whose eigenpairs we happen to know exactly: $\mu_1=4$ with
+$\vu_1=\tfrac1{\sqrt2}(1,1)^{\!\top}$ and $\mu_2=2$ with
+$\vu_2=\tfrac1{\sqrt2}(1,-1)^{\!\top}$. Pretend we know neither and hunt them by
+power iteration.
+
+\smallskip
+\emph{Step 1: power iteration finds the dominant pair.} Start from
+$\vv_0=(1,0)^{\!\top}$. One multiply gives $\mat{A}\vv_0=(3,1)^{\!\top}$; normalize
+to $\vv_1=(0.949,0.316)^{\!\top}$. Again: $\mat{A}\vv_1=(3.16,2.06)^{\!\top}$,
+normalize to $\vv_2=(0.838,0.546)^{\!\top}$. Again:
+$\mat{A}\vv_2=(3.06,2.48)^{\!\top}\to\vv_3=(0.776,0.630)^{\!\top}$. The iterate is
+swinging toward $(0.707,0.707)^{\!\top}=\vu_1$; the Rayleigh quotient
+$\rho(\vv_3)=\inner{\mat{A}\vv_3}{\vv_3}=3.98$ is closing on $\mu_1=4$. Take the
+converged pair $(\mu_1,\vu_1)=(4,\tfrac1{\sqrt2}(1,1)^{\!\top})$.
+
+\smallskip
+\emph{Step 2: restarting plain power iteration is useless.} If we restart from a
+new random vector, it converges right back to $\vu_1$---$\mu_1=4$ is still the
+dominant eigenvalue and iteration has no memory. We must deflate.
+
+\smallskip
+\emph{Step 3: deflate the found pair.} Subtract the rank-one piece
+\cref{eq:deflate-rank1}, with $\vu_1\vu_1^{\!\top}=\tfrac12
+\begin{psmallmatrix}1&1\\1&1\end{psmallmatrix}$:
+\[
+  \mat{A}_1 = \mat{A} - 4\cdot\tfrac12\begin{psmallmatrix}1&1\\1&1\end{psmallmatrix}
+    = \begin{psmallmatrix}3&1\\1&3\end{psmallmatrix}
+      - \begin{psmallmatrix}2&2\\2&2\end{psmallmatrix}
+    = \begin{psmallmatrix}1&-1\\-1&1\end{psmallmatrix}.
+\]
+Check the spectrum directly: $\mat{A}_1\vu_1=\begin{psmallmatrix}1&-1\\-1&1
+\end{psmallmatrix}\tfrac1{\sqrt2}(1,1)^{\!\top}=\tfrac1{\sqrt2}(0,0)^{\!\top}
+=\mathbf 0$---the dominant pair is annihilated. And
+$\mat{A}_1\vu_2=\begin{psmallmatrix}1&-1\\-1&1\end{psmallmatrix}\tfrac1{\sqrt2}
+(1,-1)^{\!\top}=\tfrac1{\sqrt2}(2,-2)^{\!\top}=2\vu_2$---the second pair survives
+with eigenvalue $2$, untouched. The deflated spectrum is $\{0,2\}$.
+
+\smallskip
+\emph{Step 4: power iteration on $\mat{A}_1$ now finds $\vu_2$.} Start again from
+$\vv_0=(1,0)^{\!\top}$. One multiply: $\mat{A}_1\vv_0=(1,-1)^{\!\top}$, normalize to
+$(0.707,-0.707)^{\!\top}$---which is $\vu_2$ \emph{exactly}, in a single step,
+because the deflated matrix has only one nonzero eigendirection left. The Rayleigh
+quotient reads $\rho=2=\mu_2$. The second eigenpair fell out the moment we
+deflated the first.
+
+The lesson generalizes past this tiny case: deflation does not make the next
+eigenpair easier to \emph{compute} (the per-step work is the same), it makes the
+next eigenpair the one the iteration \emph{converges to at all}.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=7mm]
+  % the spectrum being peeled, lowest first
+  % five spectrum stems, lowest-first (drawn explicitly, not via \foreach)
+  \draw[thick, simRust] (0,0) -- (0,1.4);   \fill[simRust] (0,1.4) circle (1.6pt);
+  \node[font=\scriptsize, simRust, anchor=south] at (0,1.4) {$\lambda_1$};
+  \draw[thick, simRust] (1.4,0) -- (1.4,1.4); \fill[simRust] (1.4,1.4) circle (1.6pt);
+  \node[font=\scriptsize, simRust, anchor=south] at (1.4,1.4) {$\lambda_2$};
+  \draw[thick, simBlue] (2.8,0) -- (2.8,1.4); \fill[simBlue] (2.8,1.4) circle (1.6pt);
+  \node[font=\scriptsize, simBlue, anchor=south] at (2.8,1.4) {$\lambda_3$};
+  \draw[thick, simGray] (4.2,0) -- (4.2,1.4); \fill[simGray] (4.2,1.4) circle (1.6pt);
+  \node[font=\scriptsize, simGray, anchor=south] at (4.2,1.4) {$\lambda_4$};
+  \draw[thick, simGray] (5.6,0) -- (5.6,1.4); \fill[simGray] (5.6,1.4) circle (1.6pt);
+  \node[font=\scriptsize, simGray, anchor=south] at (5.6,1.4) {$\lambda_5$};
+  \draw[->, simGray] (-0.5,0) -- (6.4,0) node[right,font=\scriptsize]{$\lambda$};
+  % peeling annotations
+  \draw[-{Stealth[length=2mm]}, simRust, thick] (0,-0.55) -- (0,-0.05);
+  \node[font=\scriptsize, simRust] at (0,-0.85) {found \#1};
+  \draw[-{Stealth[length=2mm]}, simRust, thick] (1.4,-0.55) -- (1.4,-0.05);
+  \node[font=\scriptsize, simRust] at (1.4,-0.85) {found \#2};
+  \draw[-{Stealth[length=2mm]}, simBlue, thick] (2.8,-0.55) -- (2.8,-0.05);
+  \node[font=\scriptsize, simBlue] at (2.8,-0.85) {seeking \#3};
+  \node[font=\scriptsize\itshape, simGray] at (5.0,-0.85) {not yet reached};
+  % the "wanted band" bracket
+  \draw[decorate, decoration={brace, amplitude=4pt}, simRust]
+    (-0.15,1.75) -- (1.55,1.75);
+  \node[font=\scriptsize, simRust] at (0.7,2.15) {deflated \& locked};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simGray]
+    (2.65,1.75) -- (5.75,1.75);
+  \node[font=\scriptsize, simGray] at (4.2,2.15) {still in the active search};
+\end{tikzpicture}
+\caption[Peeling the spectrum lowest-first]{Computing many eigenpairs one at a
+time. The wanted eigenvalues, lowest first, are peeled off the spectrum: pairs
+$\lambda_1,\lambda_2$ are converged, deflated, and locked (rust, bracketed left);
+the iteration is now hunting $\lambda_3$ (blue) in the space orthogonal to the
+locked set; the higher pairs remain in the active search (grey). Each conversion
+from ``seeking'' to ``found'' adds a column to the locked block $\mat{X}$ and
+shrinks the search space by one direction. This lowest-first peeling is exactly
+the eigenmode driver's request: the fundamental resonance and its first several
+overtones, in order.}
+\label{fig:peel-spectrum}
+\end{figure}
+
+\Cref{fig:peel-spectrum} shows the campaign in the large: pairs converted from
+``seeking'' to ``found,'' the locked block growing by a column each time, the
+spectrum peeled lowest-first. That is the picture to hold as we turn to the case
+where the operator itself is moving underneath us.
+
+\section{The nonlinear eigenproblem}
+\label{sec:def-nep}
+
+Everything so far assumed the operator was a fixed pencil. We now break that
+assumption, because the physics breaks it.
+
+\subsection{When the material depends on frequency}
+\label{sec:def-dispersive}
+
+The pencils of \cref{ch:eigenvalues} came from materials with constant
+properties: a permittivity $\varepsilon$ and permeability $\mu$ that are fixed
+numbers, baked once into the mass and stiffness matrices. Many real materials are
+not like that. A \emph{dispersive} medium has a permittivity that depends on
+frequency, $\varepsilon(\omega)$; a \emph{lossy} medium has a complex, frequency
+-dependent response that absorbs energy. Plasmas, dielectric resonators with
+Debye or Lorentz relaxation, conductors at microwave frequencies, metamaterials---
+in all of them the material's response to the field is a function of how fast the
+field oscillates.
+
+When you discretize Maxwell's equations in such a medium, the frequency
+dependence does not vanish into constant matrices. It rides along into the
+operator. Writing $\lambda$ for the (squared, complex) eigenfrequency as before,
+the discrete eigenproblem becomes
+\begin{equation}
+  \boxed{\;\mat{T}(\lambda)\,\vx \;=\; \mathbf 0,\;}
+  \label{eq:nep}
+\end{equation}
+where the \emph{operator} $\mat{T}(\lambda)$ \emph{itself depends on the
+eigenvalue $\lambda$ we are solving for}, and depends on it nonlinearly---not as
+the tidy polynomial $\Kop+\lambda\Cop+\lambda^2\Mop$, but through whatever
+function $\varepsilon(\lambda)$, $\nu(\lambda)$ the material model dictates. A
+typical form is
+\begin{equation}
+  \mat{T}(\lambda) \;=\; \Kop + \lambda\Cop + \lambda^2\Mop + \mat{A}_2(\lambda),
+  \label{eq:nep-form}
+\end{equation}
+where $\mat{A}_2(\lambda)$ is the operator-valued nonlinear part carrying the
+dispersion---a rational function of $\lambda$ for a Lorentz model, a square-root
+or exponential for a more exotic one. This is a \emph{nonlinear eigenproblem}, or
+NEP. The word ``nonlinear'' refers to the dependence on $\lambda$, not to any
+nonlinearity in $\vx$: \cref{eq:nep} is still linear in the eigenvector $\vx$ for
+each fixed $\lambda$.
+
+\begin{physicsbox}
+The nonlinear eigenproblem is the mathematics of a resonance that \emph{shapes its
+own cavity}. In a dispersive medium the material's response---how strongly it
+polarizes, how much it absorbs---depends on the oscillation frequency. But the
+oscillation frequency is precisely the resonance $\lambda$ we are trying to find.
+So the operator that determines the resonance depends on the resonance itself: a
+feedback loop baked into the equation. A mode ringing at one frequency sees a
+different material than a mode ringing at another, and the self-consistent
+frequency---the one at which the cavity, filled with the material \emph{as it
+behaves at that frequency}, actually resonates---is the eigenvalue of
+$\mat{T}(\lambda)\vx=\mathbf 0$. The complex part of $\lambda$ encodes the loss:
+its imaginary part is the oscillation, its real part the decay, and the two
+together give the resonant frequency and the quality factor $Q$
+(\cref{ch:reductions}).
+\end{physicsbox}
+
+\subsection{Why linearization fails}
+\label{sec:def-linfails}
+
+\Cref{ch:eigenvalues} met the \emph{quadratic} eigenproblem
+$(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$ and tamed it by
+\emph{linearization}: introduce $\vz=\lambda\vx$, stack $(\vx,\vz)$, and trade the
+quadratic $N\times N$ problem for a linear $2N\times 2N$ generalized
+eigenproblem the black-box library can solve. The trick worked because the
+$\lambda$-dependence was \emph{polynomial}: a degree-two polynomial in $\lambda$
+linearizes to a pencil of twice the size, a degree-$d$ polynomial to a pencil of
+$d$ times the size. The companion-matrix construction is exact.
+
+For the genuinely nonlinear $\mat{A}_2(\lambda)$ there is no such construction.
+You cannot stack a finite number of auxiliary unknowns to absorb a rational or
+transcendental function of $\lambda$; the ``companion'' would need infinitely many
+blocks. \Cref{fig:linear-vs-nep} contrasts the two situations. A polynomial of
+degree $d$ has a finite linearization (a $dN\times dN$ pencil); a true
+nonlinearity has none. Approximating $\mat{A}_2(\lambda)$ by a polynomial and
+linearizing \emph{that} is a real technique (rational and polynomial
+approximation methods underlie much of modern NEP solving), but it trades the
+exact problem for an approximate one and inflates the dimension. Palace takes the
+other road: confront the nonlinearity directly with a Newton iteration on
+$\lambda$, and use deflation to get more than one eigenpair.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: linear/polynomial pencil — fixed operator =====
+  \begin{scope}
+    \node[font=\small\bfseries, simBlue] at (1.4,2.9) {linear / polynomial pencil};
+    \node[stage, minimum width=30mm, minimum height=14mm] (op) at (1.4,1.4)
+      {$\Kop+\lambda\Cop+\lambda^2\Mop$};
+    \node[font=\scriptsize\itshape, simGray] at (1.4,0.55)
+      {operator built from \emph{fixed} matrices};
+    \node[data, minimum width=20mm] (lam) at (1.4,-0.4) {$\lambda$};
+    % lambda only scales the fixed blocks
+    \draw[flow, simGray] (lam) -- node[right,font=\scriptsize]{scales blocks} (op);
+    \node[font=\scriptsize, simGreen, align=center] at (1.4,-1.4)
+      {\emph{linearizes:} $2N\!\times\!2N$\\ pencil, one library call};
+  \end{scope}
+  % divider
+  \draw[simGray!50, densely dashed] (3.6,-1.8) -- (3.6,3.1);
+  % ===== RIGHT: nonlinear T(lambda) — operator depends on its own eigenvalue =====
+  \begin{scope}[xshift=4.6cm]
+    \node[font=\small\bfseries, simRust] at (1.7,2.9) {nonlinear $\mat{T}(\lambda)$};
+    \node[stage, minimum width=34mm, minimum height=14mm, draw=simRust, fill=simBgRust]
+      (opn) at (1.7,1.4) {$\mat{T}(\lambda)=\cdots+\mat{A}_2(\lambda)$};
+    \node[data, minimum width=20mm] (lamn) at (1.7,-0.6) {$\lambda$};
+    % feedback: lambda feeds the operator, the operator's eigenvalue IS lambda
+    \draw[flow, simRust] (lamn.east) to[out=0,in=-60]
+      node[right,font=\scriptsize,align=left,pos=0.4]{enters the\\operator} (opn.south east);
+    \draw[backflow, simRust] (opn.south west) to[out=-120,in=180]
+      node[left,font=\scriptsize,align=right,pos=0.6]{whose eigenvalue\\\emph{is} $\lambda$} (lamn.west);
+    \node[font=\scriptsize, simRust, align=center] at (1.7,-1.7)
+      {\emph{no linearization:} solve\\ $\mat{T}(\lambda)\vx=\mathbf 0$ directly};
+  \end{scope}
+\end{tikzpicture}
+\caption[Linear pencil versus nonlinear $\mat{T}(\lambda)$]{The structural break.
+\emph{Left:} a linear or polynomial pencil is built from \emph{fixed} matrices
+$\Kop,\Cop,\Mop$; the eigenvalue $\lambda$ only \emph{scales} those blocks, so the
+problem linearizes exactly to a larger pencil and the black-box library of
+\cref{ch:krylovschur} solves it in one call. \emph{Right:} for a dispersive
+material the operator $\mat{T}(\lambda)$ \emph{depends on $\lambda$ itself}
+through the nonlinear part $\mat{A}_2(\lambda)$---a feedback loop, since the
+$\lambda$ feeding the operator is the very eigenvalue we seek. No finite stacking
+of auxiliary unknowns can absorb a non-polynomial dependence, so linearization
+fails and we must attack $\mat{T}(\lambda)\vx=\mathbf 0$ directly.}
+\label{fig:linear-vs-nep}
+\end{figure}
+
+\section{Deflated quasi-Newton for the NEP}
+\label{sec:def-nleps}
+
+Palace solves the nonlinear eigenproblem with a \emph{deflated quasi-Newton}
+method---the scheme SLEPc's NEP solver uses, with minimality index one, following
+Effenberger~\citep{effenberger2013}. The idea is exactly the two halves of this
+chapter, joined: \emph{Newton's method to converge one eigenpair} of the
+nonlinear system, and \emph{deflation to lock it and move to the next}. We build
+it in that order.
+
+\subsection{Newton on the eigenvalue}
+\label{sec:def-newton}
+
+Forget deflation for a moment and chase a single eigenpair of
+$\mat{T}(\lambda)\vx=\mathbf 0$. The unknowns are the pair $(\vx,\lambda)$---an
+$N$-vector and a scalar---and \cref{eq:nep} is $N$ equations. That is one equation
+short of a square system: any scalar multiple of an eigenvector is also an
+eigenvector, so $\vx$ is determined only up to scale, and we need a
+\emph{normalization} to pin it down. Add one: fix the size and phase of $\vx$ by
+requiring $\vc^{\!\top}\vx=1$ for some fixed vector $\vc$. Now we have $N+1$
+equations in $N+1$ unknowns,
+\begin{equation}
+  \mat{F}(\vx,\lambda) \;=\;
+  \begin{pmatrix} \mat{T}(\lambda)\,\vx \\[2pt] \vc^{\!\top}\vx - 1 \end{pmatrix}
+  \;=\; \mathbf 0,
+  \label{eq:nep-system}
+\end{equation}
+a square \emph{nonlinear system} we can hand to Newton's method---the same
+quasi-Newton machinery that drove the nonlinear solves of \cref{ch:cg}, now with
+the eigenvalue itself among the unknowns.
+
+Newton's method linearizes $\mat{F}$ about the current guess and solves for the
+correction. The Jacobian of \cref{eq:nep-system} with respect to
+$(\vx,\lambda)$---differentiating each block---is the bordered matrix
+\begin{equation}
+  \mat{J}(\vx,\lambda) =
+  \begin{pmatrix}
+    \mat{T}(\lambda) & \mat{T}'(\lambda)\,\vx \\[2pt]
+    \vc^{\!\top} & 0
+  \end{pmatrix},
+  \label{eq:nep-jacobian}
+\end{equation}
+where $\mat{T}'(\lambda)=\mathrm{d}\mat{T}/\mathrm{d}\lambda$ is the derivative of
+the operator with respect to the eigenvalue---the term that carries the
+nonlinearity into the Jacobian. The Newton step solves
+$\mat{J}(\vx,\lambda)\,(\Delta\vx,\Delta\lambda)^{\!\top}=-\mat{F}(\vx,\lambda)$
+and updates $(\vx,\lambda)\leftarrow(\vx,\lambda)+(\Delta\vx,\Delta\lambda)$. The
+\emph{quasi}-Newton variant Palace uses replaces the exact Jacobian action with a
+cheaper lagged approximation (and an inexact inner tolerance), in the same spirit
+as the quasi-Newton methods of \cref{ch:cg}; the structure---residual, Jacobian
+solve, update---is identical.
+
+\begin{keyidea}
+The nonlinear eigenproblem $\mat{T}(\lambda)\vx=\mathbf 0$ is turned into a square
+\emph{nonlinear system} in the unknowns $(\vx,\lambda)$ by appending a
+normalization $\vc^{\!\top}\vx=1$, and solved by \emph{Newton's method---with the
+eigenvalue $\lambda$ itself as one of the unknowns Newton drives}. Each Newton
+step evaluates a residual, solves a bordered linear system built from
+$\mat{T}(\lambda)$ and its derivative $\mat{T}'(\lambda)$, and updates both the
+eigenvector and the eigenvalue. ``Newton on the eigenvalue'' is the engine; we
+deflate around it to get more than one mode.
+\end{keyidea}
+
+The next worked example makes the eigenvalue-Newton concrete on a scalar problem
+small enough to compute by hand, where ``Newton on $\lambda$'' is visibly just
+Newton's method on a scalar equation.
+
+\begin{workedexample}{Newton on a scalar nonlinear eigenproblem}{nepscalar}
+Strip the NEP to one dimension, so $\vx$ is a scalar $x$ and $\mat{T}(\lambda)$ is
+a scalar function $T(\lambda)$. Then $\mat{T}(\lambda)x=0$ with $x\neq0$ forces
+$T(\lambda)=0$: \emph{the nonlinear eigenproblem is just a root-find for
+$\lambda$}, and Newton on the eigenvalue is plain scalar Newton. Take the
+nonlinearity
+\[
+  T(\lambda) \;=\; \lambda^2 - g(\lambda),
+  \qquad g(\lambda) = 2 + \tfrac{1}{2}\cos\lambda,
+\]
+a quadratic with a small dispersive wobble $g(\lambda)$ standing in for the
+material's frequency dependence. (Were $g$ constant, this would be an ordinary
+quadratic eigenvalue $\lambda=\sqrt g$; the $\cos\lambda$ is what makes it
+genuinely nonlinear.) We seek the smallest positive root.
+
+\smallskip
+\emph{The Newton step.} With $T'(\lambda)=2\lambda+\tfrac12\sin\lambda$, the scalar
+Newton update is
+\[
+  \lambda_{k+1} = \lambda_k - \frac{T(\lambda_k)}{T'(\lambda_k)}
+    = \lambda_k - \frac{\lambda_k^2 - 2 - \tfrac12\cos\lambda_k}
+                       {2\lambda_k + \tfrac12\sin\lambda_k}.
+\]
+This is exactly the bordered Newton step \cref{eq:nep-jacobian} in one dimension:
+the ``Jacobian'' is the scalar $T'(\lambda)$, the residual is $T(\lambda)$, and
+the normalization holds $x=1$ so $\Delta x=0$ and only $\lambda$ moves.
+
+\smallskip
+\emph{Iterate from $\lambda_0=1.5$.}
+\[
+  \begin{array}{c|ccc}
+    k & \lambda_k & T(\lambda_k) & \lambda_{k+1} \\\hline
+    0 & 1.5000 & 0.2147 - 0\!=\!-0.2147 & 1.5713 \\
+    1 & 1.5713 & 0.0205 & 1.5651 \\
+    2 & 1.5651 & 0.00018 & 1.56504 \\
+    3 & 1.56504 & 1.4\!\times\!10^{-8} & 1.565036
+  \end{array}
+\]
+(Here $T(1.5)=2.25-2-\tfrac12\cos1.5=0.25-0.0354=0.2146$, and the step
+$1.5-0.2146/3.0046=1.5714$, matching the table to rounding.) The residual
+$T(\lambda_k)$ is driven to zero \emph{quadratically}---roughly doubling its
+correct digits each step, the signature of Newton convergence---and settles at the
+self-consistent eigenvalue $\lambda^\star\approx1.5650$, the frequency at which
+$\lambda^2$ equals the material response $g(\lambda)$ \emph{evaluated at that very
+frequency}. The fixed point of the feedback loop of \cref{fig:linear-vs-nep} is a
+root, and Newton finds it.
+
+\smallskip
+\emph{Reading the residual figure.} \Cref{fig:newton-residual} plots
+$\abs{T(\lambda_k)}$ against the step $k$ on a log axis: a straight line
+steepening downward, the quadratic plunge. In the full $N$-dimensional problem the
+scalar division becomes the bordered linear solve \cref{eq:nep-jacobian}, but the
+convergence story is the one on this page.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=11cm, height=5.6cm,
+  xlabel={quasi-Newton step $k$},
+  ylabel={residual $\abs{T(\lambda_k)}$},
+  ymode=log, ymin=1e-10, ymax=1,
+  xmin=0, xmax=4,
+  grid=both, grid style={simGray!18},
+  xtick={0,1,2,3,4},
+  label style={font=\footnotesize}, tick label style={font=\scriptsize},
+  legend pos=north east, legend style={font=\scriptsize, fill=white, draw=simGray!40},
+  legend cell align=left,
+]
+% the residual from the worked example: quadratic convergence
+\addplot[simRust, very thick, mark=*, mark size=2pt] coordinates {
+  (0,0.2147)(1,0.0205)(2,1.8e-4)(3,1.4e-8)};
+\addlegendentry{$\abs{T(\lambda_k)}$ (Newton on $\lambda$)}
+% reference: linear convergence (a shallower line) for contrast
+\addplot[simBlue, very thick, densely dashed, mark=square, mark size=1.5pt] coordinates {
+  (0,0.2147)(1,0.064)(2,0.019)(3,0.0058)(4,0.0017)};
+\addlegendentry{linear convergence (for contrast)}
+% tolerance line
+\addplot[simGreen, densely dotted, thick, domain=0:4, samples=2] {1e-8};
+\node[font=\scriptsize, simGreen, anchor=west] at (axis cs:0.1,3e-8) {tolerance};
+\end{axis}
+\end{tikzpicture}
+\caption[Quasi-Newton drives the eigenvalue residual to zero]{Newton on the
+eigenvalue, convergence history from \cref{wex:nepscalar}. The residual
+$\abs{T(\lambda_k)}$ (rust) falls \emph{quadratically}---each step roughly squares
+the previous error, so the count of correct digits doubles per step and the
+residual plunges through the tolerance (green dotted) in three or four steps. The
+dashed blue line shows merely \emph{linear} convergence for contrast: the
+straight-line decay of a fixed-rate iteration, far slower. This quadratic plunge
+is the payoff of solving the bordered Newton system \cref{eq:nep-jacobian} each
+step rather than fixed-point iterating. In the full problem each rust point costs
+one bordered linear solve; in the scalar case it costs one division.}
+\label{fig:newton-residual}
+\end{figure}
+
+\subsection{Deflating through an extended problem}
+\label{sec:def-extended}
+
+Newton converges \emph{one} eigenpair. To get the next, we deflate---but the
+rank-one operator subtraction of \cref{sec:def-ranköne} relied on symmetry and a
+fixed operator, neither of which a nonlinear, non-symmetric $\mat{T}(\lambda)$
+offers. The NEP deflation is instead built into the \emph{system Newton solves},
+by augmenting it.
+
+Suppose $k$ eigenpairs have already converged, collected as the columns of
+$\mat{X}\in\Complex^{N\times k}$ (the locked invariant basis) together with a
+small $k\times k$ matrix $\mat{H}$ recording how the operator acts \emph{within}
+that found subspace (its Rayleigh-quotient block). Effenberger's construction
+forms an \emph{extended} nonlinear eigenproblem of size $n+k$---the original $N$
+unknowns of $\vx$ plus $k$ extra coordinates $\vx_2\in\Complex^k$ that measure the
+new pair's overlap with the locked block:
+\begin{equation}
+  \widetilde{\mat{T}}(\lambda)
+  \begin{pmatrix}\vx\\\vx_2\end{pmatrix}
+  =\mathbf 0,
+  \qquad
+  \widetilde{\mat{T}}(\lambda) =
+  \begin{pmatrix}
+    \mat{T}(\lambda) & \mat{U}(\lambda) \\
+    \mat{X}^{\!\mathsf H} & \mathbf 0
+  \end{pmatrix},
+  \label{eq:nep-extended}
+\end{equation}
+where the coupling block $\mat{U}(\lambda)=\mat{T}(\lambda)\,\mat{X}\,
+(\lambda\mat{I}-\mat{H})^{-1}$ ties the new unknown to the locked pairs through a
+\emph{Schur-modified} factor
+\begin{equation}
+  \boxed{\;\mat{S} \;=\; \lambda\mat{I} - \mat{H}\;}
+  \label{eq:nep-schur}
+\end{equation}
+built from the eigenvalues of the already-found pairs (encoded in $\mat{H}$). The
+construction has a clean property, the whole reason for the augmentation: the
+extended problem \cref{eq:nep-extended} has \emph{exactly the eigenpairs of the
+original $\mat{T}(\lambda)$ that are not already in $\mat{X}$}. The locked pairs
+have been removed from the extended spectrum---deflated---so Newton on the extended
+system cannot reconverge to them and is driven to a genuinely new pair. The bottom
+block-row $\mat{X}^{\!\mathsf H}\vx=\mathbf 0$ is the familiar
+``orthogonal-to-the-locked-set'' constraint of \cref{sec:def-locking}, now an
+explicit equation in the augmented system rather than a projection applied by
+hand; the Schur factor $\mat{S}=\lambda\mat{I}-\mat{H}$ is what makes the
+deflation respect the nonlinear, $\lambda$-dependent structure.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the extended (n+k) x (n+k) block matrix
+  % big block T(lambda): n x n
+  \draw[thick, fill=simBgBlue, draw=simBlue] (0,0) rectangle (3.0,3.0);
+  \node[font=\small\bfseries, simBlue] at (1.5,1.6) {$\mat{T}(\lambda)$};
+  \node[font=\scriptsize, simGray] at (1.5,1.0) {$n\times n$, sparse, huge};
+  % coupling block U(lambda): n x k  (right strip)
+  \draw[thick, fill=simBgRust, draw=simRust] (3.0,0) rectangle (3.9,3.0);
+  \node[font=\scriptsize, simRust, rotate=90] at (3.45,1.5) {$\mat{U}(\lambda)$};
+  % locked block X^H: k x n  (bottom strip)
+  \draw[thick, fill=simBgGreen, draw=simGreen] (0,-0.9) rectangle (3.0,0.0);
+  \node[font=\scriptsize, simGreen] at (1.5,-0.45) {$\mat{X}^{\!\mathsf H}$ \ (locked, $k\times n$)};
+  % small dense block: k x k
+  \draw[thick, fill=simBgGold, draw=simGold] (3.0,-0.9) rectangle (3.9,0.0);
+  \node[font=\scriptsize, simGold] at (3.45,-0.45) {$\mathbf 0$};
+  % labels / braces
+  \draw[decorate, decoration={brace, amplitude=4pt}, simBlue] (-0.1,3.05) -- (2.95,3.05);
+  \node[font=\scriptsize, simBlue] at (1.45,3.45) {original $n$ unknowns $\vx$};
+  \draw[decorate, decoration={brace, amplitude=4pt}, simRust] (3.05,3.05) -- (3.9,3.05);
+  \node[font=\scriptsize, simRust, anchor=west] at (4.05,3.05) {$k$ coords $\vx_2$};
+  % the Schur factor callout
+  \node[font=\scriptsize, simInk, align=left, anchor=west] at (4.6,1.6)
+    {$\mat{U}(\lambda)=\mat{T}(\lambda)\,\mat{X}\,\mat{S}^{-1}$,\\[2pt]
+     Schur factor $\mat{S}=\lambda\mat{I}-\mat{H}$,\\[2pt]
+     $\mat{H}$: locked eigenvalues};
+  % the n+k size label
+  \draw[decorate, decoration={brace, amplitude=5pt, mirror}, simGray] (-0.25,-0.95) -- (-0.25,3.0);
+  \node[font=\scriptsize, simGray, rotate=90, anchor=south] at (-0.65,1.05) {size $n+k$};
+\end{tikzpicture}
+\caption[The deflated extended problem of size $n+k$]{Deflation by augmentation
+(Effenberger). To deflate the $k$ already-found pairs $\mat{X}$, the original
+$n\times n$ nonlinear operator $\mat{T}(\lambda)$ (blue) is bordered into an
+\emph{extended} problem of size $n+k$: a coupling column $\mat{U}(\lambda)$
+(rust), the locked block $\mat{X}^{\!\mathsf H}$ (green, the
+``orthogonal-to-the-found-set'' constraint of \cref{sec:def-locking} made an
+explicit equation), and a small $k\times k$ corner. The coupling
+$\mat{U}(\lambda)=\mat{T}(\lambda)\mat{X}\mat{S}^{-1}$ uses the
+\emph{Schur-modified} factor $\mat{S}=\lambda\mat{I}-\mat{H}$ built from the
+locked eigenvalues in $\mat{H}$, so the deflation respects the nonlinear
+$\lambda$-dependence. The extended spectrum is exactly the original spectrum
+\emph{minus} the locked pairs: Newton on the augmented system finds a genuinely
+new eigenpair, never a re-found one. Each converged pair grows $\mat{X}$ by one
+column and $\mat{H}$ by one row and column---$k\to k+1$.}
+\label{fig:extended-problem}
+\end{figure}
+
+\Cref{fig:extended-problem} draws the augmented operator. The bookkeeping that
+makes it an algorithm is the growth of the locked block: each time the inner
+Newton iteration converges a pair $(\lambda,\vx)$, the eigenvector is normalized
+and appended as a new column of $\mat{X}$, the matrix $\mat{H}$ is \emph{bordered}
+by one new row and column recording the new pair, and $k$ increments. The next
+inner solve runs against the now-larger extended problem, which has one more pair
+deflated out. ``Minimality index one'' is the technical guarantee that this
+augmentation stays as small as possible---it adds exactly $k$ extra coordinates
+for $k$ found pairs, never more---so the extended problem never bloats. The locked
+pairs are invariant: the outer loop only \emph{appends} to $\mat{X}$ and
+\emph{borders} $\mat{H}$, never disturbing what is already there, which is the
+structural reason the one-at-a-time peeling of \cref{fig:peel-spectrum} is
+correct.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm]
+  % outer loop: one-at-a-time over eigenpairs
+  \node[stage, minimum width=26mm, minimum height=11mm] (seed)
+    {\textbf{seed}\\[1pt]\scriptsize linear-eigensolve\\\scriptsize guess
+     (\cref{ch:krylovschur})};
+  \node[stage, minimum width=30mm, minimum height=13mm, right=14mm of seed] (newton)
+    {\textbf{inner quasi-Newton}\\[1pt]\scriptsize residual $\rhd$ Jacobian solve\\
+     \scriptsize $\rhd$ $\lambda$-correction $\rhd$ backtrack};
+  \node[stage, minimum width=24mm, minimum height=11mm, right=14mm of newton] (deflate)
+    {\textbf{deflate}\\[1pt]\scriptsize append col to $\mat{X}$,\\
+     \scriptsize border $\mat{H}$, $k\!+\!1$};
+  \node[product, right=12mm of deflate] (done) {all $nev$\\found?};
+  \draw[flow] (seed) -- (newton);
+  \draw[flow] (newton) -- node[above,font=\scriptsize]{converged} (deflate);
+  \draw[flow] (deflate) -- (done);
+  % the inner Newton self-loop
+  \draw[backflow] (newton.north) to[out=120,in=60,looseness=4]
+    node[above,font=\scriptsize]{not yet} (newton.north);
+  % the outer deflation loop back to seed
+  \draw[backflow] (done.south) |- node[pos=0.25,below,font=\scriptsize,simRust]
+    {next pair, now deflated against the grown $\mat{X}$} (seed.south);
+  % the extern callout: inner linear solve
+  \node[extern, below=13mm of newton, align=center] (solve)
+    {\scriptsize each Newton step: one\\\scriptsize bordered, deflated linear solve\\
+     \scriptsize (\cref{fig:dense-sparse-split})};
+  \draw[refedge] (solve.north) -- (newton.south);
+\end{tikzpicture}
+\caption[The deflated quasi-Newton loop, nested]{The full method as two nested
+loops. The \emph{outer} loop peels eigenpairs one at a time
+(\cref{fig:peel-spectrum}): \textbf{seed} a guess from the linear eigensolver of
+\cref{ch:krylovschur}, run the \textbf{inner quasi-Newton} iteration to converge
+one pair against the current deflation block $\mat{X}$, then \textbf{deflate}---
+append the new eigenvector to $\mat{X}$, border $\mat{H}$, increment $k$---and loop
+back for the next pair, now solving the extended problem with one more pair
+removed. The inner loop is Newton on the eigenvalue (\cref{sec:def-newton}):
+each step evaluates the deflated residual, solves the bordered Jacobian system
+(dashed callout, opened in \cref{fig:dense-sparse-split}), corrects
+$(\vx,\lambda)$, and backtracks for stability, repeating until the residual falls
+below tolerance. The loop terminates when $nev$ pairs are locked. This is the
+\code{QuasiNewtonSolver} Palace runs.}
+\label{fig:nleps-loop}
+\end{figure}
+
+\Cref{fig:nleps-loop} assembles the whole method: an outer one-at-a-time
+deflation loop wrapping an inner quasi-Newton iteration, with the deflation block
+growing by a column between outer iterations. The outer loop is seeded from the
+linear eigensolver of \cref{ch:krylovschur}---a cheap linear-pencil approximation
+gives Newton its starting guess, which the inner iteration then corrects to a true
+nonlinear eigenpair (the seed need not be accurate; Newton converges it).
+
+\section{The inner solve: dense-small meets sparse-large}
+\label{sec:def-innersolve}
+
+Each quasi-Newton step solves the bordered, deflated linear system---the action of
+the extended Jacobian \cref{eq:nep-jacobian} on the augmented unknowns. This
+system has a structure worth seeing clearly, because it is where two of the
+linear-algebra tools of this Part meet on the same step, each handling the part it
+is built for.
+
+The bordered system splits along the $n+k$ partition of
+\cref{fig:extended-problem}. The \emph{large} block is the $n\times n$ action of
+$\mat{T}(\lambda)$---sparse, with millions of rows, exactly the kind of operator
+\cref{ch:krylov,ch:gmres} taught us to solve iteratively. The \emph{small} block
+is the $k\times k$ Schur/Gram coordinate system---dense, but tiny, with $k$ at
+most a few hundred even after many modes are found. These call for two completely
+different solvers:
+\begin{itemize}[nosep]
+  \item the large sparse block is inverted by an iterative \code{ksp\_solve}
+  (\cref{ch:krylov})---a preconditioned Krylov method, never a factorization,
+  because the matrix is far too large to factor;
+  \item the small dense block---the $k\times k$ Gram matrix $\mat{X}^{\!\mathsf H}
+  \mat{X}$ and the Schur factor $\mat{S}=\lambda\mat{I}-\mat{H}$---is inverted by a
+  direct \code{lu\_solve}: a dense LU factorization, which on a $k\times k$ matrix
+  with $k\sim10$--$100$ is utterly negligible.
+\end{itemize}
+The block elimination that couples them is the standard Schur-complement reduction
+of a bordered system (\cref{ch:gmres} met the same shape in the bordered GMRES
+least-squares step): solve the big block, condense its contribution into the small
+block, solve the small dense block for the $k$ coordinates, and back-substitute.
+The expensive part---the one sparse solve---is exactly one \code{ksp\_solve}; the
+deflation costs only the trivial dense work on top.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=9mm]
+  % the bordered system, drawn as two coupled solves
+  \node[stage, minimum width=40mm, minimum height=22mm, draw=simBlue, fill=simBgBlue]
+    (big) at (0,0) {};
+  \node[font=\small\bfseries, simBlue] at (big.north) [yshift=-4mm] {large sparse block};
+  \node[font=\scriptsize, simInk, align=center] at (big.center) [yshift=1mm]
+    {$\mat{T}(\lambda)$, \ $n\times n$\\[1pt]$n\sim 10^6$, sparse};
+  \node[extern, minimum width=30mm, below=2mm of big.south, anchor=north]
+    (kspsolve) {\code{ksp\_solve} (\cref{ch:krylov})\\[1pt]\scriptsize preconditioned Krylov,
+      \emph{no} factorization};
+  % the small dense block
+  \node[stage, minimum width=26mm, minimum height=16mm, draw=simGold, fill=simBgGold,
+    right=24mm of big] (small) {};
+  \node[font=\small\bfseries, simGold] at (small.north) [yshift=-4mm] {small dense block};
+  \node[font=\scriptsize, simInk, align=center] at (small.center) [yshift=1mm]
+    {$\mat{S}=\lambda\mat{I}-\mat{H}$,\\[1pt]$\mat{X}^{\!\mathsf H}\mat{X}$, \ $k\times k$\\[1pt]
+     $k\sim 10$--$100$, dense};
+  \node[opbox, minimum width=24mm, below=2mm of small.south, anchor=north,
+    draw=simGold] (lusolve) {\code{lu\_solve}\\[1pt]\scriptsize dense LU, negligible};
+  % the Schur-complement coupling
+  \draw[flow] (big.east) -- node[above,font=\scriptsize,align=center]
+    {condense\\(Schur compl.)} (small.west);
+  \draw[backflow] (small.south west) to[out=-150,in=-30]
+    node[below,font=\scriptsize]{back-substitute the $k$ coords} (big.south east);
+  % the cost annotation
+  \node[font=\scriptsize\itshape, simRust, align=center] at (0,-3.4)
+    {\textbf{the cost lives here:} one sparse solve/step};
+  \node[font=\scriptsize\itshape, simGreen, align=center] at (5.0,-3.4)
+    {\textbf{essentially free:}\\ a $k\times k$ factorization};
+\end{tikzpicture}
+\caption[The dense-small / sparse-large solve split]{One quasi-Newton step's
+bordered linear solve, split by block. The deflated extended Jacobian
+\cref{eq:nep-jacobian} partitions into a \emph{large sparse} block---the
+$n\times n$ action of $\mat{T}(\lambda)$, with millions of unknowns, inverted by a
+preconditioned iterative \code{ksp\_solve} (\cref{ch:krylov}; never factored)---and
+a \emph{small dense} block---the $k\times k$ Schur factor
+$\mat{S}=\lambda\mat{I}-\mat{H}$ and Gram matrix $\mat{X}^{\!\mathsf H}\mat{X}$,
+inverted by a direct dense \code{lu\_solve}. The Schur-complement reduction
+condenses the big block into the small one, solves the $k$ dense coordinates, and
+back-substitutes. The entire deflation overhead is the negligible $k\times k$
+factorization; the cost of the step is the single sparse solve it would have cost
+without any deflation at all. Big-and-sparse iterative, small-and-dense direct:
+the recurring division of labour of this Part.}
+\label{fig:dense-sparse-split}
+\end{figure}
+
+\Cref{fig:dense-sparse-split} draws the division of labour. It is the same split
+this Part keeps returning to---iterative Krylov for the huge sparse operator,
+direct dense factorization for the tiny coordinate system---and the deflated
+quasi-Newton step is where the two sit side by side in a single bordered solve, the
+sparse \code{ksp\_solve} carrying essentially all the cost and the dense
+\code{lu\_solve} carrying the deflation bookkeeping for free.
+
+\section{Where this lands in Palace}
+\label{sec:def-palace}
+
+Palace's eigenmode driver is, by default, the clean linear path of
+\cref{ch:eigenvalues,ch:krylovschur}: assemble $(\Kop,\Mop)$, choose a shift,
+hand the pencil to SLEPc or ARPACK, read back the modes. The deflated quasi-Newton
+method of this chapter is the \emph{nonlinear} branch of that same driver, taken
+when the configuration declares frequency-dependent (lossy, dispersive)
+materials---the case where the operator $\mat{T}(\lambda)$ genuinely depends on
+$\lambda$ and no linearization exists.
+
+In the source, this branch is a Palace-authored solver,
+\code{QuasiNewtonSolver}, that drives the SLEPc-NEP-style deflation scheme
+(minimality index one, Effenberger~\citep{effenberger2013}; the disguised
+quasi-Newton variant of Jarlebring--Koskela--Mele). It is one of the few places
+where the eigensolver's outer loop is \emph{Palace's} code rather than the
+library's: where the linear eigensolve hands its whole iteration to an opaque
+\code{EPSSolve} (\cref{ch:eigenvalues}), the nonlinear path runs the outer
+deflation loop in Palace, calling the library only for the inner linear solves and
+the linear-eigensolve seed. The structure of \cref{fig:nleps-loop}---outer
+one-at-a-time deflation, inner quasi-Newton, the dense/sparse bordered solve---is
+that source rendered as a composition, the outer sweep an explicit value-threaded
+recursion over the growing locked block.
+
+The contrast with the linear path is the contrast that organizes this whole Part.
+The linear eigenmode solve is the fourth \emph{solve corner} of
+\cref{ch:situating}: an opaque black-box call, no Palace loop. The nonlinear
+eigenmode solve is a Palace-authored \emph{fold}---the same shape as the transient
+time-march---that happens to wrap a black-box linear solve and a black-box linear
+eigensolve inside each step. It is the deepest composition the eigenmode analysis
+reaches: an outer Palace deflation loop, an inner Palace quasi-Newton loop, an
+inner-inner sparse \code{ksp\_solve}, all to find the resonances of a cavity whose
+material fights back at every frequency.
+
+\subsection{Reading the results}
+\label{sec:def-results}
+
+The output is the same shape as the linear eigenmode analysis, read the same way
+(\cref{ch:eigenvalues,ch:reductions}). Each converged pair $(\lambda_i,\vx_i)$
+carries a \emph{complex} eigenvalue---necessarily complex, because the dispersive
+material is lossy. Its imaginary part gives the oscillation frequency and its real
+part the decay rate, and the two together give the resonant frequency
+$f_i=\Im\lambda_i/2\pi$ (up to convention) and the quality factor
+\begin{equation}
+  Q_i \;=\; \frac{\abs{\Im\lambda_i}}{2\,\abs{\Re\lambda_i}},
+\end{equation}
+exactly as the lossy quadratic case of \cref{ch:eigenvalues} did. The eigenvector
+$\vx_i$ is the mode field. The reduction from complex eigenpair to
+frequency-and-$Q$ is the output postprocessing of \cref{ch:reductions}; the
+nonlinear path is one more producer feeding it. So the deflated quasi-Newton
+method, for all its internal machinery, hands the engineer the same table the
+black-box eigensolve does---resonant frequencies and quality factors---computed
+for the materials the black-box path could not represent.
+
+\begin{pitfall}
+The nonlinear path's eigenvalues are \emph{always} complex and must be read as
+such; do not discard the real part as numerical noise the way one might for a
+nearly-lossless linear mode. In the NEP the real part of $\lambda$ \emph{is the
+loss}---it is the physical content the dispersive material was added to capture,
+and it is what distinguishes a sharp high-$Q$ resonance from a broad lossy one.
+A second trap is the seed: the linear-eigensolve guess that starts each outer
+iteration is computed from a \emph{constant-material} approximation, so it can sit
+far from the true nonlinear eigenvalue. That is expected---Newton's quadratic
+convergence (\cref{fig:newton-residual}) closes the gap---but it means the seed's
+eigenvalue should never be reported as the answer; only the converged
+post-Newton pair is physical.
+\end{pitfall}
+
+\summarysection
+The engineer wants many resonances, not one, and \emph{deflation} is how an
+eigensolver delivers them: once a pair has converged it is \emph{locked}---projected
+out of the search space so the iteration is forced to find the next one, peeling
+the spectrum off lowest-first. On a symmetric linear problem deflation is a
+rank-one operator subtraction $\mat{A}_1=\mat{A}-\mu_1\vu_1\vu_1^{\!\top}$ that
+sends the found eigenvalue to zero; in general it is a projection
+$\mat{P}=\mat{I}-\mat{X}\mat{X}^{\!\top}$ against the locked block---the same
+``locking'' Krylov--Schur applies to its converged Ritz vectors. When the material
+is dispersive the operator depends on its own eigenvalue,
+$\mat{T}(\lambda)\vx=\mathbf 0$, a \emph{nonlinear eigenproblem} that no
+linearization can reduce to a pencil. Palace solves it by \emph{deflated
+quasi-Newton}: append a normalization to make $(\vx,\lambda)$ a square nonlinear
+system, run \emph{Newton on the eigenvalue}, and deflate each found pair through an
+\emph{extended problem} of size $n+k$ with the Schur-modified factor
+$\mat{S}=\lambda\mat{I}-\mat{H}$. Each Newton step solves a bordered system that
+splits into a large sparse block (an iterative \code{ksp\_solve}) and a tiny dense
+block (a direct \code{lu\_solve}). The result is a set of complex eigenpairs read,
+like the linear path, as resonant frequencies and quality factors.
+
+\furtherreading
+The deflated quasi-Newton method and its minimality-preserving extended-problem
+construction are due to Effenberger~\citep{effenberger2013}, whose paper is the
+direct source for the SLEPc-NEP scheme Palace runs; it is the place to go for the
+proof that the extended problem \cref{eq:nep-extended} has exactly the
+non-locked eigenpairs and for the minimality-index machinery only sketched here.
+Saad's eigenvalue text~\citep{saad2011eig} is the standard reference for deflation
+on linear problems---the rank-one subtraction, the projection form, and their
+numerical conditioning---and for the broader landscape of nonlinear eigenvalue
+methods (contour integration, rational approximation) that Palace's Newton route
+is one branch of. Stewart~\citep{stewart2001krylovschur} connects the locking of
+the previous chapter to the deflation of this one: thick-restart Krylov--Schur's
+treatment of converged Ritz vectors is deflation on the linear pencil, and reading
+his account alongside \cref{sec:def-locking} shows the two chapters describing one
+mechanism from two sides.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Deflation by hand.} For
+  $\mat{A}=\begin{psmallmatrix}5&2\\2&5\end{psmallmatrix}$, find the dominant
+  eigenpair $(\mu_1,\vu_1)$ by inspection (the eigenvectors are
+  $(1,1)^{\!\top}/\sqrt2$ and $(1,-1)^{\!\top}/\sqrt2$). Form the deflated matrix
+  $\mat{A}_1=\mat{A}-\mu_1\vu_1\vu_1^{\!\top}$ explicitly and verify its spectrum is
+  $\{0,\mu_2\}$. What does one step of power iteration on $\mat{A}_1$ from
+  $(1,0)^{\!\top}$ return?
+  \item \textbf{Projection equals subtraction.} Show that for a symmetric
+  $\mat{A}$ with a single locked unit eigenvector $\vu_1$, iterating with the
+  projected operator $\mat{P}\mat{A}\mat{P}$ (where
+  $\mat{P}=\mat{I}-\vu_1\vu_1^{\!\top}$) produces the same sequence of directions as
+  iterating with the deflated operator $\mat{A}-\mu_1\vu_1\vu_1^{\!\top}$, when both
+  start from a vector already orthogonal to $\vu_1$. Why does the projection form
+  not require knowing $\mu_1$?
+  \item \textbf{Why orthogonality is mandatory.} Suppose you deflate with a stored
+  eigenvector $\tilde\vu_1$ that is slightly \emph{inaccurate}---off the true
+  $\vu_1$ by a small angle. Argue that the deflated iteration will then slowly
+  re-grow a component of $\vu_1$ and can drift back toward the first eigenpair.
+  What does this say about how accurately a pair must converge before it is safe to
+  lock? (This is the practical reason locking tolerances exist in Krylov--Schur,
+  \cref{ch:krylovschur}.)
+  \item \textbf{Scalar Newton-on-$\lambda$.} Repeat \cref{wex:nepscalar} for
+  $T(\lambda)=\lambda^2-(3+\sin\lambda)$ starting from $\lambda_0=2$. Carry three
+  Newton steps and tabulate $\lambda_k$ and $\abs{T(\lambda_k)}$. Confirm the
+  residual roughly squares each step (quadratic convergence). What would
+  \emph{linear} convergence at rate $\tfrac14$ look like in the same table?
+  \item \textbf{The normalization equation.} The NEP system
+  \cref{eq:nep-system} appends $\vc^{\!\top}\vx=1$ to make the problem square.
+  Explain why \emph{some} normalization is necessary (what goes wrong with the
+  $N$ equations $\mat{T}(\lambda)\vx=\mathbf 0$ alone?). Does the choice of $\vc$
+  affect \emph{which} eigenpair Newton converges to, or only the \emph{scale} of
+  the eigenvector it returns? Give a sentence of reasoning for each.
+  \item \textbf{Linearization's limit.} The quadratic pencil
+  $(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$ linearizes to a $2N\times2N$
+  problem. A cubic pencil (degree three in $\lambda$) linearizes to what size? Now
+  consider $\mat{T}(\lambda)=\Kop+\Mop\,e^{-\lambda\tau}$ (a delay term, genuinely
+  transcendental). Explain why \emph{no} finite linearization exists, and what
+  this forces the solver to do instead.
+  \item \textbf{Dense-small versus sparse-large.} In the bordered solve of
+  \cref{fig:dense-sparse-split}, the large block is $n\times n$ with
+  $n\sim10^6$ and the small block is $k\times k$ with $k\sim50$. Estimate the
+  ratio of arithmetic cost between a single dense LU factorization of the small
+  block ($\sim\tfrac23 k^3$ operations) and a single iterative solve of the large
+  block (take it as $\sim100$ matrix-vector products at $\sim10n$ operations each).
+  Which dominates, and by how many orders of magnitude? What does your answer say
+  about whether deflation ``slows down'' each Newton step?
+  \item \textbf{Block deflation.} The chapter mostly deflates one pair at a time,
+  but \cref{sec:def-locking} noted a block form that locks several at once into
+  $\mat{X}$. Sketch how the extended problem \cref{eq:nep-extended} and its growth
+  rule (append a column to $\mat{X}$, border $\mat{H}$) would change if the inner
+  solver converged a \emph{block} of $b$ pairs simultaneously instead of one. What
+  property of the nonlinear deflation makes one-at-a-time the natural default for
+  the NEP, even though linear Krylov--Schur deflates in blocks? (Hint: re-read the
+  note on minimality index one and the dependence of each pair's deflation on the
+  prior pair being fully converged.)
+\end{enumerate}

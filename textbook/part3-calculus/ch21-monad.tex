@@ -1,0 +1,1037 @@
+\chapter{Modeling Mutation Purely: The State Monad}
+\label{ch:monad}
+
+\chapterorient{A solver does not compute one tensor; it \emph{evolves} a bundle of
+state---the current iterate, the residual it is chasing, the count of how many
+steps it has taken---across many passes of a loop. In a mutable language you would
+keep that bundle in a struct and overwrite it. We cannot: every record in this book
+is immutable (\cref{ch:records}), so each step must take the \emph{old} bundle and
+return a \emph{new} one. Done by hand, threading that bundle through every call is
+tedious clerical work, and clerical work is where bugs breed. This chapter
+introduces the discipline that automates the threading and---this is the real
+prize---makes the \emph{one place} the state actually changes stand out plainly on
+the page. We call it the \emph{state monad}. We will not approach it as an abstract
+algebraic structure; we will build it as what it is: careful bookkeeping for a
+single evolving value.}
+
+\section{The problem: threading one bundle by hand}
+\label{sec:problem}
+
+Recall the workhorse record from \cref{ch:records}: a \code{SimState}, the run-time
+state a solve carries from step to step. It holds the current iterate, an iteration
+counter, a convergence flag, perhaps a residual:
+
+\begin{lstlisting}[style=l4style]
+SimState = { x: Tensor[N], it: Int, converged: Bool, residual: Float }
+\end{lstlisting}
+
+\noindent A solve is a chain of steps, each producing the next \code{SimState} from
+the current one---exactly the value-threading $\vs_0 \to \vs_1 \to \vs_2$ of
+\cref{ch:bigidea}. Because records are immutable, ``produce the next state'' means
+``read the old one and build a fresh one with the spread.'' A single step that
+bumps the counter and records a new iterate looks like this:
+
+\begin{lstlisting}[style=l4style]
+step :: SimState -> SimState
+step s =
+  let x'  = improve s.x        in    -- compute a better iterate (a pure call)
+  let r'  = residual_of x'     in    -- its residual          (a pure call)
+  { ...s, x: x', it: s.it + 1, residual: r' }   -- the fresh state
+\end{lstlisting}
+
+\noindent So far, so clean: one step is a pure function \code{SimState -> SimState},
+and we already know how to write it. The trouble starts when a step is not a single
+expression but a \emph{sequence} of sub-operations, several of which each need to
+read \emph{and} advance the state. Then the threading becomes manual, and the manual
+threading is where the eye glazes over. Picture a step that must (i) read the current
+iterate, (ii) advance it and bump the counter, (iii) read the just-advanced state to
+compute a residual, and (iv) record that residual. Threaded by hand, every sub-step
+must be handed the \emph{latest} state and must return the \emph{next} one, and the
+programmer is personally responsible for never reusing a stale one:
+
+\begin{lstlisting}[style=l4style]
+step_by_hand :: SimState -> SimState
+step_by_hand s0 =
+  let s1 = { ...s0, x: improve s0.x }      in   -- s1 is s0 advanced
+  let s2 = { ...s1, it: s1.it + 1 }        in   -- s2 is s1, counter bumped
+  let s3 = { ...s2, residual: residual_of s2.x } in   -- s3 reads s2, records r
+  s3
+\end{lstlisting}
+
+\noindent Read that carefully and you will see the hazard. There are four state
+values in flight---\code{s0}, \code{s1}, \code{s2}, \code{s3}---and the program is
+correct only because each line refers to the \emph{immediately preceding} one. Write
+\lstinline[style=l4style]|s1.it| where you meant \lstinline[style=l4style]|s2.it|,
+or thread \code{s0} into the residual line instead of \code{s2}, and the bug is
+silent: the types still check (every \code{s} is a \code{SimState}), the program
+still runs, and it computes the wrong thing. The numbers \code{s0}, \code{s1},
+\code{s2}, \code{s3} are pure clerical overhead---they carry no meaning of their own;
+they exist only to pass the baton from one line to the next. \Cref{fig:byhand} draws
+the baton-passing we are about to automate away.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=10mm]
+  \node[data, minimum width=12mm] (s0) {\code{s0}};
+  \node[opbox, right=9mm of s0] (o1) {improve};
+  \node[data, minimum width=12mm, right=9mm of o1] (s1) {\code{s1}};
+  \node[opbox, right=9mm of s1] (o2) {bump \code{it}};
+  \node[data, minimum width=12mm, right=9mm of o2] (s2) {\code{s2}};
+  \node[opbox, right=9mm of s2] (o3) {record \code{r}};
+  \node[data, minimum width=12mm, right=9mm of o3] (s3) {\code{s3}};
+  \draw[flow] (s0)--(o1); \draw[flow] (o1)--(s1);
+  \draw[flow] (s1)--(o2); \draw[flow] (o2)--(s2);
+  \draw[flow] (s2)--(o3); \draw[flow] (o3)--(s3);
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (4.45,-1.1)
+    {each baton must be handed to the \emph{next} line by hand---\\
+     name the wrong one and the bug is silent};
+\end{tikzpicture}
+\caption[Threading state by hand]{The hand-threaded step of \cref{sec:problem}.
+Four distinct state values \code{s0}\dots\code{s3} are passed line to line like a
+relay baton; each operation reads the latest and emits the next. The names carry no
+meaning---they are pure plumbing---and the program is correct only because every
+line happens to reference the one just before it. The state monad of this chapter
+makes the baton-passing implicit, so the plumbing names vanish.}
+\label{fig:byhand}
+\end{figure}
+
+\begin{keyidea}
+A solve evolves \emph{one} bundle of state through many steps. Immutability forbids
+overwriting it, so each step must read the old bundle and return a fresh one---and
+when a step has several sub-operations, threading that bundle by hand means inventing
+a chain of meaningless names (\code{s0}, \code{s1}, \code{s2}, \dots) whose only job
+is to carry the latest state to the next line. That bookkeeping is mechanical,
+repetitive, and a quiet source of bugs. The \emph{state monad} automates it: you
+write each sub-operation as if the state were simply ``there,'' and the monad threads
+the right version between the lines for you.
+\end{keyidea}
+
+\section{\texttt{Solve} as a type: a recipe that threads a state}
+\label{sec:solvetype}
+
+Here is the central move, and we make it as concretely as we can. We give a name to
+``a computation that threads a \code{SimState} and, along the way, yields some
+result of type \code{a}.'' The name is \code{Solve}:
+
+\begin{lstlisting}[style=l4style]
+type Solve a = StateT SimState Identity a
+\end{lstlisting}
+
+\noindent Do not be alarmed by the right-hand side; we will unpack \code{StateT} and
+\code{Identity} in a moment and then never need them again. Read the \emph{left} side
+first, in plain words:
+
+\begin{quote}\itshape
+A value of type \code{Solve a} is a recipe that, when you give it a starting
+\code{SimState}, produces a result of type \code{a} \emph{and} a new \code{SimState}.
+\end{quote}
+
+\noindent That is the entire idea. A \code{Solve a} is not a number, not a tensor,
+not a record---it is a \emph{recipe} (a small function, if you like) waiting for a
+state to run against. Run it against a state and two things come out: a value (the
+\code{a}) and an updated state. Concretely, you can picture \code{Solve a} as
+\emph{being} a function of this shape:
+
+\begin{lstlisting}[style=l4style]
+-- a Solve a is, under the hood, a function of this shape:
+SimState -> (a, SimState)         -- give me a state; I return a value AND a new state
+\end{lstlisting}
+
+\noindent The fancy spelling \code{StateT SimState Identity a} is just the library
+name for exactly that function shape---\code{StateT} reads ``state transformer over
+the state type \code{SimState},'' and \code{Identity} is a do-nothing wrapper that
+says ``no other effect is layered underneath; threading the state is all that
+happens.'' We could have written the type as \code{State SimState a} and meant the
+same thing; the \code{StateT \dots\ Identity} form is the spelling the calculus
+inherits, and it commits us to nothing beyond the one-line reading above. From here
+on, whenever you see \code{Solve a}, think only: \emph{a recipe that threads a
+\code{SimState} and hands back an \code{a}}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the recipe box
+  \node[stage, minimum width=34mm, minimum height=15mm, align=center] (box) at (0,0)
+    {\code{Solve a}\\[1pt]\scriptsize\itshape a recipe};
+  % input state on the left
+  \node[data, minimum width=20mm, left=16mm of box] (sin) {\code{SimState} (in)};
+  \draw[flow] (sin) -- (box);
+  % two outputs on the right
+  \node[product, minimum width=16mm] (val) at (4.4,0.9) {value : \code{a}};
+  \node[data, minimum width=22mm] (sout) at (4.5,-0.9) {\code{SimState} (out)};
+  \draw[flow] (box.east) -- (val.west);
+  \draw[flow] (box.east) -- (sout.west);
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-1.55)
+    {run it against a state\dots};
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (4.5,-1.75)
+    {\dots out comes a value \emph{and} a new state};
+\end{tikzpicture}
+\caption[\texttt{Solve a} as a state-threading recipe]{The plain reading of
+\code{Solve a}. It is not a value sitting in memory; it is a \emph{recipe} that
+consumes an incoming \code{SimState} and produces two things---a result of type
+\code{a} and an outgoing \code{SimState}. The type \code{StateT SimState Identity a}
+is the library spelling of exactly the function
+\code{SimState -> (a, SimState)}; \code{Identity} merely says ``no other effect is
+stacked underneath.'' Everything in this chapter is built from recipes of this one
+shape and ways of gluing them together.}
+\label{fig:solvetype}
+\end{figure}
+
+\begin{notationbox}
+The name \code{Solve} is reused throughout the solver chapters, and the type
+parameter \code{a} is the type of the \emph{result the recipe yields}, not the state
+it threads. A \code{Solve Float} threads a \code{SimState} and yields a
+\code{Float}; a \code{Solve Bool} threads the same \code{SimState} and yields a
+\code{Bool}. The threaded state is \emph{always} a \code{SimState} (that is fixed in
+the type \code{Solve a = StateT SimState Identity a}); only the yielded value varies.
+A very common case is \code{Solve ()}---a recipe that threads the state but yields no
+interesting value, written with the empty tuple \code{()} (``unit''). Such a recipe
+exists \emph{only} for its effect on the state.
+\end{notationbox}
+
+\section{The primitives: \texttt{do}, \texttt{get}, \texttt{modify}, \texttt{return}}
+\label{sec:primitives}
+
+A recipe is useless until we can write one and run several in order. The state monad
+gives us exactly four pieces of vocabulary, and they are all you need. We introduce
+them one at a time, in the order you reach for them.
+
+\paragraph{\code{do}: stack recipes top to bottom.} The keyword \code{do} sequences
+recipes, top to bottom, exactly the way a list of imperative statements reads. Inside
+a \code{do} block, each line is a recipe; the block runs them in order, threading the
+state from each line into the next \emph{automatically}---this is the plumbing of
+\cref{sec:problem}, now invisible. The block as a whole is itself a recipe (a bigger
+\code{Solve}), so \code{do} blocks nest like any other expression.
+
+\paragraph{\code{get}: read the current state.} The recipe \code{get} yields the
+current \code{SimState} as its value and leaves the state unchanged. You bind its
+result with the left-arrow \lstinline[style=l4style]|<-|:
+
+\begin{lstlisting}[style=l4style]
+do
+  s <- get          -- s is now bound to the current SimState; state unchanged
+  ...
+\end{lstlisting}
+
+\noindent After this line, the local name \code{s} \emph{is} the current state, and
+you may dot into it (\lstinline[style=l4style]|s.it|, \lstinline[style=l4style]|s.x|)
+like any record. Note the asymmetry with an ordinary \code{let}: a \code{let} binds
+the value of a pure expression, while \lstinline[style=l4style]|s <- get| binds the
+value \emph{a recipe yields}---here, the state itself. The left-arrow is how you reach
+inside a recipe and name what it produced.
+
+\paragraph{\code{modify f} / \code{put s}: write the state.} The recipe
+\lstinline[style=l4style]|modify f| applies the pure function \code{f} to the current
+state and makes the result the new state; it yields no interesting value (its type is
+\code{Solve ()}). This is the \emph{single most important primitive in the chapter},
+because \code{modify} is the one operation that \emph{changes} the threaded state.
+The function \code{f} is an ordinary, pure \code{SimState -> SimState}---typically a
+spread:
+
+\begin{lstlisting}[style=l4style]
+modify (\s -> { ...s, it: s.it + 1 })   -- advance the state: bump the counter
+\end{lstlisting}
+
+\noindent Read it: ``replace the current state by a fresh one, like it but with
+\code{it} incremented.'' The sibling \lstinline[style=l4style]|put s'| is the blunt
+version: it discards the current state and installs \code{s'} wholesale. We will
+almost always prefer \code{modify}, because \code{modify} \emph{names the change}
+(the spread says exactly which field moved) while \code{put} hides it inside a
+fully-rebuilt record. Indeed
+\lstinline[style=l4style]|modify f = do { s <- get; put (f s) }|---\code{modify} is
+just ``get, apply \code{f}, put,'' bundled into one honest verb.
+
+\paragraph{\code{return a}: yield a value, change nothing.} The recipe
+\lstinline[style=l4style]|return a| yields the value \code{a} and leaves the state
+untouched. It is how a \code{do} block produces a final result, and how a pure value
+is lifted into a recipe so it can sit in a \code{do} block beside the real effects.
+\lstinline[style=l4style]|return| is the ``do nothing to the state, just hand back
+this value'' recipe.
+
+\begin{notationbox}
+The four primitives partition cleanly by what they touch.
+\lstinline[style=l4style]|get| \emph{reads} the state (yields it, changes nothing);
+\lstinline[style=l4style]|modify f| and \lstinline[style=l4style]|put s| \emph{write}
+the state; \lstinline[style=l4style]|return a| touches the state not at all (it only
+yields a value). Binding a recipe's yielded value uses the left-arrow
+\lstinline[style=l4style]|x <- recipe|; binding a pure expression uses
+\lstinline[style=l4style]|let x = expr|. The two binding forms living side by side in
+one \code{do} block is the whole texture of monadic code, and \cref{sec:effectpoint}
+makes the distinction between them load-bearing.
+\end{notationbox}
+
+\subsection{Walking a tiny \texttt{do} block, line by line}
+\label{sec:walkdo}
+
+Let us slow all the way down and watch the hidden state thread through a three-line
+\code{do} block. The block reads the state, advances the iterate and counter, and
+yields the new iteration number:
+
+\begin{lstlisting}[style=l4style]
+bump :: Solve Int
+bump = do
+  s <- get                                     -- (1) read the state into s
+  modify (\s -> { ...s, x: improve s.x,        -- (2) write: advance x and it
+                       it: s.it + 1 })
+  s' <- get                                    -- (3) re-read the advanced state
+  return s'.it                                 -- (4) yield the new iteration count
+\end{lstlisting}
+
+\noindent The block is a recipe of type \code{Solve Int}: run it against a starting
+state and it yields an \code{Int} (the new counter) and leaves behind an advanced
+state. \Cref{fig:walkdo} draws the hidden state threading between the lines. Trace it
+against a concrete starting state
+\lstinline[style=l4style]|s0 = { x: x0, it: 7, ... }|:
+
+\begin{enumerate}[label=(\arabic*), leftmargin=*, nosep]
+  \item \lstinline[style=l4style]|s <- get| yields the current state \code{s0} and
+  binds it to \code{s}; the threaded state is still \code{s0}.
+  \item \lstinline[style=l4style]|modify (...)| replaces the state by the spread
+  applied to \code{s0}---a fresh \lstinline[style=l4style]|{ x: improve x0, it: 8, ... }|.
+  The threaded state is now this new record; call it \code{s1}.
+  \item \lstinline[style=l4style]|s' <- get| yields the \emph{current} state---which
+  is now \code{s1}, the advanced one---and binds it to \code{s'}.
+  \item \lstinline[style=l4style]|return s'.it| yields
+  \lstinline[style=l4style]|s'.it|, which is $8$, and leaves the state as \code{s1}.
+\end{enumerate}
+
+\noindent The crucial thing to see is what happened \emph{between} the lines. Nowhere
+did we write \code{s0}, \code{s1} as plumbing names; the \code{do} block threaded
+them for us. Line (1)'s \code{get} saw the state before the \code{modify}; line (3)'s
+\code{get} saw the state \emph{after} it. Same word, \code{get}, two different
+values---because the \code{do} block silently advanced the threaded state across the
+\code{modify} in between. That silent advance is precisely the baton-passing of
+\cref{fig:byhand}, now performed by the monad instead of by you.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the four code lines as a column on the left
+  \node[anchor=west, font=\ttfamily\scriptsize] (l1) at (-6.2,1.65) {s <- get};
+  \node[anchor=west, font=\ttfamily\scriptsize] (l2) at (-6.2,0.55) {modify (...)};
+  \node[anchor=west, font=\ttfamily\scriptsize] (l3) at (-6.2,-0.55) {s' <- get};
+  \node[anchor=west, font=\ttfamily\scriptsize] (l4) at (-6.2,-1.65) {return s'.it};
+  % the threaded-state spine on the right
+  \node[data, minimum width=16mm] (st0) at (0,1.65) {\code{s0}};
+  \node[data, minimum width=16mm] (st1) at (0,0.55) {\code{s0}};
+  \node[data, fill=simBgRust, draw=simRust, minimum width=16mm] (st2) at (0,-0.55) {\code{s1}};
+  \node[data, fill=simBgRust, draw=simRust, minimum width=16mm] (st3) at (0,-1.65) {\code{s1}};
+  % thread arrows down the spine
+  \draw[flow] (st0)--(st1);
+  \draw[flow] (st1)-- node[right=1mm,font=\scriptsize,text=simRust]{\textbf{the one write}} (st2);
+  \draw[flow] (st2)--(st3);
+  % which line reads what
+  \draw[refedge] (l1.east) -- node[above,font=\scriptsize]{reads} (st0.west);
+  \draw[refedge, simRust] (l2.east) -- node[above,font=\scriptsize,text=simRust]{writes} (st1.west);
+  \draw[refedge] (l3.east) -- node[above,font=\scriptsize]{reads} (st2.west);
+  \draw[refedge] (l4.east) -- node[above,font=\scriptsize]{ignores} (st3.west);
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,2.45)
+    {hidden threaded state (you never name it)};
+\end{tikzpicture}
+\caption[The hidden state threaded between \texttt{do} lines]{The \code{do} block of
+\cref{sec:walkdo} with its \emph{hidden} threaded state drawn on the right. The four
+source lines sit on the left; the state spine on the right shows what value the
+threaded \code{SimState} holds as control passes each line. The first \code{get}
+(line 1) sees \code{s0}; the lone \code{modify} (line 2, in rust) is the single point
+where the state changes, advancing \code{s0} to \code{s1}; the second \code{get}
+(line 3) therefore sees the \emph{advanced} \code{s1}. You wrote none of these spine
+values---the \code{do} block threaded them. Two \code{get}s, one word, two different
+answers, because one \code{modify} sat between them.}
+\label{fig:walkdo}
+\end{figure}
+
+\subsection{Why this is equivalent to the hand-threaded version}
+\label{sec:equiv}
+
+It is worth proving to yourself, once, that the \code{do} block of \cref{sec:walkdo}
+and a hand-threaded version compute exactly the same thing---that the monad is
+genuinely just hiding plumbing and adds no magic. \Cref{wex:equiv} does this side by
+side. The upshot, which we state now and earn there, is a small desugaring rule: a
+\code{do} block is shorthand for a chain of explicit ``run this recipe against the
+current state, name what it yields, thread the new state into the rest'' steps. The
+monad is sugar; underneath, the baton still gets passed---you just no longer have to
+name it.
+
+\section{The single effect point: in the monad versus outside it}
+\label{sec:effectpoint}
+
+We now reach the heart of the chapter, and the reason the state monad earns its place
+in a book about \emph{describing} algorithms clearly. The discipline is this:
+
+\begin{quote}\itshape
+Put in the monad \emph{only} the operations that read or write the threaded
+\code{SimState}. Everything else---every operator application, every dot product,
+every scrap of ephemeral workspace---is a pure \lstinline[style=l4style]|let|-binding
+\emph{outside} the monad.
+\end{quote}
+
+\noindent The payoff is enormous and immediate: because only state-touching
+operations live in the monad, the \emph{one place the state changes}---the lone
+\code{modify}---stands out on the page, surrounded by pure \code{let}s that visibly do
+not touch it. The monad turns ``where does this solver's state actually mutate?'' from
+a question you answer by reading the whole loop into a question you answer by looking
+for the word \code{modify}.
+
+\subsection{A Krylov step: one \texttt{modify} amid a sea of pure \texttt{let}s}
+\label{sec:krylovstep}
+
+The cleanest illustration is a single step of a Krylov solver (the family
+\cref{ch:operators} and the solver chapters build in full). A Krylov step does a
+\emph{lot}: it applies the system operator to the current iterate, takes one or two
+inner products, forms a scaled combination, updates a search direction, recomputes a
+residual. Naively you might expect all of that to be ``in the monad''---it is, after
+all, the step that advances the solve. The discipline says otherwise. Watch which
+lines touch the \code{SimState}:
+
+\begin{lstlisting}[style=l4style]
+krylov_step :: OpParams -> SimState -> Solve ()
+krylov_step op = \s_in -> do
+  -- ===== OUTSIDE the monad: pure let-bindings, the actual numerical work =====
+  let Ap   = apply op.A s_in.p          in   -- operator apply  (pure)
+  let alpha = s_in.rdot / dot s_in.p Ap in   -- step length     (pure dot products)
+  let x'    = axpy alpha s_in.p s_in.x  in   -- new iterate      (pure axpy)
+  let r'    = axpy (-alpha) Ap s_in.r   in   -- new residual     (pure axpy)
+  let rdot' = dot r' r'                 in   -- residual energy  (pure)
+  let beta  = rdot' / s_in.rdot         in   -- direction coeff  (pure)
+  let p'    = axpy beta s_in.p r'       in   -- new direction    (pure)
+  -- ===== INSIDE the monad: the ONE state write =====
+  modify (\s -> { ...s, x: x', r: r', p: p', rdot: rdot',
+                       it: s.it + 1, converged: rdot' < op.tol })
+\end{lstlisting}
+
+\noindent Count the monadic operations: there is exactly \emph{one}, the closing
+\code{modify}. Everything above it---the operator apply \code{Ap}, the inner products
+\code{alpha} and \code{rdot'} and \code{beta}, the new iterate \code{x'}, residual
+\code{r'}, and direction \code{p'}---is a pure \code{let}-binding. Those lines are the
+algorithm's actual arithmetic, and \emph{none of them touches the state}. They read
+fields out of \code{s\_in} (a plain value, captured once at the top) and compute fresh
+tensors, exactly the pure-function vocabulary of \cref{ch:bigidea}. Only the final
+\code{modify} folds the freshly computed quantities back into the threaded
+\code{SimState}, advancing it by one step. \Cref{fig:partition} draws the partition.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- the "outside the monad" cloud of pure work ---
+  \node[draw=simGray!55, fill=simBgGray, rounded corners=4pt, thick,
+        minimum width=58mm, minimum height=30mm] (cloud) at (-2.6,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simGray]
+    at ($(cloud.north)+(0,-1.5mm)$) {OUTSIDE the monad --- pure \code{let}s};
+  \foreach \y/\lbl in {0.55/{Ap = apply A p}, -0.05/{alpha, beta = dot ...},
+                       -0.65/{x', r', p' = axpy ...}}{
+    \node[opbox, minimum width=42mm, font=\ttfamily\scriptsize] at (-2.6,\y) {\lbl};
+  }
+  \node[anchor=south, font=\scriptsize\itshape, text=simGray]
+    at ($(cloud.south)+(0,1mm)$) {reads fields, computes fresh tensors; touches no state};
+  % --- the single modify, inside ---
+  \node[draw=simRust, fill=simBgRust, rounded corners=4pt, very thick,
+        minimum width=34mm, minimum height=16mm, align=center] (mod) at (4.0,0)
+    {\scriptsize\bfseries INSIDE the monad\\[2pt]\ttfamily\scriptsize modify (\textbackslash s -> \{...\})\\[2pt]\scriptsize\itshape the ONE state write};
+  % the computed values flow into the modify
+  \draw[flow] (cloud.east) -- node[above,font=\scriptsize]{\code{x', r', p', \dots}} (mod.west);
+\end{tikzpicture}
+\caption[In the monad versus outside it]{The partition of a Krylov step
+(\cref{sec:krylovstep}). The grey cloud on the left is everything \emph{outside} the
+monad: pure \code{let}-bindings that apply the operator, take inner products, and form
+the new iterate, residual, and direction. They read fields off the incoming state
+value and compute fresh tensors; not one of them touches the threaded \code{SimState}.
+The rust box on the right is the \emph{single} monadic operation---one
+\code{modify}---that folds those computed values back into the state, advancing it by
+one step. The arithmetic is voluminous; the effect is a single point. That asymmetry,
+made visible, is what the monad buys.}
+\label{fig:partition}
+\end{figure}
+
+\begin{keyidea}
+The state monad makes the single mutation point \emph{visible}. In a Krylov step the
+only thing \emph{in} the monad is the state write---one \code{modify} that bumps the
+counter and folds in the new iterate, residual, and direction. Everything else---the
+operator applies, the inner products, the ephemeral workspace---is a pure
+\code{let}-binding \emph{outside} the monad. The rule of thumb is exact: \textbf{if an
+operation reads or writes \code{SimState}, it is in the monad; otherwise it is a pure
+function call.} Because the discipline holds, you find every place a solver's state
+changes by searching for one word, \code{modify}---and in a whole Krylov step there
+is exactly one.
+\end{keyidea}
+
+\subsection{The rule of thumb, and why the counter is the canonical effect}
+\label{sec:counter}
+
+Apply the rule of thumb line by line to \cref{sec:krylovstep} and a striking fact
+emerges. The genuinely \emph{state-bearing} field---the one whose entire reason for
+living in \code{SimState} is that it must persist and be read across steps---is the
+iteration counter \code{it}. The heavy tensors (\code{x}, \code{r}, \code{p}) are
+recomputed each step from the previous step's values; they ride in the state for
+convenience, but the quantity that genuinely \emph{accumulates}, that the loop's
+predicate reads to decide whether to stop (\cref{ch:fold}), is the humble counter.
+In the simplest possible step---one that does nothing but advance the loop---the
+\emph{only} monadic effect is the counter bump:
+
+\begin{lstlisting}[style=l4style]
+modify (\s -> { ...s, it: s.it + 1 })   -- the canonical, irreducible state effect
+\end{lstlisting}
+
+\noindent This is the irreducible core of ``the solve mutated.'' We flagged it back
+in \cref{ch:records}: a solve's externally visible state mutates at essentially a
+\emph{single point}, the counter, while the heavy fields are recomputed elsewhere.
+The monad is what cashes that observation in: it confines the mutation to one named
+\code{modify} and pushes everything else out into pure \code{let}s, so the counter
+bump---the one true effect---is the one thing left inside.
+
+\begin{pitfall}
+The cardinal sin of monadic code is \emph{over-monadifying}: dragging pure work
+\emph{into} the monad that has no business there. It is tempting, having met
+\code{do} and \code{get}, to write every line as a monadic step---to \code{get} the
+state, compute \code{Ap = apply A s.p}, \code{put} a state with \code{Ap} stashed in
+a scratch field, \code{get} again, and so on. Resist it utterly. An operator apply is
+a pure function of its inputs; it does not read or write \code{SimState}, so it must
+\emph{not} be in the monad. Putting it there does three bad things: it buries the one
+real effect (the \code{modify}) in a crowd of fake ones, so the single mutation point
+no longer stands out; it forces ephemeral workspace (\code{Ap}, \code{alpha}) into the
+persistent state, where it does not belong (\cref{ch:strata}); and it defeats the
+demand-driven pruning of \cref{ch:fold}, which can only eliminate \emph{pure}
+unobserved work. The discipline is one-directional: pure work stays out; only
+state reads and writes go in. When in doubt, ask the rule of thumb---\emph{does this
+line read or write \code{SimState}?}---and if the answer is no, it is a \code{let}.
+\end{pitfall}
+
+\section{\texttt{execState}: the boundary where the monad evaporates}
+\label{sec:execstate}
+
+We have a way to build state-threading recipes and a discipline for keeping them
+clean. One question remains: how do we \emph{run} one? A \code{Solve a} is a recipe,
+not a value; to get an answer out we must supply a starting state and let the recipe
+thread it through to the end. That is what \code{execState} does.
+
+\begin{lstlisting}[style=l4style]
+execState :: Solve a -> SimState -> SimState
+\end{lstlisting}
+
+\noindent Read the signature: \code{execState} takes a recipe (\code{Solve a}) and an
+initial \code{SimState}, runs the recipe against it---threading the state through
+every \code{modify} inside---and returns the \emph{final state}. (It is called
+\code{exec} because it discards the recipe's yielded value \code{a} and keeps only the
+final \emph{state}; a sibling \code{evalState} keeps the value and discards the state,
+and \code{runState} keeps both. For a solve we want the final state, so
+\code{execState} is our tool.) The entire monadic apparatus---the \code{do} blocks,
+the \code{get}s and \code{modify}s, the hidden threading---is \emph{scaffolding that
+exists only between} the initial state going in and the final state coming out.
+Apply \code{execState} and the scaffolding evaporates: what is left is a plain
+function from one \code{SimState} to another.
+
+This is what lets the simulator stay pure on the outside. The top-level solve is
+written:
+
+\begin{lstlisting}[style=l4style]
+solve :: OpParams -> Inputs -> SimState
+solve op inp = execState (solve_loop op inp) (initial_state inp)
+\end{lstlisting}
+
+\noindent Look at the type of \code{solve}: \code{OpParams -> Inputs -> SimState}.
+There is no \code{Solve}, no monad, no \code{StateT} anywhere in sight. Inside,
+\code{solve\_loop op inp} is a \code{Solve ()} recipe---the whole iterative
+computation, written monadically with its \code{do} blocks and \code{modify}s---and
+\code{initial\_state inp} is the starting \code{SimState}. \code{execState} runs the
+one against the other and hands back the final \code{SimState}. From outside,
+\code{solve} is an ordinary pure function: feed it parameters and inputs, get a final
+state. The monad lived entirely inside, did its bookkeeping, and was gone by the time
+the answer crossed the boundary. \Cref{fig:execstate} draws the evaporation.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the dashed monadic interior
+  \node[draw=simViolet, fill=simBgViolet, rounded corners=4pt, densely dashed, thick,
+        minimum width=46mm, minimum height=24mm] (mon) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simViolet]
+    at ($(mon.north)+(0,-1.5mm)$) {inside: the \code{Solve} monad};
+  \node[opbox, minimum width=34mm, font=\ttfamily\scriptsize] (a) at (0,0.45)
+    {do \{ \dots\ modify \dots\ \}};
+  \node[font=\scriptsize\itshape, text=simViolet, align=center] at (0,-0.55)
+    {\code{get}s, \code{modify}s,\\hidden threading};
+  % initial state in
+  \node[data, minimum width=20mm] (s0) at (-5.0,0) {\code{initial\_state}};
+  \draw[flow] (s0) -- (mon.west);
+  % final state out
+  \node[product, minimum width=20mm] (sf) at (5.0,0) {final \code{SimState}};
+  \draw[flow] (mon.east) -- (sf.west);
+  % the boundary label
+  \node[font=\scriptsize\bfseries, text=simRust] at (-2.5,1.55) {\code{execState}};
+  \node[font=\scriptsize\bfseries, text=simRust] at (2.5,1.55) {boundary};
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-1.95)
+    {seen from outside: a pure \code{SimState -> SimState} --- the monad is gone};
+\end{tikzpicture}
+\caption[\texttt{execState} as the evaporation boundary]{\code{execState} runs a
+\code{Solve} recipe against an initial state and returns the final state. The dashed
+violet interior is the monadic computation---\code{do} blocks, \code{get}s,
+\code{modify}s, the hidden threading of \cref{fig:walkdo}. \code{execState} is the
+boundary: a \code{SimState} goes in on the left, the recipe threads it through every
+internal effect, and a final \code{SimState} comes out on the right. From outside the
+boundary there is no monad to be seen---\code{solve} has the plain type
+\code{OpParams -> Inputs -> SimState}. The monad is scaffolding that does its work
+inside and evaporates at the boundary, leaving the simulator pure on the outside.}
+\label{fig:execstate}
+\end{figure}
+
+\begin{keyidea}
+The monad is scaffolding that evaporates at the boundary. Inside \code{solve\_loop}
+the state is threaded monadically, with \code{modify} marking each write; but
+\code{execState (solve\_loop \dots) (initial\_state \dots)} runs that recipe against a
+starting state and collapses the whole thing back into a \emph{pure} function
+\code{SimState -> SimState}. The top-level \code{solve} has no monad in its type at
+all. We get the local convenience of imperative-looking, automatically-threaded state
+\emph{and} a globally pure simulator---the monad confined to the inside, gone by the
+time any answer crosses out.
+\end{keyidea}
+
+\section{Why a monad and not just a fold}
+\label{sec:whymonad}
+
+A fair challenge: \cref{ch:fold} already gave us \code{iterate\_while}, which threads
+a carry through a loop. If a solve is ``thread a \code{SimState} through steps until
+converged,'' why not simply fold the \code{SimState} as the carry and be done? Why
+introduce a monad at all?
+
+The honest answer is that for the \emph{simplest} solvers you could. A non-restarted
+solver with a single straight-line loop is perfectly well written as
+\code{iterate\_while} with \code{SimState} as the carry. The monad earns its keep
+when the control structure grows past a single flat loop, and three features push it
+there.
+
+\paragraph{Interior termination.} A real solver does not run a fixed number of steps;
+it short-circuits the instant it detects convergence---and detection happens
+\emph{mid-step}, on a residual the step just computed. Expressing ``compute the
+residual, and if it is small enough, stop \emph{now}, before doing the rest'' is
+exactly the kind of early exit a \code{do} block with a conditional makes plain at the
+coordination layer. The fold's predicate, by contrast, fires only \emph{between}
+steps (\cref{ch:fold}), so a pure fold must always finish a full step before it can
+test; the monad lets the exit decision sit \emph{inside} the step where the residual
+was born.
+
+\paragraph{Inner and outer loop structure.} Restarted Krylov methods (GMRES is the
+canonical case, built in \cref{ch:operators}) have an \emph{outer} cycle whose body is
+itself an \emph{inner} loop. The inner loop reads \code{SimState.it} to honour the
+global iteration cap and writes it back each step; the outer loop folds an accumulated
+correction into \code{SimState.x} once per cycle. That is two-level read/write traffic
+on one shared state, and the monad makes both levels explicit and the threading
+automatic across the nesting. A single flat fold cannot express ``a loop whose step is
+another loop'' without manually re-threading the carry through both.
+
+\paragraph{Threading side-data.} The iterate \code{x} lives in \code{SimState}; the
+Krylov basis lives in an ephemeral bundle reborn each restart; the correction step
+\lstinline[style=l4style]|x += V*y| reads \emph{both}. The monad makes the moment the
+\code{SimState} is touched a single named \code{modify}, while the ephemeral bundle
+rides alongside as a plain \code{let}-bound value (it does not belong in the monad---it
+does not persist across restarts). The monad cleanly separates ``the persistent state,
+threaded'' from ``the per-cycle workspace, passed as a value.''
+
+\noindent In every case the monad does the \emph{same} fundamental thing the fold
+does---thread a value through steps---but it confines the threading of the
+\emph{persistent} state to named \code{modify} points and lets the surrounding control
+structure (early exit, nesting, side-data) be written plainly. And the connection to
+\cref{ch:fold} is intact, not severed: the loop is \emph{still} \code{iterate\_while}.
+The monad is simply what the carry threads \emph{through} when the carry is a
+persistent simulator state and the control flow is richer than one flat loop. Fold and
+monad are partners: the fold is the loop; the monad is the discipline for the state the
+loop carries.
+
+\begin{notationbox}
+The three termination reasons a restarted solve can hit---converged on the residual
+proxy, exhausted the global iteration cap, filled the per-cycle basis---collapse into
+a single small sum type, \lstinline[style=l4style]@Outcome = Continue | Done Bool@.
+The recipe \code{restart\_cycle} classifies the cycle's result once, at the boundary,
+into an \code{Outcome}; \code{solve\_loop} pattern-matches on it and either recurses
+or stops. This replaces a scatter of inner-loop break conditions with one decision
+site---a clean payoff of writing the coordination monadically. The \code{Bool} inside
+\code{Done} carries whether the stop was a convergence (\code{Done True}) or an
+exhaustion (\code{Done False}), so the outer loop's final \code{modify} into
+\code{SimState} is uniform.
+\end{notationbox}
+
+\section{Two faces of one name: the \texttt{Solve} effect versus the \texttt{Solve} record}
+\label{sec:overload}
+
+A reader who has been tracking the types carefully will have noticed something
+slippery, and we must name it before it causes confusion. The word \code{Solve} is
+\emph{overloaded}: it denotes two different things that happen to share a name.
+
+\paragraph{\code{Solve} the effect.} This is the subject of the whole chapter so far:
+\code{Solve a = StateT SimState Identity a}, the \emph{monad} that threads a
+\code{SimState} and yields an \code{a}. It is a \emph{type constructor}---it takes a
+type \code{a} (the yielded-value type) and produces the type of a recipe. ``\code{Solve}
+the effect'' answers the question \emph{how is the state threaded?}
+
+\paragraph{\code{Solve} the record.} When a single Krylov step is written out, the
+\emph{value} it hands back is a record, and the calculus writes that record with the
+same word: \lstinline[style=l4style]|Solve { sim, krylov, outputs }|. This is the
+\code{SolveResult} bundle previewed in \cref{ch:records}: the next state (\code{sim}),
+the next working bundle (\code{krylov}), and the demand-prunable per-step readouts
+(\code{outputs}). ``\code{Solve} the record'' answers a different question: \emph{what
+does one step yield?}
+
+\noindent The two are genuinely distinct, and conflating them is the trap. The
+\emph{effect} is the threading discipline; the \emph{record} is the shape of the value
+yielded. They touch at exactly one field: the record's \code{sim} field is the one
+that is discharged through the effect---it is the \code{SimState} the monad threads,
+the product of the lone \code{modify}---while \code{krylov} and \code{outputs} are
+plain returned values that ride alongside, untouched by the monad. So the rule of
+thumb of \cref{sec:effectpoint} reappears at the level of the return record: of the
+three fields the record hands back, \emph{one} (\code{sim}) is effectful and \emph{two}
+(\code{krylov}, \code{outputs}) are pure. \Cref{fig:overload} disambiguates the two
+faces.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % LEFT: Solve the effect
+  \begin{scope}
+    \node[font=\small\bfseries, text=simViolet] at (0,2.2) {\code{Solve} the \emph{effect}};
+    \node[stage, minimum width=40mm, align=center] (eff) at (0,1.0)
+      {\ttfamily\scriptsize Solve a = StateT SimState Identity a};
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,0.0)
+      {a type constructor:\\\emph{how} \code{SimState} is threaded};
+    \node[font=\scriptsize, text=simInk, align=center] at (0,-1.0)
+      {answers:\\``how is state threaded?''};
+  \end{scope}
+  \draw[simGray!50, thick] (3.4,-1.6) -- (3.4,2.4);
+  % RIGHT: Solve the record
+  \begin{scope}[xshift=7.0cm]
+    \node[font=\small\bfseries, text=simBlue] at (0,2.2) {\code{Solve} the \emph{record}};
+    \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+          minimum width=42mm, minimum height=18mm, inner sep=4pt] (rec) at (0,0.6) {};
+    \node[anchor=north, font=\scriptsize\bfseries, text=simBlue] at ($(rec.north)+(0,-1mm)$)
+      {\ttfamily Solve \{ ... \}};
+    \node[anchor=west, font=\ttfamily\scriptsize, text=simRust]
+      at ($(rec.north west)+(2.5mm,-6mm)$) {sim\ \ \itshape(effectful)};
+    \node[anchor=west, font=\ttfamily\scriptsize]
+      at ($(rec.north west)+(2.5mm,-10mm)$) {krylov, outputs\ \itshape(pure)};
+    \node[font=\scriptsize, text=simInk, align=center] at (0,-1.0)
+      {answers:\\``what does one step yield?''};
+  \end{scope}
+\end{tikzpicture}
+\caption[The \texttt{Solve} overload disambiguated]{The two faces of \code{Solve}.
+\emph{Left:} \code{Solve} the \emph{effect}, the monad
+\code{StateT SimState Identity a}---a type constructor that answers \emph{how} the
+\code{SimState} is threaded across the loop. \emph{Right:} \code{Solve} the
+\emph{record}, the bundle \lstinline[style=l4style]|Solve { sim, krylov, outputs }| a
+single step yields---a value that answers \emph{what} one step hands back. They meet
+at one field: the record's \code{sim} (rust) is discharged \emph{through} the effect
+(it is the threaded \code{SimState}), while \code{krylov} and \code{outputs} are plain
+returned values the monad never touches. Same name, two questions; the \code{sim}
+field is the bridge.}
+\label{fig:overload}
+\end{figure}
+
+\begin{pitfall}
+Do not read \lstinline[style=l4style]|Solve { sim, krylov, outputs }| as ``the monad
+holds three pieces of state.'' It does not. The monad threads \emph{one} thing, a
+\code{SimState}, and that one thing is the record's \code{sim} field alone. The
+\code{krylov} and \code{outputs} fields are ordinary values the step returns
+\emph{beside} the monadic effect---the working bundle (which is reborn each restart and
+so deliberately is \emph{not} monadic state, lest its lifetime be misrepresented) and
+the prunable readouts. When you see the word \code{Solve} in a signature, check which
+face you are looking at: a bare \code{Solve a} (or \code{Solve ()}) is the effect; a
+\lstinline[style=l4style]|Solve { ... }| with braces is the return record, and only its
+\code{sim} field rides the effect.
+\end{pitfall}
+
+\section{A physical reprise: stream, then collide, threaded purely}
+\label{sec:lbm}
+
+To ground the whole chapter in something you can picture, we return to the
+lattice-Boltzmann step we met in \cref{ch:bigidea}---stream, then collide---and show
+it as the cleanest possible example of ``mutation modeled purely.'' It is the perfect
+closing example precisely because, in its minimal form, it needs \emph{no} monad at
+all: it is a pure \code{FluidState -> FluidState} function threaded by the plain fold
+\code{iterate\_while\_pure} of \cref{ch:fold}. Seeing where the monad is \emph{not}
+needed sharpens the sense of where it is.
+
+Recall the rhythm. A lattice-Boltzmann fluid stores, at each cell of a grid, a little
+tensor of \emph{populations}---how much fluid moves in each discrete direction. One
+time step \emph{streams} (every population slides to the neighbor in its direction)
+and then \emph{collides} (the populations in each cell relax toward local
+equilibrium). In a classical code this is a nest of loops overwriting a population
+array in place, often with an explicit scratch copy to avoid clobbering data a later
+cell still needs:
+
+\begin{lstlisting}[style=l4style, language=]
+// classical C-style: overwrite in place, with a defensive copy
+clone     = copy(current);              // guard against overwriting live data
+streamed  = stream(clone);              // slide populations to neighbors
+current   = collide(streamed);          // relax toward equilibrium, overwrite
+\end{lstlisting}
+
+\noindent The \lstinline[style=l4style, language=]|clone| is the tell. In the mutable
+world you must defensively copy \code{current} before streaming, because streaming
+reads a cell's neighbors and writing the result back in place would corrupt
+neighbors not yet processed. The copy is pure ceremony forced by mutation. Now watch
+the same step in our world, as a pure function building a fresh state:
+
+\begin{lstlisting}[style=l4style]
+step :: FluidState -> FluidState
+step s =
+  let streamed = stream  s.populations in    -- read s, produce a fresh tensor
+  let collided = collide streamed       in    -- read it, produce another
+  { ...s, populations: collided, t: s.t + 1 } -- a FRESH state; s untouched
+\end{lstlisting}
+
+\noindent There is no \code{clone}. There \emph{cannot} be a clobbering hazard,
+because \code{stream} reads the immutable \code{s.populations} and \emph{returns} a
+fresh tensor; the input it read can never change underneath it (\cref{ch:records}).
+The defensive copy of the mutable version has \emph{evaporated}---in the immutable
+world it was always a no-op in meaning, a workaround for a hazard that does not exist
+here. That evaporation is the whole moral of \cref{ch:bigidea} made concrete: model
+the mutation purely and the bookkeeping that mutation forced on you simply
+disappears. \Cref{fig:lbm} traces a few steps.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm]
+  % carry of FluidStates threaded by iterate_while_pure
+  \node[data, minimum width=15mm, align=center] (f0) {\code{s}\(_0\)\\\scriptsize\(t=0\)};
+  \node[opbox, right=10mm of f0, align=center] (st1) {stream\\then collide};
+  \node[data, minimum width=15mm, align=center, right=10mm of st1] (f1) {\code{s}\(_1\)\\\scriptsize\(t=1\)};
+  \node[opbox, right=10mm of f1, align=center] (st2) {stream\\then collide};
+  \node[data, minimum width=15mm, align=center, right=10mm of st2] (f2) {\code{s}\(_2\)\\\scriptsize\(t=2\)};
+  \node[font=\scriptsize, simGray, right=6mm of f2] (more) {$\cdots$};
+  \draw[flow] (f0)--(st1); \draw[flow] (st1)-- node[above,font=\scriptsize]{fresh} (f1);
+  \draw[flow] (f1)--(st2); \draw[flow] (st2)-- node[above,font=\scriptsize]{fresh} (f2);
+  \draw[flow] (f2)--(more);
+  % the evaporated clone
+  \node[draw=simGray!45, densely dashed, fill=white, rounded corners=2pt,
+        font=\scriptsize\itshape, text=simGray!70, align=center] (clone) at (1.7,-1.5)
+    {\code{clone()}\\(no-op --- evaporates)};
+  \draw[refedge, simGray!50] (clone.north) -- (st1.south);
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (8.0,-1.5)
+    {threaded by\\\code{iterate\_while\_pure}\\(no monad needed)};
+\end{tikzpicture}
+\caption[The LBM step threaded purely]{The lattice-Boltzmann step as a pure
+\code{FluidState -> FluidState} function threaded by \code{iterate\_while\_pure}
+(\cref{ch:fold}). Each step streams then collides the current populations and returns
+a \emph{fresh} state with the time counter advanced; the chain
+\code{s}\(_0 \to\) \code{s}\(_1 \to\) \code{s}\(_2\) is the value-threading of
+\cref{ch:bigidea}. The defensive \code{clone()} of the mutable version (dashed, below)
+is a \emph{no-op} here---it guarded against an in-place clobber that immutability makes
+impossible, so it simply evaporates. Because the minimal step has no interior
+termination, no nesting, and no persistent side-data beyond the carry itself, it needs
+\emph{no monad}: the plain fold suffices.}
+\label{fig:lbm}
+\end{figure}
+
+The lattice-Boltzmann step is the lower bound of the chapter's machinery: pure step,
+plain fold, no monad. A Krylov solve sits at the upper bound: the same fold drives it
+(\cref{ch:fold}), but now the carry is a persistent \code{SimState} with interior
+termination and nesting, so the monad of this chapter manages the state the fold
+carries, confining its one true mutation to a single \code{modify}. Between those two
+poles live all the solvers of the book---and every one of them is the value-threading
+of \cref{ch:bigidea}, dressed in exactly as much monadic bookkeeping as its control
+structure demands, and no more.
+
+\section{Worked examples}
+\label{sec:worked}
+
+\begin{workedexample}{One step, hand-threaded versus monadic---and they agree}{equiv}
+We take a tiny two-effect computation and write it twice: once threading the state by
+hand (passing \code{s} explicitly), once with the monad. Then we check that they
+compute the same final state, so the monad is revealed as pure plumbing-hiding.
+
+\textbf{The task.} From a starting state, (i) advance the iterate and bump the
+counter, then (ii) record the residual of the advanced iterate. Two operations, each
+touching the state.
+
+\textbf{By hand.} Thread \code{s} explicitly, inventing names for each version:
+\begin{lstlisting}[style=l4style]
+by_hand :: SimState -> SimState
+by_hand s0 =
+  let s1 = { ...s0, x: improve s0.x, it: s0.it + 1 } in   -- (i) advance + bump
+  let s2 = { ...s1, residual: residual_of s1.x }    in   -- (ii) read s1, record r
+  s2
+\end{lstlisting}
+The correctness hinges on line (ii) reading \code{s1} (the advanced state), not
+\code{s0}. The name \code{s1} is pure plumbing.
+
+\textbf{With the monad.} Write each operation as a monadic step; the \code{do} block
+threads the state:
+\begin{lstlisting}[style=l4style]
+monadic :: Solve ()
+monadic = do
+  modify (\s -> { ...s, x: improve s.x, it: s.it + 1 })   -- (i) advance + bump
+  s' <- get                                               -- re-read the advanced state
+  modify (\s -> { ...s, residual: residual_of s'.x })     -- (ii) record r
+\end{lstlisting}
+
+\tcblower
+\textbf{Running the monadic version.} Apply \code{execState monadic s0} and thread by
+the rules of \cref{sec:primitives}. The first \code{modify} replaces \code{s0} by
+\lstinline[style=l4style]|{ ...s0, x: improve s0.x, it: s0.it + 1 }|---call it
+\code{s1}, exactly the \code{s1} of the hand-threaded version. The
+\lstinline[style=l4style]|s' <- get| binds \code{s'} to the \emph{current} state,
+which is now \code{s1}. The second \code{modify} replaces \code{s1} by
+\lstinline[style=l4style]|{ ...s1, residual: residual_of s'.x }|, and since
+\code{s'} \emph{is} \code{s1}, that is
+\lstinline[style=l4style]|{ ...s1, residual: residual_of s1.x }|---exactly the
+hand-threaded \code{s2}. \code{execState} returns this final state.
+
+\textbf{They agree.} The two final states are identical, character for character. The
+difference is only that the hand-threaded version \emph{named} the intermediate
+\code{s1} and had to reference it correctly by hand, while the monadic version let the
+\code{do} block thread \code{s1} from the first \code{modify} into the \code{get} that
+follows it. This is the desugaring promised in \cref{sec:equiv}: a \code{do} block is
+shorthand for the explicit baton-passing, with the baton names supplied by the monad
+instead of by you. The monad is sugar; the computation underneath is the value
+threading of \cref{ch:bigidea}.
+\end{workedexample}
+
+\begin{workedexample}{The LBM step as a pure \texttt{FluidState -> FluidState}}{lbm}
+We trace two lattice-Boltzmann steps numerically (schematically), watching the
+\code{clone()} of the mutable version evaporate and the state thread as fresh
+immutable values through \code{iterate\_while\_pure}.
+
+\textbf{Setup.} A \code{FluidState} carries the population field and a time counter:
+\begin{lstlisting}[style=l4style]
+FluidState = { populations: Tensor[H, W, Q], t: Int }
+\end{lstlisting}
+where \code{Q} is the number of discrete velocity directions. The step streams then
+collides; the driver folds it with the plain combinator:
+\begin{lstlisting}[style=l4style]
+run :: FluidState -> Int -> FluidState
+run s0 nsteps =
+  iterate_while_pure
+    s0                              -- initial carry: the fluid state
+    (\s -> s.t < nsteps)            -- predicate: pure on the carry (the time count)
+    (\s -> let streamed = stream  s.populations in
+           let collided = collide streamed       in
+           { ...s, populations: collided, t: s.t + 1 })   -- fresh state, no clone
+\end{lstlisting}
+
+\tcblower
+\textbf{The trace.} Take a schematic field where \code{stream} shifts populations and
+\code{collide} nudges them toward equilibrium; we track only the time counter and the
+\emph{identity} of the population tensor, to make the threading visible:
+\begin{center}
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}clll@{}}
+\toprule
+step & carry \code{t} & \code{streamed} (fresh) & result \code{populations} (fresh) \\
+\midrule
+0 & $0$ & $\mathrm{stream}(P_0)$ & $P_1 = \mathrm{collide}(\mathrm{stream}(P_0))$ \\
+1 & $1$ & $\mathrm{stream}(P_1)$ & $P_2 = \mathrm{collide}(\mathrm{stream}(P_1))$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Each row reads the \emph{previous} population tensor ($P_0$, then $P_1$) and produces a
+\emph{fresh} one ($P_1$, then $P_2$); the originals $P_0$, $P_1$ are never altered, so
+no defensive copy is needed before streaming. In the mutable code,
+\lstinline[style=l4style, language=]|clone = copy(current)| would sit at the top of
+each step to protect $P_0$ from being clobbered while its neighbors are streamed; here
+that copy is a \emph{no-op}---streaming an immutable $P_0$ cannot clobber it---so it
+evaporates entirely.
+
+\textbf{Why no monad.} Examine the step against the three pressures of
+\cref{sec:whymonad}. There is no \emph{interior termination}: the loop runs a fixed
+\code{nsteps}, tested between steps by the predicate. There is no \emph{inner/outer
+nesting}: one flat loop. There is no persistent \emph{side-data} beyond the carry: the
+\code{streamed} intermediate lives and dies inside one step as an ephemeral
+\code{let}. All three pressures are absent, so the carry \emph{is} the entire state
+and a plain fold suffices---no \code{Solve}, no \code{modify}, no \code{execState}.
+This is the cleanest face of ``mutation modeled purely'': the same value-threading as
+a Krylov solve, with none of the monadic bookkeeping, because the control structure
+does not demand it. The monad is a tool you reach for exactly when the loop outgrows
+this shape, and not a moment sooner.
+\end{workedexample}
+
+\summarysection
+A solver evolves one bundle of state---the \code{SimState} holding the iterate,
+counter, residual, and convergence flag---across many steps. Immutability forbids
+overwriting it, so each step reads the old bundle and returns a fresh one; threading
+that bundle by hand means inventing a chain of meaningless plumbing names (\code{s0},
+\code{s1}, \dots) and is a quiet source of bugs (\cref{sec:problem}). The
+\emph{state monad} automates the threading. A \code{Solve a = StateT SimState
+Identity a} is a \emph{recipe} that, given a starting \code{SimState}, yields an
+\code{a} and a new \code{SimState}---read plainly, the function
+\code{SimState -> (a, SimState)} (\cref{sec:solvetype}). Four primitives suffice:
+\code{do} stacks recipes top to bottom and threads the state between them; \code{get}
+reads the current state; \code{modify f} / \code{put s} write it; \code{return a}
+yields a value, changing nothing (\cref{sec:primitives}). The load-bearing discipline
+is the \emph{single effect point}: only operations that read or write \code{SimState}
+go in the monad; everything else---operator applies, inner products, ephemeral
+workspace---is a pure \code{let} outside it. In a Krylov step the \emph{only} monadic
+operation is one \code{modify}, surrounded by pure \code{let}s; the irreducible core of
+that effect is the counter bump
+\lstinline[style=l4style]|modify (\s -> { ...s, it: s.it + 1 })|
+(\cref{sec:effectpoint},~\cref{sec:counter}). Over-monadifying---dragging pure work
+into the monad---buries the one real effect and defeats pruning; the rule of thumb
+guards against it. \code{execState} runs a recipe against an initial state and collapses
+the whole monad back into a pure \code{SimState -> SimState}: the scaffolding
+evaporates at the boundary, leaving \code{solve} pure on the outside
+(\cref{sec:execstate}). The monad earns its keep over a plain fold when control flow
+grows past one flat loop---interior termination, inner/outer nesting, side-data
+threading---but the loop is \emph{still} \code{iterate\_while}; the monad is what the
+carry threads through (\cref{sec:whymonad}). The name \code{Solve} is overloaded: the
+\emph{effect} \code{StateT SimState Identity a} (how the state is threaded) versus the
+\emph{record} \lstinline[style=l4style]|Solve { sim, krylov, outputs }| (what a step
+yields), meeting at the one effectful field \code{sim} (\cref{sec:overload}). The
+lattice-Boltzmann step is the chapter's lower bound: a pure
+\code{FluidState -> FluidState} threaded by \code{iterate\_while\_pure}, with the
+mutable world's defensive \code{clone()} evaporating into a no-op---mutation modeled
+purely, needing no monad at all (\cref{sec:lbm}).
+
+\furtherreading
+The state monad is the classic functional-programming answer to ``how do I thread
+mutable-looking state through pure code,'' and the canonical, readable introduction is
+Wadler's tutorial on how monads tame state and effects~\citep{wadler1995monads}, which
+develops exactly the \code{get}/\code{put}/\code{return} vocabulary used here, from the
+ground up and with no category theory. The state monad and the \code{StateT}
+transformer (our \code{StateT SimState Identity}) are standard equipment in the
+language Peyton Jones documents~\citep{peytonjones2003}; readers who want the precise
+desugaring of \code{do}-notation into \texttt{>>=} will find it there. We have used the
+monad here only as disciplined bookkeeping for one evolving value; the solver chapters
+(\cref{ch:operators} and the Krylov solvers that follow it) put it to work, and
+\cref{ch:strata} explains \emph{why} the threaded \code{SimState} splits cleanly from
+the build-time \code{OpParams} and the per-step \code{SolveResult}---the stratification
+that makes the single effect point possible.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item In the hand-threaded \code{step\_by\_hand} of \cref{sec:problem}, suppose a
+  typo made the third line read \lstinline[style=l4style]|residual_of s1.x| instead of
+  \lstinline[style=l4style]|s2.x|. Does the program still type-check? Does it compute
+  the right residual? Use this to explain, in one sentence, what class of bug the state
+  monad eliminates.
+  \item Read the type \code{Solve a = StateT SimState Identity a} aloud as a plain
+  English sentence, without using the words ``monad'' or ``StateT.'' Then say what
+  \code{Solve ()} and \code{Solve Bool} each yield, and what state each threads.
+  \item For each of the four primitives \code{get}, \code{modify f}, \code{put s},
+  \code{return a}, state whether it \emph{reads} the state, \emph{writes} the state, or
+  \emph{neither}, and what value (if any) it yields. Which one is the only one that can
+  change the threaded state?
+  \item Walk the \code{do} block \code{bump} of \cref{sec:walkdo} against a starting
+  state \lstinline[style=l4style]|{ x: x0, it: 3 }|. What value does each \code{get}
+  yield? What does the block return? Explain why the two \code{get}s yield states with
+  \emph{different} \code{it} fields even though they are the same word.
+  \item Classify every line of the Krylov step in \cref{sec:krylovstep} as ``in the
+  monad'' or ``outside the monad'' by applying the rule of thumb. How many lines are in
+  the monad? Now argue why moving the line \lstinline[style=l4style]|let Ap = apply op.A s_in.p|
+  \emph{into} the monad (via a \code{modify} that stashes \code{Ap} in a scratch field)
+  would be a mistake---name two distinct things it breaks.
+  \item The top-level \code{solve} has type \code{OpParams -> Inputs -> SimState}, with
+  no \code{Solve} in sight, yet its body \code{solve\_loop} is a \code{Solve ()} recipe.
+  Explain how \code{execState} reconciles these---what goes in, what comes out, and why
+  the monad is invisible from outside.
+  \item Give one concrete reason from \cref{sec:whymonad} that a restarted GMRES solve
+  is awkward to write as a single flat \code{iterate\_while} with \code{SimState} as the
+  carry. Then explain in what sense the loop is ``still \code{iterate\_while}'' even when
+  the state is threaded monadically.
+  \item Distinguish the two faces of \code{Solve}. Given the signature
+  \lstinline[style=l4style]|krylov_step :: OpParams -> SimState -> Solve { sim, krylov, outputs }|,
+  identify which \code{Solve} is the effect and which is the record, and say which
+  \emph{single} field of the record is discharged through the effect and which two are
+  plain returned values.
+  \item In the LBM step of \cref{sec:lbm} the mutable version needs a defensive
+  \code{clone()} but the pure version does not. Explain precisely what hazard the
+  \code{clone()} guards against in the mutable world, and why immutability
+  (\cref{ch:records}) makes that hazard impossible---so the copy becomes a no-op. Then
+  state the three pressures of \cref{sec:whymonad} and confirm the minimal LBM step
+  exhibits none, which is why it needs no monad.
+\end{enumerate}

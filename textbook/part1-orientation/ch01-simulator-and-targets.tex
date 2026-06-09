@@ -1,0 +1,324 @@
+\chapter{The Simulator and Its Targets}
+\label{ch:targets}
+
+\chapterorient{Before we open the machine, we should know what it makes. This
+chapter is a guided tour of the six questions our simulator can answer, the
+physical situations each one models, and the single number or table each one
+produces. By the end you will be able to look at an engineering problem and say
+which of the six analyses it calls for---and you will have met, in physical
+form, every target the rest of the book learns to compute.}
+
+\section{What an electromagnetic field simulator does}
+
+An electromagnetic field simulator takes a description of a physical
+device---its geometry, its materials, and how it is excited---and computes the
+electromagnetic fields inside and around it. From those fields it extracts the
+quantities an engineer actually wants: the capacitance between two conductors,
+the inductance of a coil, the resonant frequencies of a cavity, the fraction of
+a signal a microwave component reflects.
+
+The device we use throughout this book is \emph{Palace}, a three-dimensional
+finite-element solver for Maxwell's equations. Its internals are the subject of
+the entire book; in this first chapter we stay outside the machine and look only
+at its interface. From the outside, every run has the same shape
+(\cref{fig:blackbox}): a \emph{configuration} goes in---a mesh of the geometry,
+the material properties, the boundary excitations, and a choice of analysis---and
+a \emph{physical product} comes out.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=14mm]
+  \node[data, align=left, text width=24mm] (cfg)
+    {geometry\\materials\\excitation\\analysis type};
+  \node[stage, minimum width=34mm, minimum height=16mm, right=of cfg] (sim)
+    {\textbf{the simulator}\\[1pt]\footnotesize assemble $\to$ solve $\to$ reduce};
+  \node[product, align=left, text width=24mm, right=of sim] (out)
+    {capacitance,\\inductance,\\frequencies,\\S-parameters,\\\dots};
+  \draw[flow] (cfg) -- node[above,font=\scriptsize]{config} (sim);
+  \draw[flow] (sim) -- node[above,font=\scriptsize]{product} (out);
+\end{tikzpicture}
+\caption[The simulator as a black box]{From the outside, every analysis is the
+same black box: a configuration enters on the left and a physical product leaves
+on the right. The three-word caption inside the box---\emph{assemble, solve,
+reduce}---is the skeleton we will open up in \cref{ch:situating} and spend the
+rest of the book filling in.}
+\label{fig:blackbox}
+\end{figure}
+
+What changes from run to run is the \emph{analysis type}---the choice of which
+physical question to ask. Palace offers six. They look, at first, like six
+different programs. A central claim of this book, made precise in
+\cref{ch:situating} and proved component by component thereafter, is that they
+are really one program with a few parts swapped. But to make that claim land, we
+first need the six in their own right. We take them in turn, each with the
+physical picture it models and the quantity it yields.
+
+\section{The six analyses}
+
+\Cref{fig:sixanalyses} shows all six at a glance; the subsections that follow
+walk through them one by one. Keep one eye on the figure as you read---the point
+of the section is that these six very different-looking physical situations will,
+by the end of the book, turn out to be six settings of the same dial.
+
+\begin{figure}[p]
+\centering
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}cc@{}}
+% --- electrostatic: capacitor ---
+\begin{tikzpicture}[scale=0.95]
+  \fill[simBlue!12] (-1.1,-0.7) rectangle (1.1,0.7);
+  \draw[very thick,simInk] (-1.1,0.7)--(1.1,0.7);
+  \draw[very thick,simInk] (-1.1,-0.7)--(1.1,-0.7);
+  \node[font=\scriptsize] at (-1.4,0.7) {$+V$};
+  \node[font=\scriptsize] at (-1.4,-0.7) {$0$};
+  \foreach \x in {-0.8,-0.4,0,0.4,0.8}{\draw[flow,simRust,shorten >=1pt] (\x,0.62)--(\x,-0.62);}
+  \node[font=\scriptsize\itshape] at (0.7,0.0) {$\vE$};
+\end{tikzpicture}
+&
+% --- magnetostatic: coil ---
+\begin{tikzpicture}[scale=0.95]
+  \draw[very thick,simRust] (0,0) ellipse (0.45 and 0.9);
+  \draw[-{Stealth[length=2mm]},simRust,thick] (0.45,0.2)--(0.45,-0.1);
+  \node[font=\scriptsize] at (0.85,-0.4) {$I$};
+  \foreach \y in {-0.5,0,0.5}{\draw[flow,simBlue] (-1.1,\y) .. controls (-0.2,\y+0.15) and (0.2,\y+0.15) .. (1.1,\y);}
+  \node[font=\scriptsize\itshape] at (1.0,0.75) {$\vB$};
+\end{tikzpicture}
+\\[-1mm]
+{\footnotesize\textbf{Electrostatic} $\to$ capacitance}
+&
+{\footnotesize\textbf{Magnetostatic} $\to$ inductance}
+\\[3mm]
+% --- eigenmode: cavity ---
+\begin{tikzpicture}[scale=0.95]
+  \draw[very thick,simInk] (-1.1,-0.7) rectangle (1.1,0.7);
+  \draw[simTeal,thick,domain=-1.05:1.05,samples=60] plot (\x,{0.45*sin(180*\x+90)});
+  \draw[simTeal!55,thick,domain=-1.05:1.05,samples=60] plot (\x,{-0.45*sin(180*\x+90)});
+  \node[font=\scriptsize] at (0.0,-1.05) {$f,\,Q$};
+\end{tikzpicture}
+&
+% --- driven: 2-port network ---
+\begin{tikzpicture}[scale=0.95]
+  \node[draw,thick,simInk,fill=simBgGray,minimum width=12mm,minimum height=12mm] (b) at (0,0) {\scriptsize DUT};
+  \draw[flow,simGreen] (-1.5,0.25)--(b.west|-0,0.25) coordinate[midway](in);
+  \draw[-{Stealth[length=2mm]},simRust] (b.west|-0,-0.25)--(-1.5,-0.25);
+  \draw[flow,simGreen] (b.east)--(1.5,0);
+  \node[font=\scriptsize] at (-1.2,0.55) {in};
+  \node[font=\scriptsize] at (-1.25,-0.55) {refl.};
+  \node[font=\scriptsize] at (1.05,-0.35) {$S_{ij}$};
+\end{tikzpicture}
+\\[-1mm]
+{\footnotesize\textbf{Eigenmode} $\to$ frequencies \& $Q$}
+&
+{\footnotesize\textbf{Driven} $\to$ S-parameters}
+\\[3mm]
+% --- transient: pulse over time ---
+\begin{tikzpicture}[scale=0.95]
+  \draw[->,simGray] (-1.2,-0.55)--(1.3,-0.55) node[right,font=\scriptsize]{$t$};
+  \draw[simRust,thick,domain=-1.1:1.1,samples=60]
+    plot (\x,{0.7*exp(-6*\x*\x)*cos(360*\x)-0.0});
+  \node[font=\scriptsize\itshape] at (-1.0,0.55) {$\vJ(t)$};
+\end{tikzpicture}
+&
+% --- waveguide cross-section ---
+\begin{tikzpicture}[scale=0.95]
+  \draw[very thick,simInk] (-0.9,-0.7) rectangle (0.9,0.7);
+  \foreach \x in {-0.55,-0.18,0.18,0.55}{
+    \draw[-{Stealth[length=1.6mm]},simViolet] (\x,-0.5)--(\x,0.5);}
+  \draw[-{Stealth[length=2.4mm]},simBlue,thick] (1.05,-0.5)--(1.05,0.5)
+    node[right,font=\scriptsize]{$k_n$};
+\end{tikzpicture}
+\\[-1mm]
+{\footnotesize\textbf{Transient} $\to$ time-domain fields}
+&
+{\footnotesize\textbf{Boundary mode} $\to$ waveguide modes}
+\end{tabular}
+\caption[The six analyses]{The six physical situations the simulator models.
+Each is a different question about the same Maxwell physics; each yields a
+different product. The rest of Part~I shows that all six share one skeleton, and
+\cref{part:modalities} studies each in depth.}
+\label{fig:sixanalyses}
+\end{figure}
+
+\subsection{Electrostatic: capacitance}
+
+Hold two conductors at fixed voltages with an insulator (a \emph{dielectric})
+between them. Charge collects on their surfaces, and an electric field $\vE$
+fills the gap. The ratio of stored charge to applied voltage is the
+\emph{capacitance}, the quantity that governs how a circuit stores energy in its
+electric field and how quickly signals can charge a node.
+
+The electrostatic analysis computes the capacitance of a system of conductors.
+It does so by solving for the electric potential $V$ when each conductor in turn
+is held at unit voltage and the others at zero, then reading the capacitance off
+the resulting fields. The governing equation is the simplest in the book---a
+single scalar Poisson equation, $-\Div(\varepsilon\Grad V)=0$, the same
+equation that describes steady heat flow or an ideal fluid's potential. The
+product is an $n\times n$ \emph{capacitance matrix} relating the charges on $n$
+conductors to their voltages.
+
+\subsection{Magnetostatic: inductance}
+
+Run a steady current around a loop of wire and a magnetic field $\vB$ threads
+through it. The ratio of magnetic flux to current is the \emph{inductance}, the
+magnetic counterpart of capacitance and the quantity that governs how a circuit
+stores energy in its magnetic field and resists changes in current.
+
+The magnetostatic analysis computes inductance the same way electrostatics
+computes capacitance: drive each current source in turn, solve for the field,
+and reduce. The equation is the \emph{curl--curl} equation
+$\Curl(\nu\,\Curl\vA)=\vJ$ for a magnetic vector potential $\vA$, where
+$\nu=1/\mu$ is the reluctivity. We will see in \cref{ch:magnetostatics} that
+this analysis is, almost line for line, the electrostatic analysis with the
+function space changed and one weight in the final reduction swapped---our first
+concrete instance of ``the same machine, one part different.''
+
+\subsection{Eigenmode: resonant frequencies and quality factors}
+
+Strike a bell and it rings at particular pitches; close off a region of space
+with conducting walls and the electromagnetic field inside will likewise
+``ring'' at particular frequencies, its \emph{resonant modes}. Each mode has a
+frequency $f$ and a \emph{quality factor} $Q$ measuring how slowly it loses
+energy. Cavity resonators, superconducting qubits, and filter design all live
+or die by these numbers.
+
+The eigenmode analysis finds the resonances with no external drive at all. It
+assembles the operators once and hands them to a specialized eigenvalue solver,
+which returns the modes as eigenpairs: each eigenvalue gives a frequency, each
+eigenvector a mode field. Mathematically this is a \emph{generalized eigenvalue
+problem} $\mat{K}\vx=\lambda\mat{M}\vx$. It is the one analysis whose ``solve''
+is a single call to an opaque library routine rather than a loop we write
+ourselves---a distinction that will turn out to matter a great deal.
+
+\subsection{Driven: scattering parameters}
+
+Feed a sinusoidal signal into one port of a microwave component and some of it
+passes through, some reflects, and the proportions depend on frequency. The
+\emph{scattering parameters}, or S-parameters, are the complex numbers $S_{ij}$
+that record how much of a wave entering port $j$ leaves port $i$. They are the
+universal currency of microwave and RF engineering; every filter, coupler, and
+antenna is specified by its S-parameters across a frequency band.
+
+The driven analysis computes S-parameters by solving the time-harmonic Maxwell
+system at each frequency in a swept band and projecting the resulting fields onto
+the ports. The operator now depends on the frequency $\omega$:
+$\mat{A}(\omega)=\mat{K}+i\omega\mat{C}-\omega^2\mat{M}$. Because the operator
+changes with every frequency, this analysis rebuilds and re-solves inside the
+sweep---the opposite of electrostatics, which assembles once and reuses. That
+contrast is the heart of \cref{ch:driven}.
+
+\subsection{Transient: time-domain fields}
+
+Inject a pulse of current and watch the fields evolve, step by step, in time.
+The transient analysis marches the time-domain Maxwell equations forward from an
+initial state, producing the full history of the fields: a movie rather than a
+snapshot. It is the analysis of choice when the excitation is broadband, when
+nonlinear effects matter, or when one simply wants to watch a wave propagate.
+
+The governing equation is now a second-order system in time,
+$\mat{M}\,\ddot{\vs}+\mat{C}\,\dot{\vs}+\mat{K}\,\vs=\vJ(t)$, integrated by an
+ordinary-differential-equation solver. Where the driven analysis solved
+independent problems at independent frequencies, the transient analysis solves a
+\emph{chain}: each time step begins from the state the previous step left
+behind. This is our first genuinely sequential computation, and it will be the
+motivating example for the ``fold'' in \cref{ch:fold}.
+
+\subsection{Boundary mode: waveguide propagation modes}
+
+A waveguide---a hollow metal pipe, a coaxial line, a microstrip---carries
+electromagnetic energy along its length in a set of characteristic patterns
+called \emph{propagation modes}, each with a \emph{propagation constant} $k_n$
+that says how fast it travels and whether it travels at all. Before the driven
+analysis can excite a device through a port, it must know the modes of the
+waveguide feeding that port.
+
+The boundary-mode analysis computes those modes. It is distinguished from the
+other five by a preliminary step: it extracts a two-dimensional cross-section
+from the three-dimensional mesh and solves an eigenvalue problem \emph{on the
+cross-section}. The solve itself is, once again, the opaque eigenvalue call of
+the eigenmode analysis---now posed on a surface rather than a volume. The product
+is a table of modes, each with its propagation constant and its transverse field
+pattern.
+
+\section{Six questions, one machine}
+
+\Cref{tab:sixanalyses} lays the six side by side. Read down the columns and a
+pattern jumps out that no single analysis reveals: the products differ, the
+equations differ, the function spaces differ---but the \emph{structure} of every
+row is identical. Each analysis assembles one or more operators from the mesh and
+materials, solves something, and reduces the solution to a physical quantity.
+
+\begin{table}[t]
+\centering
+\caption[The six analyses, compared]{The six analyses share a single structure:
+assemble, solve, reduce. The columns that change are the physics (equation,
+space) and the \emph{kind} of solve. \Cref{ch:situating} names the four kinds of
+solve and the three kinds of reduction that this table is quietly tabulating.}
+\label{tab:sixanalyses}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Analysis & Physical question & Governing equation & Product \\
+\midrule
+Electrostatic & capacitance of conductors & $-\Div(\varepsilon\Grad V)=0$ & capacitance matrix \\
+Magnetostatic & inductance of current loops & $\Curl(\nu\Curl\vA)=\vJ$ & inductance matrix \\
+Eigenmode & resonances of a cavity & $\mat{K}\vx=\lambda\mat{M}\vx$ & frequencies $f$, factors $Q$ \\
+Driven & frequency response & $\mat{A}(\omega)\vE=\vb(\omega)$ & S-parameters $S_{ij}(\omega)$ \\
+Transient & time-domain response & $\mat{M}\ddot{\vs}+\mat{C}\dot{\vs}+\mat{K}\vs=\vJ(t)$ & field history \\
+Boundary mode & waveguide modes & $\mat{A}(\omega)\vx=\sigma\mat{B}\vx$ (2-D) & modes $k_n$, fields \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keyidea}
+The simulator offers six analyses, but they are six settings of one machine.
+Every one of them \emph{assembles} operators from the geometry and materials,
+\emph{solves} a problem built from those operators, and \emph{reduces} the
+solution to a physical quantity. What distinguishes the analyses is which
+equation they discretize, on which function space, and---above all---\emph{what
+kind of solve} the middle stage performs. There are only four kinds, and naming
+them is the business of \cref{ch:situating}.
+\end{keyidea}
+
+This is the thesis the book exists to develop. We have it now only as a
+promise---a table whose last-but-one column we have not yet learned to read. The
+next chapter opens the machine far enough to see the stages \emph{assemble,
+solve, reduce} as actual steps in an actual program: the lifecycle that every
+one of these six analyses runs through, from the moment the user presses
+\textsf{enter} to the moment the product is written out.
+
+\summarysection
+A field simulator turns a configuration---geometry, materials, excitation,
+analysis type---into a physical product. Palace offers six analyses:
+electrostatic (capacitance), magnetostatic (inductance), eigenmode (resonant
+frequencies and quality factors), driven (S-parameters), transient (time-domain
+fields), and boundary mode (waveguide propagation modes). Despite their physical
+variety, all six share one skeleton: \emph{assemble, solve, reduce}. The book's
+central project is to show that the variety lives almost entirely in the
+``solve'' stage, of which there are only four kinds.
+
+\furtherreading
+For the physics behind the six analyses, any undergraduate electromagnetics
+text---Griffiths~\citep{griffiths2017} for the fields, Pozar~\citep{pozar2011}
+for the microwave quantities (S-parameters, waveguide modes, $Q$)---is ideal
+background. The simulator itself is documented at the Palace
+project~\citep{palace2023}. No functional-programming or finite-element
+background is needed yet; we build both from scratch beginning in
+\cref{part:fieldtheory} and \cref{part:framework}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of the six analyses, name one engineering device whose design
+  would require it. (Example: the eigenmode analysis is essential to designing a
+  superconducting-qubit resonator.)
+  \item The electrostatic and magnetostatic rows of \cref{tab:sixanalyses} look
+  the most alike. List every column in which they differ. (We will return to
+  exactly this comparison in \cref{ch:magnetostatics}.)
+  \item Which two analyses produce a result that depends on frequency? Which one
+  produces a result that depends on time? What does this suggest about how their
+  ``solve'' stages must differ?
+  \item The driven and boundary-mode analyses both involve frequency, but only
+  one of them ``rings'' with no input. Which, and why does that make its solve a
+  search for eigenvalues rather than a response to a drive?
+\end{enumerate}

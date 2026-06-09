@@ -1,0 +1,923 @@
+\chapter{State Stratification and Lifetimes}
+\label{ch:strata}
+
+\chapterorient{Every piece of data a solver touches has a \emph{lifetime}---a
+window of time over which it is alive, during which it may be read, perhaps
+written, and after which it is gone. The configuration is set once and read
+forever; the iterate evolves step by step; the scratch basis is born at a
+restart and thrown away at the next; a single recurrence scalar is carried
+across an inner loop and then forgotten. This chapter sorts \emph{all} of a
+solver's state by lifetime. The sorting bins are the \emph{strata}, and getting
+them right is what turns a tangle of instance variables into a design you can
+reason about---and what turns the variant-handling of \cref{ch:operators} from a
+discipline you must remember into a typing rule the calculus checks for you.}
+
+\section{Why a solver's data has lifetimes}
+
+In \cref{ch:records} we learned to bundle a solver's state into records and to
+``update'' them without mutation, by building fresh copies. In \cref{ch:monad}
+we learned to thread one such record---the evolving \code{SimState}---through a
+chain of steps so the spreads stay out of the algorithm's way. Both chapters
+treated ``state'' as one undifferentiated thing: a record that flows. This
+chapter draws the lines \emph{inside} that flow.
+
+The motivation is concrete. Open a real iterative solver and you find a dozen
+named values living side by side: the operator it inverts, the tolerances it
+chases, the current best guess, a counter, a convergence flag, a basis of search
+directions, a small dense matrix of inner products, a couple of rotation
+registers, one or two stray scalars. In the original C++ they are all
+\emph{instance fields} of one solver object---all stored the same way, all
+reachable from any method, all looking, syntactically, alike. But they are not
+alike. They differ in the one property that matters most for understanding the
+design: \emph{how long each one lives}.
+
+\begin{itemize}[nosep]
+  \item The operator and the tolerances are fixed when the solver is built and
+  never change while it runs. They live for the \emph{whole solve}, read-only.
+  \item The current guess, the counter, and the flag \emph{evolve}: each step
+  produces new values from the old. They too live for the whole solve, but they
+  are read \emph{and} written.
+  \item The basis of search directions is scratch space. In a restarted method
+  it is allocated fresh at each restart and discarded at the next. Its lifetime
+  is \emph{one restart cycle}---shorter than the solve.
+  \item A recurrence scalar like the one that forms a search-direction
+  coefficient is threaded from each inner step to the next, then reborn from
+  scratch the next time the solver is called. Its lifetime is \emph{one call's
+  worth of inner steps}---narrower still.
+\end{itemize}
+
+Four different lifetimes, four kinds of data, all stored identically in the
+source. \Cref{fig:nested} draws them as nested time-windows. The thesis of this
+chapter is that making those windows \emph{visible in the type}---giving each
+lifetime its own record, its own stratum---is not pedantry. It is the structural
+move that makes the rest of the framework tractable.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=1mm, y=1mm]
+  % time axis
+  \draw[->,simGray] (0,-3) -- (118,-3) node[right,font=\scriptsize]{time};
+  \node[font=\scriptsize,text=simGray] at (4,-6) {build};
+  \node[font=\scriptsize,text=simGray] at (60,-6) {the solve runs};
+  % OpParams: spans the whole solve (built at construction, read forever)
+  \fill[simBgGray] (10,18) rectangle (114,26);
+  \draw[simGray,thick] (10,18) rectangle (114,26);
+  \node[anchor=west] at (12,22) {\code{OpParams} \;\scriptsize(build-time, read-only)};
+  % SimState: spans the whole solve, evolving
+  \fill[simBgBlue] (16,8) rectangle (114,16);
+  \draw[simBlue,thick] (16,8) rectangle (114,16);
+  \node[anchor=west] at (18,12) {\code{SimState} \;\scriptsize(run-time, evolving)};
+  % Krylov: one restart cycle (two of them shown)
+  \fill[simBgGreen] (22,-1) rectangle (62,6);
+  \draw[simGreen,thick] (22,-1) rectangle (62,6);
+  \node[anchor=west,font=\scriptsize] at (24,2.5) {\code{Krylov}};
+  \fill[simBgGreen] (66,-1) rectangle (106,6);
+  \draw[simGreen,thick] (66,-1) rectangle (106,6);
+  \node[anchor=west,font=\scriptsize] at (68,2.5) {\code{Krylov}};
+  \node[font=\scriptsize,text=simGreen] at (44,-3.6) {restart cycle};
+  \node[font=\scriptsize,text=simGreen] at (86,-3.6) {restart cycle};
+  % recurrence carry: one apply / inner-loop sweep (tiny bars)
+  \foreach \x in {24,30,36,42,48,54}{
+    \fill[simBgRust] (\x,-9) rectangle (\x+4,-5.5);
+    \draw[simRust,semithick] (\x,-9) rectangle (\x+4,-5.5);}
+  \node[anchor=west,font=\scriptsize,text=simRust] at (60,-7.25) {recurrence carry (one inner sweep each)};
+\end{tikzpicture}
+\caption[The four strata as nested lifetimes]{The four strata of a solver's
+state, drawn as time-windows. \code{OpParams} (the build-time configuration) is
+alive for the whole run and never changes. \code{SimState} (the evolving state)
+is alive for the whole run and changes every step. The ephemeral \code{Krylov}
+workspace lives for a single restart cycle and is reborn at each restart. The
+recurrence carry is narrower still---it threads one inner sweep and is reborn
+each call. The windows \emph{nest}: each shorter-lived stratum sits inside a
+longer-lived one. Reading a value from a window that has closed is a bug, and the
+whole point of typing the strata separately is to make that bug impossible to
+write.}
+\label{fig:nested}
+\end{figure}
+
+\begin{keyidea}
+A value's \emph{lifetime} is part of its type. Two values that are both
+``state'' but live for different windows---the configuration that is read for the
+whole solve, the scratch basis that dies at the next restart---are different
+\emph{kinds} of state and belong in different records. When the calculus puts
+each lifetime in its own stratum, ``who owns what, for how long'' stops being a
+fact you keep in your head and becomes a fact the type signature states out
+loud. This is the single idea the chapter develops; everything else is its
+consequences.
+\end{keyidea}
+
+\section{The four strata}
+
+We now name the four strata, each with its lifetime, its mutability, and the
+real record of the framework that lives there. \Cref{tab:strata} is the map; the
+subsections walk the rows.
+
+\begin{table}[t]
+\centering
+\caption[The four strata of solver state]{The four strata, sorted by lifetime.
+The first three are the common case of any iterative solve; the fourth appears
+only when an inner loop threads a recurrence scalar. ``Mutability'' is from the
+\emph{caller's} view: \code{SimState} is evolved by the solve but is a fresh
+value each step, never mutated in place (\cref{ch:records}).}
+\label{tab:strata}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{20mm}p{30mm}p{20mm}p{30mm}@{}}
+\toprule
+Stratum & Lifetime & Mutability & Record \& example field \\
+\midrule
+\textbf{Build-time config} & the whole solve & read-only & \code{OpParams}: \code{tol}, \code{flexible} \\
+\textbf{Run-time state} & the whole solve, evolving & evolved (fresh each step) & \code{SimState}: \code{x}, \code{it}, \code{converged} \\
+\textbf{Ephemeral workspace} & one restart cycle & internal scratch & \code{Krylov}: basis \code{V}, direction \code{p} \\
+\textbf{Recurrence carry} & one inner sweep, reborn per call & threaded scalar & \code{PrevCarry}: \code{beta\_prev} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stratum one: \texorpdfstring{\code{OpParams}}{OpParams}---build-time configuration}
+
+The first stratum is everything the solver is \emph{configured} with: the
+operator it applies, the preconditioner, the tolerances, the iteration limit,
+and---crucially---the \emph{variant selectors} that pick which flavour of the
+algorithm to run (left or right preconditioning, which Gram--Schmidt variant,
+flexible or ordinary). All of it is captured once, at the moment the solver is
+constructed, and none of it changes while the solve runs. Its lifetime is the
+whole solve; its mutability, from anyone's view, is read-only.
+
+The framework's record for this stratum is \code{OpParams}. Its shape, in the
+record syntax of \cref{ch:records}:
+
+\begin{lstlisting}[style=l4style]
+OpParams = {
+  -- constructed-operator surfaces (the kernel touches OpParams ONLY through these)
+  T          : ConstructedOp,      -- the apply surface (preconditioned operator)
+  eps        : Convergence,        -- the stopping-predicate surface
+
+  -- variant selectors (closed over by the surfaces above; NOT read by the kernel body)
+  pc_side    : PreconditionerSide, -- LEFT | RIGHT
+  gs_orthog  : Orthogonalization,  -- MGS | CGS | CGS2
+  flexible   : Bool,               -- FGMRES vs GMRES
+
+  -- termination knobs (close into eps)
+  max_dim    : Int,                -- restart subspace dimension
+  max_it     : Int,
+  rel_tol    : Scalar,
+  abs_tol    : Scalar
+}                                  -- the WHOLE record is readonly
+\end{lstlisting}
+
+Two things deserve immediate notice. First, the whole record is marked
+\code{readonly}: there is no field a step writes. That is the defining property
+of the stratum---build-time configuration is, by definition, the data that is
+fixed before the loop and read during it. Second, the record is in two layers.
+The \emph{variant selectors} (\code{pc\_side}, \code{gs\_orthog},
+\code{flexible}) are raw choices; but the kernel never reads them directly.
+Instead they are folded, at construction, into the \emph{constructed-operator
+surfaces} (\code{T}, \code{eps})---closures that have already ``baked in'' the
+variant choice. The per-step kernel touches \code{OpParams} only through those
+surfaces. We will see in \cref{sec:visible} that this two-layer shape is exactly
+what makes variant handling a checkable invariant rather than a discipline. The
+fields trace to the immutable instance fields of Palace's \code{IterativeSolver}
+hierarchy, which the framework un-mixes into this one read-only record.
+
+\subsection{Stratum two: \texorpdfstring{\code{SimState}}{SimState}---run-time evolving state}
+
+The second stratum is the state the solve \emph{evolves}: the externally-visible
+quantities a caller observes after the solve returns. This is the record
+\cref{ch:records} drew as cards and \cref{ch:monad} threaded through the
+\code{Solve} monad. Its lifetime is also the whole solve, but unlike
+\code{OpParams} it is read \emph{and} written---a new value every step. Its
+shape is the familiar five fields:
+
+\begin{lstlisting}[style=l4style]
+SimState = {
+  x           : Tensor[N],   -- the current iterate (the solve's primary product)
+  it          : Int,         -- iteration count
+  converged   : Bool,        -- convergence flag
+  final_res   : Scalar,      -- final residual
+  initial_res : Scalar       -- residual captured at solve entry
+}
+\end{lstlisting}
+
+\code{SimState} is run-time-evolved \emph{but immutable}: ``evolves'' here means
+exactly what it meant in \cref{ch:records}---each step builds a \emph{fresh}
+\code{SimState}, like the previous one but for the fields that changed, and the
+\code{Solve} monad of \cref{ch:monad} threads the fresh value forward. From the
+\emph{caller's} viewpoint \code{SimState} is read-only (the solve hands back a
+new value rather than reaching into theirs); from the \emph{solve's} viewpoint
+it is the one bundle that ticks forward step by step. Notice how little actually
+changes per step: the iteration counter \code{it} increments---typically the
+kernel's \emph{sole} per-step monadic effect---while the heavy iterate \code{x}
+is folded only at restart-cycle boundaries, and the exit fields
+(\code{converged}, \code{final\_res}) are written only as the solve terminates.
+This is the single-mutation-point observation we flagged in \cref{ch:records},
+now made structural by the stratum boundary.
+
+\Cref{fig:simstatecard} is the record card, with every field tagged
+\emph{run-time} to mark the stratum. The decisive fact about \code{SimState}---
+the one that makes it the monad's state type---is that its shape is
+\emph{uniform across algorithms}. Conjugate gradients, GMRES, flexible GMRES,
+and the Chebyshev smoother all evolve exactly these five fields. They differ
+wildly in their workspace and their configuration, but the externally-visible
+state they thread is one shape. That uniformity is what lets the \code{Solve}
+monad's effect domain be exactly \code{SimState}: the monadic coordination of
+\cref{ch:monad} does not vary by algorithm, because the thing it coordinates
+does not. The fields mirror the \code{mutable} solve-statistics of Palace's base
+class---\code{converged}, \code{initial\_res}, \code{final\_res}, the iteration
+count---which the \code{mutable} keyword itself marks as the run-time stratum.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=86mm, minimum height=44mm, inner sep=6pt] (card) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simBlue]
+    at ($(card.north)+(0,-1.5mm)$) {\code{SimState} \;\textnormal{\scriptsize(stratum 2: run-time)}};
+  % rows
+  \node[anchor=west] at ($(card.north west)+(4mm,-9mm)$)
+    {\code{x}\,:\ \(\mathsf{Tensor}[N]\)\quad\scriptsize\itshape current iterate};
+  \node[anchor=west] at ($(card.north west)+(4mm,-16mm)$)
+    {\code{it}\,:\ \(\mathsf{Int}\)\quad\scriptsize\itshape iteration count};
+  \node[anchor=west] at ($(card.north west)+(4mm,-23mm)$)
+    {\code{converged}\,:\ \(\mathsf{Bool}\)\quad\scriptsize\itshape convergence flag};
+  \node[anchor=west] at ($(card.north west)+(4mm,-30mm)$)
+    {\code{final\_res}\,:\ \(\mathsf{Scalar}\)\quad\scriptsize\itshape final residual};
+  \node[anchor=west] at ($(card.north west)+(4mm,-37mm)$)
+    {\code{initial\_res}\,:\ \(\mathsf{Scalar}\)\quad\scriptsize\itshape entry residual};
+  % run-time tags down the right edge
+  \foreach \y in {9,16,23,30,37}{
+    \node[anchor=east, font=\scriptsize, text=simRust]
+      at ($(card.north east)+(-3mm,-\y mm)$) {\textsf{run-time}};}
+  % rules
+  \foreach \y in {12.5,19.5,26.5,33.5}{
+    \draw[simGray!35] ($(card.north west)+(3mm,-\y mm)$) -- ($(card.north east)+(-3mm,-\y mm)$);}
+\end{tikzpicture}
+\caption[The \code{SimState} record card]{The \code{SimState} record, with all
+five fields tagged \emph{run-time} to mark the stratum. This is the only state a
+caller observes after the solve returns; it is the value the \code{Solve} monad
+of \cref{ch:monad} threads. Its shape is identical for conjugate gradients,
+GMRES, flexible GMRES, and Chebyshev---a single five-field card across every
+algorithm---which is precisely what lets one monad coordinate them all.}
+\label{fig:simstatecard}
+\end{figure}
+
+\subsection{Stratum three: ephemeral \texorpdfstring{\code{Krylov}}{Krylov} workspace}
+
+The third stratum is \emph{scratch}: working data whose entire life is internal
+to the solve and which is thrown away on return. For a GMRES-shaped method this
+is the \code{Krylov} bundle---the orthonormal basis \code{V} of search
+directions, the small dense Hessenberg matrix \code{H}, the least-squares
+right-hand side \code{s}, the Givens rotation registers \code{cs}/\code{sn}. For
+conjugate gradients it is the search direction \code{p} and the residual vector
+\code{r}. Whatever the method, this stratum holds the algorithm's gears: large
+enough to dominate memory, never visible to the caller.
+
+\begin{lstlisting}[style=l4style]
+-- GMRES / FGMRES workspace
+Krylov = {
+  V  : Basis,    -- orthonormal Krylov basis (the search directions)
+  H  : Dense,    -- Hessenberg matrix
+  s  : Vec,      -- least-squares right-hand side
+  cs : Vec, sn : Vec,  -- Givens rotation registers
+  j  : Int       -- position within the current restart cycle
+}
+\end{lstlisting}
+
+Two properties set this stratum apart, and both are about lifetime. First, its
+lifetime is \emph{shorter than the solve}. In a restarted method the basis
+\code{V} fills up over an inner cycle and is then discarded: at each restart the
+\code{Krylov} bundle is \emph{reborn}---a fresh bundle, not the old one with its
+position counter reset. The window in \cref{fig:nested} that says ``one restart
+cycle'' is this stratum's, and there are as many such windows as there are
+restarts. Second---and this is the subtle structural point---\code{Krylov} is
+\emph{not threaded by the monad}. It is threaded as a \emph{plain value},
+passed from inner step to inner step by ordinary function application, never
+entering the \code{Solve} monad's state.
+
+Why keep it out of the monad? Because the monad threads \code{SimState}, and
+\code{SimState} is exactly the state that survives the whole solve. The
+\code{Krylov} bundle does \emph{not} survive the whole solve---it is reborn at
+every restart. To thread it through the monad would be to claim it has the
+lifetime of \code{SimState}, which is false. Its born-at-restart,
+discarded-at-restart lifetime \emph{defeats} monadic encoding: the monad is the
+wrong tool for a value whose window is a restart cycle, so we thread it as a
+plain returned value instead. This is the first place where the lifetime of a
+value dictates the \emph{mechanism} that carries it, and it is why the strata are
+not a bookkeeping nicety but a design constraint.
+
+\subsection{Stratum four: the recurrence carry}
+
+The first three strata are the whole story for many solvers. But some carry a
+\emph{fourth} kind of state, narrower than all three, and it is worth a stratum
+of its own because mis-housing it is a real bug class.
+
+Consider the conjugate-gradient direction update. Each step forms the new search
+direction from the old one with a coefficient $\beta_k/\beta_{k-1}$, where
+$\beta_k = (\mathsf{B}\vr_k, \vr_k)$ is this step's preconditioned residual inner
+product and $\beta_{k-1}$ was last step's. To compute step $k$ you need a value
+from step $k-1$: the recurrence \emph{threads}. The Chebyshev smoother has the
+same shape, carrying a scalar $\rho_{k-1}$ through its inner polynomial
+recurrence $\rho_k = 1/(2\theta/\delta - \rho_{k-1})$.
+
+That single threaded scalar is the fourth stratum. The framework records it as
+\code{PrevCarry}:
+
+\begin{lstlisting}[style=l4style]
+PrevCarry = { beta_prev: Scalar }   -- CG: the prior step's (Br, r)
+-- (GMRES variant: PrevCarry = { H_prev: Scalar })
+\end{lstlisting}
+
+Its lifetime is the diagnostic. It is \emph{threaded across the inner loop}---
+each step reads the previous step's value, so it has a genuine cross-iteration
+data dependence---but it is \emph{reborn at each top-level call}: the next time
+the solver runs, the recurrence restarts from its base case. ``One call's worth
+of inner steps, then gone.'' That window is narrower than \code{OpParams} (which
+lives across \emph{all} calls) and narrower than an ordinary scratch temporary
+(which has no cross-iteration dependence at all). It is its own thing, and
+\cref{fig:fourstrata} sorts a value into it by exactly these two questions.
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, node distance=7mm and 10mm]
+  \tikzset{q/.style={draw=simBlue, fill=simBgBlue, rounded corners=2pt, thick,
+      align=center, inner sep=4pt, minimum width=38mm, font=\footnotesize},
+    leaf/.style={draw=simGray, fill=white, rounded corners=2pt, semithick,
+      align=center, inner sep=4pt, minimum width=28mm, font=\scriptsize}}
+  \node[q] (q1) {Captured at construction\\and read forever?};
+  \node[leaf, below left=of q1] (op) {\textbf{OpParams}\\\scriptsize build-time config};
+  \node[q, below right=of q1] (q2) {Read \emph{and written}, and\\survives the whole solve?};
+  \node[leaf, below left=of q2] (sim) {\textbf{SimState}\\\scriptsize run-time state};
+  \node[q, below right=of q2] (q3) {Has a cross-iteration\\recurrence dependence?};
+  \node[leaf, below left=of q3] (kry) {\textbf{Krylov}\\\scriptsize ephemeral workspace};
+  \node[leaf, below right=of q3] (car) {\textbf{PrevCarry}\\\scriptsize recurrence carry};
+  \draw[flow] (q1) -- node[above left,font=\scriptsize]{yes} (op);
+  \draw[flow] (q1) -- node[above right,font=\scriptsize]{no} (q2);
+  \draw[flow] (q2) -- node[above left,font=\scriptsize]{yes} (sim);
+  \draw[flow] (q2) -- node[above right,font=\scriptsize]{no} (q3);
+  \draw[flow] (q3) -- node[above left,font=\scriptsize]{no} (kry);
+  \draw[flow] (q3) -- node[above right,font=\scriptsize]{yes} (car);
+\end{tikzpicture}}
+\caption[Sorting a value into its stratum]{A decision tree for placing a piece of
+solver state. The two questions that matter are about \emph{lifetime}: does the
+value survive the whole solve (and is it written), and does it carry a
+cross-iteration recurrence? Build-time configuration is captured once and read
+forever (\code{OpParams}); evolving caller-visible state survives the solve
+(\code{SimState}); scratch with no cross-step dependence is ephemeral workspace
+(\code{Krylov}); a threaded recurrence scalar that is reborn each call is the
+carry (\code{PrevCarry}).}
+\label{fig:fourstrata}
+\end{figure}
+
+The fourth stratum is easy to confuse with two of the others, and the confusions
+are both bugs. It is \emph{not} build-time configuration: if you stored
+$\beta_{k-1}$ in \code{OpParams}, it would persist between calls and corrupt the
+next solve, which must restart its recurrence from scratch. And it is \emph{not}
+an ordinary ephemeral temporary: those (the residual vector recomputed each step,
+the matrix-vector products) have no dependence on the previous iteration, whereas
+the carry's whole nature is that step $k$ reads step $k-1$. We return to all
+three confusions as pitfalls in \cref{sec:mistakes}.
+
+\section{Why lifetimes must be visible}
+\label{sec:visible}
+
+We have four strata and four records. The question this section answers is
+\emph{why bother}---why not store everything as instance fields the way the C++
+does, and keep the lifetimes in our heads? The answer is that making the
+lifetimes visible in the type buys two guarantees that are otherwise only
+hopes.
+
+\subsection{You cannot persist ephemeral data past its window}
+
+The first guarantee is a safety property. When the ephemeral \code{Krylov}
+workspace is its own value, threaded as a plain value and reborn at each restart,
+there is \emph{no place} to accidentally read it after its window closes. The
+type says: at the restart boundary, the old \code{Krylov} is gone and a fresh one
+takes its place. A step that tried to read a basis vector from before the restart
+would be reading from a value that no longer exists---and because the fresh
+bundle is a genuinely new value (\cref{ch:records}), there is no aliased box
+holding the stale data for it to find.
+
+Contrast the mutable world. There, the basis \code{V} is an instance field that
+outlives any one restart cycle; ``reborn at restart'' is implemented by
+\emph{overwriting} it in place, and nothing stops a stray method from reading a
+slot that belongs to the previous cycle. The lifetime is real but invisible---a
+fact about when the code happens to overwrite \code{V}, not a fact the type
+enforces. The stratum makes the invisible visible: a restart \emph{produces a
+new bundle}, so reading across the boundary is reading a value that was never
+built.
+
+\subsection{Variant absorption becomes a typing invariant}
+
+The second guarantee is the deeper one, and it is the bridge to
+\cref{ch:operators}. Recall the two-layer shape of \code{OpParams}: variant
+selectors on one layer, constructed-operator surfaces on another, and the rule
+that \emph{the per-step kernel touches \code{OpParams} only through the
+surfaces}, never through the raw selectors. Why is that rule worth stating?
+
+Because it makes \emph{variant absorption} checkable. A single kernel is supposed
+to run all the variants---left and right preconditioning, the three
+Gram--Schmidt flavours, flexible and ordinary---without itself branching on which
+variant it is. The variant choice is supposed to be ``absorbed'' at construction,
+into the surfaces, so the kernel's control flow is uniform. In a procedural
+solver that uniformity is a \emph{discipline}: the programmer must remember not
+to write \code{if (pc\_side == LEFT)} in the inner loop. Nothing checks it.
+
+With the strata, it is a \emph{typing invariant}. If \code{OpParams} is
+\code{readonly}, and the variant selectors are reachable from the kernel only
+\emph{through} the constructed surfaces (because the kernel is handed the
+surfaces, not the raw record), then the kernel \emph{provably cannot} branch on a
+selector---there is no expression it could write to read one. Variant absorption
+stops being ``a thing we are careful to do'' and becomes ``a thing the type
+forbids us from violating.'' That is the entire payoff of separating the
+build-time stratum from the run-time one, and \cref{ch:operators} cashes it in to
+show one kernel covering an entire family of algorithms.
+
+\begin{keyidea}
+Visible lifetimes turn two correctness properties from discipline into typing.
+\emph{Safety:} because ephemeral workspace is a fresh value reborn at each
+restart, there is no stale box to read across the boundary---persisting it past
+its window is unwriteable, not merely discouraged. \emph{Variant absorption:}
+because \code{OpParams} is read-only and the kernel reaches the variant selectors
+only through the constructed surfaces, the kernel \emph{cannot} branch on a
+variant---the absorption invariant of \cref{ch:operators} is checked by the
+types, not remembered by the programmer. Both guarantees are consequences of one
+move: giving each lifetime its own stratum.
+\end{keyidea}
+
+\section{Build-time versus run-time: the two great strata}
+
+Step back from the four-way split and a coarser, even more important division
+appears. Group the strata by \emph{when their work runs}, and there are exactly
+two camps:
+
+\begin{itemize}[nosep]
+  \item \textbf{Build-time work} runs \emph{once}, before the loop. Constructing
+  the operator surfaces, factoring a preconditioner, installing pointers, parsing
+  the configuration record, querying the function-space hierarchy---all of it
+  happens at solver construction and is done by the time the first iteration
+  begins. This is the world of \code{OpParams}.
+  \item \textbf{Run-time work} runs \emph{every step}, inside the loop. Applying
+  the operator, applying the preconditioner, bumping the counter, computing a
+  residual norm, folding the iterate. This is the world of \code{SimState}, the
+  \code{Krylov} workspace, and the carry.
+\end{itemize}
+
+\Cref{fig:buildrun} draws the two as a timeline: a setup pass, then the loop.
+This build-time/run-time line is the same one we drew for the matrix-free
+operator in \cref{ch:matrixfree}, where the operator's \emph{setup}---assembling
+the element-local quadrature data once---is split from its \emph{apply}---the
+per-call tensor contraction that runs every iteration. There, as here, the setup
+is build-time and the apply is run-time; the two were separated for exactly the
+reason the strata separate them now.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=1mm, y=1mm]
+  % timeline
+  \draw[->,simGray] (0,0) -- (122,0) node[right,font=\scriptsize]{time};
+  % build-time pass
+  \fill[simBgGray] (4,4) rectangle (40,16);
+  \draw[simGray,thick] (4,4) rectangle (40,16);
+  \node[align=center,font=\scriptsize] at (22,13) {\textbf{build-time pass} (once)};
+  \node[align=center,font=\scriptsize,text=simGray] at (22,8.5)
+    {construct surfaces\\factor preconditioner\\parse config};
+  \node[font=\scriptsize,text=simGray,anchor=north] at (22,3) {\code{OpParams} born here};
+  % run-time loop
+  \fill[simBgBlue] (48,4) rectangle (118,16);
+  \draw[simBlue,thick] (48,4) rectangle (118,16);
+  \node[align=center,font=\scriptsize] at (83,13) {\textbf{run-time loop} (every step)};
+  % loop iterations as little boxes
+  \foreach \x in {52,62,72,82,92,102}{
+    \draw[simBlue,fill=white,semithick] (\x,6) rectangle (\x+7,10.5);
+    \node[font=\tiny] at (\x+3.5,8.25) {apply};}
+  \node[font=\scriptsize,text=simBlue,anchor=north] at (83,3)
+    {\code{SimState} / \code{Krylov} evolve here};
+  % the boundary
+  \draw[->,flow] (40,10) -- (48,10);
+  \node[font=\scriptsize,text=simRust,align=center] at (44,16) {loop\\entry};
+\end{tikzpicture}
+\caption[The build-time / run-time timeline]{Solver work splits into a setup
+pass that runs once and a loop that runs every step. Build-time work---building
+the operator surfaces, factoring the preconditioner, parsing configuration---is
+done before the first iteration and populates \code{OpParams}. Run-time
+work---the per-step applies, counter bumps, residual computations---runs inside
+the loop and evolves \code{SimState} and the ephemeral workspace. This is the
+same split as the matrix-free operator's setup-versus-apply of
+\cref{ch:matrixfree}.}
+\label{fig:buildrun}
+\end{figure}
+
+The division matters for a reason beyond tidiness, and it connects to the very
+purpose of the layered framework. \emph{Only run-time work lifts to the
+tensor-field form of \cref{ch:tensors}.} When we re-express a solve as global
+tensor-field operations---the whole point of the climb toward the abstract
+calculus---it is the per-element, per-iteration work that has structure to lift:
+an \code{apply} is a tensor contraction, a residual is a reduction, a counter
+bump is a scalar increment. Build-time work has no per-element structure to lift;
+it \emph{sets up} the loop rather than \emph{being} a loop. So the build-time
+stratum is recorded as the scaffolding that materializes the operator graph, and
+it is the run-time stratum---and only the run-time stratum---that participates in
+the lift. The build-time/run-time line is thus not only a lifetime distinction;
+it is the line between the work that becomes a tensor-field expression and the
+work that prepares for it.
+
+In the monad of \cref{ch:monad} this lands as a clean structural rule:
+build-time work sits in the \code{do}-block's \emph{setup} prologue, before the
+loop; run-time work sits in the \emph{body} that the loop iterates. Schematically,
+
+\begin{lstlisting}[style=l4style]
+solve = do
+  setup <- build_operators(config)   -- BUILD-TIME: once, before the loop
+  iterate_while(not_converged) (\s ->
+     step(setup, s))                  -- RUN-TIME: every iteration
+\end{lstlisting}
+
+The \code{setup} line runs once and produces the \code{OpParams}-stratum
+surfaces; the \code{step} inside \code{iterate\_while} runs every iteration and
+evolves the run-time strata. Reading the \code{do}-block, you can see the
+lifetime of every value by \emph{where} it appears: above the loop, it is
+build-time; inside, it is run-time.
+
+\begin{workedexample}{Sorting a conjugate-gradient solve, variable by variable}{cgsort}
+We take a complete preconditioned conjugate-gradient solve and sort
+\emph{every} variable it names into its stratum. The exercise is the whole
+chapter in miniature: given a pile of state, place each value by its lifetime.
+
+\textbf{The variables.} A PCG solve holds: the system operator $\mathsf{A}$ and
+preconditioner $\mathsf{B}$; the relative and absolute tolerances and the
+iteration limit; the current iterate $\vx$; the iteration count and the
+convergence flag; the residual vector $\vr$ and the preconditioned residual
+$\mathsf{B}\vr$; the search direction $\vp$; the step lengths $\alpha$ formed
+each step; and the recurrence scalar $\beta = (\mathsf{B}\vr,\vr)$, whose
+\emph{previous} value $\beta_{k-1}$ feeds the direction-update coefficient.
+
+\tcblower
+\textbf{The sort.} Ask of each value the two lifetime questions of
+\cref{fig:fourstrata}.
+
+\begin{itemize}[nosep]
+  \item \(\mathsf{A}\), \(\mathsf{B}\), \code{rel\_tol}, \code{abs\_tol},
+  \code{max\_it} --- captured at construction, read forever, never written.
+  \textbf{Stratum 1, \code{OpParams}.} (The operators are reached through the
+  constructed \code{T} surface; the tolerances close into \code{eps}.)
+  \item \(\vx\), \code{it}, \code{converged}, the residual proxies --- evolved
+  every step, survive the whole solve, visible to the caller.
+  \textbf{Stratum 2, \code{SimState}.}
+  \item \(\vr\), \(\mathsf{B}\vr\), \(\vp\), and the per-step \(\alpha\) ---
+  scratch, recomputed each step, with no value carried from one step to the next;
+  discarded on return. \textbf{Stratum 3, ephemeral \code{Krylov}.}
+  \item \(\beta_{k-1}\) --- the one scalar with a genuine cross-step dependence
+  (\(\vp_k = \vr_k + (\beta_k/\beta_{k-1})\,\vp_{k-1}\)), threaded inner step to
+  inner step but restarting from its base case each new solve.
+  \textbf{Stratum 4, the carry \code{PrevCarry}.}
+\end{itemize}
+
+\textbf{The trap, named.} Note that $\vp$ and $\beta_{k-1}$ both ``come from the
+previous step,'' and the lazy sort would lump them together. They are in
+different strata. The direction $\vp$ is rebuilt each step from current
+quantities (it has a \emph{recurrence in form} but we treat the rebuilt vector as
+ephemeral workspace); the \emph{scalar} $\beta_{k-1}$ is the value with the true
+cross-iteration data dependence that the carry exists to thread. The
+distinguishing question---``does step $k$ read a \emph{value} from step
+$k-1$?''---is what separates stratum 4 from stratum 3, and it is exactly the
+bottom question of \cref{fig:fourstrata}.
+\end{workedexample}
+
+\section{The book's real records, defined}
+
+We have met all five records in passing. We now define each one as a card of
+named fields, with the stratum each field lives in stated outright. This section
+is the reference the rest of Part~III points back to.
+
+\subsection{\texorpdfstring{\code{SolveResult}}{SolveResult}---what a step returns}
+
+A single step does not return a bare \code{SimState}; it returns a bundle. The
+framework calls the bundle \code{SolveResult}, written with the \code{Solve}
+name:
+
+\begin{lstlisting}[style=l4style]
+SolveResult = Solve { sim: SimState, krylov: Krylov, outputs: StepOutputs }
+-- (Form B, when the carry is threaded explicitly:)
+--   Solve { sim: SimState, krylov: Krylov, outputs: StepOutputs, carry: PrevCarry }
+\end{lstlisting}
+
+Read it field by field, by stratum:
+
+\begin{itemize}[nosep]
+  \item \code{sim} --- the next \code{SimState}, stratum 2. This is the one field
+  the step delivers \emph{through the monad}: it is the monadic-effect product,
+  the state transition the \code{Solve} monad of \cref{ch:monad} threads.
+  Typically the only thing that changed is the \code{it} counter.
+  \item \code{krylov} --- the next ephemeral workspace, stratum 3, returned as a
+  \emph{plain value} (because, as we saw, its restart-bounded lifetime defeats
+  monadic threading).
+  \item \code{outputs} --- the demand-prunable per-step readouts, a fresh bundle
+  each step; defined just below.
+  \item \code{carry} --- present only in Form B, the recurrence carry of stratum
+  4 (\code{PrevCarry}), threaded back into the next step.
+\end{itemize}
+
+There is a deliberate overload here, and \cref{ch:monad} warned of it:
+\code{Solve} names \emph{both} the monad (the effect that threads \code{SimState})
+\emph{and} this returned record (the braces). They are different things sharing a
+spelling: the monad answers ``how is state threaded?''; \code{SolveResult}
+answers ``what record does a step yield?''. The \code{sim} field is where they
+touch---it is the effect's state product---while the other fields are the plain
+returned value. \Cref{ch:monad} owns the threading; this stratum chapter owns the
+record's fields and their lifetimes.
+
+\subsection{\texorpdfstring{\code{StepOutputs}}{StepOutputs}---demand-prunable per-step readouts}
+
+The \code{outputs} field is its own record, and it is the textbook home of the
+optional-field, demand-pruning idea of \cref{ch:records}:
+
+\begin{lstlisting}[style=l4style]
+StepOutputs = {
+  residual_norm:    Scalar,        -- the step's residual proxy
+  ls_residual?:     Scalar,        -- GMRES/FGMRES least-squares residual estimate
+  breakdown_token?: BreakdownTag   -- a guarded-quantity validity tag
+}
+\end{lstlisting}
+
+Every field is run-time and \emph{derived}: each is a pure function of the
+post-step \code{Krylov} bundle---the residual norm read off the recurrence
+scalar, the least-squares residual read off the rotated right-hand side, the
+breakdown token read off a guarded dot product. And every optional field is
+\emph{demand-prunable}: if no downstream consumer reads \code{ls\_residual}, the
+kernel never computes it. The record exists precisely to make that pruning
+structural---by typing the derived observations separately from the \code{Krylov}
+state they are derived from, the calculus can state ``unread output, uncomputed''
+as a law (\cref{ch:fold}) rather than a comment. \code{StepOutputs} is the
+\emph{observation} a step makes about itself; do not confuse it with the
+persistent \code{SimState.final\_res} statistic it eventually feeds.
+
+\subsection{The five records, at a glance}
+
+\Cref{tab:records} collects all five with their strata. Read it as the answer
+to ``where does each piece of a solve's data live, and for how long.''
+
+\begin{table}[t]
+\centering
+\caption[The five workhorse records and their strata]{The five records of a
+Krylov-shaped solve, each with its stratum and lifetime. \code{OpParams} and
+\code{SimState} are the two persistent strata (build-time vs.\ run-time);
+\code{Krylov} and \code{PrevCarry} are the two short-lived ones; \code{SolveResult}
+and its \code{StepOutputs} field are the result-side bundles a single step
+returns.}
+\label{tab:records}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{24mm}p{20mm}p{34mm}p{30mm}@{}}
+\toprule
+Record & Stratum & Lifetime & Role \\
+\midrule
+\code{OpParams} & 1 (build) & whole solve, read-only & configuration + surfaces \\
+\code{SimState} & 2 (run) & whole solve, evolving & caller-visible state \\
+\code{Krylov} & 3 (ephemeral) & one restart cycle & algorithm workspace \\
+\code{PrevCarry} & 4 (carry) & one inner sweep, reborn & threaded recurrence scalar \\
+\code{StepOutputs} & run, derived & one step, demand-pruned & per-step readouts \\
+\code{SolveResult} & result bundle & one step & what a step returns \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The common stratification mistakes}
+\label{sec:mistakes}
+
+Each stratum boundary is a place where a value can be filed wrong, and each
+mis-filing is a recognizable bug. We teach them as pitfalls because they are the
+errors a reader coming from the mutable, instance-field world will reach for by
+habit---the C++ stores everything as instance fields, so the original layout
+offers no guidance on where a value \emph{belongs}.
+
+\begin{pitfall}
+\textbf{Ephemeral workspace in \code{SimState}.} The tempting mistake is to put
+the basis \code{V} or the direction \code{p} into \code{SimState} because the
+original C++ stored it as an instance field. But the instance-field layout is a
+\emph{memory-reuse optimisation}, not a statement of lifetime: the field is
+reused across restarts because allocating it once is cheap, not because it
+\emph{lives} that long. Mathematically the basis dies at each restart. Put it in
+\code{SimState} and you have claimed it survives the whole solve---so it
+persists, wrongly, past the restart that should have discarded it, and a later
+step can read a stale basis vector. The L4 type should reflect the mathematical
+lifetime, not the allocation strategy. \emph{Workspace is stratum 3, never
+stratum 2.}
+\end{pitfall}
+
+\Cref{fig:bug} draws this bug: a basis vector from before a restart, wrongly
+surviving inside \code{SimState} and read by a step that should see only the
+reborn bundle.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, x=1mm, y=1mm]
+  % restart boundary
+  \draw[simRust, very thick, densely dashed] (50,-12) -- (50,20);
+  \node[font=\scriptsize\bfseries, text=simRust] at (50,22) {restart};
+  \node[font=\scriptsize, text=simGray] at (24,22) {cycle $r$};
+  \node[font=\scriptsize, text=simGray] at (78,22) {cycle $r{+}1$};
+  % SimState band wrongly carrying V across
+  \fill[simBgBlue] (6,8) rectangle (104,16);
+  \draw[simBlue,thick] (6,8) rectangle (104,16);
+  \node[anchor=west,font=\scriptsize] at (8,12) {\code{SimState} \emph{(correct: x, it, ...)}};
+  % the wrongly-persisted V, drawn straddling the restart line
+  \fill[simBgRust] (30,-4) rectangle (70,4);
+  \draw[simRust,thick] (30,-4) rectangle (70,4);
+  \node[font=\scriptsize, text=simRust] at (50,0) {\code{V} wrongly kept in \code{SimState}};
+  % the read that goes wrong
+  \draw[backflow] (78,0) -- node[below,font=\tiny,text=simRust]{reads stale basis} (62,0);
+  \node[opbox, minimum width=12mm] at (82,0) {step};
+  % correct: Krylov reborn
+  \node[font=\scriptsize, text=simGreen, align=center] at (24,-9)
+    {\emph{correct:} \code{Krylov}\\dies at restart};
+  \node[font=\scriptsize, text=simGreen, align=center] at (84,-9)
+    {\emph{correct:} fresh\\\code{Krylov} born};
+\end{tikzpicture}
+\caption[The ephemeral-in-\code{SimState} bug]{Putting the ephemeral basis
+\code{V} into \code{SimState} claims it survives the whole solve. It then
+straddles the restart boundary (dashed), and a step in cycle $r{+}1$ reads a
+basis vector from cycle $r$---stale data. The fix is to keep \code{V} in the
+\code{Krylov} stratum, which is reborn at the restart, so there is no surviving
+value to read across the boundary.}
+\label{fig:bug}
+\end{figure}
+
+\begin{pitfall}
+\textbf{Variant selectors in \code{SimState}.} The selectors \code{pc\_side},
+\code{gs\_orthog}, \code{flexible} are \emph{read} during the solve, so it is
+tempting to file them with the run-time state. They are build-time
+configuration. They are read only by the constructed-operator surfaces---which
+were built once, at construction, with the selectors already baked in---never by
+the per-step kernel. File them in \code{SimState} and you have invited the kernel
+to branch on them, which destroys variant absorption (\cref{sec:visible}): the
+whole point was that the kernel \emph{cannot} see a raw selector. \emph{Selectors
+are stratum 1, never stratum 2}---``read during the solve'' is not the same as
+``run-time state.''
+\end{pitfall}
+
+\begin{pitfall}
+\textbf{Forgetting that the carry is reborn at restart (or at each call).} The
+recurrence carry \code{PrevCarry} threads a scalar across inner steps, so it
+looks persistent. But it is reborn at each top-level call: the next solve
+restarts its recurrence from the base case. Two failures follow from forgetting
+this. \emph{If you file the carry in \code{OpParams}}, it persists between calls
+and the next solve starts with last solve's $\beta_{k-1}$---a corrupted
+recurrence. \emph{If your form reads a \code{Krylov} field across a restart
+boundary} expecting the recurrence to continue, it reads from a bundle that was
+discarded. The carry's lifetime is exactly ``one call's inner steps''---wider
+than an ordinary temporary, narrower than configuration---and a form that gets
+that window wrong is broken even when it type-checks against the field names.
+\end{pitfall}
+
+\begin{workedexample}{Build-time versus run-time in a preconditioned solve}{buildrun}
+We take a preconditioned solve and split its work into the two great strata,
+then show what each \emph{mislabeling} costs. This is the build-time/run-time
+line of \cref{fig:buildrun} made concrete on one operation: the preconditioner.
+
+\textbf{The two halves of a preconditioner.} A preconditioner $\mathsf{B}$
+enters a solve in two distinct acts. First it is \emph{constructed}: for an
+incomplete-factorization preconditioner this means \emph{factoring}---computing
+the sparse triangular factors once, an expensive setup. Then, every iteration, it
+is \emph{applied}: a triangular solve against the current residual, $\vz \gets
+\mathsf{B}\vr$, cheap per call but run every step.
+
+\textbf{The correct split.}
+\begin{itemize}[nosep]
+  \item \textbf{Build-time, once:} factor $\mathsf{B}$. The factors are
+  \code{OpParams}-stratum data---configuration of the operator, captured at
+  construction, read (applied) but never re-factored during the loop. In the
+  monad they sit in the \code{setup} prologue.
+  \item \textbf{Run-time, every step:} apply $\mathsf{B}$ to the residual. This
+  is the per-iteration work; it touches \code{SimState} (the residual it reads,
+  the iterate it helps advance) and lifts, in \cref{ch:tensors}, to a
+  tensor-field expression.
+\end{itemize}
+
+\tcblower
+\textbf{What each mislabeling costs.} The two halves are not interchangeable, and
+swapping a label is a real failure---one wrong each way.
+
+\begin{itemize}[nosep]
+  \item \textbf{Calling the factorization run-time} (re-factoring $\mathsf{B}$
+  every iteration) is \emph{wasted work}: you recompute, at full setup cost, a
+  result that never changed. A solve that should factor once and apply a thousand
+  times instead factors a thousand times. The answer is right; the cost is
+  catastrophic. This is the classic ``loop-invariant computation left inside the
+  loop.''
+  \item \textbf{Calling the apply build-time} (applying $\mathsf{B}$ once, before
+  the loop, and reusing the result) gives \emph{wrong results}: the apply depends
+  on the current residual, which changes every step, so a single hoisted apply
+  feeds every iteration a stale preconditioned vector and the solve does not
+  converge to the right answer---if it converges at all.
+\end{itemize}
+
+\textbf{The lesson.} The build-time/run-time line is not cosmetic. Mislabel it
+one way and you waste work; mislabel it the other and you compute the wrong
+thing. The discriminating question is precisely \emph{lifetime}: does the value
+change across iterations? The factorization does not (build-time); the apply's
+result does (run-time). The matrix-free operator of \cref{ch:matrixfree} draws
+exactly this line as its setup-versus-apply split, and for exactly this reason.
+\end{workedexample}
+
+\section{Lifetimes as the backbone of the design}
+
+We close by collecting the thread. A solver's data is not one undifferentiated
+``state.'' It is four kinds, sorted by lifetime: the build-time configuration
+that is read for the whole solve, the run-time state that evolves across it, the
+ephemeral workspace that lives one restart cycle, and the recurrence carry that
+threads one inner sweep and is reborn each call. Each lifetime gets its own
+record---\code{OpParams}, \code{SimState}, \code{Krylov}, \code{PrevCarry}---and
+the result bundle \code{SolveResult} (with its demand-prunable \code{StepOutputs})
+is what a single step returns.
+
+The payoff is that the strata make the design's hardest questions structural
+rather than disciplinary. You cannot persist ephemeral data past its window,
+because the window's end is a fresh value, not an overwrite. You cannot let the
+kernel branch on a variant, because the variant selectors are read-only and
+reachable only through the constructed surfaces. And you cannot lose track of
+which work runs once versus every step, because the build-time/run-time line is
+the line between the \code{setup} prologue and the loop body---and, not
+incidentally, the line between the work that prepares the loop and the work that
+lifts to the tensor-field form of \cref{ch:tensors}. The variant-handling
+machinery of \cref{ch:operators} rests entirely on this: with the strata in
+place, absorbing a family of algorithms into one kernel is a typing invariant the
+calculus checks, not a discipline the programmer must keep.
+
+\summarysection
+Every piece of a solver's state has a \emph{lifetime}, and classifying state by
+lifetime---its \emph{stratum}---is what makes the design tractable. There are
+four strata. \textbf{Build-time configuration} (\code{OpParams}) is captured once
+at construction and read, read-only, for the whole solve; it holds the operator
+surfaces, tolerances, and variant selectors, in a two-layer shape where the
+kernel reaches the selectors only through constructed surfaces. \textbf{Run-time
+state} (\code{SimState}) is the caller-visible bundle---\code{x}, \code{it},
+\code{converged}, \code{final\_res}, \code{initial\_res}---that evolves every step
+(as fresh values, never mutated) and is threaded by the \code{Solve} monad
+(\cref{ch:monad}); its five-field shape is uniform across CG, GMRES, FGMRES, and
+Chebyshev. \textbf{Ephemeral workspace} (\code{Krylov}: basis \code{V},
+direction \code{p}) lives one restart cycle, is reborn at each restart, and is
+threaded as a plain value, not in the monad---its lifetime defeats monadic
+encoding. The \textbf{recurrence carry} (\code{PrevCarry}: \code{beta\_prev}) is
+a fourth stratum, threaded across an inner loop but reborn each call. Making
+lifetimes visible buys two guarantees: ephemeral data cannot be persisted past
+its window, and variant absorption (\cref{ch:operators}) becomes a typing
+invariant. The coarse \textbf{build-time versus run-time} split---setup once,
+loop every step---is the same line the matrix-free operator draws
+(\cref{ch:matrixfree}); only run-time work lifts to the tensor-field form
+(\cref{ch:tensors}). The three classic mistakes are filing ephemeral workspace,
+variant selectors, or the recurrence carry in the wrong stratum, and each is a
+distinct, real bug.
+
+\furtherreading
+The conjugate-gradient and GMRES algorithms whose state we stratified, including
+the restart structure that gives the ephemeral workspace its one-cycle lifetime
+and the direction-update recurrence that gives the carry its cross-iteration
+dependence, are developed in Saad's standard treatment of iterative
+methods~\citep{saad2003}; reading the GMRES restart loop there with the four
+strata in mind is the best exercise this chapter can recommend. The discipline of
+making lifetime and effect visible in a value's type---so that ``what survives,
+what is scratch, what threads'' is a fact the type states rather than a comment
+the programmer leaves---is the contribution of pure functional programming and
+its state monad; Peyton Jones's account of the lazy, purely functional
+language~\citep{peytonjones2003} is where the threaded-state-as-a-value idea this
+chapter applies to solvers is laid out in full, and it pairs naturally with the
+monad of \cref{ch:monad}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of the four strata, state its lifetime in one phrase and name one
+  field of the framework's record that lives there. (Example: ephemeral
+  workspace---``one restart cycle''---\code{Krylov.V}.)
+  \item A colleague proposes storing the iteration counter \code{it} in
+  \code{OpParams} ``because it is just one integer and lives the whole solve.''
+  Give the one reason this is wrong, and say which stratum \code{it} belongs to.
+  (Hint: read-only versus evolved.)
+  \item Take a GMRES solve and sort each of the following into its stratum: the
+  preconditioner $\mathsf{B}$; the Krylov basis \code{V}; the Hessenberg matrix
+  \code{H}; the iteration count \code{it}; the relative tolerance; the
+  least-squares residual estimate $|s[j{+}1]|$. For the last one, say whether it
+  is state or a derived \emph{output}, and which record it lives in.
+  \item Explain, in two sentences, why the ephemeral \code{Krylov} bundle is
+  threaded as a plain value rather than through the \code{Solve} monad. Your
+  answer should turn on the word ``restart.''
+  \item The chapter claims you ``cannot accidentally persist ephemeral data past
+  its restart'' once it is in the \code{Krylov} stratum. Explain why the immutable
+  fresh-value discipline of \cref{ch:records} is what makes this true, and what
+  would go wrong in a mutable instance-field implementation.
+  \item Why does putting a variant selector such as \code{pc\_side} into
+  \code{SimState} defeat variant absorption? Trace the argument from ``the kernel
+  can now read \code{pc\_side}'' to ``the kernel can now branch on the variant.''
+  \item Distinguish the conjugate-gradient search direction $\vp$ (ephemeral,
+  stratum 3) from the recurrence scalar $\beta_{k-1}$ (carry, stratum 4). Both
+  ``come from the previous step''---state the precise question that separates
+  them, and answer it for each.
+  \item Consider a preconditioner that is \emph{rebuilt} partway through a solve
+  (for instance, when the operator changes mid-sweep). Does the factorization
+  stay build-time? Argue both sides, then propose how the stratification should
+  describe a value that is mostly build-time but occasionally refreshed. (This is
+  a genuine edge case; there is no single right answer, but a good answer names
+  the lifetime precisely.)
+\end{enumerate}

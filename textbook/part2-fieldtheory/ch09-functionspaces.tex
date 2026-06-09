@@ -1,0 +1,770 @@
+\chapter{The Finite-Element Function Spaces}
+\label{ch:functionspaces}
+
+\chapterorient{The previous chapters turned each Maxwell problem into a weak form
+$a(u,v)=\ell(v)$ and a Galerkin recipe: pick a finite-dimensional space $V_h$,
+expand the unknown in a basis, and solve a linear system. We left one question
+open---\emph{which} space? This chapter answers it. There are four canonical
+finite-element spaces, one for each kind of physical field, and the choice is not
+a matter of taste: a field that must be continuous in its tangential part lives in
+a different space from one that must be continuous in its normal part. Put a field
+in the wrong space and the simulator returns nonsense---spurious modes, locked
+solutions, fields that cannot represent a constant. Get it right and the
+discretization inherits the exact structure of Maxwell's equations. By the end you
+will know why electrostatics uses a scalar nodal space while every magnetic and
+wave problem uses edge elements, you will be able to count the degrees of freedom
+of each space on a mesh by hand, and you will have met the number $N$ that names
+the dimension of every tensor in this book.}
+
+\section{Why one space will not do}
+
+Every problem in \cref{ch:reductions-pde} reduced to the same abstract shape: find
+$u$ in some space such that
+\[
+  a(u,v) = \ell(v) \qquad \text{for all test functions } v,
+\]
+with $a$ the bilinear form of \cref{ch:galerkin}. To compute, we replace the
+infinite-dimensional space of all admissible fields by a finite-dimensional
+subspace $V_h$ spanned by simple, locally-supported basis functions. The unknown
+becomes a finite list of coefficients, and $a(u,v)=\ell(v)$ becomes a matrix
+equation. This is the finite-element method, and the basis functions are the
+\emph{finite elements}.
+
+The temptation is to use one space for everything. After all, an electric field
+$\vE$ and a magnetic field $\vB$ are both just vector fields---three numbers at
+each point of space. Why not discretize each component the same way we discretize
+a scalar, storing values at mesh vertices and interpolating linearly in between?
+
+The answer is that $\vE$ and $\vB$ are not ``just'' vector fields. They are vector
+fields with \emph{specific continuity requirements} dictated by Maxwell's
+equations, and those requirements differ between the two. Recall from
+\cref{ch:maxwell} the interface conditions that hold across any surface separating
+two materials: the \emph{tangential} component of $\vE$ is continuous, while the
+\emph{normal} component of $\vB$ is continuous. The normal component of $\vE$ may
+jump (a surface charge lives in the jump); the tangential component of $\vB$ may
+jump (a surface current lives there). A discretization that does not respect the
+correct interface condition is not merely inaccurate---it represents a field that
+is physically impossible, and the solver will dutifully compute with it.
+
+\begin{keyidea}
+The finite-element space must enforce exactly the continuity that physics
+requires---no more, no less. Tangentially-continuous fields ($\vE$, the magnetic
+vector potential $\vA$) belong in one space; normally-continuous fields (fluxes,
+$\vB$, $\vD$) belong in another; scalar potentials belong in a third; quantities
+with no inter-element continuity at all belong in a fourth. The degrees of freedom
+of each space are chosen to be precisely the quantities that must match across
+element faces. \emph{This single principle---DoFs match required continuity---is
+the organizing idea of the whole chapter.}
+\end{keyidea}
+
+There are four such spaces, and they are not arbitrary. They form a chain---the
+\emph{de Rham complex}---linked by the gradient, curl, and divergence operators,
+which we develop fully in \cref{ch:derham}. This chapter introduces the four spaces
+one at a time, by the degrees of freedom that define them, and shows how the
+abstract principle above forces each PDE onto a particular slot in the chain.
+
+\section{Degrees of freedom: the language of finite elements}
+
+Before meeting the four spaces we fix the vocabulary that distinguishes them. A
+finite-element space is built from a mesh---a partition of the domain $\dom$ into
+simple cells (tetrahedra, hexahedra) sharing faces, edges, and vertices. A field in
+the space is determined by a finite list of numbers, its \emph{degrees of freedom}
+(DoFs). Each DoF is a \emph{functional}: a rule that reads one number out of a
+field.
+
+\begin{definition}[Degree of freedom]
+A \emph{degree of freedom} of a finite-element space is a linear functional
+$\sigma_i$ on fields, together with a basis function $\phi_j$ satisfying the
+\emph{duality} (or \emph{unisolvence}) relation
+\[
+  \sigma_i(\phi_j) = \delta_{ij}.
+\]
+A field $u$ in the space is recovered from its DoFs by
+$u = \sum_i \sigma_i(u)\,\phi_i$; the coefficient on $\phi_i$ is exactly the value
+the functional $\sigma_i$ reads.
+\end{definition}
+
+The four spaces differ in \emph{what their functionals read} and \emph{where on the
+mesh they live}---and that is the whole story. The choices are summarized in
+\cref{tab:fourdofs}, which we then unpack space by space.
+
+\begin{table}[t]
+\centering
+\caption[Degrees of freedom of the four spaces]{The four finite-element spaces,
+distinguished entirely by their degrees of freedom: what each DoF reads and which
+geometric entity of the mesh it lives on. The last column anticipates
+\cref{ch:derham}: the four spaces form a chain linked by $\Grad$, $\Curl$, $\Div$.}
+\label{tab:fourdofs}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Space & A DoF reads\dots & lives on a\dots & continuity & de Rham slot \\
+\midrule
+$\Hone$ & a value $u(\vx_i)$ & vertex (node) & full ($C^0$) & start \\
+$\Hcurl$ & a circulation $\int_e \mathbf{u}\cdot d\vec\ell$ & edge & tangential & after $\Grad$ \\
+$\Hdiv$ & a flux $\int_f \mathbf{u}\cdot\vn\,dA$ & face & normal & after $\Curl$ \\
+$\Ltwo$ & a cell value / mean & cell interior & none & after $\Div$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The four spaces}
+
+\subsection{$\Hone$: nodal elements, the home of the scalar potential}
+
+The simplest finite element stores the \emph{value} of a scalar field at each mesh
+vertex. The functionals are point evaluations,
+\[
+  \sigma_i(u) = u(\vx_i), \qquad \vx_i = \text{the $i$-th vertex,}
+\]
+and the basis functions are the familiar ``hat'' or \emph{Lagrange} functions:
+$\phi_i$ is the unique piecewise-polynomial that equals $1$ at vertex $\vx_i$ and
+$0$ at every other vertex. A field is reconstructed by interpolating its nodal
+values across each cell.
+
+Because neighbouring cells share the vertex $\vx_i$ and both assign it the single
+coefficient $\sigma_i(u)=u(\vx_i)$, the reconstructed field takes the \emph{same}
+value on both sides of every shared face: it is continuous. This is the space
+called $\Hone$, the space of square-integrable scalar fields whose gradient is also
+square-integrable. Its discrete subspace is denoted $\Hone_h$, and its conformity is
+full continuity ($C^0$): the field has no jumps anywhere.
+
+\begin{physicsbox}
+$\Hone$ is the home of the \textbf{electrostatic potential} $V$. The electrostatic
+problem of \cref{ch:reductions-pde} solves $-\Div(\varepsilon\Grad V)=0$ for a
+scalar $V$ that is continuous everywhere (a potential cannot jump---a jump would be
+an infinite field). Nodal continuity is exactly the physics: $V$ must match across
+faces, and $\Hone$ enforces precisely that and nothing more.
+\end{physicsbox}
+
+The same space serves any scalar field that must be continuous: temperature in heat
+conduction, pressure in potential flow, the scalar magnetic potential. Whenever the
+unknown is a scalar potential, $\Hone$ is the slot.
+
+\subsection{$\Hcurl$: edge elements, the home of $\vE$ and $\vA$}
+
+Now suppose the unknown is a vector field whose \emph{tangential} component must be
+continuous---the electric field $\vE$, or the magnetic vector potential $\vA$. The
+naive approach stores all three Cartesian components as separate $\Hone$ fields. We
+will see in \cref{sec:spurious} that this is a disaster. The right approach uses a
+different kind of DoF entirely.
+
+A \emph{N\'ed\'elec edge element} assigns one DoF to each \emph{edge} of the mesh,
+and the functional it reads is the \emph{circulation} of the field along that edge:
+\[
+  \sigma_e(\mathbf{u}) = \int_e \mathbf{u}\cdot d\vec\ell
+  = \int_e \mathbf{u}\cdot\vec t_e \, d\ell,
+\]
+where $\vec t_e$ is the unit tangent along edge $e$. The basis function $\phi_e$ is
+the lowest-order vector field whose circulation is $1$ along edge $e$ and $0$ along
+every other edge.
+
+Why does this give tangential continuity? Two cells sharing a face share the edges
+bounding that face. Along each shared edge, the circulation DoF is a single number
+owned by both cells, so both cells reconstruct a field with the \emph{same
+tangential component} along that edge. The tangential component on the shared face
+is therefore continuous, while the normal component is free to jump from cell to
+cell---exactly the interface behaviour $\vE$ must have. This space is $\Hcurl$, the
+space of vector fields whose curl is square-integrable; its discrete subspace
+$\Hcurl_h$ is the \emph{edge-element} space.
+
+\begin{physicsbox}
+$\Hcurl$ is the home of the \textbf{electric field} $\vE$ and the \textbf{magnetic
+vector potential} $\vA$. Every wave and magnetic analysis---eigenmode, driven,
+magnetostatic, boundary mode---puts its primary unknown here. The curl--curl
+operator $\Curl(\nu\Curl\,\cdot)$ of \cref{ch:reductions-pde} acts on an $\Hcurl$
+field, and the tangential-continuity DoFs match the interface condition that
+$\vE_{\text{tan}}$ (or $\vA_{\text{tan}}$) be continuous.
+\end{physicsbox}
+
+\subsection{$\Hdiv$: face elements, the home of fluxes}
+
+The dual situation is a vector field whose \emph{normal} component must be
+continuous---a flux density such as $\vB$, $\vD$, or a current $\vJ$. Here the DoFs
+live on \emph{faces}. A \emph{Raviart--Thomas face element} assigns one DoF per face,
+reading the \emph{flux} of the field through that face:
+\[
+  \sigma_f(\mathbf{u}) = \int_f \mathbf{u}\cdot\vn \, dA,
+\]
+with $\vn$ the unit normal to face $f$. The basis function $\phi_f$ has unit flux
+through face $f$ and zero flux through every other face.
+
+Two cells sharing a face share that face's flux DoF---a single number---so both
+reconstruct a field with the \emph{same normal component} across the shared face,
+while the tangential component may jump. This is $\Hdiv$, the space of vector fields
+with square-integrable divergence; its discrete subspace $\Hdiv_h$ is the
+\emph{face-element} (Raviart--Thomas) space. Normal continuity is exactly the
+condition $\vB$ obeys: $B_n$ continuous, $B_{\text{tan}}$ free.
+
+\subsection{$\Ltwo$: discontinuous elements, the home of densities}
+
+Finally, some quantities have \emph{no} inter-element continuity requirement at all:
+a charge density, an energy density, a flux divergence, the right-hand side of a
+balance law. For these the appropriate space is $\Ltwo$, merely square-integrable,
+with no constraint coupling neighbouring cells. Its discrete subspace $\Ltwo_h$ uses
+\emph{discontinuous} elements: the DoFs are cell-interior values or moments, owned by
+a single cell and shared with no one. A field in $\Ltwo_h$ may jump freely across
+every face.
+
+\subsection{The pattern}
+
+Read \cref{tab:fourdofs} top to bottom and the pattern is unmistakable. As we descend
+$\Hone \to \Hcurl \to \Hdiv \to \Ltwo$, the DoFs move from vertices to edges to faces
+to cell interiors, and the continuity weakens from full, to tangential, to normal, to
+none. \Cref{fig:fourspaces} shows the DoF locations on a single tetrahedron. This
+ladder is not a coincidence: the gradient turns a nodal scalar into an edge field, the
+curl turns an edge field into a face field, and the divergence turns a face field into
+a cell density---the de Rham complex, the subject of \cref{ch:derham}. For now, the
+take-away is the placement rule, which we can already use to choose a space for any
+field whose continuity we know.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% reusable tetrahedron macro via four corners
+\def\A{(0,0)}      \def\B{(2.0,0.25)}   \def\C{(1.0,1.7)}   \def\D{(1.05,0.55)}
+% --- panel layout: 2x2 grid of tetrahedra ---
+\foreach \px/\py/\ttl/\sub in {%
+  0/0/{$\Hone$ (nodal)}/{DoFs on vertices},%
+  5/0/{$\Hcurl$ (edge)}/{DoFs on edges},%
+  0/-3.4/{$\Hdiv$ (face)}/{DoFs on faces},%
+  5/-3.4/{$\Ltwo$ (discontinuous)}/{DoF in interior}%
+}{
+  \begin{scope}[shift={(\px,\py)}]
+    % tetra skeleton (back edges dashed)
+    \coordinate (a) at (0,0);
+    \coordinate (b) at (2.0,0.25);
+    \coordinate (c) at (1.0,1.7);
+    \coordinate (d) at (1.05,0.62);
+    \draw[simGray,densely dashed] (a)--(d) (b)--(d) (c)--(d);
+    \draw[simInk,thick] (a)--(b)--(c)--cycle;
+    \node[font=\footnotesize\bfseries, simInk] at (1.0,2.15) {\ttl};
+    \node[font=\scriptsize\itshape, simGray] at (1.0,-0.45) {\sub};
+  \end{scope}
+}
+% --- H1: dots on vertices ---
+\begin{scope}[shift={(0,0)}]
+  \foreach \p in {(0,0),(2.0,0.25),(1.0,1.7),(1.05,0.62)}{
+    \fill[simBlue] \p circle (2.6pt);}
+\end{scope}
+% --- Hcurl: arrows along edges ---
+\begin{scope}[shift={(5,0)}]
+  \coordinate (a) at (0,0); \coordinate (b) at (2.0,0.25);
+  \coordinate (c) at (1.0,1.7); \coordinate (d) at (1.05,0.62);
+  \foreach \u/\v in {a/b,b/c,c/a}{
+    \draw[-{Stealth[length=1.8mm]},simRust,thick]
+      ($(\u)!0.25!(\v)$)--($(\u)!0.75!(\v)$);}
+  \foreach \u/\v in {a/d,b/d,c/d}{
+    \draw[-{Stealth[length=1.6mm]},simRust,thick,opacity=0.6]
+      ($(\u)!0.3!(\v)$)--($(\u)!0.7!(\v)$);}
+\end{scope}
+% --- Hdiv: a normal arrow through each face (front face shown) ---
+\begin{scope}[shift={(0,-3.4)}]
+  \coordinate (a) at (0,0); \coordinate (b) at (2.0,0.25);
+  \coordinate (c) at (1.0,1.7); \coordinate (d) at (1.05,0.62);
+  % front face centroid abc
+  \coordinate (fabc) at ($(a)!0.5!(b)$);
+  \fill[simGreen!18] (a)--(b)--(c)--cycle;
+  \draw[simInk,thick] (a)--(b)--(c)--cycle;
+  \node[circle,fill=simGreen,inner sep=1.4pt] (gc) at (1.0,0.65){};
+  \draw[-{Stealth[length=2mm]},simGreen,thick] (gc)++(0.0,0.0)--+(0.35,-0.7);
+  % a couple of side-face normals
+  \node[circle,fill=simGreen,inner sep=1.1pt] (g2) at (0.55,0.55){};
+  \draw[-{Stealth[length=1.6mm]},simGreen,thick,opacity=0.6] (g2)--+(-0.45,-0.15);
+\end{scope}
+% --- L2: single interior dot ---
+\begin{scope}[shift={(5,-3.4)}]
+  \fill[simViolet] (1.0,0.6) circle (3.0pt);
+\end{scope}
+\end{tikzpicture}
+\caption[The four spaces and their DoF locations]{The hero picture: the same
+tetrahedron, four spaces. $\Hone$ places its degrees of freedom on \emph{vertices}
+(blue dots: nodal values); $\Hcurl$ on \emph{edges} (rust arrows: tangential
+circulations); $\Hdiv$ on \emph{faces} (green normals: fluxes through faces); $\Ltwo$
+in the \emph{interior} (violet dot: a single cell value, shared with no neighbour). The
+DoF location \emph{is} the continuity: a quantity owned by a shared entity is continuous
+across it. Reading the panels in order traces the de Rham ladder of \cref{ch:derham}.}
+\label{fig:fourspaces}
+\end{figure}
+
+\section{Conformity: why the DoF location is the continuity}
+
+We have asserted that the location of a DoF determines the continuity of the space.
+This deserves a precise statement, because it is the mechanism behind everything in
+the chapter.
+
+When two cells share a geometric entity---a vertex, an edge, a face---and a DoF lives
+\emph{on} that entity, both cells reference the \emph{same single coefficient} for that
+DoF. Whatever quantity the functional reads is therefore identical as computed from
+either side. The reconstructed fields, built from those coefficients, must agree on
+that quantity across the interface. The DoF type fixes \emph{which} quantity:
+
+\begin{itemize}[nosep]
+\item a \emph{vertex value} shared $\Rightarrow$ the field value matches: $C^0$
+  continuity ($\Hone$);
+\item an \emph{edge circulation} shared $\Rightarrow$ the tangential component matches
+  along the edge: tangential continuity ($\Hcurl$);
+\item a \emph{face flux} shared $\Rightarrow$ the normal component matches across the
+  face: normal continuity ($\Hdiv$);
+\item \emph{nothing} shared (interior DoF) $\Rightarrow$ no constraint: discontinuity
+  ($\Ltwo$).
+\end{itemize}
+
+\Cref{fig:tangnormal} draws the two vector cases side by side. The crucial observation
+is that $\Hcurl$ and $\Hdiv$ each constrain \emph{exactly one} of the two pieces of a
+vector field at an interface (tangential or normal) and leave the other free. This is
+not a weakness; it is the point. The interface conditions of Maxwell's equations
+constrain exactly one piece and leave the other free, with the freed piece carrying a
+physical surface source. A space that constrained \emph{both} pieces (as componentwise
+$\Hone$ does) would forbid the surface charges and surface currents that physics
+permits---and would over-constrain the solution into the spurious modes of the next
+section.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% --- Left: tangential continuity (Hcurl) ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.4,2.2) {$\Hcurl$: tangential continuous};
+  \draw[simInk,thick] (1.4,-0.2)--(1.4,1.9);
+  \node[simGray] at (1.4,-0.5) {shared face};
+  \fill[simBlue!8] (0,-0.2) rectangle (1.4,1.9);
+  \fill[simRust!8] (1.4,-0.2) rectangle (2.8,1.9);
+  % tangential (vertical) components: equal magnitude both sides
+  \draw[-{Stealth[length=2mm]},simBlue,thick] (1.05,0.4)--(1.05,1.1);
+  \draw[-{Stealth[length=2mm]},simRust,thick] (1.75,0.4)--(1.75,1.1);
+  \node[simBlue] at (0.62,0.75) {$u_{\text{tan}}$};
+  \node[simRust] at (2.2,0.75) {$u_{\text{tan}}$};
+  % normal components: may differ
+  \draw[-{Stealth[length=1.6mm]},simBlue,opacity=0.55] (1.05,1.5)--(0.6,1.5);
+  \draw[-{Stealth[length=1.6mm]},simRust,opacity=0.55] (1.75,1.5)--(2.5,1.5);
+  \node[simGray] at (1.4,-0.95) {$\;u_{\text{tan}}$ matches, $u_n$ may jump};
+\end{scope}
+% --- Right: normal continuity (Hdiv) ---
+\begin{scope}[shift={(5,0)}]
+  \node[font=\footnotesize\bfseries] at (1.4,2.2) {$\Hdiv$: normal continuous};
+  \draw[simInk,thick] (1.4,-0.2)--(1.4,1.9);
+  \node[simGray] at (1.4,-0.5) {shared face};
+  \fill[simBlue!8] (0,-0.2) rectangle (1.4,1.9);
+  \fill[simGreen!8] (1.4,-0.2) rectangle (2.8,1.9);
+  % normal (horizontal) components: equal both sides
+  \draw[-{Stealth[length=2mm]},simBlue,thick] (0.9,0.95)--(1.4,0.95);
+  \draw[-{Stealth[length=2mm]},simGreen,thick] (1.4,0.95)--(1.9,0.95);
+  \node[simBlue] at (0.55,1.25) {$u_n$};
+  \node[simGreen] at (2.25,1.25) {$u_n$};
+  % tangential: may differ
+  \draw[-{Stealth[length=1.6mm]},simBlue,opacity=0.55] (1.05,0.35)--(1.05,0.0);
+  \draw[-{Stealth[length=1.6mm]},simGreen,opacity=0.55] (1.75,0.35)--(1.75,0.75);
+  \node[simGray] at (1.4,-0.95) {$\;u_n$ matches, $u_{\text{tan}}$ may jump};
+\end{scope}
+\end{tikzpicture}
+\caption[Tangential versus normal continuity]{The two vector spaces each constrain one
+component of a field across a shared face and free the other. \emph{Left:} $\Hcurl$
+forces the tangential component $u_{\text{tan}}$ to match (the heavy vertical arrows are
+equal) while the normal component $u_n$ may jump. \emph{Right:} $\Hdiv$ forces the
+normal component $u_n$ to match (the heavy horizontal arrows are equal) while the
+tangential component may jump. These are precisely the Maxwell interface conditions for
+$\vE$ (tangential continuous) and $\vB$ (normal continuous) from \cref{ch:maxwell}.}
+\label{fig:tangnormal}
+\end{figure}
+
+\section{The spurious-mode pitfall: why not just use nodal vectors?}
+\label{sec:spurious}
+
+We can now confront the question that motivates edge elements directly. Why not
+discretize $\vE$ component by component in $\Hone$---store $E_x$, $E_y$, $E_z$ each as a
+nodal scalar field? It is simpler to implement and uses tooling we already have. The
+reason it fails is one of the most important lessons in computational electromagnetics.
+
+A nodal vector field forces \emph{all three} components to be continuous at every
+vertex, hence the \emph{whole vector} is continuous across faces---both its tangential
+and its normal parts. But Maxwell's equations do \emph{not} require the normal part of
+$\vE$ to be continuous; across a dielectric interface, or at a re-entrant metallic
+corner, $\vE$ has a genuinely discontinuous normal component and a field singularity.
+Forcing full continuity where physics demands only tangential continuity over-constrains
+the discrete space: the true singular field cannot be represented, and the extra
+constraints have to go somewhere.
+
+Where they go is into \emph{spurious modes}---non-physical eigenvectors that pollute the
+spectrum of the discrete curl--curl operator. In an eigenmode analysis
+(\cref{ch:eigenmodes}) these appear as extra ``resonances'' at frequencies that no
+physical cavity possesses, interleaved unpredictably with the real ones, impossible to
+filter out reliably. \Cref{fig:spurious} sketches the mechanism at a re-entrant corner:
+the nodal-vector field is pinned to a single value at the corner vertex and cannot
+follow the field around it, while the edge-element field, owning independent tangential
+circulations on the two corner edges, represents the singular field cleanly.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% --- Left: nodal vector at a re-entrant corner ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.3,2.3) {nodal vector (wrong)};
+  % L-shaped re-entrant domain
+  \fill[simBgGray] (0,0)--(2.4,0)--(2.4,1.0)--(1.2,1.0)--(1.2,2.0)--(0,2.0)--cycle;
+  \draw[simInk,thick] (0,0)--(2.4,0)--(2.4,1.0)--(1.2,1.0)--(1.2,2.0)--(0,2.0)--cycle;
+  \fill[simRust] (1.2,1.0) circle (2.6pt);
+  \node[simRust] at (1.62,1.18) {corner};
+  % single pinned vector at corner -> cannot bend
+  \draw[-{Stealth[length=2mm]},simInk,thick] (1.2,1.0)--+(0.55,0.25);
+  % field tries to wrap but is forced single-valued (X marks)
+  \node[simRust,font=\footnotesize] at (0.8,0.55) {$\times$};
+  \node[simRust,font=\footnotesize] at (1.85,1.4) {$\times$};
+  \node[simGray] at (1.2,-0.5) {spurious: over-constrained};
+\end{scope}
+% --- Right: edge element at the same corner ---
+\begin{scope}[shift={(4.6,0)}]
+  \node[font=\footnotesize\bfseries] at (1.3,2.3) {edge element (right)};
+  \fill[simBgGreen] (0,0)--(2.4,0)--(2.4,1.0)--(1.2,1.0)--(1.2,2.0)--(0,2.0)--cycle;
+  \draw[simInk,thick] (0,0)--(2.4,0)--(2.4,1.0)--(1.2,1.0)--(1.2,2.0)--(0,2.0)--cycle;
+  \fill[simGreen] (1.2,1.0) circle (2.6pt);
+  % independent edge circulations wrap around the corner
+  \draw[-{Stealth[length=1.8mm]},simRust,thick] (1.2,1.0)--+(-0.0,0.55);
+  \draw[-{Stealth[length=1.8mm]},simRust,thick] (1.2,1.0)--+(0.6,0.0);
+  \draw[simBlue,thick,-{Stealth[length=1.6mm]}]
+    (1.7,1.45) arc (35:-120:0.55);
+  \node[simBlue] at (2.05,1.0) {$\vE$};
+  \node[simGray] at (1.2,-0.5) {singular field captured};
+\end{scope}
+\end{tikzpicture}
+\caption[Spurious modes at a re-entrant corner]{Why componentwise-nodal $\vE$ fails.
+\emph{Left:} a nodal-vector field pins the whole vector to one value at the corner
+vertex; it forces normal continuity that physics does not require and cannot follow the
+field's singular wrap around a re-entrant corner ($\times$ marks the constraints that
+have nowhere to go---they become spurious eigenmodes). \emph{Right:} an edge element owns
+independent tangential circulations on the corner's edges, leaves the normal component
+free, and represents the singular field cleanly. This is the reason every eigenmode and
+driven analysis uses $\Hcurl$.}
+\label{fig:spurious}
+\end{figure}
+
+\begin{pitfall}
+Never discretize $\vE$, $\vA$, or any tangentially-continuous field as three
+independent nodal ($\Hone$) components. Doing so imposes \emph{normal} continuity that
+Maxwell does not require, over-constrains the discrete space, and injects
+\textbf{spurious modes}---non-physical eigenvalues that corrupt every eigenmode and
+driven solve and cannot be reliably filtered out. Use edge elements ($\Hcurl$), whose
+DoFs constrain only the tangential component. This single design decision is why Palace's
+eigenmode, driven, magnetostatic, and boundary-mode solvers all assemble their primary
+operator over an $\Hcurl$ (\code{ND\_FECollection}) space.
+\end{pitfall}
+
+\section{From reference element to global space}
+
+So far we have described DoFs and continuity abstractly. The actual construction has two
+layers, which \cref{ch:refelement} develops in full; we sketch them here so the
+machinery is in view.
+
+\paragraph{The reference element.} Rather than define basis functions separately on every
+cell of the mesh, we define them \emph{once} on a single \emph{reference element}---a
+canonical unit tetrahedron or unit cube---and map them to each physical cell by an affine
+or isoparametric transformation. Each of the four spaces has its own family of reference
+shape functions: nodal Lagrange polynomials for $\Hone$, N\'ed\'elec edge functions for
+$\Hcurl$, Raviart--Thomas face functions for $\Hdiv$, and discontinuous Lagrange or
+Legendre polynomials for $\Ltwo$. The vector spaces $\Hcurl$ and $\Hdiv$ use special
+\emph{covariant} (Piola) and \emph{contravariant} transformations that preserve tangential
+and normal components respectively under the mapping---a detail that is what actually makes
+the continuity survive the map to a curved or skewed cell.
+
+\paragraph{Gluing into the global space.} The global finite-element space is assembled by
+\emph{identifying} the DoFs that shared mesh entities have in common. Each physical edge
+contributes one $\Hcurl$ DoF no matter how many cells border it; each physical face
+contributes one $\Hdiv$ DoF; each vertex one $\Hone$ DoF. The local-to-global \emph{DoF
+map}---a table recording, for each cell, which global DoF each of its local DoFs maps
+to---is what stitches the per-cell reference bases into one continuous (or
+tangentially/normally continuous) global field. In the matrix-free pipeline of
+\cref{ch:matrixfree} this map is the \emph{element restriction} operator $\mathsf{G}$ that
+gathers a global DoF vector into per-element local-dof tensors and scatters the result
+back; the per-element local-dof axis is the $L$ axis of the element-local tensor
+introduced there.
+
+In Palace, this whole construction is a single object. The function space is built by
+pairing a mesh with a \emph{collection} that names the family and order:
+\begin{center}
+\code{fe\_space(mesh, collection)} $\longrightarrow$
+\code{FiniteElementSpace[N]},
+\end{center}
+where the collection's type ($\Hone$, $\Hcurl$, $\Hdiv$, or $\Ltwo$) selects the de Rham
+slot and $N$ is the resulting dimension---the subject of \cref{sec:truedof}. The mesh and
+the collection are independent inputs: the same collection over a finer mesh, or the same
+mesh under a higher-order collection, are both well-formed spaces. These two axes of
+refinement are the topic of the next section.
+
+\section{Polynomial order and the \code{FECollection} family}
+
+Each space comes in a tower of \emph{orders}. The order-$p$ version of a space replaces the
+lowest-order shape functions with degree-$p$ polynomials, adding more DoFs per cell and
+representing the field more accurately. Palace organizes the four families and their orders
+through \emph{finite-element collections}: \code{H1\_FECollection}, \code{ND\_FECollection}
+(N\'ed\'elec, $\Hcurl$), \code{RT\_FECollection} (Raviart--Thomas, $\Hdiv$), and
+\code{L2\_FECollection}. A collection is the object passed as the second argument to
+\code{fe\_space} above; its \emph{type} fixes the de Rham slot and its order fixes the
+polynomial degree.
+
+\Cref{tab:collections} collects the four families with the data that matters for building a
+solver: the de Rham slot, the geometric entity that carries the DoFs, and the
+\emph{minimum order} $p_{\min}$ each family admits.
+
+\begin{table}[t]
+\centering
+\caption[The four \code{FECollection} families]{The four finite-element collection
+families. The minimum order $p_{\min}$ differs by family: $\Hone$ and $\Hcurl$ require
+$p_{\min}=1$ (a constant nodal scalar or a lowest-order edge function is the floor), while
+$\Hdiv$ and $\Ltwo$ admit $p_{\min}=0$ (a piecewise-constant flux or cell value is
+meaningful). These floors bound the coarsening sequence of the $p$-multigrid hierarchy.}
+\label{tab:collections}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}lllcl@{}}
+\toprule
+Space & Collection & DoF entity & $p_{\min}$ & primary field \\
+\midrule
+$\Hone$  & \code{H1\_FECollection} & vertices (nodes) & $1$ & scalar potential $V$ \\
+$\Hcurl$ & \code{ND\_FECollection} & edges            & $1$ & $\vE$, $\vA$ \\
+$\Hdiv$  & \code{RT\_FECollection} & faces            & $0$ & flux $\vB$, $\vD$ \\
+$\Ltwo$  & \code{L2\_FECollection} & cell interiors   & $0$ & density, $B=\Curl\vE$ (2-D) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{$h$- versus $p$-refinement.} There are two independent ways to make a finite-element
+solution more accurate, drawn in \cref{fig:hp}. \emph{$h$-refinement} subdivides the mesh into
+smaller cells (the mesh size $h$ shrinks) while keeping the polynomial order fixed; it adds
+resolution where the field varies rapidly and is the basis of the adaptive mesh refinement of
+\cref{ch:amr}. \emph{$p$-refinement} raises the polynomial order $p$ on a fixed mesh, adding DoFs
+per cell; on smooth fields it converges far faster (exponentially, rather than algebraically) than
+$h$-refinement. The two are orthogonal---one varies the mesh argument of \code{fe\_space}, the
+other the collection argument---and they can be combined ($hp$-refinement).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% baseline single coarse element
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.0,1.65) {coarse, $p=1$};
+  \draw[simInk,thick] (0,0) rectangle (2,1.2);
+  \foreach \x/\y in {0/0,2/0,2/1.2,0/1.2}{\fill[simBlue] (\x,\y) circle (2pt);}
+\end{scope}
+% h-refinement: subdivide
+\begin{scope}[shift={(3.4,0)}]
+  \node[font=\footnotesize\bfseries] at (1.0,1.65) {$h$-refine ($p=1$)};
+  \draw[simInk,thick] (0,0) rectangle (2,1.2);
+  \draw[simGray] (1,0)--(1,1.2) (0,0.6)--(2,0.6);
+  \foreach \x in {0,1,2}{\foreach \y in {0,0.6,1.2}{\fill[simBlue] (\x,\y) circle (2pt);}}
+  \node[simGray] at (1.0,-0.5) {smaller cells};
+\end{scope}
+% p-refinement: more DoFs, same cell
+\begin{scope}[shift={(6.8,0)}]
+  \node[font=\footnotesize\bfseries] at (1.0,1.65) {$p$-refine ($p=2$)};
+  \draw[simInk,thick] (0,0) rectangle (2,1.2);
+  \foreach \x in {0,1,2}{\foreach \y in {0,0.6,1.2}{\fill[simRust] (\x,\y) circle (2pt);}}
+  \node[simGray] at (1.0,-0.5) {higher order};
+\end{scope}
+\end{tikzpicture}
+\caption[$h$- versus $p$-refinement]{Two orthogonal routes to accuracy, shown for a nodal
+($\Hone$) element. \emph{$h$-refinement} (middle) subdivides the cell, shrinking the mesh size $h$
+while keeping order $p=1$; the DoFs (blue) multiply by subdivision. \emph{$p$-refinement} (right)
+keeps the single cell but raises the order to $p=2$, adding interior and edge DoFs (rust). Palace's
+geometric $p$-multigrid (\cref{ch:multigrid}) builds a hierarchy of order-coarsened collections; the
+$p_{\min}$ floors of \cref{tab:collections} bound how far the order can drop.}
+\label{fig:hp}
+\end{figure}
+
+\paragraph{The $p$-multigrid order schedule.} Palace's geometric multigrid preconditioner
+(\cref{ch:multigrid}) needs not a single space but a \emph{tower} of them, one per multigrid level,
+differing in order. The collection-schedule operator produces a list of collections from the finest
+order $p$ down to the floor $p_{\min}$, coarsening the order level by level. Two coarsening policies
+are offered: \emph{linear}, which steps $p \mapsto p-1$ each level, and \emph{logarithmic} (the
+default), which halves the gap to the floor, $p \mapsto \lfloor (p+p_{\min})/2 \rfloor$, reaching the
+floor in far fewer levels for large $p$. The schedule terminates at $p_{\min}$---which is why the
+floor differs by family: an $\Hone$ or $\Hcurl$ tower bottoms out at order $1$ (a constant scalar or
+lowest edge element), while an $\Hdiv$ or $\Ltwo$ tower can descend to the piecewise-constant order
+$0$. When the tower has a single level, the schedule degenerates to one ordinary \code{fe\_space}
+construction.
+
+\section{True degrees of freedom: the number $N$}
+\label{sec:truedof}
+
+We close with the single most-used number in this book. The dimension of the discrete space
+$V_h$---the number of basis functions, hence the length of the coefficient vector, hence the size
+of every assembled matrix---is denoted
+\[
+  N = \dim V_h.
+\]
+This is the $N$ in every \code{Tensor[N]} and every \code{LinearOperator[N,N]} throughout the
+framework chapters; the function-space construction is the operator that \emph{defines} $N$.
+
+There is a subtlety. The raw count of DoFs over all cells---summing local DoFs cell by cell---over-counts, because DoFs on shared entities are identified. Worse, on an adaptively refined mesh, a
+\emph{hanging node} (a vertex of a fine cell lying in the middle of a coarse cell's face) is not an
+independent DoF: its value is \emph{constrained} to be an interpolation of the surrounding coarse
+DoFs, so that the global field stays conforming. The space therefore distinguishes two counts:
+
+\begin{itemize}[nosep]
+\item the \emph{local} (or \emph{L-vector}) DoF count, summed over cells with shared and hanging
+  DoFs still counted multiply---the natural size for per-element work;
+\item the \emph{true} DoF count $N$, with shared DoFs identified once and hanging-node constraints
+  eliminated---the number of genuinely independent coefficients, the dimension of $V_h$.
+\end{itemize}
+
+It is the \emph{true}-DoF count $N$ that the solver works with: the assembled operators are $N\times
+N$, the Krylov vectors of \cref{ch:krylov} are length $N$, the unknowns are $N$ true coefficients.
+The transfer between the two pictures---gather the $N$ true coefficients into the larger local
+vector, apply the constraints, scatter back---is exactly the prolongation/restriction pair the space
+carries, and exactly the boundary the element-restriction operator $\mathsf{G}$ of
+\cref{ch:matrixfree} sits on. For the un-refined, single-order meshes of most of this book there are
+no hanging nodes, and $N$ is simply ``DoFs with shared entities counted once.''
+
+\begin{notationbox}
+$N = \dim V_h$ is the \textbf{true-DoF count}: the number of independent coefficients after shared
+DoFs are identified and hanging-node constraints are removed. It is the dimension of every
+\code{Tensor[N]} and the size of every \code{LinearOperator[N,N]} in the book. Different analyses on
+the same mesh have different $N$, because they use different spaces---an $\Hone$ scalar problem and
+an $\Hcurl$ vector problem over one mesh produce entirely different $N$.
+\end{notationbox}
+
+\section{Worked examples}
+
+\subsection{Counting degrees of freedom}
+
+The placement rule of \cref{tab:fourdofs} makes the lowest-order DoF count a purely combinatorial
+exercise: count vertices for $\Hone$, edges for $\Hcurl$, faces for $\Hdiv$, cells for $\Ltwo$. We do
+it first on a single tetrahedron, then on a small two-element mesh, to see how sharing changes the
+arithmetic.
+
+\begin{workedexample}{Lowest-order DoFs on a tetrahedron and a 2-element mesh}{dofcount}
+A single tetrahedron has $4$ vertices, $6$ edges, $4$ faces, and $1$ cell. For the lowest-order
+spaces the DoF count is the count of the carrying entity:
+\[
+  N_{\Hone} = 4, \quad N_{\Hcurl} = 6, \quad N_{\Hdiv} = 4, \quad N_{\Ltwo} = 1.
+\]
+So even on one cell the three first spaces have genuinely different sizes---vertices, edges, and faces
+of a tetrahedron number $4$, $6$, $4$. An $\Hcurl$ problem is the largest; this is the price of getting
+the continuity right.
+
+Now glue a \emph{second} tetrahedron onto the first across a shared triangular face. The two cells share
+that face's $3$ vertices and $3$ edges and the face itself; everything else is new. Counting the
+combined mesh:
+\begin{itemize}[nosep]
+\item \textbf{vertices:} $4 + 1 = 5$. (The second tet adds one new apex; its other three vertices are
+  the shared face.) So $N_{\Hone} = 5$.
+\item \textbf{edges:} the first tet has $6$; the second adds the $3$ edges from its new apex to the
+  shared face's vertices, the other $3$ being shared. So $6 + 3 = 9$, giving $N_{\Hcurl} = 9$.
+\item \textbf{faces:} the first tet has $4$; the second adds $3$ new faces (the fourth is the shared
+  face). So $4 + 3 = 7$, but the \emph{shared} face is counted once: $N_{\Hdiv} = 7$.
+\item \textbf{cells:} $2$, so $N_{\Ltwo} = 2$.
+\end{itemize}
+The naive ``sum over cells'' count would give $\Hone$: $4+4=8$, $\Hcurl$: $6+6=12$, $\Hdiv$:
+$4+4=8$. The true counts $5,9,7$ are smaller because the shared vertices, edges, and the shared face
+are \emph{identified}---each contributes a single global DoF. That identification is exactly the
+gluing of \cref{sec:truedof} and the source of the gap between the local and true DoF counts. The
+amount of sharing differs by space: the shared face removes $3$ from the vertex count, $3$ from the
+edge count, but only $1$ from the face count.
+\end{workedexample}
+
+\subsection{A lowest-order edge basis function}
+
+The defining feature of $\Hcurl$---tangential support on a single edge---can be checked by hand on the
+reference triangle. We exhibit the lowest-order N\'ed\'elec basis function for one edge and verify its
+tangential trace.
+
+\begin{workedexample}{The N\'ed\'elec edge function and its tangential trace}{whitney}
+Take the reference triangle with vertices $\vx_0=(0,0)$, $\vx_1=(1,0)$, $\vx_2=(0,1)$, and let
+$\lambda_0,\lambda_1,\lambda_2$ be its barycentric (nodal $\Hone$) coordinates---the hat functions with
+$\lambda_i(\vx_j)=\delta_{ij}$. Explicitly $\lambda_0 = 1-x-y$, $\lambda_1 = x$, $\lambda_2 = y$, and
+note $\Grad\lambda_0=(-1,-1)$, $\Grad\lambda_1=(1,0)$, $\Grad\lambda_2=(0,1)$.
+
+The lowest-order edge (Whitney) function associated with the edge $e_{01}$ joining $\vx_0$ and $\vx_1$
+is
+\[
+  \boldsymbol{\phi}_{01} \;=\; \lambda_0\,\Grad\lambda_1 \;-\; \lambda_1\,\Grad\lambda_0
+  \;=\; (1-x-y)\,(1,0) \;-\; x\,(-1,-1)
+  \;=\; \bigl(\,1-y,\; x\,\bigr).
+\]
+This is a genuine vector field on the triangle. We check the three edge circulations
+$\sigma_e(\boldsymbol{\phi}_{01})=\int_e \boldsymbol{\phi}_{01}\cdot d\vec\ell$.
+
+\smallskip\noindent\emph{Edge $e_{01}$} (its own edge), from $\vx_0=(0,0)$ to $\vx_1=(1,0)$: here
+$y=0$, the tangent is $d\vec\ell=(dx,0)$, and $\boldsymbol{\phi}_{01}=(1-0,\,x)=(1,x)$, so
+$\boldsymbol{\phi}_{01}\cdot d\vec\ell = 1\,dx$. The circulation is
+$\int_0^1 1\,dx = 1.$
+
+\smallskip\noindent\emph{Edge $e_{02}$}, from $\vx_0=(0,0)$ to $\vx_2=(0,1)$: here $x=0$, the tangent is
+$(0,dy)$, and $\boldsymbol{\phi}_{01}=(1-y,\,0)$, so the dot product
+$\boldsymbol{\phi}_{01}\cdot d\vec\ell = 0$. The circulation is $0.$
+
+\smallskip\noindent\emph{Edge $e_{12}$}, from $\vx_1=(1,0)$ to $\vx_2=(0,1)$: parametrize
+$(x,y)=(1-t,\,t)$ for $t\in[0,1]$, so $d\vec\ell=(-1,1)\,dt$ and
+$\boldsymbol{\phi}_{01}=(1-t,\,1-t)$. Then
+$\boldsymbol{\phi}_{01}\cdot d\vec\ell = (1-t)(-1)+(1-t)(1) = 0$,
+and the circulation is $0.$
+
+\smallskip So $\sigma_{e_{01}}(\boldsymbol{\phi}_{01})=1$ and
+$\sigma_{e_{02}}=\sigma_{e_{12}}=0$: the function satisfies the duality relation
+$\sigma_e(\boldsymbol{\phi}_{01})=\delta_{e,e_{01}}$. Its tangential trace is supported on \emph{exactly
+one} edge. Consequently, when two triangles share edge $e_{01}$, both reference $\boldsymbol{\phi}_{01}$
+through the \emph{same} circulation coefficient, and the assembled field has continuous tangential
+component along $e_{01}$ and nowhere else constrained---tangential continuity, edge by edge, exactly as
+\cref{fig:tangnormal} promised.
+\end{workedexample}
+
+\summarysection
+A finite-element discretization must place each field in a space whose degrees of freedom enforce
+exactly the continuity the physics requires. There are four canonical spaces, distinguished entirely by
+their DoFs: $\Hone$ stores nodal \emph{values} on vertices and is fully continuous (the home of the
+scalar potential $V$); $\Hcurl$ (N\'ed\'elec edge elements) stores \emph{circulations} on edges and is
+tangentially continuous (the home of $\vE$ and $\vA$); $\Hdiv$ (Raviart--Thomas face elements) stores
+\emph{fluxes} on faces and is normally continuous (the home of $\vB$, $\vD$); $\Ltwo$ stores
+\emph{cell} quantities and has no inter-element continuity (the home of densities). Because a DoF on a
+shared entity is a single coefficient owned by both neighbours, the DoF \emph{location} is the
+continuity. Discretizing $\vE$ as componentwise nodal vectors over-constrains it---it imposes normal
+continuity physics does not require---and injects spurious modes that ruin eigenmode and driven solves;
+edge elements get the continuity exactly right, which is why every magnetic and wave analysis uses
+$\Hcurl$. Each space comes in a tower of polynomial orders with family-dependent floors
+($p_{\min}=1$ for $\Hone$/$\Hcurl$, $0$ for $\Hdiv$/$\Ltwo$), assembled from reference shape functions
+glued by a local-to-global DoF map; refinement is $h$ (smaller cells) or $p$ (higher order). The
+dimension $N=\dim V_h$---the true-DoF count, with shared DoFs identified and hanging-node constraints
+removed---is the $N$ that names every tensor in the book.
+
+\furtherreading
+The definitive reference for finite-element spaces in electromagnetics is
+Monk~\citep{monk2003}, which develops $\Hcurl$ and $\Hdiv$, the N\'ed\'elec and Raviart--Thomas
+elements, and the spurious-mode question with full rigour. The unifying structural view---the four
+spaces as a discrete de Rham complex with exactness---is the subject of finite-element exterior
+calculus; Arnold, Falk, and Winther~\citep{arnold2006feec} is the canonical account and the natural
+sequel to \cref{ch:derham}. For an engineering-oriented treatment tied directly to computational
+electromagnetics, with the spurious-mode pathology worked through on real cavity problems,
+Jin~\citep{jin2014} is the standard text. The continuity arguments of \cref{sec:spurious} are made
+precise there; the tangential/normal trace theory underlying them is Monk's Chapter~3.
+
+\exercisessection
+\begin{enumerate}[nosep]
+\item For each of the four spaces, state in one sentence which Maxwell interface condition its DoFs
+  enforce, and name a physical field that belongs in it. (Use \cref{tab:fourdofs} and the
+  \texttt{physicsbox} anchors.)
+\item A single hexahedron (cube) has $8$ vertices, $12$ edges, $6$ faces, and $1$ cell. Give the
+  lowest-order DoF count $N$ for each of the four spaces on one hexahedron. Which space is largest?
+\item Two hexahedra are glued across a shared square face. Following
+  \cref{wex:dofcount}, compute the true DoF count $N$ for $\Hone$, $\Hcurl$, $\Hdiv$, and $\Ltwo$ on the
+  combined mesh, and compare each to the naive sum-over-cells count. How many DoFs does the shared face
+  remove from each space?
+\item Explain, in terms of degrees of freedom, why discretizing $\vE$ as three independent $\Hone$
+  scalar fields imposes \emph{more} continuity than $\Hcurl$ does. Which interface condition does the
+  nodal-vector approach wrongly enforce, and what physical surface quantity does that forbid?
+\item The $p$-multigrid order schedule for an $\Hcurl$ ($p_{\min}=1$) space at finest order $p=8$
+  produces a tower of collections. List the order sequence under (a) linear coarsening
+  ($p\mapsto p-1$) and (b) logarithmic coarsening ($p\mapsto\lfloor(p+1)/2\rfloor$). How many levels
+  does each policy produce before reaching the floor?
+\item Repeat the previous exercise for an $\Hdiv$ ($p_{\min}=0$) space at $p=8$. Why can this tower
+  descend one order further than the $\Hcurl$ tower, and what does the order-$0$ space represent
+  physically?
+\item Verify, by the method of \cref{wex:whitney}, that the edge function
+  $\boldsymbol{\phi}_{02}=\lambda_0\Grad\lambda_2-\lambda_2\Grad\lambda_0$ on the reference triangle has
+  circulation $1$ along edge $e_{02}$ and $0$ along $e_{01}$ and $e_{12}$.
+\item The number $N=\dim V_h$ differs between an electrostatic ($\Hone$) and an eigenmode ($\Hcurl$)
+  analysis run on the \emph{same} mesh. Using the single-tetrahedron and two-tet counts of
+  \cref{wex:dofcount}, explain why, and state which analysis produces the larger linear system on a given
+  mesh.
+\end{enumerate}

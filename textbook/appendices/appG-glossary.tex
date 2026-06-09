@@ -1,0 +1,450 @@
+\chapter{Symbol Glossary and Guide to the Literature}
+\label{app:glossary}
+
+\chapterorient{This closing appendix is a reference, not a narrative. Its first
+half is a glossary: every symbol the book uses often, grouped by the world it
+lives in---fields, operators, function spaces, numerical methods, the
+pseudo-language, and the layered methodology---with a pointer to the chapter that
+introduced it. Its second half is a guide to the literature, a topic-organized
+map of the sources the book leans on, each with a one-line note on what to read
+it for. The notation primer at the front of the book introduced these symbols a
+few at a time; here they are collected so you can look one up. When a symbol is
+unfamiliar, start here.}
+
+This appendix expands the front-matter notation primer (and its
+\cref{tab:symbols}) into a full reference. The mathematical symbols are set the
+usual way; the pseudo-language symbols obey the one standing convention of the
+book---they belong in a shaded box, never inside a formula, because the
+shape-group sigil \texttt{\$} clashes with mathematics typesetting. In the
+tables below, pseudo-language identifiers are set in \texttt{typewriter}; where a
+shape carries the sigil we write it as \texttt{Tensor[(S:\,\dots)]} and discuss
+the \texttt{\$S} back-reference form in prose.
+
+\section{Symbol and notation glossary}
+
+The glossary is split into six categories, one cluster of tables each: physical
+fields and quantities; discrete operators and matrices; function spaces and the
+finite-element vocabulary; the symbols of the numerical methods; the
+pseudo-language and calculus; and the layered methodology. Each row gives the
+symbol, its meaning, and a cross-reference to the chapter where it is introduced
+and used.
+
+\subsection{Fields and physical quantities}
+
+These are the quantities Maxwell's equations relate, the materials they move
+through, and the scalar readouts a simulation finally reports. Vector fields are
+upright bold; material coefficients and scalars are italic.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Fields and material coefficients]{Electromagnetic fields, potentials,
+and the constitutive coefficients of the medium.}
+\label{tab:gl-fields}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$\vE$ & electric field & \cref{ch:maxwell} \\
+$\vB$ & magnetic flux density & \cref{ch:maxwell} \\
+$\vH$ & magnetic field intensity, $\vH=\nu\vB$ & \cref{ch:maxwell} \\
+$\vD$ & electric displacement, $\vD=\varepsilon\vE$ & \cref{ch:maxwell} \\
+$\vJ$ & (free) current density & \cref{ch:maxwell} \\
+$\vA$ & magnetic vector potential, $\vB=\Curl\vA$ & \cref{ch:magnetostatics} \\
+$V$ & electrostatic scalar potential, $\vE=-\Grad V$ & \cref{ch:electrostatics} \\
+$\varepsilon$ & electric permittivity & \cref{ch:maxwell} \\
+$\mu$ & magnetic permeability & \cref{ch:maxwell} \\
+$\nu$ & magnetic reluctivity, $\nu=\mu^{-1}$ & \cref{ch:weak} \\
+$\sigma$ & electrical conductivity (loss term) & \cref{ch:maxwell} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Scalar outputs and modal quantities]{Frequencies, modal quantities, and
+the scalar products a driver reports.}
+\label{tab:gl-outputs}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$\omega$ & angular frequency, $\omega=2\pi f$ & \cref{ch:maxwell} \\
+$f$ & (ordinary) frequency & \cref{ch:driven} \\
+$\lambda$ & eigenvalue (here $\lambda=\omega^2$, or a shifted variant) & \cref{ch:eigenvalues} \\
+$k_n$ & wavenumber / propagation constant of mode $n$ & \cref{ch:waveports} \\
+$Q$ & quality factor of a resonant mode, $Q=\omega/(2\,\Im\omega)$ & \cref{ch:eigenmodes} \\
+$S_{ij}$ & scattering-matrix entry (port $j$ in, port $i$ out) & \cref{ch:driven} \\
+$C$ & capacitance (matrix) & \cref{ch:electrostatics} \\
+$M$ & inductance (matrix) & \cref{ch:magnetostatics} \\
+$U$ & stored field energy, electric or magnetic & \cref{ch:reductions-pde} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{notationbox}
+The letter $\sigma$ does double duty: it is the conductivity in
+\cref{tab:gl-fields} (a physical material property) and the spectral
+\emph{shift} of a shift-and-invert eigensolve in \cref{tab:gl-numerics} (a purely
+algebraic device). The context---a constitutive law versus an eigenvalue
+transform---always disambiguates, and the two never appear in the same equation.
+\end{notationbox}
+
+\subsection{Discrete operators and matrices}
+
+Assembling a weak form over a mesh turns each continuous bilinear form into a
+sparse matrix. These are set sans-serif to mark them as discrete operators acting
+on vectors of degrees of freedom, as opposed to the continuous differential
+operators of \cref{tab:gl-spaces}.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Discrete operators]{The assembled matrices and the maps between
+discretizations. Sans-serif marks a discrete (matrix) operator.}
+\label{tab:gl-operators}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$\mat{K}$ & stiffness operator (curl--curl or grad--grad) & \cref{ch:weak} \\
+$\mat{M}$ & mass operator & \cref{ch:weak} \\
+$\mat{C}$ & damping / conductivity operator & \cref{ch:weak} \\
+$\mat{A}$ & a generic system matrix, $\mat{A}\vx=\vb$ & \cref{ch:cg} \\
+$\mat{A}(\omega)$ & frequency-dependent system matrix of a driven solve & \cref{ch:driven} \\
+$\mat{P}$ & prolongation (coarse$\to$fine) or a projector & \cref{ch:multigrid} \\
+$\mat{G}$ & discrete gradient (the $\Hone\to\Hcurl$ map); a restriction & \cref{ch:smoothers} \\
+$a(u,v)$ & a bilinear (weak) form, the source of $\mat{K},\mat{M},\mat{C}$ & \cref{ch:weak} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The driven system matrix is the recurring composite
+$\mat{A}(\omega)=\mat{K}+i\omega\mat{C}-\omega^2\mat{M}$: one matrix-valued
+function of frequency, built once from the three assembled operators and
+re-evaluated across a sweep (\cref{ch:driven}). The discrete gradient $\mat{G}$
+is the algebraic shadow of $\Grad$---it is what makes the Hiptmair smoother of
+\cref{ch:smoothers} possible, by carrying a residual from the edge space into the
+nodal space where the near-null-space lives.
+
+\subsection{Function spaces and the finite-element vocabulary}
+
+The four de Rham spaces and the operators that connect them are the backbone of
+\cref{part:fieldtheory}; the discretization symbols ($N$, $\eta_K$, $\theta$) and
+the element-local axes come from \cref{part:machinery}.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Function spaces and continuous operators]{The de Rham complex and its
+differential operators.}
+\label{tab:gl-spaces}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$\Hone$ & scalar potentials; nodal elements & \cref{ch:derham} \\
+$\Hcurl$ & curl-conforming (edge) elements; tangential continuity & \cref{ch:derham} \\
+$\Hdiv$ & div-conforming (face) elements; normal continuity & \cref{ch:derham} \\
+$\Ltwo$ & square-integrable fields; no continuity imposed & \cref{ch:derham} \\
+$\Grad$ & gradient, $\Hone\to\Hcurl$ & \cref{ch:derham} \\
+$\Curl$ & curl, $\Hcurl\to\Hdiv$ & \cref{ch:derham} \\
+$\Div$ & divergence, $\Hdiv\to\Ltwo$ & \cref{ch:derham} \\
+$\diffop$ & a generic first-order differential operator in a weak form & \cref{ch:weak} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Discretization and adaptivity symbols]{Degree-of-freedom counts, error
+indicators, and the element-local axes.}
+\label{tab:gl-fem}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$N$ & number of (true) degrees of freedom & \cref{ch:fem} \\
+$\eta_K$ & local error indicator on element $K$ & \cref{ch:amr} \\
+$\theta$ & D\"orfler marking fraction & \cref{ch:amr} \\
+E & element axis (which element) & \cref{ch:refelement} \\
+L & local-node axis (dof within an element) & \cref{ch:refelement} \\
+P & quadrature-point axis & \cref{ch:matrixfree} \\
+C & component axis (vector-field component) & \cref{ch:refelement} \\
+G & global-dof axis (after gather/scatter) & \cref{ch:assembly} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The five element-local axes \texttt{E/L/P/C/G} are the named shape run of the
+matrix-free operator: \cref{ch:matrixfree} writes a quadrature contraction as a
+sequence of moves along these axes, and \cref{ch:assembly} shows the gather and
+scatter that fold the local axis \texttt{L} into the global axis \texttt{G}.
+
+\subsection{Numerical-method symbols}
+
+The Krylov, eigensolver, and multigrid chapters of \cref{part:machinery} share a
+compact algebraic vocabulary. The same letters recur---$\alpha$ and $\beta$ for
+step coefficients, $\mat{H}$ and $\mat{T}$ for the small projected operators,
+$\sigma$ for a spectral shift---so they are collected here.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Krylov and eigensolver symbols]{Subspaces, coefficients, and projected
+operators of the iterative methods.}
+\label{tab:gl-numerics}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Where introduced \\
+\midrule
+$\mathcal{K}_m$ & Krylov subspace of dimension $m$ & \cref{ch:krylov} \\
+$\alpha$ & CG step length / Lanczos diagonal coefficient & \cref{ch:cg} \\
+$\beta$ & CG conjugacy factor / Lanczos off-diagonal coefficient & \cref{ch:cg} \\
+$\bar{\mat{H}}$ & upper-Hessenberg matrix (Arnoldi / GMRES) & \cref{ch:gmres} \\
+$\mat{T}$ & tridiagonal matrix (Lanczos) & \cref{ch:krylovschur} \\
+$\sigma$ & spectral shift in shift-and-invert & \cref{ch:eigenvalues} \\
+$\kappa$ & condition number, $\kappa(\mat{A})$ & \cref{ch:cg} \\
+$c,s$ & cosine / sine of a Givens rotation & \cref{ch:givens} \\
+$\mat{V}$ & matrix of (orthonormal) basis vectors & \cref{ch:krylov} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Hessenberg $\bar{\mat{H}}$ and the tridiagonal $\mat{T}$ are the same object
+seen from two angles: $\mat{T}$ is what $\bar{\mat{H}}$ collapses to when the
+operator is symmetric, which is exactly why Lanczos is the cheap special case of
+Arnoldi (\cref{ch:krylovschur}). The Givens pair $(c,s)$ is the rotation that
+GMRES applies to keep $\bar{\mat{H}}$ triangular incrementally
+(\cref{ch:givens}); the \emph{V-cycle} (\cref{ch:multigrid}) is the recursive
+coarsen--smooth--correct schedule that the smoothers of \cref{ch:smoothers}
+plug into.
+
+\subsection{The pseudo-language and calculus}
+
+These are the symbols of the typed pseudo-language in which the book writes its
+algorithms. They always appear in a shaded box. The combinators and named
+operators are the verbs of the calculus; the records are its nouns; the
+\texttt{Solve} monad threads the one piece of mutable state.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Calculus types and shapes]{The type and shape vocabulary of the
+pseudo-language.}
+\label{tab:gl-calc-types}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Identifier & Meaning & Where introduced \\
+\midrule
+\texttt{Tensor[N]} & flat vector of $N$ dofs & \cref{ch:tensors} \\
+\texttt{Tensor[(S:\,\dots)]} & tensor with a named, rank-agnostic shape run \texttt{S} & \cref{ch:shapes} \\
+\texttt{Tensor[\$S]} & a back-reference: ``the same shape \texttt{S} again'' & \cref{ch:shapes} \\
+\texttt{Op[\dots]} & a (matrix-free) linear-operator value & \cref{ch:matrixfree} \\
+\texttt{Scalar} & a rank-0 tensor (a number with shape) & \cref{ch:tensors} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The shape run is the heart of the shape system (\cref{ch:shapes}): a function
+typed \texttt{Tensor[(S:\,\dots)] -> Tensor[\$S]} works on a vector, a matrix, or
+a higher array at once, and the \texttt{\$S} back-reference promises the output
+carries the same axes as the input. We write the sigil form only inside the
+shaded box; in prose we name it ``the shape group \texttt{S}.''
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Combinators and named operators]{The loop combinator and the named solve
+verbs of the synthesis surface.}
+\label{tab:gl-calc-ops}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Identifier & Meaning & Where introduced \\
+\midrule
+\texttt{iterate\_while} & the one loop combinator (predicate + step) & \cref{ch:fold} \\
+\texttt{fold\_solve} & a linear solve expressed as a fold over Krylov steps & \cref{ch:krylov} \\
+\texttt{ksp\_solve} & the preconditioned Krylov solve verb & \cref{ch:precond} \\
+\texttt{solve\_family} & one operator, many right-hand sides (reused factorization) & \cref{ch:electrostatics} \\
+\texttt{frequency\_sweep} & a driven solve evaluated across a band of $\omega$ & \cref{ch:driven} \\
+\texttt{eigsolve} & the eigenvalue-problem solve verb & \cref{ch:eigenvalues} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Records and effects]{The state records, the \texttt{Solve} monad, and
+the two edge kinds of the dependency graph.}
+\label{tab:gl-calc-records}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Identifier & Meaning & Where introduced \\
+\midrule
+\texttt{IoData} & the parsed configuration record (the run's inputs) & \cref{ch:records} \\
+\texttt{OpParams} & the assembled-operator parameter bundle & \cref{ch:records} \\
+\texttt{SimState} & the evolving simulation state the monad threads & \cref{ch:monad} \\
+\texttt{SolveResult} & a solve's output record (solution + diagnostics) & \cref{ch:records} \\
+\texttt{Solve} & the state monad threading \texttt{SimState} & \cref{ch:monad} \\
+\texttt{\#extern} & an opaque external kernel (no body; type only) & \cref{ch:matrixfree} \\
+\texttt{depends-on} & a blocking edge: constrains resolution and liveness & \cref{ch:wholemachine} \\
+\texttt{reference} & a navigational (free) edge: a cross-link, not a dependency & \cref{ch:wholemachine} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{Solve} monad is the one place state changes: a \texttt{do} block in
+the \texttt{Solve} monad threads a \texttt{SimState} through a sequence of steps,
+and \texttt{modify} is the single state-mutating verb (\cref{ch:monad}). An
+\texttt{\#extern} marks a leaf the synthesis surface does not implement---a call
+out to an opaque library kernel (libCEED quadrature, a vendor eigensolve), shown
+by its type signature only (\cref{ch:matrixfree}).
+
+\subsection{The layered stack and methodology}
+
+The book's organizing idea is a stack of representations connected by rotations.
+These tokens name its levels and its recurring structural patterns.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[The layered stack]{Levels, rotations, and the structural categories of
+the methodology.}
+\label{tab:gl-method}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Token & Meaning & Where introduced \\
+\midrule
+L0 & ground-truth source level (cited ranges) & \cref{ch:strata} \\
+L1 & pure-function level (mutation rotated out) & \cref{ch:strata} \\
+L2 & fused-algebra level (HPC tricks erased) & \cref{ch:strata} \\
+L3 & iteration level (global tensor-field ops) & \cref{ch:strata} \\
+L4 & calculus level (combinators + monad + tensors) & \cref{ch:strata} \\
+rotation & a representation-preserving rewrite between levels & \cref{ch:rotations} \\
+obstruction & a place a rotation cannot complete cleanly & \cref{ch:rotations} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A \emph{rotation} re-expresses a level in a new vocabulary while preserving what
+it computes; an \emph{obstruction} is an honest record of a place that resists
+the rotation (a sequential recurrence that will not become a tensor-field op, an
+opaque library boundary). Two small taxonomies recur. The \emph{four solve
+corners} (\cref{ch:composing}) are the cross product of two axes---one
+right-hand side versus a family, and a fixed operator versus a frequency-varying
+one---and they classify the five drivers: electrostatic and magnetostatic are
+family-of-RHS / fixed-operator corners, the driven solve is the
+varying-operator corner, and so on. The \emph{three reduction shapes}
+(\cref{ch:reductions-pde}) are the three ways a field is collapsed to a
+reported number---a global scalar (energy), a boundary integral (a port flux),
+and a pointwise probe (a field sample at a point)---one shape per family of
+output product.
+
+\begin{keyidea}
+Every symbol in this glossary lives at a definite level of the stack. The
+physical fields ($\vE$, $\vB$) and the function spaces ($\Hcurl$, $\Ltwo$) name
+the continuous problem; the assembled operators ($\mat{K}$, $\mat{M}$) and the
+Krylov symbols ($\alpha$, $\bar{\mat{H}}$) name the discrete machinery; the
+pseudo-language identifiers (\texttt{iterate\_while}, \texttt{Solve}) name the
+calculus that rewrites that machinery into a synthesizable surface. Reading a
+symbol's level is half of reading the symbol.
+\end{keyidea}
+
+\section{A guide to the literature}
+\label{sec:furtherreading-app}
+
+The book is a synthesis, and it stands on a small, deliberately chosen
+bibliography. This section groups those sources by topic and says, in a line,
+what to read each for. It is a map for going deeper, not a survey.
+
+\paragraph{Finite elements and Maxwell's equations.}
+For the finite-element treatment of electromagnetics, \citet{monk2003} is the
+standard reference and the closest in spirit to the field-theory part of this
+book---read it for the rigorous theory of edge elements and $\Hcurl$
+conformity. \citet{jin2014} is the more applied companion, rich in engineering
+detail and worked formulations; read it for how the weak forms become real
+solvers. \citet{brennerscott2008} is the mathematical foundation of the finite
+element method in general (approximation theory, error estimates); read it when
+you want the analysis under the discretization. \citet{arnold2006feec} is the
+deep structural account: finite element exterior calculus explains \emph{why}
+the de Rham complex of \cref{ch:derham} is the right organizing principle, and
+why the four spaces must connect as they do.
+
+\paragraph{Krylov methods and iterative linear solvers.}
+\citet{saad2003} is the encyclopedic reference for sparse iterative
+methods---read it for CG, GMRES, preconditioning, and the Krylov-subspace theory
+behind \cref{ch:krylov,ch:cg,ch:gmres}. \citet{trefethenbau1997} is the elegant
+short course; read it for the cleanest possible derivations of QR, Arnoldi, and
+the conditioning ideas ($\kappa$). \citet{golubvanloan2013} is the matrix-computations
+handbook; read it for Givens rotations (\cref{ch:givens}), the dense linear
+algebra under the small projected problems, and as a definitive cross-reference.
+
+\paragraph{Eigensolvers.}
+\citet{saad2011eig} is the companion volume to Saad's linear-systems book and the
+reference for large-scale eigenvalue computation---read it for Lanczos,
+Arnoldi, and the shift-and-invert ($\sigma$) transforms of
+\cref{ch:eigenvalues}. \citet{stewart2001krylovschur} introduced the
+Krylov--Schur restarting scheme of \cref{ch:krylovschur}; read it for the
+stable thick-restart mechanism. \citet{effenberger2013} treats the nonlinear
+eigenvalue problem and the successive-deflation strategy behind
+\cref{ch:deflation}; read it when the eigenproblem's operator depends on its own
+eigenvalue.
+
+\paragraph{Multigrid and preconditioning.}
+\citet{hiptmair1998} is the foundational paper on multigrid for Maxwell's
+equations and the source of the Hiptmair smoother (\cref{ch:smoothers})---read
+it for why curl-conforming problems need a special near-null-space correction.
+\citet{hiptmairxu2007} generalizes this into nodal auxiliary-space
+preconditioning (the AMS idea); read it for the auxiliary-space construction
+that makes $\Hcurl$ and $\Hdiv$ solves scalable. \citet{phillipsfischer2022}
+gives the optimal Chebyshev smoothers and one-sided V-cycle schedule of
+\cref{ch:multigrid}; read it for the practical smoother tuning.
+
+\paragraph{Adaptivity and error estimation.}
+\citet{dorfler1996} introduced the marking strategy ($\theta$) that drives the
+adaptive loop of \cref{ch:amr}---read it for the convergence guarantee behind
+``refine the smallest set of elements holding a fixed fraction of the error.''
+\citet{zienkiewiczzhu1987} is the classic recovery-based error estimator
+($\eta_K$); read it for the practical, inexpensive indicator that tells the loop
+\emph{where} to refine.
+
+\paragraph{Microwave engineering and physics.}
+\citet{pozar2011} is the microwave-engineering reference and the source of the
+S-parameter and wave-port conventions ($S_{ij}$, $k_n$) of
+\cref{ch:driven,ch:waveports}---read it for what the driven solve's outputs
+mean physically. \citet{griffiths2017} is the undergraduate electrodynamics
+text; read it to refresh Maxwell's equations, the potentials, and the energy
+integrals of \cref{ch:maxwell} from first principles.
+
+\paragraph{Functional programming and the calculus.}
+\citet{peytonjones2003} is the Haskell language report and the reference for the
+typed-functional notation the pseudo-language borrows (currying, records, type
+signatures)---read it for the precise meaning of the syntax in the shaded
+boxes. \citet{wadler1995monads} is the classic exposition of monads for
+functional programming; read it for the idea that makes the \texttt{Solve} monad
+of \cref{ch:monad} legitimate---state threaded purely, with one mutation point.
+
+\paragraph{The tools.}
+\citet{palace2023} is Palace itself, the AWS Labs finite-element electromagnetics
+solver this book dissects; it is the L0 ground truth that every citation in the
+book ultimately points at. \citet{ceed2021} is libCEED, the matrix-free
+high-order element library behind the \texttt{\#extern} quadrature kernel of
+\cref{ch:matrixfree}; read it for the element-local algebra (the E/L/P/C/G axes)
+the synthesis surface lifts into tensor contractions.
+
+\summarysection
+You now have the whole book in three forms. You have the \emph{map}---the
+layered stack L0 through L4, the rotations that connect the levels, and the
+honest obstructions where a rotation cannot finish. You have the
+\emph{machinery}---the weak forms and de Rham spaces of the field theory, the
+Krylov, eigensolver, and multigrid algorithms of the numerical core, and the
+five drivers that compose them into electrostatic, magnetostatic, eigenmode,
+driven, and transient simulations. And you have the \emph{vocabulary}---the
+symbols of this glossary and the typed pseudo-language they belong to, in which
+the synthesis surface re-expresses a quarter-million lines of tuned C++ as a few
+combinators over immutable tensors. The simulator is no longer a black box: it is
+a small calculus, a handful of named operators, and a clear account of what each
+one computes and why. That account was the goal; you are now holding it.

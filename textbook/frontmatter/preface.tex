@@ -1,0 +1,108 @@
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+\markboth{Preface}{Preface}
+
+This is a book about a single, surprisingly small idea: that a large physics
+simulator---the kind that engineers use to design antennas, microwave filters,
+superconducting qubits, and electric machines---can be understood, in its
+entirety, as the repeated composition of a handful of mathematical building
+blocks. The simulator we use as our running example is
+\emph{Palace}, an open-source three-dimensional electromagnetic field solver.
+But almost nothing in this book is specific to Palace. The shapes we will
+draw---assemble, solve, reduce; fold, map, iterate---are the shapes of nearly
+every field simulator ever written.
+
+\section*{Why this book exists}
+
+Most simulation software is written in the idiom of its era's hardware. The
+classic finite-element code is a sea of nested loops that march over arrays,
+overwriting memory in place: \texttt{for each element, for each quadrature
+point, accumulate into the global matrix}. That idiom is fast, it is familiar,
+and it is almost perfectly designed to hide what the program is actually
+computing. To read such a code is to reverse-engineer a physical theory from a
+memory-access pattern.
+
+This book takes the opposite stance. We present the same algorithms, but in a
+form where the \emph{mathematics is in the foreground and the memory management
+has disappeared.} A field is a \emph{tensor}---an immutable array of numbers
+with named axes. A simulation step is a \emph{pure function} from tensors to
+tensors. A loop is a \emph{combinator}---a higher-order function like ``fold''
+or ``map'' that captures the \emph{shape} of the iteration without committing to
+how it is scheduled on a particular machine. In this language, a whole
+electrostatic capacitance extraction is three lines; an eigenmode analysis is
+one black-box call wrapped in a readout; a frequency sweep is a map over a list.
+
+Why bother? Three reasons.
+
+\begin{itemize}
+  \item \textbf{Clarity.} When mutation is gone, the data flow of an algorithm
+  is exactly its mathematical dependency graph. You can \emph{see} that
+  conjugate-gradient touches the operator once per step, that the only thing a
+  Krylov solver writes back each cycle is the current iterate, that the
+  preconditioner is just an approximate inverse applied as a function.
+  \item \textbf{Composability.} Because every piece is a pure function, pieces
+  snap together. The same \texttt{solve} routine serves electrostatics,
+  magnetostatics, and the inner loop of an eigensolver. We will spend the whole
+  book discovering that there are really only \emph{four} ways the simulator
+  ever solves anything.
+  \item \textbf{Hardware independence.} Pure tensor functions are exactly what
+  modern accelerator libraries (GPUs, tensor processors, automatic
+  differentiation frameworks) want to consume. The functional rendering is not
+  an academic nicety; it is the form in which the algorithm can be \emph{handed
+  to a backend} and run, unchanged, on a graphics card.
+\end{itemize}
+
+\section*{Three ways to look at a simulator}
+
+There are three honest ways to describe a program this size, and a good engineer
+learns to switch between them fluently. This book deliberately uses all three.
+
+\begin{description}
+  \item[Top-down (what does it do?).] Start from the user's command---``compute
+  the capacitance of this geometry''---and trace the work downward into smaller
+  and smaller pieces. This is the view of \cref{ch:targets} and
+  \cref{ch:lifecycle}: the six analyses Palace offers and the lifecycle that
+  runs them.
+  \item[Bottom-up (what is this piece?).] Start from a primitive---``what
+  exactly does \texttt{fe\_assemble} compute?''---and build understanding
+  upward. This is the view of \cref{part:fieldtheory} and
+  \cref{part:machinery}: the finite-element theory and the numerical
+  algorithms, each studied on its own terms.
+  \item[As a synthesized library (what is the code?).] Look at the whole thing
+  as one small, well-organized library of composed functions. This is the view
+  of \cref{part:collection}: the \emph{synthesis surface}, where every analysis
+  is reassembled from the parts as a few lines of pseudocode.
+\end{description}
+
+The book's title points at the third view because it is the one that ties the
+other two together. ``The synthesis surface'' is the name we give to the
+simulator rendered as a library; ``simulates its targets'' is the claim that
+this small library, composed in the right way, reproduces every physical
+analysis the original C\texttt{++} program performs. The book is the argument
+for that claim, told slowly enough that a reader who has just finished
+sophomore-year mathematics can follow every step.
+
+\section*{What you will be able to do}
+
+By the end you should be able to: read the simulator's algorithms in the
+pseudo-language we use throughout; explain, for each of the six analyses, what
+physical quantity it computes and which equation it discretizes; recognize the
+four ``solve corners'' and the three ``reduction shapes'' that organize the
+entire system; follow a finite-element assembly from a weak form to a global
+operator; describe how conjugate gradients, GMRES, multigrid, and a
+shift-and-invert eigensolver work and why each appears where it does; and read
+the synthesized library as a coherent whole. None of this requires prior
+exposure to functional programming, monads, or finite-element analysis---only
+the willingness to meet a few new ideas one at a time.
+
+\section*{A note on the diagrams}
+
+This is an illustrated book on purpose. Nearly every idea here has a picture
+that is easier to remember than its formula: the lifecycle pipeline, the de Rham
+complex, the multigrid V-cycle, the matrix-free contraction chain, the
+shift-and-invert spectrum. Where a diagram and an equation say the same thing,
+we give both, and we recommend you trust the diagram first and use the equation
+to make it precise.
+
+\vspace{1em}
+\noindent\hfill\textit{The Palace Whiteroom}\hfill\null

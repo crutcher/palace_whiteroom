@@ -1,0 +1,878 @@
+\chapter{Types, Shapes, and the Shape Algebra}
+\label{app:shapes}
+
+\chapterorient{\Cref{ch:tensors} fixed the vocabulary of tensors and shapes, and
+\cref{ch:shapes} taught the reading discipline: a shape is a type, named groups
+assert congruence, scalar promotion lets a real number quietly join a complex
+computation. Those chapters argued by example and picture. This appendix supplies
+the \emph{formal} object underneath them. We write the shape language as a
+grammar; we state named-group resolution as a single unification rule; we give the
+type-and-shape judgment $\Gamma \vdash e : \tau$ as a small set of inference rules;
+we collect the primitive shape contracts into one reference table; and we cast
+scalar promotion as a subtyping rule \lstinline[style=l4style]|real <: complex|.
+Nothing here is new physics or new notation---it is the precise version of the
+rules the main text reads informally, the companion to \cref{app:calculus}'s
+grammar and reduction rules and the home for the equational laws of
+\cref{app:laws}. Read it as reference: the rule you reach for when a shape
+contract or a typing question must be settled exactly rather than by eye.}
+
+\section{What this appendix formalizes}
+\label{sec:b-scope}
+
+\Cref{ch:tensors,ch:shapes} carry the conceptual load; this appendix carries the
+formal load behind them. The split is deliberate. The main text earns its rules on
+worked vectors and matrices and draws each contract as a picture, so that a reader
+learns to \emph{read} a shape the way they read a type. Here we write those same
+rules as grammar productions, inference rules, and a reference table, so that a
+reader can \emph{settle} a shape question exactly---decide whether two shapes are
+congruent, whether a call type-checks, which group binds where---without appeal to
+intuition.
+
+Four objects organize the appendix, each the formal counterpart of a main-text
+idea:
+
+\begin{itemize}[leftmargin=1.4em, nosep]
+\item \textbf{The shape language} (\cref{sec:b-shapelang})---a BNF grammar for the
+shape expression $\sigma$, with its literals, axis variables, algebraic
+combinations, the rank-wildcard \lstinline[style=l4style]|...|, and the named-group
+binding and use forms. This is the formal version of \cref{ch:tensors}'s bracket
+notation and \cref{ch:shapes}'s named groups.
+\item \textbf{Named-group resolution} (\cref{sec:b-resolve})---the precise
+unification rule by which a use \lstinline[style=l4style]|$S| is matched against a
+binding \lstinline[style=l4style]|(S: ...)|, the formal version of
+\cref{ch:shapes}'s rank-agnostic congruence.
+\item \textbf{The type-and-shape judgment} (\cref{sec:b-judgment})---the inference
+rules of $\Gamma \vdash e : \tau$, including the primitive-op shape-contract rule
+that ties shapes into typing.
+\item \textbf{The primitive shape contracts} (\cref{sec:b-contracts}) and
+\textbf{scalar promotion} (\cref{sec:b-promotion})---a reference table of the
+primitive signatures, and the subtyping rule
+\lstinline[style=l4style]|real <: complex|.
+\end{itemize}
+
+\begin{keyidea}
+\textbf{Shapes are types; congruence is unification.} A tensor's shape is a
+type-level expression, checked at every function boundary exactly as a type is. A
+named shape group \lstinline[style=l4style]|(S: ...)| is a unification variable
+over a run of axes of \emph{unknown rank}; a use \lstinline[style=l4style]|$S|
+resolves by \emph{unifying} the labelled shape against the binding, modulo a small
+equational theory on axis extents (commutative, associative $+$ and $\times$). The
+whole shape discipline of this book is therefore one rule applied everywhere:
+\emph{unify the named groups of a signature against the argument shapes, modulo
+that equational theory, rank first.}
+\end{keyidea}
+
+\section{The shape language}
+\label{sec:b-shapelang}
+
+A tensor type is \lstinline[style=l4style]|Tensor[s]| for a shape expression
+$\sigma$. A shape expression is a tuple of \emph{items}, each item an axis
+extent---a literal, a named axis, an algebraic combination---or one of the two
+rank-flexible constructs: the wildcard and the named group. We give the grammar,
+then read each production.
+
+\subsection{Grammar}
+\label{sec:b-grammar}
+
+A shape $\sigma$ is a bracketed sequence of \emph{group items} $\gamma$; a group
+item is either a single axis extent or one of the rank-flexible forms.
+
+\begin{lstlisting}[style=l4style]
+sigma ::= n                      -- literal natural (a pinned extent, e.g. 3)
+        | s                      -- axis variable (a named axis: N, m, H, ...)
+        | sigma + sigma          -- axis arithmetic
+        | sigma - sigma
+        | sigma * sigma
+        | sigma ^ n
+        | [ gamma_1, ..., gamma_k ]  -- a shape: a sequence of group items
+
+gamma ::= sigma                  -- one axis (literal, variable, or algebraic)
+        | ...                    -- rank wildcard: zero or more unconstrained axes
+        | (S: gamma_1, ..., gamma_j)  -- named group BINDING: binds S to this run
+        | $S                     -- named group USE: a back-reference to S
+\end{lstlisting}
+
+\noindent The grammar is taken verbatim from the source calculus's
+\lstinline[style=l4style]|DimExpr| algebra; \cref{ch:tensors,ch:shapes} use exactly
+its shapes. Reading the productions:
+
+\begin{description}[leftmargin=1.6em, style=nextline, nosep]
+\item[Literal $n$.] A \emph{pinned} extent: an axis whose length is fixed in the
+signature, like the $3$ in \lstinline[style=l4style]|Tensor[H, W, 3]| (a 3-vector
+per cell). A call supplying any other extent at that position is rejected.
+\item[Axis variable $s$.] A \emph{named} axis: a single letter ($N$, $m$, $n$,
+$H$, $W$) standing for a size not fixed in the signature but required to
+\emph{match} wherever the same name recurs. An axis variable is \emph{one} axis,
+hence rank-bearing---this is the load-bearing fact behind the
+\lstinline[style=l4style]|Tensor[N]| pitfall of \cref{ch:shapes}.
+\item[Algebraic combination.] An extent built from others by $+,-,\times,{}^\wedge$.
+These arise from reshapes and factorizations: flattening a height axis $h$ and a
+width axis $w$ into one produces the extent \lstinline[style=l4style]|h*w|. The
+matcher reasons about these \emph{modulo} a small algebra (\cref{sec:b-dimexpr}).
+\item[{Shape tuple $[\gamma_1,\dots,\gamma_k]$.}] The shape itself: an ordered
+sequence of group items. The \emph{number} of axes the tuple denotes is the
+tensor's \emph{rank}---but a single \lstinline[style=l4style]|...| or
+\lstinline[style=l4style]|(S: ...)| item may itself stand for \emph{several} axes,
+so the count of \emph{items} is not in general the rank.
+\item[Rank wildcard \code{...}.] Matches \emph{zero or more}
+axes of any extent. It is the device that makes a signature rank-agnostic: it
+declines to commit to how many axes fill its position.
+\item[Named group, binding \code{(S: ...)}.] Binds the name
+$S$ to the run of axes its body matches. The binding occurs \emph{exactly once},
+at $S$'s first appearance.
+\item[{Named group, use \code{\$S}.}] A \emph{back-reference}: it
+asserts that the run of axes at this position is \emph{congruent} to the run bound
+to $S$. The \lstinline[style=l4style]|$| sigil is what visually distinguishes a use
+from a fresh binding or a single-axis variable.
+\end{description}
+
+\Cref{fig:b-shapealgebra} draws the shape algebra as labelled axis boxes: a row of
+boxes for a tensor's axes, a spanning bracket for a named group's binding, and the
+\lstinline[style=l4style]|$S| back-arrow for a use---the formal-side companion to
+the hero figure of \cref{ch:shapes}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % LEGEND-style: literal, variable, group, wildcard
+  % Row of axis boxes with mixed item kinds: [ (S: a, ...), k ]
+  \begin{scope}[shift={(0,1.3)}]
+    % the named-group run: a leading pinned 'a' then a wildcard tail
+    \draw[draw=simBlue, fill=simBgBlue, thick] (0,-0.4) rectangle (0.8,0.4);
+    \node[font=\small, simInk] at (0.4,0) {$a$};
+    \draw[draw=simBlue, fill=simBgBlue, thick] (1.0,-0.4) rectangle (1.8,0.4);
+    \node[font=\footnotesize, simGray] at (1.4,0) {$\cdot$};
+    \node[font=\scriptsize, simGray] at (2.15,0) {$\cdots$};
+    \draw[draw=simBlue, fill=simBgBlue, thick] (2.5,-0.4) rectangle (3.3,0.4);
+    \node[font=\footnotesize, simGray] at (2.9,0) {$\cdot$};
+    % the free trailing axis k
+    \draw[draw=simRust, fill=simBgRust, thick] (3.9,-0.4) rectangle (4.7,0.4);
+    \node[font=\small, simInk] at (4.3,0) {$k$};
+    % bracket binding the group S over the leading run
+    \draw[decorate, decoration={brace, amplitude=4pt}, simBlue]
+      (-0.02,0.55) -- (3.32,0.55)
+      node[midway, above=4pt, font=\scriptsize\bfseries, simBlue]
+      {binds \texttt{S} (a leading run: pinned \texttt{a}, then \texttt{...})};
+    \node[font=\scriptsize\bfseries, simRust, above=4pt] at (4.3,0.55) {free \texttt{k}};
+    \node[font=\scriptsize\ttfamily, simInk] at (-2.0,0)
+      {\lstinline[style=l4style]|Tensor[(S: a, ...), k]|};
+  \end{scope}
+  % a second operand: $S then a free m  -- the USE row
+  \begin{scope}[shift={(0,-0.6)}]
+    \draw[draw=simTeal, fill=simBgGreen, thick] (0,-0.4) rectangle (0.8,0.4);
+    \node[font=\small, simInk] at (0.4,0) {$a$};
+    \draw[draw=simTeal, fill=simBgGreen, thick] (1.0,-0.4) rectangle (1.8,0.4);
+    \node[font=\footnotesize, simGray] at (1.4,0) {$\cdot$};
+    \node[font=\scriptsize, simGray] at (2.15,0) {$\cdots$};
+    \draw[draw=simTeal, fill=simBgGreen, thick] (2.5,-0.4) rectangle (3.3,0.4);
+    \node[font=\footnotesize, simGray] at (2.9,0) {$\cdot$};
+    \draw[draw=simGold, fill=simBgGold, thick] (3.9,-0.4) rectangle (4.7,0.4);
+    \node[font=\small, simInk] at (4.3,0) {$m$};
+    \draw[decorate, decoration={brace, amplitude=4pt, mirror}, simTeal]
+      (-0.02,-0.55) -- (3.32,-0.55)
+      node[midway, below=4pt, font=\scriptsize\bfseries, simTeal]
+      {uses \texttt{\$S} (must be congruent)};
+    \node[font=\scriptsize\bfseries, simGold, below=4pt] at (4.3,-0.55) {free \texttt{m}};
+    \node[font=\scriptsize\ttfamily, simInk] at (-2.0,0)
+      {\lstinline[style=l4style]|Tensor[$S, m]|};
+  \end{scope}
+  % the congruence back-arrow
+  \draw[-{Stealth[length=2.6mm]}, simRust, thick]
+    (3.55,-0.85) .. controls (4.5,-0.1) and (4.5,0.7) .. (3.55,1.45)
+    node[midway, right=1pt, font=\scriptsize\itshape, simRust, align=left]
+    {congruent\\(same run)};
+\end{tikzpicture}
+\caption[The shape algebra: items, groups, and the congruence back-arrow]{The
+shape language as labelled axis boxes. \emph{Top (blue/rust):} the binding shape
+\lstinline[style=l4style]|Tensor[(S: a, ...), k]|---a named group \texttt{S}
+spanning a leading run (a pinned axis \texttt{a} followed by a wildcard
+\texttt{...} of any number of further axes), then a single \emph{free} trailing
+axis \texttt{k} outside the group. \emph{Bottom (teal/gold):} a second operand
+\lstinline[style=l4style]|Tensor[$S, m]|, whose leading run is a \emph{use}
+\lstinline[style=l4style]|$S| and whose own trailing axis \texttt{m} is free and
+independent of \texttt{k}. The rust back-arrow is the congruence assertion the
+\lstinline[style=l4style]|$S| carries: \emph{my leading run is the same run that
+bound \texttt{S}}. Group items may be literals, variables, algebraic extents,
+wildcards, or nested groups; a group splits a shape into a named congruent part
+and a free part.}
+\label{fig:b-shapealgebra}
+\end{figure}
+
+\subsection{The DimExpr equational theory}
+\label{sec:b-dimexpr}
+
+Two shapes that differ on the page may denote the same run of extents. A reshape
+that merges axes $h$ and $w$ yields the extent \lstinline[style=l4style]|h*w|; an
+operation consuming the flattened tensor must recognize
+\lstinline[style=l4style]|h*w| and \lstinline[style=l4style]|w*h| as the same
+length. Shape matching is therefore \emph{not} raw character comparison; it is
+comparison modulo a small equational theory on extent expressions---the
+\lstinline[style=l4style]|DimExpr| theory.
+
+\begin{definition}[DimExpr equational theory]
+\label{def:b-dimexpr}
+Two axis extents are \emph{equal} when they are equal as elements of the free
+commutative semiring on the axis variables, with $+$ and $\times$ the semiring
+operations: that is, modulo the axioms
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\emph{commutativity} & $a + b = b + a$,\qquad $a \times b = b \times a$ \\
+\emph{associativity} & $(a+b)+c = a+(b+c)$,\qquad $(a\,b)\,c = a\,(b\,c)$ \\
+\emph{distributivity} & $a\,(b+c) = a\,b + a\,c$ \\
+\emph{identities} & $a + 0 = a$,\qquad $a \times 1 = a$,\qquad $a \times 0 = 0$ \\
+\emph{powers} & $a^{m}\,a^{n} = a^{m+n}$,\qquad $a^{1}=a$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Subtraction $a - b$ is admitted as the formal inverse of addition
+(extents arising from a reshape are assumed nonnegative; the theory does not
+attempt to prove nonnegativity). Two shapes $[\gamma_1,\dots,\gamma_k]$ and
+$[\delta_1,\dots,\delta_k]$ of \emph{equal rank} are equal when $\gamma_i = \delta_i$
+in this theory for every $i$.
+\end{definition}
+
+In practice the matcher normalizes each extent expression to a canonical
+sum-of-monomials form and compares; \lstinline[style=l4style]|h*w| and
+\lstinline[style=l4style]|w*h| both normalize to the monomial $hw$, so they match,
+while \lstinline[style=l4style]|h*w| and \lstinline[style=l4style]|h+w| do not.
+The theory is deliberately weak---it decides the \emph{algebraic} coincidences a
+reshape genuinely produces, and nothing subtler.
+
+\begin{notationbox}
+The equational theory is a fact the matcher \emph{verifies}; congruence is a
+contract you \emph{assert}. When two operands must share a shape, say so with a
+group (\lstinline[style=l4style]|(S: ...)| / \lstinline[style=l4style]|$S|) and let
+the matcher enforce it; reserve the extent algebra
+(\lstinline[style=l4style]|h*w| and friends) for the positions where a genuine
+reshape \emph{produced} a composite extent. Writing two operands as
+\lstinline[style=l4style]|Tensor[h*w]| and hoping the algebra makes them agree is
+backwards: the algebra equates \emph{extents at matching positions}, it does not
+discover that two whole shapes were meant to be congruent.
+\end{notationbox}
+
+\section{Named-group resolution}
+\label{sec:b-resolve}
+
+We can now state, precisely, what \cref{ch:shapes} drew as a back-arrow: how a use
+\lstinline[style=l4style]|$S| is resolved against a binding
+\lstinline[style=l4style]|(S: ...)|. The resolution is a \emph{unification} of
+axis runs, with one wrinkle---a named group spans a \emph{run} of axes of unknown
+length, so the unifier must split a concrete shape into the part the group claims
+and the part left free.
+
+\subsection{The resolution rule}
+\label{sec:b-resolve-rule}
+
+A signature is checked left to right against the argument shapes. The first
+position labelled by a group binds it; later uses are tested.
+
+\begin{definition}[Named-group resolution]
+\label{def:b-resolve}
+Let a signature contain a binding \lstinline[style=l4style]|(S: p)| (where the
+\emph{pattern} $p$ is a sequence of group items, possibly containing a wildcard
+\lstinline[style=l4style]|...|) and one or more uses \lstinline[style=l4style]|$S|.
+Resolution proceeds in two steps.
+
+\begin{description}[leftmargin=1.6em, style=nextline, nosep]
+\item[Bind.] Match the pattern $p$ against the corresponding run of the
+\emph{first} argument shape that labels $S$. If $p$ is a pure wildcard
+\lstinline[style=l4style]|(S: ...)|, the run is the \emph{entire} shape at that
+position; if $p$ pins leading or trailing axes (e.g.
+\lstinline[style=l4style]|(S: a, ...)|), those pinned axes must match by the
+\lstinline[style=l4style]|DimExpr| theory (\cref{def:b-dimexpr}) and the wildcard
+absorbs the remainder. The matched run---a concrete sequence of extents
+$\hat{S} = [\hat{e}_1,\dots,\hat{e}_r]$ of definite rank $r$---becomes the
+\emph{value} of $S$.
+\item[Use.] At each later \lstinline[style=l4style]|$S|, require the run of axes at
+that position to be \emph{congruent} to $\hat{S}$: \textbf{(i)} the same rank $r$,
+and \textbf{(ii)} extent $\hat{e}_i$ at axis $i$ for every $i$, equality decided by
+the \lstinline[style=l4style]|DimExpr| theory. Rank is checked \emph{first}: a rank
+mismatch fails immediately, before any extent is compared.
+\end{description}
+
+\noindent A group with both a pinned part and a free part splits each labelled
+shape into ``the run $S$ claims'' and ``the free axes outside it''; only the
+claimed run participates in congruence, while the free axes (\texttt{k},
+\texttt{m} in \cref{fig:b-shapealgebra}) are unconstrained across operands.
+\end{definition}
+
+Read as a unification rule, the binding/use machinery is one inference:
+
+\[
+\dfrac{
+  \begin{array}{c}
+  \text{$\hat{S}$ is the run matched by \lstinline[style=l4style]|(S: p)| in the binding position}
+  \end{array}
+  \qquad
+  \text{rank}(\tau) = \text{rank}(\hat{S})
+  \qquad
+  \tau \;=_{\text{DimExpr}}\; \hat{S}
+}{
+  \text{a shape $\tau$ at a use position \lstinline[style=l4style]|$S| resolves (is congruent)}
+}
+\quad(\textsc{congr})
+\]
+
+\noindent and the dual---a rank mismatch---is the rejection rule:
+
+\[
+\dfrac{\text{rank}(\tau) \neq \text{rank}(\hat{S})}
+      {\text{$\tau$ at \lstinline[style=l4style]|$S| is rejected (rank mismatch, no extent compared)}}
+\quad(\textsc{congr-fail})
+\]
+
+This is exactly why \lstinline[style=l4style]|Tensor[N]| (\cref{ch:shapes}) can
+never match a rank-$2$ argument: a single axis variable $N$ is a run of rank $1$,
+so \textsc{congr-fail} fires on the rank check before $N$'s extent is ever
+considered. \Cref{fig:b-unify} draws the two-step resolution as a matched
+binding-against-use, the formal version of the boundary gate of
+\cref{ch:shapes}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm and 12mm]
+  % the binding shape on the left
+  \node[data, text width=26mm] (bind)
+    {\textbf{binding}\\\lstinline[style=l4style]|(S: ...)|\\matched run\\$\hat{S}=[3,4]$};
+  % the unify gate
+  \node[stage, right=16mm of bind, minimum height=24mm, text width=20mm] (gate)
+    {\textbf{unify}\\$\$S \stackrel{?}{=} \hat{S}$};
+  % two use candidates
+  \node[data, right=16mm of gate, yshift=11mm, text width=30mm] (ok)
+    {use \lstinline[style=l4style]|$S| $=[3,4]$\\rank $2$, extents agree};
+  \node[data, right=16mm of gate, yshift=-11mm, text width=30mm] (bad)
+    {use \lstinline[style=l4style]|$S| $=[12]$\\rank $1\neq 2$};
+  \draw[flow] (bind) -- node[above, font=\scriptsize, simGray]{bind $\hat{S}$} (gate);
+  \draw[-{Stealth[length=2.4mm]}, simGreen, thick] (gate.east|-ok) -- (ok)
+    node[midway, above, font=\scriptsize, simGreen]{congruent};
+  \draw[-{Stealth[length=2.4mm]}, simRust, thick, densely dashed] (gate.east|-bad) -- (bad)
+    node[midway, below, font=\scriptsize, simRust]{reject};
+  % annotation: rank first
+  \node[font=\scriptsize\itshape, simGray, below=7mm of gate, text width=64mm,
+        align=center]
+    {\textbf{step 1} bind $\hat{S}$ from the first labelled run;\quad
+     \textbf{step 2} at each use, check rank \emph{first}, then extents modulo
+     \lstinline[style=l4style]|DimExpr|. The lower candidate fails on rank
+     ($1\neq 2$) before any extent is compared---even though $3\cdot4=12$.};
+\end{tikzpicture}
+\caption[Named-group resolution as unification]{Resolving a use
+\lstinline[style=l4style]|$S| against a binding \lstinline[style=l4style]|(S: ...)|.
+The binding's first labelled run fixes $\hat{S}$ (here $[3,4]$, rank $2$). Each
+later use is \emph{unified} against $\hat{S}$: rank is checked first (a mismatch is
+rejected on the spot, lower path), then extents axis-by-axis modulo the
+\lstinline[style=l4style]|DimExpr| equational theory (\cref{def:b-dimexpr}, upper
+path). The flattened candidate $[12]$ is rejected on \emph{rank} even though its
+single extent equals the product $3\cdot4$ of the bound run: congruence demands the
+same number of axes, not merely the same total size. This is the precise content of
+\cref{ch:shapes}'s back-arrow and boundary gate.}
+\label{fig:b-unify}
+\end{figure}
+
+\subsection{Operator shapes: range-first}
+\label{sec:b-operators}
+
+An operator whose domain and range shapes differ names \emph{two} groups, a range
+group $R$ and a domain group $D$, written \emph{range-first} (matching the
+$m \times n$ matrix convention, rows then columns):
+
+\begin{lstlisting}[style=l4style]
+LinOp[(R: ...), (D: ...)]                                   -- general operator
+apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[$D] -> Tensor[$R]
+\end{lstlisting}
+
+\noindent The operand is a use of the \emph{domain} group
+(\lstinline[style=l4style]|$D|); the result is a use of the \emph{range} group
+(\lstinline[style=l4style]|$R|). Resolution is \cref{def:b-resolve} applied to two
+groups at once: the operator value binds both $R$ and $D$, the operand is checked
+against $\hat{D}$, the result is congruent to $\hat{R}$. An \emph{endomorphism}
+(domain $\equiv$ range) binds one group and uses it for both:
+
+\begin{lstlisting}[style=l4style]
+LinOp[(S: ...), $S]                                        -- square / endomorphic
+apply_linop :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]
+\end{lstlisting}
+
+\noindent which is the signature a Krylov solver wants: feed it a vector of shape
+$S$, get back a vector of shape $S$ you can feed it again
+(\cref{ch:matrixfree}). At the lowest layers, where Palace's operators act on
+genuine flat dof-vectors of a definite length, the concrete rank-$1$ spelling
+\lstinline[style=l4style]|LinearOperator[M, N]| over
+\lstinline[style=l4style]|Tensor[N]| is faithful and is kept; the group form is the
+rank-agnostic calculus rendering used at the higher layers.
+
+\subsection{Congruence groups versus named axes of fixed meaning}
+\label{sec:b-fixedaxes}
+
+The resolution rule applies only to \emph{congruence groups}---the
+\lstinline[style=l4style]|(S: ...)| / \lstinline[style=l4style]|$S| variables. A
+shape bracket holds a second, entirely different kind of name, and the two must not
+be confused. A \emph{named axis of fixed meaning} is a single axis whose letter
+denotes one specific, fixed quantity---it is \emph{not} a unification variable and
+\emph{not} a back-reference. The book's recurring family is the element-local
+vocabulary of the matrix-free kernel (\cref{ch:matrixfree}):
+
+\begin{description}[leftmargin=1.6em, style=nextline, nosep]
+\item[\texttt{E}] element count---how many mesh elements the operator runs over.
+\item[\texttt{L}] local dofs per element, $(p+1)^d$ for a degree-$p$ element.
+\item[\texttt{P}] quadrature points per element.
+\item[\texttt{C}] value (or derivative) components carried at a quadrature point.
+\item[\texttt{G}] geometry-factor components stored per quadrature point.
+\end{description}
+
+\noindent with the three rank-structured shapes
+\lstinline[style=l4style]|Tensor[(E, L)]|, \lstinline[style=l4style]|Tensor[(E, P, C)]|,
+and \lstinline[style=l4style]|Tensor[(E, P, G)]|. Each letter has a definite role
+fixed by the finite-element construction; none is rank-agnostic, none is a
+back-reference. A fixed-meaning axis answers \emph{what is this axis}; a congruence
+group answers \emph{does this shape match that one}. The two are governed by
+different rules: a fixed-meaning axis is matched like an ordinary axis variable
+(its letter must agree wherever it recurs, at rank $1$), whereas a congruence group
+is resolved by \cref{def:b-resolve} over a run of unknown rank. The flat global
+dof-axis $N$ is a third species again---a genuine rank-$1$
+\lstinline[style=l4style]|Tensor[N]|, neither fixed-meaning element-local nor a
+congruence group---and the gather/scatter pair $G,G^{\mathsf T}$ of
+\cref{ch:matrixfree} is precisely the boundary between the flat-$N$ world and the
+fixed-meaning \lstinline[style=l4style]|(E, L)| world.
+
+\section{The type-and-shape judgment}
+\label{sec:b-judgment}
+
+Shapes do not float free; they ride on \emph{types}, and a tensor type
+\lstinline[style=l4style]|Tensor[s]| is a type former carrying a shape. The
+calculus's typing judgment is the standard typed-$\lambda$ form,
+\[
+  \Gamma \vdash e : \tau,
+\]
+read ``under context $\Gamma$ (a finite map from variables to types), the
+expression $e$ has type $\tau$.'' The type $\tau$ ranges over the ground scalar
+types, tensor types, records, tuples, functions, the simulator monad
+\lstinline[style=l4style]|Sim t|, and operator types
+\lstinline[style=l4style]|Op[t_in -> t_out]| (the full grammar is
+\cref{app:calculus}). The shape discipline of the previous sections enters typing
+at exactly one place: the rule for primitive-operator application, where the op's
+declared shape contract must match the argument shapes modulo the equational theory.
+
+\subsection{The core rules}
+\label{sec:b-coretyping}
+
+The structural rules are the textbook ones. We give variable, application,
+abstraction, record formation and spread, and the two monadic rules; the rest are
+mechanical.
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+\item[Variable.] A variable has the type the context assigns it.
+\[
+  \dfrac{x : \tau \,\in\, \Gamma}{\Gamma \vdash x : \tau}\quad(\textsc{var})
+\]
+
+\item[Application and abstraction.] Function application demands the argument's
+type meet the function's domain; abstraction discharges a hypothesis.
+\[
+  \dfrac{\Gamma \vdash e_1 : \tau_1 \to \tau_2 \qquad \Gamma \vdash e_2 : \tau_1}
+        {\Gamma \vdash e_1\,e_2 : \tau_2}\quad(\textsc{app})
+  \qquad\qquad
+  \dfrac{\Gamma,\, x : \tau_1 \vdash e : \tau_2}
+        {\Gamma \vdash \lambda(x{:}\tau_1).\,e \;:\; \tau_1 \to \tau_2}\quad(\textsc{abs})
+\]
+
+\item[Records and spread.] A record literal is typed field-by-field; a spread
+(functional update) preserves the record type while replacing one field's value
+with one of the same type.
+\[
+  \dfrac{\Gamma \vdash e_i : \tau_i \ \ (\text{each } i)}
+        {\Gamma \vdash \{\, l_1{:}\,e_1,\dots,l_n{:}\,e_n \,\} : \{\, l_1{:}\,\tau_1,\dots,l_n{:}\,\tau_n \,\}}
+  \quad(\textsc{record})
+\]
+\[
+  \dfrac{\Gamma \vdash e : \{\, l_1{:}\,\tau_1,\dots,l_n{:}\,\tau_n \,\}
+         \qquad \Gamma \vdash w : \tau_k}
+        {\Gamma \vdash \{\, \dots e,\ l_k{:}\,w \,\} : \{\, l_1{:}\,\tau_1,\dots,l_n{:}\,\tau_n \,\}}
+  \quad(\textsc{spread})
+\]
+
+\item[Monad: return and bind.] \lstinline[style=l4style]|return| injects a pure
+value into the simulator monad; bind sequences two \lstinline[style=l4style]|Sim|
+actions, threading the state (the ownership discipline of \cref{ch:monad}).
+\[
+  \dfrac{\Gamma \vdash e : \tau}{\Gamma \vdash \texttt{return}\ e : \texttt{Sim}\ \tau}
+  \quad(\textsc{return})
+  \qquad\quad
+  \dfrac{\Gamma \vdash m : \texttt{Sim}\ \alpha \qquad \Gamma,\, x{:}\,\alpha \vdash k : \texttt{Sim}\ \beta}
+        {\Gamma \vdash m \mathbin{>\!\!>\!\!=} \lambda x.\,k \;:\; \texttt{Sim}\ \beta}
+  \quad(\textsc{bind})
+\]
+\end{description}
+
+\noindent These rules are shape-agnostic: a shape appears only \emph{inside} a
+tensor type and is carried along opaquely by \textsc{var}, \textsc{app}, and the
+rest. Where shapes acquire force is the next rule.
+
+\subsection{The primitive shape-contract rule}
+\label{sec:b-primrule}
+
+Each primitive operator $\mathit{op}$ carries a declared signature---a sequence of
+argument tensor (or scalar) types and a result type, with shapes drawn from
+\cref{sec:b-shapelang}, possibly mentioning groups. Applying $\mathit{op}$ to
+arguments type-checks when each argument's shape matches the contract's
+corresponding shape \emph{modulo the equational theory and the group resolution of
+\cref{def:b-resolve}}, after which the result wears the contract's result shape with
+the resolved groups substituted in.
+
+Write the contract of $\mathit{op}$ as
+\lstinline[style=l4style]|op :: Tensor[s_1] -> ... -> Tensor[s_k] -> Tensor[s_r]|,
+possibly with scalar arguments interspersed and with groups shared among the
+$\sigma$'s. Let $\theta$ be the substitution that resolves every group
+(\cref{def:b-resolve}) against the argument shapes. The rule is:
+
+\[
+\dfrac{
+  \begin{array}{c}
+  \mathit{op} :: \texttt{Tensor[}\sigma_1\texttt{]} \to \cdots \to \texttt{Tensor[}\sigma_k\texttt{]} \to \texttt{Tensor[}\sigma_r\texttt{]}
+  \qquad
+  \Gamma \vdash e_i : \texttt{Tensor[}\tau_i\texttt{]} \ \ (\text{each } i) \\[2pt]
+  \tau_i \;=_{\text{DimExpr}}\; \theta(\sigma_i) \ \ (\text{each } i)
+  \qquad
+  \theta \text{ resolves every group of the contract (\cref{def:b-resolve})}
+  \end{array}
+}{
+  \Gamma \vdash \mathit{op}(e_1,\dots,e_k) : \texttt{Tensor[}\theta(\sigma_r)\texttt{]}
+}\quad(\textsc{prim})
+\]
+
+\noindent In words: the op's declared shape contract must match the argument shapes
+modulo the equational theory (with groups resolved consistently), and the result
+shape is the contract's result with the resolved group values plugged in. This is
+the single rule that turns ``a shape is a type'' into a checkable obligation---and
+it is the formal content of every shape-matching picture in
+\cref{ch:tensors,ch:shapes}. A mismatch in any $\tau_i =_{\text{DimExpr}}
+\theta(\sigma_i)$, or a failed group resolution, is a type error caught at the
+boundary, before any arithmetic runs.
+
+\begin{example}[\code{matvec} under \textsc{prim}]
+\label{ex:b-matvec}
+The contract is \lstinline[style=l4style]|matvec :: Tensor[m, n] -> Tensor[n] -> Tensor[m]|.
+Apply it to a matrix of shape $[3,4]$ and a vector of shape $[4]$. Resolution
+binds $m \mapsto 3$, $n \mapsto 4$ from the first argument; the second argument's
+shape $[4]$ must equal $\theta([n]) = [4]$---it does. By \textsc{prim} the result
+type is $\theta([m]) = [3]$, a length-$3$ vector. Hand it a length-$3$ vector
+instead and the premise $[3] =_{\text{DimExpr}} [4]$ fails: a type error at the
+boundary, exactly the shape-mismatch picture of \cref{ch:tensors}.
+\end{example}
+
+\Cref{fig:b-deriv} shows \textsc{prim} composing with the structural rules in a
+small derivation tree: typing the composite expression
+\lstinline[style=l4style]|axpy a x (matvec K x)|, where the inner
+\lstinline[style=l4style]|matvec| produces the second \lstinline[style=l4style]|axpy|
+operand.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0,
+   every node/.style={font=\footnotesize}]
+  % leaves
+  \node (g1) at (-5.4,2.4) {$\Gamma \vdash \mathsf{K} : \texttt{Tensor[3,3]}$};
+  \node (g2) at (-2.6,2.4) {$\Gamma \vdash \vx : \texttt{Tensor[3]}$};
+  \node (g3) at (-2.6,0.9) {$\Gamma \vdash \vx : \texttt{Tensor[3]}$};
+  \node (ga) at (-5.0,0.9) {$\Gamma \vdash a : \texttt{Scalar}$};
+  % matvec node (PRIM)
+  \node (mv) at (-3.9,1.55)
+    {$\Gamma \vdash \texttt{matvec}\ \mathsf{K}\ \vx : \texttt{Tensor[3]}$};
+  \draw[simGray] (-5.4,2.2) -- (-2.0,2.2);
+  \node[font=\scriptsize, simRust] at (-1.5,2.2) {(\textsc{prim})};
+  % axpy node (PRIM), top conclusion
+  \node (ax) at (-3.4,-0.3)
+    {$\Gamma \vdash \texttt{axpy}\ a\ \vx\ (\texttt{matvec}\ \mathsf{K}\ \vx) : \texttt{Tensor[3]}$};
+  \draw[simGray] (-5.4,0.65) -- (-1.6,0.65);
+  \node[font=\scriptsize, simRust] at (-1.1,0.65) {(\textsc{prim})};
+  % connectors (informal tree edges)
+  \draw[simGray, -] (mv.south) -- (-3.9,0.7);
+  \node[font=\scriptsize\itshape, simGray, align=center] at (1.9,1.55)
+    {\textbf{inner} \texttt{matvec}\\binds $m,n\mapsto 3$;\\result \texttt{Tensor[3]}};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (1.9,-0.3)
+    {\textbf{outer} \texttt{axpy}\\binds $\$S\mapsto[3]$ from $\vx$;\\
+     the \texttt{matvec} result, also\\\texttt{[3]}, is congruent};
+  \draw[refedge, simBlue] (0.3,1.55) -- (mv.east);
+  \draw[refedge, simBlue] (0.3,-0.3) -- (ax.east);
+\end{tikzpicture}
+\caption[A typing derivation for a composite expression]{A derivation of
+$\Gamma \vdash \texttt{axpy}\ a\ \vx\ (\texttt{matvec}\ \mathsf{K}\ \vx) :
+\texttt{Tensor[3]}$, showing \textsc{prim} (the primitive shape-contract rule)
+applied twice and composed through the result of one op feeding the next. The
+\emph{inner} \lstinline[style=l4style]|matvec| (top) takes the $[3,3]$ operator
+$\mathsf{K}$ and the $[3]$ vector $\vx$, binds $m,n\mapsto 3$, and yields a $[3]$
+result by \textsc{prim} (\cref{ex:b-matvec}). That $[3]$ result becomes the third
+operand of the \emph{outer} \lstinline[style=l4style]|axpy| (bottom), whose group
+\lstinline[style=l4style]|$S| is bound to $[3]$ by $\vx$; the
+\lstinline[style=l4style]|matvec| result, also $[3]$, is congruent, so the whole
+expression types at \lstinline[style=l4style]|Tensor[3]|. Each horizontal bar is one
+rule instance; the tree is read bottom-up as ``to conclude the root, discharge these
+premises.''}
+\label{fig:b-deriv}
+\end{figure}
+
+\section{The primitive shape contracts: a reference}
+\label{sec:b-contracts}
+
+We collect the primitive operators' shape contracts in one place. Each is a pure
+function (\cref{ch:operators} gives their algebra and laws; \cref{app:laws}
+collects the equational laws). The table is the formal companion to the
+shape-matching pictures of \cref{ch:tensors}: read each row as a signature plus the
+side-condition its groups and axis names impose under \textsc{prim}.
+
+\begin{figure}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}>{\ttfamily}l l l@{}}
+\toprule
+\normalfont\textbf{op} & \textbf{signature} & \textbf{shape side-condition} \\
+\midrule
+axpy &
+  \lstinline[style=l4style]|Scalar -> Tensor[$S] -> Tensor[$S] -> Tensor[$S]| &
+  all three congruent ($S$) \\
+dot &
+  \lstinline[style=l4style]|Tensor[$S] -> Tensor[$S] -> Scalar| &
+  both congruent; collapses \emph{all} axes \\
+matvec &
+  \lstinline[style=l4style]|Tensor[m, n] -> Tensor[n] -> Tensor[m]| &
+  inner $n$ must match, cancels; $m$ survives \\
+outer &
+  \lstinline[style=l4style]|Tensor[m] -> Tensor[n] -> Tensor[m, n]| &
+  no axis matches; rank \emph{raised} ($1{+}1$) \\
+reduce &
+  \lstinline[style=l4style]|Tensor[..., k] -> Tensor[...]| &
+  labelled axis $k$ collapsed; rest survives \\
+unfold &
+  \lstinline[style=l4style]!Tensor[$S] -> (axis,size,stride) -> Tensor[..., size]! &
+  windows one axis into a new trailing \texttt{size} \\
+broadcast &
+  \lstinline[style=l4style]!(target: Shape) -> Tensor[$Sa] -> Tensor[target]! &
+  \texttt{target} a broadcast extension of $S_a$ \\
+conv &
+  \lstinline[style=l4style]|Tensor[N,Ci,Si] -> Tensor[Co,Ci,Sk] -> Tensor[N,Co,So]| &
+  channels $C_i$ match; $S_o$ from $S_i,S_k$ \\
+\bottomrule
+\end{tabular}
+\caption[Primitive shape contracts]{The primitive operators and their shape
+contracts, the formal reference behind \cref{ch:tensors}'s picture-per-op
+treatment. \emph{Same-shape} ops (\lstinline[style=l4style]|axpy|,
+\lstinline[style=l4style]|dot|) demand their operands be congruent over a group
+$S$; \emph{contraction} (\lstinline[style=l4style]|matvec|) and
+\emph{rank-raising} (\lstinline[style=l4style]|outer|) ops state the input/output
+axis relation explicitly; \emph{rank-moving} ops
+(\lstinline[style=l4style]|reduce| drops an axis,
+\lstinline[style=l4style]|broadcast| / \lstinline[style=l4style]|unfold| add one);
+and \lstinline[style=l4style]|conv| is the structured kernel contract (matching
+input channels $C_i$, output spatial extent $S_o$ a function of input and kernel
+extents $S_i$, $S_k$). Each side-condition is what the \textsc{prim} rule
+(\cref{sec:b-primrule}) checks at the boundary. In running text we abbreviate the
+broadcast/unfold subscript names; the source signatures use
+\lstinline[style=l4style]!Tensor[$S_a]! and the explicit \texttt{target\_shape}
+tuple.}
+\label{fig:b-contracts}
+\end{figure}
+
+A few rows reward a second look, each a representative \emph{kind} of contract:
+
+\begin{description}[leftmargin=1.4em, style=nextline, nosep]
+\item[Same-shape: \code{axpy}, \code{dot}.] One group $S$ shared across all tensor
+positions. \lstinline[style=l4style]|axpy| returns shape $S$;
+\lstinline[style=l4style]|dot| collapses \emph{every} axis to a \code{Scalar} (the
+$S=[\,]$ case of a reduction). The contract is the simplest: the shapes must be
+congruent, decided by \cref{def:b-resolve}.
+\item[Contraction: \code{matvec}.] Two distinct axis variables $m,n$; the inner
+$n$ appears on both the matrix's second axis and the vector's only axis, so they
+must agree and are summed away; the outer $m$ survives as the result.
+\code{matvec} is the rank-$1$/rank-$2$ instance of the general contraction whose
+group-level form is the operator-apply of \cref{sec:b-operators}.
+\item[Rank-raising: \code{outer}.] No axis is required to match; the result rank is
+the \emph{sum} of the inputs'. The opposite move to \code{matvec}.
+\item[Rank-moving: \code{reduce}, \code{broadcast}, \code{unfold}.]
+\lstinline[style=l4style]|reduce| drops the labelled axis $k$ (\code{dot} is its
+collapse-everything special case); \lstinline[style=l4style]|broadcast| stretches a
+tensor to a larger \texttt{target} shape, with the matching side-condition
+(\texttt{target} must be a broadcast extension of the source, decided by the
+\lstinline[style=l4style]|DimExpr| solver); \lstinline[style=l4style]|unfold|
+windows one axis into a new trailing \texttt{size} axis, the rank-raising mechanism
+behind the matrix-free element gather.
+\item[Structured kernel: \code{conv}.] The convolution contract is the most
+structured: batch $N$ and input channels $C_i$ must agree between data and kernel,
+the kernel's output-channel axis $C_o$ becomes the result's channel axis, and the
+output spatial extent $S_o$ is a \lstinline[style=l4style]|DimExpr| function of the
+input and kernel spatial extents $S_i$, $S_k$.
+\end{description}
+
+\section{Scalar promotion as subtyping}
+\label{sec:b-promotion}
+
+Everything so far concerned \emph{shapes}. One rule about \emph{element types}
+threads through the contracts and deserves its own formal statement: scalar
+promotion, the rule that lets a \emph{real} scalar join a \emph{complex} operation
+without minting a second operator. Cast formally, it is a one-step \emph{subtyping}
+relation \lstinline[style=l4style]|real <: complex|.
+
+\begin{definition}[Scalar promotion subtyping]
+\label{def:b-promotion}
+The scalar element types carry the one-step subtype order
+\[
+  \texttt{real} \;\sqsubseteq\; \texttt{complex},
+\]
+witnessed by the coercion $\alpha \mapsto \alpha + 0i$ (attach a zero imaginary
+part). The coercion is \emph{exact}: zero is representable exactly, so $\alpha$ and
+$\alpha + 0i$ are the same number to the last bit, and every algebraic law of an
+operator holds identically before and after promotion. The order is one-way: there
+is no demotion \lstinline[style=l4style]|complex <: real|.
+\end{definition}
+
+As an inference rule, promotion is the standard \emph{subsumption} rule
+specialized to the scalar lattice: a real-typed expression may be used where a
+complex one is expected.
+
+\[
+  \dfrac{\Gamma \vdash e : \texttt{real}}
+        {\Gamma \vdash e : \texttt{complex}}\quad(\textsc{sub-scalar})
+  \qquad\qquad
+  \dfrac{}{\texttt{real} \sqsubseteq \texttt{complex}}\quad(\textsc{sub-base})
+\]
+
+\noindent and it lifts to tensors elementwise: a
+\lstinline[style=l4style]|Tensor[s]| over \texttt{real} subsumes to a
+\lstinline[style=l4style]|Tensor[s]| over \texttt{complex} of the \emph{same}
+shape---promotion changes only the element type, never the shape. The practical
+payoff is the collapse of overloads: an operator like \code{axpy} need not come in
+separate real-scalar and complex-scalar forms. When its tensors are \texttt{complex}
+and a scalar argument arrives \texttt{real}, \textsc{sub-scalar} promotes the scalar
+and the one complex \code{axpy} runs; its laws are written once.
+\Cref{fig:b-lattice} draws the lattice.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  \node[draw=simViolet, fill=simBgViolet, rounded corners=3pt, thick,
+        minimum width=22mm, minimum height=8mm, font=\small] (c) at (0,1.5)
+    {\texttt{complex}};
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=22mm, minimum height=8mm, font=\small] (r) at (0,0)
+    {\texttt{real}};
+  \draw[-{Stealth[length=2.6mm]}, simRust, thick] (r) -- (c)
+    node[midway, right=2mm, font=\scriptsize\itshape, simRust, align=left]
+    {\textsc{sub-scalar}:\\ $\alpha \mapsto \alpha + 0i$\\ (exact, no rounding)};
+  \node[font=\scriptsize\itshape, simGray, align=right, text width=28mm]
+    at (-2.4,0.75)
+    {the subtype lattice\\ \lstinline[style=l4style]!real <: complex!};
+  \draw[-{Stealth[length=2.2mm]}, simGray, dotted] (c.west) to[bend right=42]
+    node[midway, left=1pt, font=\scriptsize, simGray] {\,no} (r.west);
+\end{tikzpicture}
+\caption[The scalar-promotion subtype lattice]{Scalar promotion is the one-step
+subtype order \lstinline[style=l4style]!real <: complex!. Upward (rust): a
+\texttt{real} scalar is \emph{promoted}---used where \texttt{complex} is
+expected---by the exact coercion $\alpha\mapsto\alpha+0i$, the witness of
+\textsc{sub-scalar}. The promotion attaches a zero imaginary part with no rounding,
+so the operator's algebraic laws (\cref{app:laws}) are invariant. Downward (grey,
+dotted): \emph{no} demotion---a \texttt{complex} scalar against a \texttt{real}
+operation is a type error, because the imaginary part has nowhere to go. The
+lattice runs one way, collapsing the real/complex operator overloads into one.}
+\label{fig:b-lattice}
+\end{figure}
+
+\begin{pitfall}
+Promotion lifts a \texttt{real} scalar \emph{into} a complex operation; it never
+demotes, and it never touches a \emph{reduction's output} scalar. A
+\lstinline[style=l4style]|dot :: Tensor[$S] -> Tensor[$S] -> Scalar| has no
+\emph{incoming} scalar to promote---its scalar is the \emph{output}, fixed by the
+operands' element type (complex operands give a complex result); likewise a norm's
+result is real regardless. \textsc{sub-scalar} is about an incoming scalar
+argument, not a result. If you find yourself wanting to ``promote'' a complex
+coefficient down to a real result, the type is genuinely wrong: there is no
+information-preserving demotion, and the calculus rejects it rather than silently
+discard the imaginary part.
+\end{pitfall}
+
+\section{Tying back: where these rules are used}
+\label{sec:b-tieback}
+
+The rules of this appendix are not free-standing formalism; each is the precise
+version of a discipline the main text relies on continuously.
+
+\begin{itemize}[leftmargin=1.4em, nosep]
+\item \textbf{To \cref{ch:tensors}.} The shape language (\cref{sec:b-shapelang})
+and the primitive-contract table (\cref{fig:b-contracts}) formalize that chapter's
+bracket notation and its picture-per-op treatment of \code{axpy}, \code{dot},
+\code{matvec}, \code{outer}, \code{reduce}, \code{broadcast}. The \textsc{prim}
+rule (\cref{sec:b-primrule}) is what its ``checked at every function boundary''
+slogan means exactly.
+\item \textbf{To \cref{ch:shapes}.} Named-group resolution (\cref{def:b-resolve})
+is the formal version of that chapter's rank-agnostic congruence and its
+boundary-gate figure; the range-first operator shapes (\cref{sec:b-operators}) and
+the congruence-group-versus-fixed-axis distinction (\cref{sec:b-fixedaxes}) are its
+\lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]| and \texttt{E}/\texttt{L}/%
+\texttt{P}/\texttt{C}/\texttt{G} material made formal; and scalar promotion
+(\cref{sec:b-promotion}) is its \lstinline[style=l4style]!real <: complex! rule
+cast as subtyping.
+\item \textbf{To \cref{ch:matrixfree}.} The fixed-meaning element-local axes
+(\cref{sec:b-fixedaxes}) are the shape vocabulary of the matrix-free kernel; the
+square operator form \lstinline[style=l4style]|LinOp[(S: ...), $S]| is the shape a
+Krylov solver demands of its operator, re-feedable at every power.
+\item \textbf{To \cref{app:calculus} and \cref{app:laws}.} The typing judgment
+$\Gamma \vdash e : \tau$ (\cref{sec:b-judgment}) shares its term grammar and
+reduction rules with \cref{app:calculus}; the algebraic laws the \textsc{prim} rule
+presupposes (and which scalar promotion leaves invariant) are collected in
+\cref{app:laws}.
+\end{itemize}
+
+Read together, the appendix says one thing in four registers: a shape is a type, a
+named group is a unification variable over axes of unknown rank, the
+shape-contract rule \textsc{prim} is where shapes acquire force, and scalar
+promotion is a one-step subtyping that keeps the algebra single-voiced across real
+and complex.
+
+\summarysection
+This appendix supplies the formal object underneath \cref{ch:tensors,ch:shapes}. The
+\emph{shape language} (\cref{sec:b-shapelang}) is a BNF grammar for a shape
+expression $\sigma$: a bracketed tuple of items, each a literal extent, a named axis
+variable, an algebraic combination ($+,-,\times,{}^\wedge$), the rank-wildcard
+\lstinline[style=l4style]|...|, or a named group (binding
+\lstinline[style=l4style]|(S: ...)|, use \lstinline[style=l4style]|$S|). Shapes are
+compared modulo the \lstinline[style=l4style]|DimExpr| equational theory
+(\cref{def:b-dimexpr})---commutative, associative $+$ and $\times$---so that
+\lstinline[style=l4style]|h*w| matches \lstinline[style=l4style]|w*h|.
+\emph{Named-group resolution} (\cref{def:b-resolve}) is a two-step unification:
+\emph{bind} the group from the first labelled run, then at each use check rank
+\emph{first} and extents modulo \lstinline[style=l4style]|DimExpr|---the precise
+content of the congruence back-arrow, and the reason \lstinline[style=l4style]|Tensor[N]|
+cannot match a rank-$2$ argument. Operator shapes name two groups range-first,
+\lstinline[style=l4style]|LinOp[(R: ...), (D: ...)]|, collapsing to the square form
+for endomorphisms; congruence groups are kept distinct from named axes of fixed
+meaning (\texttt{E}/\texttt{L}/\texttt{P}/\texttt{C}/\texttt{G}). The
+\emph{type-and-shape judgment} $\Gamma \vdash e : \tau$ (\cref{sec:b-judgment}) is
+the standard typed-$\lambda$ form; shapes acquire force at exactly one rule, the
+primitive shape-contract rule \textsc{prim}, which requires each argument's shape to
+match the op's contract modulo the equational theory and group resolution, then
+substitutes the resolved groups into the result. The \emph{primitive shape
+contracts} (\cref{fig:b-contracts}) collect \code{axpy}, \code{dot}, \code{matvec},
+\code{outer}, \code{reduce}, \code{unfold}, \code{broadcast}, and \code{conv} as a
+reference table. Finally, \emph{scalar promotion}
+(\lstinline[style=l4style]!real <: complex!, \cref{def:b-promotion}) is a one-step
+subtyping witnessed by the exact coercion $\alpha\mapsto\alpha+0i$: a real scalar
+joins a complex operation, never the reverse, and never on a reduction's output
+scalar.
+
+\furtherreading
+The view of a matrix as a typed map between shaped spaces, rather than a grid of
+numbers, is the organizing idea of Trefethen and Bau~\citep{trefethenbau1997}; their
+treatment of matrix--vector products and the four fundamental subspaces is the
+linear-algebra backdrop for the range-first operator-shape convention
+(\cref{sec:b-operators}) and the contraction contract of \code{matvec}. The
+inference-rule presentation of the typing judgment $\Gamma\vdash e:\tau$
+(\cref{sec:b-judgment}), the subsumption rule behind scalar promotion
+(\cref{sec:b-promotion}), and the general discipline of reading a type system as a
+set of judgment rules follow the standard implementation-of-functional-languages
+account of Peyton Jones~\citep{peytonjones2003}, whose treatment of type inference,
+unification, and the typed-$\lambda$ core is the closest analogue to the
+shape-as-type / congruence-as-unification reading developed here. The grammar and
+reduction rules this appendix's typing judgment shares are collected in
+\cref{app:calculus}; the algebraic laws the \textsc{prim} rule presupposes are
+collected in \cref{app:laws}.

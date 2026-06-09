@@ -1,0 +1,783 @@
+\chapter{The Layered View: Rotations and Representations}
+\label{ch:rotations}
+
+\chapterorient{We have spent Part~III building a calculus---tensors and shapes,
+the fold and its combinators, the state monad, operators as values. This closing
+chapter steps back from the bricks to look at the building. The calculus is not
+the simulator; it is one \emph{description} of the simulator, the topmost of
+several. Below it sit the algebra, the loops, the pure functions, and finally the
+cited C++ source. Each description is complete and correct in itself, and moving
+from one to the next is a precise act we call a \emph{rotation}: a re-expression
+that turns exactly one ``impedance''---mutation, fusion, iteration---while leaving
+the computation untouched. By the end you will have the map of the whole project:
+which layers exist, what each rotation buys, how to tell a genuine rotation from
+an empty renaming, and---no less important---when a rotation honestly fails.}
+
+\section{One simulator, several descriptions}
+
+Throughout this book a single computation has worn many costumes. The
+\texttt{axpy} update appeared first (\cref{ch:bigidea}) as a C loop overwriting an
+array, then as a pure function returning a fresh tensor, then as an arrow in a
+dependency graph. The transient solve appeared as a hand-written time-stepping
+loop and again as a \code{fold\_solve} over a schedule. These were not different
+computations. They were the \emph{same} computation, described at different
+\emph{levels}.
+
+That is the organizing idea of the entire project that this textbook documents.
+We do not describe the simulator once. We describe it at a stack of levels, each a
+faithful account of the machine, each written in a different vocabulary, and we
+make the relationship between adjacent levels explicit and checkable. The
+calculus you have just learned is the \emph{top} of that stack. This chapter
+names all the levels, names the moves between them, and hands you the criteria
+for telling a real move from a fake one.
+
+\begin{keyidea}
+The simulator is described at several \emph{layers}, $L_0$ through $L_4$, each
+complete and correct \emph{in itself}. Adjacent layers are connected by a
+\emph{rotation}: a re-expression that turns exactly one impedance---mutation,
+fusion, iteration, or coordination---while computing the same numbers. The
+calculus of Part~III is the top layer $L_4$; the physics of Part~II grounds the
+bottom layers. The stack is the map; this chapter is the legend.
+\end{keyidea}
+
+\subsection{The five layers}
+
+We number the layers from the ground up. The bottom is the literal source; the
+top is the calculus. \Cref{fig:stack} is the hero picture of the whole chapter,
+and indeed of the project---print it on the inside of your eyelids.
+
+\begin{description}[leftmargin=2.2em,style=nextline]
+  \item[$L_0$ --- the cited source.] The ground truth: ranges of Palace's
+  C++ (and the MFEM library beneath it), quoted by file and line. Every claim
+  anywhere in the stack ultimately rests on an $L_0$ citation. $L_0$ is not
+  ``ours''; it is the machine as written. Nothing is interpreted here---it is read.
+
+  \item[$L_1$ --- pure functions.] The same operations re-expressed as
+  \emph{pure functions over immutable values}. The destination array that $L_0$
+  overwrote in place becomes a returned value; the loop that scribbled over memory
+  becomes a function from inputs to a fresh output. This is the
+  \emph{mutation rotation} of \cref{ch:bigidea}, applied operator by operator.
+
+  \item[$L_2$ --- algebraic decompositions.] Each $L_1$ function unfolded back
+  into a \emph{composition of base algebraic primitives}, with the performance
+  tricks erased. A fused kernel that computed $a x + b y + c z$ in one
+  cache-friendly sweep is decomposed into the scaled sums it stands for; a
+  packed, blocked matrix apply becomes the plain linear map it implements. This is
+  the \emph{fusion rotation}.
+
+  \item[$L_3$ --- global tensor-field operations.] Where the algebra permits,
+  the explicit per-degree-of-freedom loops of $L_2$ are lifted to
+  \emph{whole-field operations}: ``add these two fields,'' ``apply this operator
+  to this field,'' with no surviving element loop in the spec form. This is the
+  \emph{iteration rotation}---and, crucially, the one that does not always go
+  through (\cref{sec:obstruction}).
+
+  \item[$L_4$ --- the calculus.] The small, formally defined
+  graph-evaluation calculus of Part~III: high-order combinators
+  (\cref{ch:fold,ch:combinators}), the state monad (\cref{ch:monad}), the strata
+  (\cref{ch:strata}), operators as values (\cref{ch:operators}). $L_4$ is
+  \emph{vocabulary, not architecture}---it says what the algorithm \emph{is},
+  abstractly, in a form an accelerator backend can consume. The
+  \emph{coordination rotation} from $L_3$ replaces hand-written control flow with
+  named combinators.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0mm]
+  % five stacked layer bands, L0 at bottom -> L4 at top
+  \def\lw{86mm}   % layer width
+  \def\lh{11mm}   % layer height
+  \def\gap{8.5mm} % vertical gap between bands (room for rotation arrow)
+  \foreach \i/\name/\desc/\col/\bg in {%
+      0/$L_0$/cited C++ {\&} MFEM source/simInk/simBgGray,
+      1/$L_1$/pure functions over immutable values/simGreen/simBgGreen,
+      2/$L_2$/algebraic decompositions {\textbullet} tricks erased/simTeal/simBgGray,
+      3/$L_3$/global tensor-field operations/simBlue/simBgBlue,
+      4/$L_4$/calculus {\textbullet} combinators {\textbullet} monad {\textbullet} strata/simViolet/simBgViolet}{
+    \node[draw=\col, fill=\bg, thick, rounded corners=2pt,
+          minimum width=\lw, minimum height=\lh, align=center, font=\small]
+      (L\i) at (0, \i*\dimexpr\lh+\gap\relax) {%
+        \textbf{\name}\quad\textcolor{simGray}{\footnotesize\desc}};
+  }
+  % rotation arrows between adjacent bands
+  \foreach \lo/\hi in {0/1,1/2,2/3,3/4}{
+    \draw[depedge, line width=1pt] (L\lo.north) -- (L\hi.south);
+  }
+  % labels placed to the right of each arrow gap
+  \node[font=\scriptsize\itshape, simBlue, anchor=west] at (0.50*\lw, 0.5*\lh+0.5*\gap) {mutation rotation};
+  \node[font=\scriptsize, simGray, anchor=west] at (0.50*\lw, 0.5*\lh+0.5*\gap-3mm) {mutation $\to$ purity};
+  \node[font=\scriptsize\itshape, simBlue, anchor=west] at (0.50*\lw, 1.5*\lh+1.5*\gap) {fusion rotation};
+  \node[font=\scriptsize, simGray, anchor=west] at (0.50*\lw, 1.5*\lh+1.5*\gap-3mm) {fused kernel $\to$ algebra};
+  \node[font=\scriptsize\itshape, simBlue, anchor=west] at (0.50*\lw, 2.5*\lh+2.5*\gap) {iteration rotation};
+  \node[font=\scriptsize, simGray, anchor=west] at (0.50*\lw, 2.5*\lh+2.5*\gap-3mm) {loop $\to$ whole-field op};
+  \node[font=\scriptsize\itshape, simBlue, anchor=west] at (0.50*\lw, 3.5*\lh+3.5*\gap) {coordination rotation};
+  \node[font=\scriptsize, simGray, anchor=west] at (0.50*\lw, 3.5*\lh+3.5*\gap-3mm) {control flow $\to$ combinators};
+  % side bracket: "complete & correct in itself"
+  \draw[decorate, decoration={brace, amplitude=5pt}, simGray]
+    (-0.52*\lw-2mm, -0.5*\lh) -- (-0.52*\lw-2mm, 4*\dimexpr\lh+\gap\relax+0.5*\lh);
+  \node[rotate=90, font=\scriptsize\itshape, simGray, anchor=south]
+    at (-0.52*\lw-7mm, 2*\dimexpr\lh+\gap\relax) {each layer complete \& correct in itself};
+\end{tikzpicture}
+\caption[The five-layer stack and its rotations]{The impedance-matching stack.
+Read it from the ground up: $L_0$ is the cited source, and each rotation above it
+turns exactly one impedance while computing the same numbers---mutation into
+purity ($L_0\!\to\!L_1$), a fused kernel into its base algebra
+($L_1\!\to\!L_2$), an explicit loop into a whole-field operation
+($L_2\!\to\!L_3$), and hand-written control flow into named combinators
+($L_3\!\to\!L_4$). Every layer is a complete, correct account of the simulator in
+its own vocabulary; the arrows are translations between vocabularies, never mere
+renamings. The book has been teaching the $L_4$ view, with Part~II supplying the
+$L_0$--$L_1$ grounding.}
+\label{fig:stack}
+\end{figure}
+
+\subsection{Why a stack and not a single description}
+
+It would be simpler to describe the simulator once and have done. The stack earns
+its complexity because \emph{each layer answers a different question well, and
+none answers all of them}. $L_0$ answers ``what does Palace actually do''---it is
+the only layer that can be wrong about the source, because it \emph{is} the
+source. $L_4$ answers ``what algorithm is this, abstractly, and how would it lower
+onto a GPU''---but it is too far from the source to verify against it directly.
+The intervening layers are the stepping-stones that let us connect the two with
+small, individually checkable moves. A direct $L_0 \to L_4$ leap would be a leap
+of faith; the stack replaces it with a sequence of short, auditable steps.
+
+This is why we call the stack \emph{impedance-matching}. In an electrical
+transmission line, you do not connect a high-impedance source straight to a
+low-impedance load---you insert matching sections that each step the impedance part
+of the way, so power transfers without reflection. Here the ``impedance mismatch''
+is between raw mutating C++ and an abstract whole-tensor calculus. Each rotation
+matches one stage of it.
+
+\section{What a rotation is}
+\label{sec:whatis}
+
+We have used the word loosely; now we pin it down. A rotation is the unit of
+progress between layers. The metaphor is geometric: a rotation changes your
+\emph{point of view} on an object without changing the object. Rotate a cube and
+the face that was hidden comes forward, but it is the same cube, with the same
+volume and the same corners.
+
+\begin{definition}[Rotation]
+\label{def:rotation}
+A \emph{rotation} is a re-expression of a piece of work from layer $L_n$ into
+layer $L_{n+1}$ that \emph{changes exactly one impedance} while computing the same
+result. The impedance turned is one of: mutation (made into purity), a fused
+kernel (unfolded into base algebra), an explicit loop (lifted to a whole-field
+operation), or hand-written coordination (replaced by a named combinator).
+\end{definition}
+
+The single most important thing to understand about a rotation is what it is
+\emph{not}.
+
+\begin{keyidea}
+A rotation is a \emph{translation across vocabularies}, not a one-to-one
+\emph{renaming}. It re-expresses the lower form in a genuinely different idiom,
+in which something becomes simpler, hidden, or substitutable. If the new form is
+just the old form with the identifiers swapped---same state threaded, same
+structure, same grain---no impedance turned, and \emph{no rotation occurred}. A
+rotation turns one impedance; a renaming turns none.
+\end{keyidea}
+
+To make this concrete, contrast two purported $L_1 \to L_2$ moves on the
+conjugate-gradient inner step. At $L_1$, one step reads
+\[
+  \vr \leftarrow \vr - \alpha\,\mat{A}\vp, \qquad
+  \beta \leftarrow \tfrac{(\vr\cdot\vr)_{\text{new}}}{(\vr\cdot\vr)_{\text{old}}},\qquad
+  \vp \leftarrow \vr + \beta\,\vp .
+\]
+A \emph{renaming} rewrites this as \lstinline[style=l4style]|axpby(alpha, Ap, -1, r)|;
+\lstinline[style=l4style]|beta = dot(r,r)/dot(r_old,r_old)|;
+\lstinline[style=l4style]|axpby(1, r, beta, p)|. Every line is the same operation
+with a BLAS-1 name pasted on. The reader could not drop in a \emph{different
+algorithm} where \code{axpby} sits---there is only the one operation it stands
+for. Nothing was hidden, nothing compressed, nothing made substitutable. This is
+the failure mode \cref{sec:tests} teaches you to detect.
+
+A genuine rotation, by contrast, introduces a primitive
+\lstinline[style=l4style]|cg_step| whose signature \emph{hides} the explicit
+threading of $\vr_k \to \vr_{k+1}$ and into whose slot a \emph{different}
+inner-step algorithm---\code{cgne\_step}, \code{minres\_step}---could be
+substituted without the caller noticing. That is a translation into a new
+vocabulary, not a renaming in the old one.
+
+\section{The three tests for ``a rotation has occurred''}
+\label{sec:tests}
+
+How do you \emph{tell}? This is the analytical core of the chapter, and the one
+piece of it you should carry out the door. A proposed rotation from $L_n$ to
+$L_{n+1}$ is genuine if and only if \textbf{at least one} of three tests passes.
+If none passes, you have a renaming---a smell, not a rotation. \Cref{fig:tests}
+collects the tests as a decision diagram.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm]
+  \node[data, text width=30mm] (in) {a proposed $L_n\!\to\!L_{n+1}$ move};
+  \node[stage, below=of in, text width=46mm, minimum height=10mm] (t1)
+    {\textbf{T1.} Does it \emph{hide state}?\\[1pt]\footnotesize something mutable now internal/absorbed};
+  \node[stage, below=8mm of t1, text width=46mm, minimum height=10mm] (t2)
+    {\textbf{T2.} Does a \emph{different algorithm}\\fit the same slot?\\[1pt]\footnotesize the algorithmic-substitution test};
+  \node[stage, below=8mm of t2, text width=46mm, minimum height=10mm] (t3)
+    {\textbf{T3.} Is the \emph{threaded state}\\compressed or abstracted?};
+  % outcome nodes on the right
+  \node[product, right=20mm of t1, text width=24mm] (yes) {genuine\\rotation};
+  \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt, align=center,
+        font=\small\bfseries, text=simInk, right=20mm of t3, text width=24mm,
+        minimum height=9mm] (no) {renaming\\(smell)};
+  % flow
+  \draw[flow] (in) -- (t1);
+  \draw[flow] (t1) -- node[left,font=\scriptsize]{no} (t2);
+  \draw[flow] (t2) -- node[left,font=\scriptsize]{no} (t3);
+  \draw[flow] (t1.east) -- node[above,font=\scriptsize]{yes} (yes.west);
+  \draw[flow] (t2.east) -| node[pos=0.25,above,font=\scriptsize]{yes} (yes.south);
+  \draw[flow] (t3.east) -- node[above,font=\scriptsize]{yes} ($(t3.east)+(8mm,0)$) |- (yes.south west);
+  \draw[flow] (t3.south) |- node[pos=0.75,below,font=\scriptsize]{no to all three} (no.west);
+\end{tikzpicture}
+\caption[The three rotation tests as a decision diagram]{The three tests for a
+genuine rotation. A move passes if \emph{any one} of them is satisfied: it hides
+mutable state (\textbf{T1}), it admits a different algorithm in the same slot
+(\textbf{T2}, the algorithmic-substitution test), or it compresses the state
+threaded through the computation (\textbf{T3}). Only when \emph{all three} fail is
+the move a mere renaming---the smell this chapter teaches you to catch.}
+\label{fig:tests}
+\end{figure}
+
+\subsection{T1 --- state hiding}
+
+\emph{Does the higher form hide a piece of state that the lower form exposed?}
+
+This is the most common way a rotation succeeds. At $L_n$ some buffer, index,
+accumulator, or configuration is visible---threaded through the code, named in
+signatures, mutated by hand. At $L_{n+1}$ it is \emph{absorbed}: tucked inside a
+constructed operator, captured at construction time, or hidden behind a
+primitive's contract.
+
+The canonical example is a constructed operator (\cref{ch:operators}). A
+preconditioner is configured once---factorizations computed, levels assembled,
+tables filled---and then applied many times. At a low layer all that
+configuration is visible state, threaded into every apply. The rotation
+\emph{constructs} an operator that captures the configuration internally and
+exposes only \lstinline[style=l4style]|apply :: LinOp -> Tensor[N] -> Tensor[N]|.
+The construction-time state is hidden; the caller sees a clean field-to-field map.
+
+\subsection{T2 --- coarser substitution (the algorithmic-substitution test)}
+
+\emph{Could you swap the implementation in this slot for a genuinely different
+algorithm without the caller noticing?}
+
+This is the subtlest and most valuable test, so we give it its own name: the
+\emph{algorithmic-substitution test}. The trap it guards against is mistaking a
+\emph{name} for an \emph{interface}. Pasting the name \code{dot} onto an inner
+product does not make a coarser substitution, because there is only one algorithm
+called \code{dot}. The substitution must be \emph{algorithmic}, not nominal.
+
+\begin{notationbox}
+The algorithmic-substitution test, stated as a question to ask before claiming a
+rotation: \emph{could a reader replace the $L_{n+1}$ primitive with a different
+algorithm---not a different implementation of the same algorithm---and still
+satisfy the $L_n$ contract?} If yes, a coarser substitution interface emerged and
+the rotation is genuine. If ``no, it is just a named version of the one
+operation,'' it is a renaming.
+\end{notationbox}
+
+A passing example: at $L_n$, choosing modified Gram--Schmidt over classical
+Gram--Schmidt means re-threading per-vector dot accumulators and rewriting the
+inner loop. At a genuine $L_{n+1}$ the choice collapses to a single substitution,
+\lstinline[style=l4style]@orthog := mgs_step | cgs_step | cgs2_step@: three
+\emph{distinct algorithms} occupying one primitive's slot, with whole-algorithm
+correctness arguments factoring through the primitive's contract rather than its
+body. \Cref{fig:substitution} draws the shape of a passing T2: two unlike
+implementations, one interface.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  % the interface
+  \node[opbox, minimum width=34mm, minimum height=9mm] (iface)
+    {\lstinline[style=l4style]|apply :: LinOp -> Tensor[N] -> Tensor[N]|};
+  \node[font=\scriptsize\itshape, simGray, above=1mm of iface] {one interface (the slot)};
+  % caller above
+  \node[data, above=9mm of iface, text width=26mm] (caller) {the caller\\(can't tell which)};
+  \draw[flow] (caller) -- node[right,font=\scriptsize]{\code{apply}} (iface);
+  % two unlike implementations below
+  \node[extern, below left=11mm and 2mm of iface, text width=30mm, minimum height=11mm] (impA)
+    {\textbf{Jacobi smoother}\\[1pt]\footnotesize diagonal scaling, one sweep};
+  \node[extern, below right=11mm and 2mm of iface, text width=30mm, minimum height=11mm] (impB)
+    {\textbf{multigrid V-cycle}\\[1pt]\footnotesize restrict, recurse, prolong};
+  \draw[flow, densely dashed, simViolet] (iface.south) -- (impA.north);
+  \draw[flow, densely dashed, simViolet] (iface.south) -- (impB.north);
+  \node[font=\scriptsize\itshape, simGray, below=1mm of impA] {algorithm 1};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of impB] {algorithm 2};
+  \node[align=center, font=\scriptsize\itshape, simGray, below=15mm of iface]
+    {two \emph{different} algorithms, one slot $\Rightarrow$ T2 passes};
+\end{tikzpicture}
+\caption[The algorithmic-substitution test]{The shape of a passing
+algorithmic-substitution test (T2). A single interface---here a preconditioner's
+\code{apply}---sits between the caller and the implementation. Behind it can stand
+genuinely \emph{different} algorithms: a one-line Jacobi diagonal scaling, or a
+full multigrid V-cycle that restricts, recurses, and prolongs. The caller invokes
+\code{apply} and cannot tell which is in the slot. Because a different algorithm
+fits the same slot, the move is a genuine rotation. Contrast a renaming, where the
+``slot'' admits only the one operation its name stands for.}
+\label{fig:substitution}
+\end{figure}
+
+\subsection{T3 --- threaded-state compression}
+
+\emph{Is the bundle of state threaded through each step strictly smaller, or at
+least strictly more abstract, at the higher layer?}
+
+A solver's inner loop may thread a long tuple of buffers: a Krylov basis array,
+a packed Hessenberg matrix, Givens rotation accumulators, a column index, scratch
+vectors, a restart counter. If the higher layer threads a short, abstract bundle
+instead---\lstinline[style=l4style]|(iterate, residual, basis_handle, converged)|,
+with the implementation buffers encapsulated behind \code{basis\_handle}---then
+the threaded state compressed, and the rotation is genuine even if no single
+piece was outright hidden and no algorithm became substitutable. The reader
+manipulates fewer, more meaningful names.
+
+\begin{pitfall}
+The renaming smell is the trap to watch for: a proposed higher form that names
+the lower form's operations as primitives but turns \emph{no} impedance. Symptom:
+the higher form threads the \emph{same} buffers with the \emph{same} shapes,
+admits only the \emph{same} algorithm in each slot, and exposes the \emph{same}
+state. A genuine rotation may pass \emph{some} pieces through unchanged---an
+\code{axpy} that is already at the right grain need not be ``rotated'' for its own
+sake---but the anti-pattern is \emph{everything} carrying through with new names
+and nothing moving forward. When you find it, do not record a hollow layer:
+either merge (treat the lower form as the highest this slice has reached) or
+redesign the move so one of the three tests genuinely fires.
+\end{pitfall}
+
+\section{Justification: how we know a rotation is sound}
+\label{sec:justification}
+
+Detecting that a rotation \emph{occurred} (\cref{sec:tests}) is separate from
+showing it is \emph{correct}---that the higher form really computes what the lower
+form does. Every rotation in the stack carries a \emph{justification}, and there
+are exactly five kinds. \Cref{fig:justification} is the palette. The first four
+are positive (the rotation goes through, here is why); the fifth is the negative
+result that the next section is about.
+
+\begin{description}[leftmargin=2.2em,style=nextline]
+  \item[\texttt{algebraic}.] An algebraic identity makes the rotation manifest:
+  associativity, distributivity, linearity. Unfolding a fused $a x + b y$ into two
+  scaled sums is justified by the distributive law---no test required, the
+  identity \emph{is} the proof.
+
+  \item[\texttt{structural}.] A structural property of the primitives carries the
+  rotation: the locality of an element-wise operation, the commutativity of an
+  operator apply with a scalar scaling. The reasoning is about \emph{shape}, not
+  arithmetic value.
+
+  \item[\texttt{reduction\_chain}.] A sequence of small algebraic or structural
+  steps, each individually named and sound, composed into the whole rotation. When
+  no single identity does the job, a documented chain of them does.
+
+  \item[\texttt{empirical\_match}.] An \emph{executed test} confirms the higher
+  form matches the lower form numerically: run both on the same input, check the
+  numbers agree to tolerance. \textbf{This is the preferred justification whenever
+  it is available}---a green test beats a paragraph of algebra, because it cannot
+  quietly be wrong about an edge case the prose forgot.
+
+  \item[\texttt{obstruction}.] The rotation does \emph{not} go through, and the
+  justification records \emph{why} as a first-class result. This is
+  \cref{sec:obstruction}.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+  \def\pw{30mm}
+  \node[draw=simGreen, fill=simBgGreen, thick, rounded corners=2pt, align=center,
+        font=\footnotesize, text=simInk, minimum height=13mm, text width=\pw] (alg)
+    {\textbf{\code{algebraic}}\\[1pt]an identity makes it manifest};
+  \node[draw=simTeal, fill=simBgGray, thick, rounded corners=2pt, align=center,
+        font=\footnotesize, text=simInk, minimum height=13mm, text width=\pw,
+        right=of alg] (str)
+    {\textbf{\code{structural}}\\[1pt]a property of the shape carries it};
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt, align=center,
+        font=\footnotesize, text=simInk, minimum height=13mm, text width=\pw,
+        right=of str] (red)
+    {\textbf{\code{reduction\_chain}}\\[1pt]named small steps, composed};
+  \node[draw=simGold, fill=simBgGold, very thick, rounded corners=2pt, align=center,
+        font=\footnotesize, text=simInk, minimum height=13mm, text width=\pw,
+        below=6mm of str] (emp)
+    {\textbf{\code{empirical\_match}}\\[1pt]\emph{run both; numbers agree}\\(preferred)};
+  \node[draw=simRust, fill=simBgRust, very thick, rounded corners=2pt, align=center,
+        font=\footnotesize, text=simInk, minimum height=13mm, text width=\pw,
+        right=of emp] (obs)
+    {\textbf{\code{obstruction}}\\[1pt]it does \emph{not} rotate; record why};
+  \node[font=\scriptsize\itshape, simGray, left=of emp, text width=24mm]
+    {a first-class\\negative result $\rightarrow$};
+\end{tikzpicture}
+\caption[The justification-kinds palette]{The five kinds of justification a
+rotation can carry. The four upper/positive kinds certify that the rotation goes
+through: an algebraic identity, a structural property, a chain of small named
+steps, or---preferred whenever feasible---an empirical match, where the two layers
+are run on the same input and their numbers are checked to agree. The fifth,
+\code{obstruction} (rust), is the first-class \emph{negative} result: the rotation
+genuinely does not go through, and recording \emph{why} is itself valuable
+output.}
+\label{fig:justification}
+\end{figure}
+
+\section{Obstructions: when a rotation honestly fails}
+\label{sec:obstruction}
+
+Not everything rotates. Some work, faithfully described at $L_2$, genuinely cannot
+be lifted to a clean $L_3$ whole-field operation, because its very meaning depends
+on doing things in order. When that happens we do \emph{not} fake a rotation and
+we do \emph{not} treat the failure as an error in our method. We record an
+\emph{obstruction}: a precise statement of what blocks the lift and why. An
+obstruction is a finding, not a failure.
+
+\begin{keyidea}
+An \emph{obstruction} is a first-class negative result: a rotation that genuinely
+does not go through, with the reason recorded as part of the spec. The obstructions
+are not gaps in the work---they are some of its most valuable output, because they
+say exactly where the abstract whole-tensor picture meets a wall, and why. ``It
+does not rotate, and here is precisely why'' is knowledge.
+\end{keyidea}
+
+The archetype is the \emph{sequential reduction}---a loop whose $i$-th step reads
+the $(i-1)$-th step's \emph{output}. \Cref{ch:tensors} introduced exactly this as
+the case where the tensor-field lift fails: a Gauss--Seidel sweep updates
+component $i$ using the \emph{already-updated} components $0,\dots,i-1$, so there
+is no way to apply it to ``all entries at once.'' A whole-field operation has no
+notion of ``the entry before this one''; the loop-carried dependency is the
+obstruction. \Cref{fig:obstruction} contrasts a liftable elementwise update with
+an unliftable sequential one.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm]
+  % ---- LEFT: liftable, independent ----
+  \begin{scope}
+    \node[font=\bfseries\small, simGreen] at (0,1.7) {Liftable: independent updates};
+    \foreach \i in {0,1,2,3}{
+      \node[opbox, minimum width=8mm, minimum height=6mm] (a\i) at (\i*0.95,0.7) {$y_\i$};
+      \node[data, minimum width=8mm, minimum height=5mm] (x\i) at (\i*0.95,-0.4) {$x_\i$};
+      \draw[flow] (x\i) -- (a\i);
+    }
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=42mm] at (1.4,-1.25)
+      {each $y_i = a x_i + y_i$ reads only its own input $\Rightarrow$ apply to all at once};
+    \node[draw=simGreen, thick, rounded corners=2pt, fit=(a0)(a3), inner sep=3pt,
+          fill=simGreen!8] {};
+    \node[font=\scriptsize\bfseries, simGreen] at (1.4,1.15) {one whole-field op};
+  \end{scope}
+  % ---- RIGHT: unliftable, sequential ----
+  \begin{scope}[shift={(6.3,0)}]
+    \node[font=\bfseries\small, simRust] at (0,1.7) {Unliftable: sequential reduction};
+    \foreach \i in {0,1,2,3}{
+      \node[opbox, draw=simRust, minimum width=8mm, minimum height=6mm] (b\i) at (\i*0.95,0.7) {$y_\i$};
+      \node[data, minimum width=8mm, minimum height=5mm] (u\i) at (\i*0.95,-0.4) {$x_\i$};
+      \draw[flow] (u\i) -- (b\i);
+    }
+    % chain of carried dependencies
+    \foreach \i/\j in {0/1,1/2,2/3}{
+      \draw[backflow] (b\i.east) -- (b\j.west);}
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=42mm] at (1.4,-1.25)
+      {$y_i$ reads the \emph{already-updated} $y_{i-1}$ $\Rightarrow$ no whole-field form};
+    \node[font=\scriptsize\bfseries, simRust] at (1.4,1.15) {loop-carried dependency};
+  \end{scope}
+\end{tikzpicture}
+\caption[An obstruction: a sequential reduction will not lift]{Why some loops
+rotate to $L_3$ and some do not. \emph{Left:} an \code{axpy}-style update writes
+$y_i = a x_i + y_i$ reading only its own input; the entries are independent, so the
+loop lifts to a single whole-field operation. \emph{Right:} a sequential
+reduction (a Gauss--Seidel sweep) writes $y_i$ using the \emph{already-updated}
+$y_{i-1}$; the dashed rust arrows are the loop-carried dependency. A whole-field
+operation has no ``previous entry,'' so the lift fails---and we record the
+obstruction (with the offending dependency cited) rather than force a false
+rotation. This is the tensor-field-lift failure of \cref{ch:tensors}.}
+\label{fig:obstruction}
+\end{figure}
+
+A subtle and important variant: sometimes the loop we cannot rotate is one
+\emph{we never wrote}. The eigenmode analysis (\cref{ch:targets}) hands its operators
+to an opaque library routine---SLEPc's eigensolver---whose iteration lives entirely
+in someone else's code. We cannot render that loop as a fold because Palace authors
+no loop to render; we can only mark the obstruction at the library boundary. This
+is still a genuine, recorded obstruction; it just sits at a wrapper, not at a
+visible recurrence. We meet exactly this kind again in \cref{ch:eigenvalues}.
+
+\begin{remark}
+An obstruction is never an excuse to stop. It is a precise boundary marker: the
+work \emph{below} it (the per-step body) usually rotates cleanly, and only the
+\emph{loop} resists. The honest record says ``the body lifts; the iteration does
+not, because of this cited dependency''---which is far more useful than either a
+forced rotation or a blank silence.
+\end{remark}
+
+\section{Two worked examples}
+
+We now run the machinery on two concrete cases: a clean state-hiding rotation, and
+a clean algorithmic-substitution rotation set beside a renaming that fails all
+three tests.
+
+\begin{workedexample}{The three tests on the \texttt{axpy} mutation rotation}{axpy}
+Take the $L_0 \to L_1$ \emph{mutation rotation} on \code{axpy}, the running
+example of \cref{ch:bigidea}. At $L_0$, the cited C++ overwrites the destination
+in place:
+\begin{lstlisting}[style=l4style, language=]
+for (int i = 0; i < n; i++)
+    y[i] = a * x[i] + y[i];     // y is mutated; the name y survives, values do not
+\end{lstlisting}
+At $L_1$, the operation is a pure function returning a fresh tensor:
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]
+axpy a x y = a * x + y         -- returns a FRESH tensor; x and y unchanged
+\end{lstlisting}
+
+Apply the three tests of \cref{sec:tests}.
+
+\textbf{T1 (state hiding): passes.} At $L_0$ the destination array \code{y} is a
+piece of \emph{mutable state}---a block of memory the loop scribbles over, whose
+contents depend on how many iterations have run. At $L_1$ that mutable destination
+is gone: \code{axpy} \emph{returns} its result, and its inputs \code{x} and
+\code{y} are untouched afterward. The mutable destination-argument has been hidden
+(in fact, eliminated): the impedance \emph{mutation} was turned into \emph{purity}.
+That is precisely the $L_0\!\to\!L_1$ impedance of \cref{def:rotation}, and it is
+the one test the mutation rotation is built to pass.
+
+\textbf{T2 (coarser substitution): does not pass---and need not.} Could a reader
+drop a \emph{different algorithm} into the \code{axpy} slot and still satisfy the
+$L_0$ contract? No: \code{axpy} computes $a x + y$ and there is exactly one such
+operation. The slot admits no algorithmic choice. T2 fails---but a rotation needs
+only \emph{one} test to pass, and T1 already did. \code{axpy} is a leaf primitive,
+already at the right grain; it is not where substitution interfaces live.
+
+\textbf{T3 (threaded-state compression): not applicable.} \code{axpy} is a single
+operation, not an iteration threading a state bundle; there is no per-step state to
+compress. T3 has nothing to bite on here.
+
+\textbf{Verdict.} \emph{One} test passes (T1, decisively), so the move is a
+genuine rotation, not a renaming. Its justification (\cref{sec:justification}) is
+\code{algebraic}: the equality of the in-place result and the returned value is the
+identity $a x + y = a x + y$ read under two memory models---and it is also trivially
+confirmable by \code{empirical\_match}, running both forms on the same \code{x},
+\code{y}, \code{a} and checking the output array agrees entry for entry.
+\end{workedexample}
+
+\begin{workedexample}{Solver-as-operator: a passing T2 beside a failing renaming}{slot}
+Now the algorithmic-substitution test in action, on a \emph{preconditioner behind
+an apply interface}---the ``solver-as-operator'' pattern of \cref{ch:operators}.
+A preconditioner $\mat{M}^{-1}$ is used inside a Krylov solve only through one
+move: \emph{apply it to a vector}. The rotation packages it as a constructed
+operator exposing a single method:
+\begin{lstlisting}[style=l4style]
+apply :: LinOp -> Tensor[N] -> Tensor[N]      -- the only thing the solver calls
+\end{lstlisting}
+
+\textbf{The passing rotation (T2).} Ask the algorithmic-substitution question:
+could a \emph{different algorithm} occupy this \code{apply} slot while the Krylov
+solver---the caller---stays byte-for-byte the same? Yes, and dramatically so. The
+slot can hold a one-line Jacobi smoother (scale by the inverse diagonal); or a
+Gauss--Seidel sweep; or a full geometric-multigrid V-cycle that restricts the
+residual to a coarse mesh, recurses, and prolongs the correction back
+(\cref{ch:multigrid}). These are \emph{wildly} different algorithms---different
+work, different cost, different code---yet each satisfies the same contract
+``approximately invert the operator,'' and the caller, which only ever writes
+\lstinline[style=l4style]|z = apply(pc, r)|, cannot tell which is installed
+(\cref{fig:substitution}). A different algorithm fits the same slot: T2 passes, and
+this is a genuine rotation. (T1 also passes here---the preconditioner's setup state
+is hidden inside the constructed operator---which is common: real rotations often
+trip more than one test.)
+
+\textbf{The failing renaming, for contrast.} Suppose instead we had ``rotated''
+the diagonal-scaling preconditioner by simply renaming its inner expression
+$z_i \leftarrow r_i / d_i$ to a primitive \code{diag\_scale} and calling it a new
+layer:
+\begin{lstlisting}[style=l4style]
+diag_scale :: Tensor[N] -> Tensor[N] -> Tensor[N]   -- z[i] = r[i] / d[i]
+\end{lstlisting}
+Run the tests. \textbf{T1}: nothing is hidden---the diagonal \code{d} is still
+threaded in as an explicit argument, just as before. \textbf{T2}: no different
+algorithm fits the \code{diag\_scale} slot; it \emph{is} the one elementwise
+division, named. \textbf{T3}: there is no threaded state bundle to compress; it is
+a single stateless operation. All three fail. This is a renaming---the smell of
+\cref{sec:tests}---and the right response is not to enshrine it as a layer but to
+recognize \code{diag\_scale} as a leaf that simply \emph{carries through}, while
+the real rotation happens one level up, at the \code{apply} interface that makes
+the \emph{whole preconditioner} substitutable.
+
+\textbf{The lesson.} The same component---a diagonal preconditioner---hosts both a
+genuine rotation and an empty one. The rotation is genuine at the grain where
+\emph{substitution becomes possible} (the \code{apply} interface, where Jacobi and
+multigrid are interchangeable) and empty at the grain where it does not (renaming
+one elementwise division). The three tests are what tell the two apart.
+\end{workedexample}
+
+\section{An advanced sidebar: erasure scope}
+\label{sec:erasure}
+
+\emph{This section is a depth note for the curious; a first reading may skip to
+\cref{sec:payoff}.}
+
+When an iteration rotation \emph{does} engage an obstruction
+(\cref{sec:obstruction}), there is a finer question worth asking: \emph{how much}
+of the operator's iteration view does the layer-hop erase? The answer ranges over
+a small ladder---the \emph{erasure scope}---and naming the rung sharpens what each
+obstruction is really about. \Cref{fig:erasure} draws the ladder.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+  \node[band, fill=simBgGreen, draw=simGreen, thick, text width=68mm] (r1)
+    {\textbf{1. single loop}\;---\;the whole operator \emph{is} one sequential loop
+     (a linear solve's outer iteration). One recurrence erased.};
+  \node[band, fill=simBgGray, draw=simTeal, thick, text width=68mm, below=of r1] (r2)
+    {\textbf{2. nested double loop}\;---\;an inner recurrence inside an outer sweep,
+     both sequential (a polynomial smoother). Two nested recurrences erased.};
+  \node[band, fill=simBgRust, draw=simRust, thick, text width=68mm, below=of r2] (r3)
+    {\textbf{3. opaque library call}\;---\;the loop lives entirely in
+     someone else's code (an eigensolver). No loop to render: only a boundary
+     marker erased.};
+  % ascending "more iteration erased" arrow on the left
+  \draw[-{Stealth[length=2.5mm]}, simGray, thick] (-3.95,-2.2) -- (-3.95,1.0);
+  \node[font=\scriptsize\itshape, simGray, rotate=90, anchor=south]
+    at (-4.3,-0.6) {more of the iteration view erased};
+\end{tikzpicture}
+\caption[The erasure-scope ladder]{How much iteration view a layer-hop erases,
+from least to most opaque. \emph{Rung 1:} the operator is a single sequential
+loop---one linear-solve outer iteration---and the hop erases that one recurrence.
+\emph{Rung 2:} a nested double loop, an inner recurrence inside an outer sweep (a
+degree-$k$ polynomial smoother), erasing two coupled recurrences. \emph{Rung 3:}
+an opaque library call---an eigensolver whose loop is in third-party code---where
+there is no loop to render at all, only a boundary marker to erase. The rung tells
+you what kind of obstruction you are looking at and how it must be recorded.}
+\label{fig:erasure}
+\end{figure}
+
+The three rungs differ in a structurally meaningful way. On rungs~1 and~2 Palace
+\emph{authors} the recurrence, so the lower layer can \emph{render} it---an
+explicit tail-recursive loop carrying a visible loop-carried dependency---and the
+hop then \emph{erases} that rendered iteration view, the obstruction surviving only
+as ``these algebraic laws do \emph{not} hold'' (you cannot reorder the steps).
+Rung~3 is different in kind: Palace authors \emph{no} loop, so there is nothing to
+render; the obstruction exists only as a marker at the library boundary, and the
+hop erases the marker. The distinction is not pedantry---it changes how the
+obstruction can ever be discharged. A rendered recurrence (rungs~1--2) records a
+loop Palace chose to surface and could, in principle, be re-described; an
+opaque-library marker (rung~3) records a boundary Palace never sees inside and that
+will not be discharged unless the upstream architecture changes. We will see all
+three rungs concretely in Part~IV: the single loop in \cref{ch:krylov}, the nested
+double loop in \cref{ch:multigrid}, and the opaque eigensolver in
+\cref{ch:eigenvalues}.
+
+\section{The payoff, and the bridge to the machinery}
+\label{sec:payoff}
+
+Step back and see what the layered view has bought. By describing the simulator at
+a stack of layers rather than once, and by making every move between layers a
+rotation with a stated test and a stated justification, we get three things at
+once. We get \emph{auditability}: a doubtful reader can check each short move
+instead of swallowing one long leap from C++ to calculus. We get \emph{honesty}:
+where the abstraction meets a wall, the obstruction is recorded, not papered over.
+And we get a \emph{target}: the top layer $L_4$, the calculus you have learned, is
+precisely the whole-tensor, no-aliasing form an accelerator backend wants to
+consume---the implementation view promised back in \cref{ch:bigidea}.
+
+That is the close of Part~III. You now hold the entire framework: the calculus
+(\cref{ch:language,ch:records,ch:tensors,ch:shapes}), the fold and combinators
+(\cref{ch:fold,ch:combinators}), the state monad and strata
+(\cref{ch:monad,ch:strata}), operators as values (\cref{ch:operators}), and---this
+chapter---the map of how all five layers relate. What remains is to watch the
+rotations turn on \emph{real algorithms}.
+
+\Cref{part:machinery} does exactly that. Its chapters are where the
+explicit-loop view and the combinator view stop being a methodology and become
+concrete machine. \Cref{ch:krylov} takes the conjugate-gradient and GMRES solvers
+and shows their inner loops rotating from hand-threaded buffers up to
+\code{krylov\_step} and \code{iterate\_while}---a single-loop erasure (rung~1 of
+\cref{fig:erasure}) with a state-hiding rotation you can now name on sight.
+\Cref{ch:multigrid} does the same for the multigrid preconditioner---the very
+\code{apply} slot of \cref{wex:slot}---and meets the nested double loop
+(rung~2). \Cref{ch:eigenvalues} reaches the eigensolver and meets the opaque
+library obstruction (rung~3) head on. Each is a rotation, or an obstruction, of a
+kind you have now learned to recognize. Turn the page, and watch them turn.
+
+\summarysection
+The simulator is described not once but at a stack of five \emph{layers}: $L_0$,
+the cited source; $L_1$, pure functions over immutable values; $L_2$, algebraic
+decompositions with performance tricks erased; $L_3$, global tensor-field
+operations; and $L_4$, the calculus of Part~III. Each layer is complete and
+correct in itself, and adjacent layers are joined by a \emph{rotation}---a
+re-expression that turns exactly one impedance (mutation, fusion, iteration, or
+coordination) while computing the same numbers. A rotation is a translation across
+vocabularies, never a one-to-one renaming. Three tests decide whether a genuine
+rotation occurred: it \emph{hides state} (T1), it admits a \emph{different
+algorithm in the same slot} (T2, the algorithmic-substitution test), or it
+\emph{compresses the threaded state} (T3); if all three fail, the move is a
+renaming, a smell to be merged or redesigned away. Every rotation carries one of
+five justifications---\code{algebraic}, \code{structural}, \code{reduction\_chain},
+\code{empirical\_match} (preferred, because it runs both layers and checks the
+numbers), or \code{obstruction}, the first-class negative result when a rotation
+honestly does not go through. Obstructions---the sequential reductions and
+opaque-library loops that will not lift to whole-field operations---are findings,
+not failures, and their \emph{erasure scope} (single loop, nested loop, opaque
+call) records how much iteration view a hop erases. The payoff is auditability,
+honesty, and an accelerator-ready top layer. Part~IV now turns these rotations on
+real numerical algorithms.
+
+\furtherreading
+The layered, rotation-based method this book documents is purpose-built, but its
+two pillars are standard. The shift from mutable loops to pure, composable,
+substitutable pieces is the functional-programming tradition (\cref{ch:bigidea}'s
+further reading). The numerical algorithms whose rotations Part~IV makes
+concrete---Krylov subspace solvers, multigrid, eigenvalue iterations---are
+developed in Saad's \emph{Iterative Methods for Sparse Linear
+Systems}~\citep{saad2003}, the standard reference for the solvers behind the
+single-loop and nested-loop erasures, and in Trefethen and Bau's \emph{Numerical
+Linear Algebra}~\citep{trefethenbau1997}, whose lecture-by-lecture development of
+orthogonalization, conditioning, and the eigenvalue problem is the ideal companion
+for seeing \emph{why} certain steps resist the iteration rotation. Read either with
+the three tests of \cref{sec:tests} in hand, and the place where each algorithm's
+loop becomes (or refuses to become) a whole-field operation will jump off the page.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item Name the impedance each of the four rotations in \cref{fig:stack} turns,
+  in one phrase each. Which two layers does the \emph{iteration rotation} connect,
+  and what is the one situation (\cref{sec:obstruction}) in which it refuses to go
+  through?
+  \item Classify each move as a genuine rotation or a renaming, and name the
+  test(s) it passes or fails: (a) replacing an in-place
+  \lstinline[style=l4style]|x.Add(alpha, y)| with a pure
+  \lstinline[style=l4style]|axpy alpha y x|; (b) renaming the loop body
+  \lstinline[style=l4style]|s += x[i]*y[i]| to a primitive \code{dot} with the same
+  sequential accumulation; (c) packaging a preconditioner behind an \code{apply}
+  interface that a Jacobi smoother \emph{or} a multigrid V-cycle could implement.
+  \item The algorithmic-substitution test (T2) asks whether a \emph{different
+  algorithm} could fit a slot. Explain why pasting the name \code{nrm2} onto the
+  expression $\sqrt{\sum_i |x_i|^2}$ does \emph{not} pass T2, while wrapping a
+  Krylov inner step as \code{cg\_step} (substitutable by \code{minres\_step})
+  does. What is the difference between a \emph{name} and an \emph{interface}?
+  \item Give the justification kind you would prefer for each rotation and say why:
+  (a) unfolding $a x + b y$ into two scaled sums; (b) claiming a hand-rolled GMRES
+  matches a reference implementation; (c) a chain of four small associativity and
+  linearity steps. When is \code{empirical\_match} unavailable, forcing you back to
+  an algebraic argument?
+  \item A Gauss--Seidel sweep updates $y_i$ using the \emph{already-updated}
+  $y_{i-1}$ (\cref{fig:obstruction}). Explain in one paragraph why this blocks the
+  $L_2 \to L_3$ iteration rotation, and why recording the obstruction is more
+  useful than either forcing a whole-field form or omitting the operator entirely.
+  Which \emph{part} of the operator (body or loop) still rotates cleanly?
+  \item Place each on the erasure-scope ladder (\cref{fig:erasure}) and justify the
+  rung: (a) a conjugate-gradient solve's outer iteration; (b) a degree-3 Chebyshev
+  polynomial smoother with an inner recurrence inside an outer Richardson sweep;
+  (c) a call to SLEPc's eigensolver. For which one does Palace author \emph{no}
+  loop at all, and what does that imply about whether the obstruction can ever be
+  discharged?
+  \item \emph{(Synthesis.)} Pick any operator you met in Part~II---a weak-form
+  assembly, a boundary-condition elimination, a reduction to a physical
+  quantity---and sketch its journey up the stack: what does its mutation rotation
+  ($L_0\!\to\!L_1$) hide, does its iteration rotation ($L_2\!\to\!L_3$) succeed or
+  hit an obstruction, and what combinator (\cref{ch:fold,ch:combinators}) names its
+  coordination at $L_4$? You need not be exhaustive; the point is to walk one
+  computation through all five costumes.
+\end{enumerate}

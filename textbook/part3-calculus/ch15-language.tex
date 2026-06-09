@@ -1,0 +1,997 @@
+\chapter{A Language for Computations: Values and Functions}
+\label{ch:language}
+
+\chapterorient{In \cref{ch:bigidea} we made a decision: describe a simulation as
+a chain of pure functions over immutable tensors, not as overwrites of a block of
+memory. That decision earns its keep only if we can write the functions down
+\emph{precisely}---precisely enough that the written form \emph{is} the dependency
+graph, precisely enough that a critic can check one piece against the source
+without running anything. This chapter introduces the small notation we use for
+exactly that, and it teaches you to read it from zero. We assume no
+functional-programming background at all. By the end you will be able to look at a
+line like \lstinline[style=l4style]|axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]|
+and say, token by token, what it means---and you will understand the one idea that
+trips up every newcomer: a function that takes, or returns, another function.}
+
+\section{Why a language at all}
+
+We could describe every algorithm in this book in ordinary English prose, or in
+ordinary mathematics. We will, in fact, lean on both constantly. But neither is
+quite enough on its own, and the gap is worth naming, because it tells us exactly
+what the small notation of this part is \emph{for}.
+
+Recall the three questions the calculus is built to answer
+(\cref{ch:bigidea}): \emph{what operations happen}, \emph{who owns the state},
+and \emph{how state evolution is coordinated}. Each is a structural question---a
+question about the \emph{shape} of a computation, not about the numbers it
+produces. English prose blurs structure: ``then we update the residual'' hides
+whether the residual is a fresh value or an overwrite, whether the update reads
+any state besides its stated inputs, whether it is a step in a loop or a one-off.
+Ordinary mathematics fixes the arithmetic but says nothing about ownership or
+coordination at all: the equation $\vr = \vb - \mat{A}\vx$ tells us what $\vr$
+\emph{equals}, but not that $\vr$ is a brand-new immutable value, nor that
+computing it is a pure function of exactly $\vb$, $\mat{A}$, and $\vx$ and
+nothing else.
+
+So we adopt a third notation---a small, deliberately readable \emph{pseudo-language}
+borrowed from typed functional programming---that makes the structure
+explicit. This chapter does the first of the three questions, the foundation the
+other two rest on: \emph{values and functions}. What is a value? What is a
+function? How do we write a function's type, supply its arguments, and---the
+hard part---pass functions to other functions? \Cref{ch:records} adds records
+(bundles of named fields); \cref{ch:tensors} adds shapes; \cref{ch:fold} adds
+the loop combinator; \cref{ch:monad} adds the discipline for threaded state. Each
+builds on this one.
+
+\begin{notationbox}
+The pseudo-language is a language you \emph{read}, not one you run. It always
+appears in a shaded, monospaced box. It is not a burn API, not a Rust sketch, not
+something a compiler accepts; it is a precise notation for talking about
+algorithms, the way a physicist reads a Feynman diagram. The notation primer at
+the front of the book sketched it in one page; this chapter is the careful
+version. When you see a shaded box you are reading code; when you see an inline
+formula like $\mat{K}\vx=\vb$ you are reading mathematics. The two never mix in
+one expression.
+\end{notationbox}
+
+\section{Values: things you can name but never change}
+
+The most foundational idea in the whole notation is also the simplest, and you
+already met it in \cref{ch:bigidea}: a \emph{value} is a thing you can name but
+never change.
+
+The number $7$ is a value. So is the number $3$. When you write $3 + 4$ you do not
+\emph{turn} the $3$ into a $7$; you compute a \emph{new} value, $7$, and the $3$
+and the $4$ sit there, untouched, exactly as before. Nobody is tempted to ask
+``but what is the $3$ \emph{now}, after the addition?''---the question is
+nonsense. A number has no ``now.'' It simply is what it is.
+
+The single rule of our notation is that \emph{everything} behaves this way. A
+tensor is a value, like $7$. A record (a bundle of named fields, \cref{ch:records})
+is a value. A function---we will see---is a value. None of them can be changed
+once it exists. You can compute new values \emph{from} them, name those new
+values, and pass them around; you can never reach inside an existing value and
+overwrite a part of it.
+
+\begin{definition}[Value and immutability]
+A \emph{value} is a piece of data---a number, a tensor, a record, a function---that,
+once it exists, never changes. Computing with values means producing \emph{new}
+values from old ones. A name, once bound to a value, refers to that same
+unchanging value for as long as the name is in scope. We call this discipline
+\emph{immutability}.
+\end{definition}
+
+\subsection{The contrast: a variable as a mutable box}
+
+If you have programmed in C, Python, or most mainstream languages, you carry a
+\emph{different} mental model of what a name means, and it is worth dragging into
+the light because it will fight you here. In those languages a variable is a
+\emph{box}: a labeled slot in memory that holds a value \emph{now} but can be
+made to hold a different value \emph{later}.
+
+\begin{lstlisting}[style=l4style, language=]
+y = 5      # the box labeled y now holds 5
+y = y + 1  # overwrite: the box labeled y now holds 6
+\end{lstlisting}
+
+\noindent After the second line, the box \texttt{y} holds $6$; the $5$ is gone.
+The \emph{name} \texttt{y} survived but what it points to was destroyed and
+replaced. This is the in-place-mutation picture of \cref{ch:bigidea}, now at the
+level of a single variable rather than a whole array: one box, scribbled over.
+
+Our notation has no such boxes. When we write
+
+\begin{lstlisting}[style=l4style]
+let y = 5 in
+let z = y + 1 in
+...
+\end{lstlisting}
+
+\noindent the name \texttt{y} is bound, once and forever (within its scope), to
+the value $5$. We do not---cannot---``update \texttt{y} to $6$.'' Instead we
+introduce a \emph{new} name, \texttt{z}, for the new value $6$. There are two
+names and two values; nothing was overwritten. The \code{let} keyword reads
+``\emph{let} this name stand for this value, in what follows.''
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  % ============ LEFT: mutable box ============
+  \begin{scope}
+    \node[font=\bfseries\small, simRust] at (0,2.5) {A mutable box (a variable)};
+    \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+          minimum width=24mm, minimum height=11mm] (box) at (0,1.1) {};
+    \node[font=\ttfamily\small, simInk] at (-0.7,1.1) {y};
+    \node[font=\small, simInk] at (0.45,1.1) {$\leftarrow 5$};
+    % overwrite loop
+    \draw[backflow] (box.north west) to[out=135,in=45,looseness=4.5]
+      node[above,font=\scriptsize]{\texttt{y := 6}} (box.north east);
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=40mm]
+      at (0,-0.15) {one slot; the old contents are destroyed and replaced.
+      ``What is \texttt{y} now?'' is a real question.};
+  \end{scope}
+  % ============ RIGHT: immutable values ============
+  \begin{scope}[shift={(7.2,0)}]
+    \node[font=\bfseries\small, simBlue] at (0,2.5) {Immutable values (names)};
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=12mm, minimum height=10mm] (v5) at (-0.9,1.1) {$5$};
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=12mm, minimum height=10mm] (v6) at (1.1,1.1) {$6$};
+    \node[font=\ttfamily\scriptsize, simBlue, below=0.5mm of v5] {y};
+    \node[font=\ttfamily\scriptsize, simBlue, below=0.5mm of v6] {z};
+    \draw[flow] (v5) -- node[above,font=\scriptsize]{$+1$} (v6);
+    \node[align=center, font=\scriptsize\itshape, simGray, text width=42mm]
+      at (0.1,-0.15) {two distinct values, two names; \texttt{y} still
+      means $5$. ``What is \texttt{y} now?'' is a non-question.};
+  \end{scope}
+\end{tikzpicture}
+\caption[A mutable box versus an immutable value]{Two readings of a name.
+\emph{Left:} the mainstream model---a variable is a box in memory; \texttt{y := 6}
+overwrites it, and the previous contents vanish, so the box's value depends on how
+far the program has run. \emph{Right:} our model---a name is bound permanently to
+an immutable value; computing $y+1$ produces a \emph{fresh} value $6$, which we
+give a \emph{new} name \texttt{z}. The original \texttt{y} still means $5$. The
+notation in this book has only the right-hand picture; there are no boxes.}
+\label{fig:valuebox}
+\end{figure}
+
+\Cref{fig:valuebox} draws the two pictures side by side, the same contrast
+\cref{fig:mutvalue} drew for whole arrays, now for a single name. The discipline
+is the same at every scale: never overwrite, always produce a fresh value and
+name it.
+
+\begin{keyidea}
+Immutability is the ground rule of the entire notation. A value---number, tensor,
+record, or function---never changes after it is created. A name binds to a value
+permanently within its scope. We never overwrite; we compute new values from old
+ones and give them new names. Every other convention in this part is built on
+top of this one. If you ever find yourself asking ``what does this name hold
+\emph{now}?'', you have slipped back into the mutable-box model---stop and
+recover the value picture.
+\end{keyidea}
+
+\subsection{Why \code{clone()} is meaningless here}
+
+A quick but illuminating consequence. In a mutable language, when you want a
+function to work on a copy of your data without disturbing the original, you
+\emph{clone} it: you make a second box holding the same contents, so that
+overwriting one leaves the other intact. The lattice-Boltzmann reference code in
+\cref{ch:bigidea} was littered with \texttt{current.clone()} for exactly this
+reason.
+
+In our notation, \code{clone()} is meaningless---there is nothing to clone,
+because there is nothing to protect. A value cannot be overwritten, so there is no
+way for one use of a value to disturb another use of it. Two names for ``the same
+tensor'' is perfectly safe: neither can mutate it, so neither can surprise the
+other.
+
+\begin{lstlisting}[style=l4style]
+let v = some_tensor in
+let a = scale 2 v in   -- uses v
+let b = scale 3 v in   -- ALSO uses v; no clone needed
+(a, b)                 -- v was never disturbed; it could not be
+\end{lstlisting}
+
+\noindent This is not a small convenience. ``When must I copy, to be safe?'' is
+one of the central, error-prone questions of mutable programming, and in the
+value picture it simply evaporates. The cost we appear to pay---``but surely
+making a fresh tensor every step is wasteful!''---is recovered in full by the
+implementation, which is free to reuse storage whenever an old value is no longer
+referenced (the pitfall in \cref{ch:bigidea}; made precise in \cref{ch:monad}).
+We describe the computation with fresh values; the machine optimizes the memory.
+
+\section{Functions and types}
+
+A \emph{function} is a rule that turns inputs into an output. In our notation a
+function is written in two parts: a \emph{type signature} that says what kinds of
+thing go in and come out, and a \emph{definition} that says how the output is
+computed. Here is the smallest possible example---a function that squares a
+floating-point number.
+
+\begin{lstlisting}[style=l4style]
+square :: Float -> Float       -- the TYPE: takes a Float, gives a Float
+square x = x * x               -- the DEFINITION: the output is x times x
+\end{lstlisting}
+
+Read the two lines carefully, because their grammar recurs on every function in
+the book.
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[The signature \code{square :: Float -> Float}.] The
+  double colon \code{::} reads ``\emph{has type}.'' So this line says
+  ``\code{square} has type \code{Float -> Float}.'' The arrow \code{->} reads
+  ``\emph{maps to}'': \code{Float -> Float} is the type of functions that map a
+  \code{Float} to a \code{Float}. The signature is a \emph{contract}: it promises
+  that if you hand \code{square} a \code{Float}, you get a \code{Float} back, and
+  it forbids handing it anything else.
+  \item[The definition \code{square x = x * x}.] Here \code{x}
+  names the input (the \emph{parameter}); the right-hand side \lstinline[style=l4style]|x * x|
+  is the output, an expression built from the input. Applying the function is
+  written by \emph{juxtaposition}---just putting the argument next to the function
+  name, with a space: \lstinline[style=l4style]|square 5| evaluates to $25$. No
+  parentheses are needed around the argument (though \lstinline[style=l4style]|square (a + b)|
+  needs them, to group the argument).
+\end{description}
+
+\noindent The types are not decoration. They are the first line of defence
+against nonsense: a tool (and a careful reader) can check that every function is
+only ever applied to arguments of the type it expects, long before any numbers
+are computed. The shapes of tensors, which we develop in \cref{ch:tensors}, are
+types in exactly this sense---and they catch the overwhelming majority of
+mistakes in tensor code.
+
+\subsection{Pure functions}
+
+The functions in this book obey one further, crucial discipline: they are
+\emph{pure}. A pure function's output depends on \emph{nothing but its declared
+inputs}, and computing it changes nothing in the outside world. Two consequences,
+both load-bearing:
+
+\begin{itemize}[nosep]
+  \item \textbf{Same inputs, same output, always.} \lstinline[style=l4style]|square 5|
+  is $25$ today, tomorrow, on every machine, no matter what ran before it. A pure
+  function has no memory and no mood.
+  \item \textbf{No side effects.} A pure function does not secretly read a global
+  variable, write to a file, overwrite one of its inputs, or depend on the time
+  of day. Everything it uses arrives through its parameters; everything it
+  produces leaves through its return value.
+\end{itemize}
+
+This is precisely the property that makes the program text equal to the
+dependency graph (\cref{ch:bigidea}): if a function can depend only on its
+inputs, then drawing an arrow from each input to the function captures
+\emph{everything} the function depends on---there are no hidden arrows. Purity is
+what we buy with immutability, and the rest of the book spends it.
+
+\begin{pitfall}
+The mutable-box habit dies hard, and it shows up as a specific reading error.
+When you see \lstinline[style=l4style]|axpy a x y = a * x + y|, the C programmer's
+instinct is to ask ``and which of \code{x}, \code{y} did it overwrite?'' The
+answer is \emph{neither}. A pure function \emph{returns} its result; it does not
+deposit it into one of its arguments. After \lstinline[style=l4style]|let r = axpy a x y|,
+the names \code{x} and \code{y} still refer to exactly the tensors they did
+before, and \code{r} names the fresh result. If you ever catch yourself hunting
+for ``the output argument,'' you have slipped models---there is no output
+argument, only a returned value.
+\end{pitfall}
+
+\subsection{A function is itself a value}
+
+Here is the move that makes the whole notation expressive, stated plainly now and
+exploited heavily later: \emph{a function is a value, just like a number or a
+tensor.} It is a thing you can name, pass to another function as an argument, and
+return from a function as a result. \code{square} is a value of type
+\code{Float -> Float}, exactly as $5$ is a value of type \code{Float}.
+
+This is not how most engineers first learn to think about functions---a function
+feels like a \emph{verb}, a thing you \emph{do}, not a \emph{noun}, a thing you
+\emph{hold}. But in this notation it is both. \Cref{fig:fnvalue} draws the
+cartoon: a function is a little box you can carry around in a bag, hand to
+someone, or get handed back. Sections~\ref{sec:currying}
+and~\ref{sec:higherorder} are entirely about what this buys us.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % a "bag" of values, one of which is a function
+  \node[font=\bfseries\small, simInk] at (0,2.2) {Values you can name, pass, and return};
+  % number value
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=15mm, minimum height=10mm] (n) at (-3.6,0.7) {$5$};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of n] {a number};
+  % tensor value
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=18mm, minimum height=10mm] (t) at (-1.1,0.7)
+        {\lstinline[style=l4style]|Tensor[N]|};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of t] {a tensor};
+  % function value, drawn as a little machine box
+  \node[draw=simTeal, fill=simBgGreen, thick, rounded corners=2pt,
+        minimum width=30mm, minimum height=12mm] (f) at (2.3,0.7) {};
+  \node[font=\ttfamily\scriptsize, simInk] at (1.55,0.95) {square};
+  \node[font=\scriptsize, simTeal] at (2.55,0.55)
+        {$x \mapsto x{*}x$};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of f]
+        {a function---also a value};
+  % a "carry" arrow suggesting you can pass it around
+  \draw[flow] (3.95,0.7) -- ++(1.1,0)
+    node[right,font=\scriptsize\itshape,simGray,align=left] {pass it,\\return it,\\name it};
+\end{tikzpicture}
+\caption[A function is a value you can pass around]{In this notation a function is
+a value with the same standing as a number or a tensor: you can bind it to a name,
+hand it to another function as an argument, and get one back as a result.
+\code{square} is a value of type \code{Float -> Float} the way $5$ is a value of
+type \code{Float}. This single idea---functions are first-class values---is what
+makes currying (\cref{sec:currying}) and higher-order functions
+(\cref{sec:higherorder}) possible.}
+\label{fig:fnvalue}
+\end{figure}
+
+\section{Currying: one argument at a time}
+\label{sec:currying}
+
+Most interesting functions take more than one argument. We write a two-argument
+function's type with two arrows:
+
+\begin{lstlisting}[style=l4style]
+add :: Float -> Float -> Float
+add x y = x + y
+\end{lstlisting}
+
+\noindent and apply it by listing the arguments after the name, separated by
+spaces: \lstinline[style=l4style]|add 3 4| evaluates to $7$. So far this looks
+like the multi-argument functions of any language. But the arrow notation is
+hinting at something subtler, and the subtlety pays off enormously, so we take it
+slowly.
+
+\subsection{Reading \code{A -> B -> C}}
+
+How should we read \lstinline[style=l4style]|add :: Float -> Float -> Float|? The
+honest reading is \emph{one argument at a time}:
+
+\begin{quote}
+\emph{``\code{add} takes a \code{Float}, and returns a function that takes a
+\code{Float} and returns a \code{Float}.''}
+\end{quote}
+
+\noindent That is, the arrow \code{->} groups \emph{to the right}: the type is
+secretly
+\begin{lstlisting}[style=l4style]
+add :: Float -> (Float -> Float)
+\end{lstlisting}
+\noindent with invisible parentheses around the tail. \code{add} is not really a
+two-argument function at all; it is a one-argument function whose \emph{result is
+another function}. This way of treating multi-argument functions---as a chain of
+one-argument functions---is called \emph{currying}, after the logician Haskell
+Curry (whose first name, not coincidentally, also names the language our notation
+borrows from).
+
+When you write \lstinline[style=l4style]|add 3 4|, two things happen in
+sequence:
+
+\begin{lstlisting}[style=l4style]
+add 3       -- supply the first argument: get back a FUNCTION,
+            --   "the function that adds 3 to its argument"
+(add 3) 4   -- supply the second argument to THAT function: get 7
+\end{lstlisting}
+
+\noindent The juxtaposition \lstinline[style=l4style]|add 3 4| is just
+\lstinline[style=l4style]|(add 3) 4| with the parentheses dropped---application,
+too, groups to the left. So ``calling a two-argument function'' is really
+``calling a one-argument function, then calling its one-argument result.'' You
+almost never have to think about this when you supply all the arguments at once;
+it matters when you supply only \emph{some}.
+
+\subsection{Partial application}
+
+Because \lstinline[style=l4style]|add 3| is itself a perfectly good function value,
+we can name it and use it later:
+
+\begin{lstlisting}[style=l4style]
+let add3 = add 3 in   -- supply ONE of two arguments; add3 :: Float -> Float
+let u = add3 4 in     -- u = 7
+let w = add3 10 in     -- w = 13
+(u, w)
+\end{lstlisting}
+
+\noindent Supplying \emph{some} of a function's arguments and getting back a
+function that awaits the rest is called \emph{partial application}. We applied
+\code{add} to one argument and \emph{froze} it---baked the $3$ in---producing a
+new, more specialized function \code{add3} that adds $3$ to whatever it is later
+given. \Cref{fig:currying} draws the freezing.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  % the curried machine, three "slots"
+  \node[font=\bfseries\small, simInk] at (0,2.55)
+    {Partial application: freeze some arguments now, supply the rest later};
+  % stage 0: the full function
+  \node[draw=simTeal, fill=simBgGray, thick, rounded corners=2pt,
+        minimum width=20mm, minimum height=10mm] (f0) at (-4.3,1.0) {};
+  \node[font=\ttfamily\scriptsize] at (-4.3,1.28) {add};
+  \node[font=\scriptsize, simTeal] at (-4.3,0.78) {needs $x,y$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of f0]
+    {\code{Float -> Float -> Float}};
+  % supply 3
+  \draw[flow] (-3.2,1.0) -- node[above,font=\scriptsize]{supply $x=3$} (-1.7,1.0);
+  % stage 1: partially-applied, one slot frozen
+  \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+        minimum width=22mm, minimum height=10mm] (f1) at (-0.4,1.0) {};
+  \node[font=\ttfamily\scriptsize] at (-0.4,1.30) {add3 = add 3};
+  \node[font=\scriptsize, simBlue] at (-0.4,0.80) {needs $y$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of f1]
+    {\code{Float -> Float}};
+  % a little "frozen 3" tag
+  \node[draw=simRust,fill=simBgRust,rounded corners=1pt,font=\scriptsize,
+        inner sep=1.5pt] at (-0.4,2.0) {$x{=}3$ frozen in};
+  % supply 4
+  \draw[flow] (0.8,1.0) -- node[above,font=\scriptsize]{supply $y=4$} (2.3,1.0);
+  % stage 2: a value
+  \node[draw=simRust, fill=simBgRust, thick, rounded corners=2pt,
+        minimum width=14mm, minimum height=10mm] (r) at (3.4,1.0) {$7$};
+  \node[font=\scriptsize\itshape,simGray,below=0.5mm of r] {a \code{Float}};
+\end{tikzpicture}
+\caption[Currying and partial application]{A curried function is consumed one
+argument at a time. \code{add} needs two \code{Float}s; supplying the first
+($x=3$) does not produce a number---it produces a \emph{new function} \code{add3},
+of type \code{Float -> Float}, with the $3$ \emph{frozen in}. Supplying the
+second ($y=4$) to \emph{that} function finally produces the value $7$. Freezing
+some arguments now and supplying the rest later is \emph{partial application}; it
+is the mechanism behind ``build once with configuration baked in, apply many
+times.''}
+\label{fig:currying}
+\end{figure}
+
+\subsection{Why partial application matters}
+
+Partial application looks like a curiosity, but it is one of the most useful
+patterns in the entire book, and it is worth seeing why \emph{now}, even before we
+can spell the example fully. Over and over, an algorithm has a piece that is
+\emph{configured once} and then \emph{applied many times}: a linear operator
+assembled from the mesh and materials, then applied at every iteration of a solve;
+a preconditioner factorized once, then applied every step; a time-step rule with
+the step size $\Delta t$ baked in, then marched thousands of times.
+
+Currying gives us a clean way to say exactly this. A constructor function takes
+the configuration as its first arguments, and \emph{returns a function} that takes
+the run-time data:
+
+\begin{lstlisting}[style=l4style]
+-- schematically: configuration first, then the run-time argument
+make_operator :: Config -> (Tensor[N] -> Tensor[N])
+let apply_A = make_operator cfg in   -- build ONCE, configuration frozen in
+let y1 = apply_A x1 in               -- apply MANY times, cheaply
+let y2 = apply_A x2 in
+...
+\end{lstlisting}
+
+\noindent We build \code{apply\_A} once---freezing the configuration \code{cfg}
+in---and then apply it again and again to different vectors. This ``build once,
+apply many times'' shape is the backbone of \emph{constructed operators}, which
+get a full chapter of their own (\cref{ch:operators}). Notice the parentheses in
+the signature, \lstinline[style=l4style]|Config -> (Tensor[N] -> Tensor[N])|: we
+will explain them carefully in \cref{sec:higherorder}---they are a deliberate
+signal that \code{make\_operator} \emph{returns a function}.
+
+\section{Higher-order functions}
+\label{sec:higherorder}
+
+We now reach the one genuinely new idea of the chapter---new, that is, to a reader
+coming from ordinary imperative programming. It is the idea we have been circling:
+a function can \emph{take} another function as an argument, or \emph{return} one as
+a result. A function that does either is called a \emph{higher-order function}.
+
+This is the single biggest conceptual lift in the notation, so we build it in two
+halves: first a function that \emph{takes} a function, then a function that
+\emph{returns} one. Take your time with both; everything in \cref{part:framework}
+leans on them.
+
+\subsection{Half one: a function that \emph{takes} a function}
+
+Because a function is a value (\cref{fig:fnvalue}), nothing stops us from writing
+a function whose \emph{parameter} is itself a function. Here is the cleanest tiny
+example: \code{apply\_twice} takes a function \code{f} and a value \code{x}, and
+applies \code{f} to \code{x} twice.
+
+\begin{lstlisting}[style=l4style]
+apply_twice :: (Float -> Float) -> Float -> Float
+apply_twice f x = f (f x)
+\end{lstlisting}
+
+\noindent Read the signature one piece at a time. The first argument has type
+\lstinline[style=l4style]|(Float -> Float)|---note the parentheses: this argument
+is \emph{a function} from \code{Float} to \code{Float}. The second argument is a
+plain \code{Float}. The result is a \code{Float}. The body
+\lstinline[style=l4style]|f (f x)| says: apply \code{f} to \code{x}, then apply
+\code{f} again to that. We can hand it our \code{square} from before:
+
+\begin{lstlisting}[style=l4style]
+apply_twice square 3    -- = square (square 3) = square 9 = 81
+add3_twice = apply_twice add3       -- partially applied: freeze f = add3
+add3_twice 10                       -- = add3 (add3 10) = add3 13 = 16
+\end{lstlisting}
+
+\noindent The parentheses around \lstinline[style=l4style]|(Float -> Float)| in
+the signature are essential and worth pausing on. Without them,
+\lstinline[style=l4style]|Float -> Float -> Float| would read (by the
+right-grouping rule) as a function taking \emph{two} \code{Float}s---an ordinary
+two-argument numeric function, like \code{add}. The parentheses say ``no: the
+\emph{first} argument is itself a function.'' Grouping is the whole difference
+between ``takes a function'' and ``takes two numbers.''
+
+This pattern---pass a function in, let the surrounding function decide how to use
+it---is exactly how the combinators of \cref{ch:fold} work. \code{map} takes a
+function and applies it to every element of a list. \code{foldl} takes a function
+and threads it through a list, accumulating. \code{iterate\_while}, our central
+loop combinator, takes a \emph{step} function and applies it over and over. Each
+is a function that takes a function; \code{apply\_twice} is the toy version of all
+of them.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % ===== LEFT: a function flowing IN to another function =====
+  \begin{scope}
+    \node[font=\bfseries\small, simInk] at (0,2.5) {A function flows \emph{in}};
+    % the outer machine
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=30mm, minimum height=20mm] (outer) at (0,0.6) {};
+    \node[font=\ttfamily\scriptsize, simInk] at (0,1.35) {apply\_twice};
+    % a little function-box being inserted as an argument
+    \node[draw=simTeal, fill=simBgGreen, thick, rounded corners=2pt,
+          minimum width=13mm, minimum height=7mm] (fin) at (-2.9,0.6)
+          {\ttfamily\scriptsize f};
+    \draw[flow] (fin) -- (outer.west|-0,0.6);
+    \node[font=\scriptsize, simInk] at (0,0.35) {uses \texttt{f} inside};
+    \node[draw=simRust,fill=simBgRust,rounded corners=1pt,minimum width=11mm,
+          minimum height=7mm] (xin) at (-2.9,-0.6) {\scriptsize $x$};
+    \draw[flow] (xin) -- (outer.west|-0,-0.4);
+    \draw[flow] (outer.east) -- ++(1.0,0) node[right,font=\scriptsize]{\texttt{f (f x)}};
+    \node[align=center,font=\scriptsize\itshape,simGray,text width=42mm]
+      at (0,-1.85) {a higher-order function \emph{takes} a function as an argument
+      and calls it internally (\code{map}, \code{foldl}, \code{iterate\_while}).};
+  \end{scope}
+  % ===== RIGHT: a closure flowing OUT, capturing a value =====
+  \begin{scope}[shift={(7.4,0)}]
+    \node[font=\bfseries\small, simInk] at (0,2.5) {A closure flows \emph{out}};
+    % the factory machine
+    \node[draw=simBlue, fill=simBgBlue, thick, rounded corners=2pt,
+          minimum width=24mm, minimum height=14mm] (fac) at (0,0.9) {};
+    \node[font=\ttfamily\scriptsize, simInk] at (0,1.45) {scaled\_by};
+    % a captured value going in
+    \node[draw=simRust,fill=simBgRust,rounded corners=1pt,minimum width=11mm,
+          minimum height=7mm] (cap) at (-2.7,0.9) {\scriptsize $a$};
+    \draw[flow] (cap) -- (fac.west);
+    \node[font=\scriptsize, simInk] at (0,0.6) {captures $a$};
+    % the closure coming out, with the captured a baked in
+    \node[draw=simTeal, fill=simBgGreen, thick, rounded corners=2pt,
+          minimum width=22mm, minimum height=9mm] (clo) at (0,-1.0) {};
+    \node[font=\ttfamily\scriptsize] at (0,-0.75) {\textbackslash v -> a .* v};
+    \node[draw=simGold,fill=simBgGold,rounded corners=1pt,font=\scriptsize,
+          inner sep=1.3pt] at (0,-1.35) {$a$ baked in};
+    \draw[flow] (fac.south) -- (clo.north);
+    \node[align=center,font=\scriptsize\itshape,simGray,text width=44mm]
+      at (0,-2.25) {a higher-order function \emph{returns} a function that has
+      \emph{captured} the value $a$---a \emph{closure}.};
+  \end{scope}
+\end{tikzpicture}
+\caption[The two halves of higher order]{The two ways a function can be
+higher-order. \emph{Left:} \code{apply\_twice} \emph{takes} a function \code{f} as
+an argument and calls it inside its own body---the pattern of every combinator in
+\cref{ch:fold}. \emph{Right:} \code{scaled\_by} (built next) \emph{returns} a
+function, and that returned function has \emph{captured} the value $a$ supplied to
+the factory---a \emph{closure}, a function with some data baked into it. Functions
+flow both in and out.}
+\label{fig:higherorder}
+\end{figure}
+
+\subsection{Half two: a function that \emph{returns} a function (a closure)}
+
+The other half is a function whose \emph{result} is a function. We have already
+half-seen it: \code{add3 = add 3} was a function produced by partially applying
+\code{add}. But we can also write a factory \emph{directly}, with the explicit
+intention of producing a function. Consider \code{scaled\_by}, which takes a scalar
+$a$ and returns the function ``scale a tensor by $a$.''
+
+\begin{lstlisting}[style=l4style]
+scaled_by :: Scalar -> (Tensor[N] -> Tensor[N])
+scaled_by a = \v -> a .* v
+\end{lstlisting}
+
+\noindent Several new pieces here, each small:
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[The codomain \code{(Tensor[N] -> Tensor[N])}.] The
+  signature says \code{scaled\_by} takes a \code{Scalar} and returns---the
+  parenthesized part---a \emph{function} from \code{Tensor[N]} to \code{Tensor[N]}.
+  Those parentheses are the \emph{closure-returning convention} we have been
+  flagging: see the box just below.
+  \item[The lambda \code{\textbackslash v -> a .* v}.] This is an
+  \emph{anonymous function}---a function with no name, written inline. The
+  backslash \code{\textbackslash} introduces the parameter (here \code{v}), the
+  arrow \code{->} separates the parameter from the body, and
+  \lstinline[style=l4style]|a .* v| is the body (the operator \code{.*} is
+  scalar-times-tensor; we meet it in \cref{ch:tensors}). Read the whole thing as
+  ``the function that, given \code{v}, returns \lstinline[style=l4style]|a .* v|.''
+  \item[The capture.] The crucial part: the body
+  \lstinline[style=l4style]|a .* v| mentions \code{a}, which is \emph{not} the
+  lambda's own parameter---it is the argument that was handed to \code{scaled\_by}.
+  The returned function has \emph{captured} \code{a}: it carries that value around
+  with it, baked in, ready to use whenever it is finally applied. A function that
+  has captured values from where it was created is called a \emph{closure}.
+\end{description}
+
+\noindent Now we can use it. Building the closure and applying it are two separate
+events, possibly far apart in the program:
+
+\begin{lstlisting}[style=l4style]
+let double  = scaled_by 2 in   -- build a closure; 2 captured.  double :: Tensor[N] -> Tensor[N]
+let halve   = scaled_by 0.5 in -- a DIFFERENT closure; 0.5 captured
+let y = double v in            -- apply later: y = 2 .* v
+let z = halve  v in            -- z = 0.5 .* v
+(y, z)
+\end{lstlisting}
+
+\noindent \code{double} and \code{halve} are two distinct function values, born
+from the same factory but carrying different captured scalars. This is the
+right-hand cartoon of \cref{fig:higherorder}: a value flows \emph{in} to the
+factory, a function flows \emph{out} with that value captured inside it.
+\Cref{wex:scaledby} traces this through with concrete numbers.
+
+\begin{notationbox}
+\textbf{The closure-returning parenthesis convention.} When a signature's result
+(its \emph{codomain}, the type after the last top-level arrow) is itself a
+function that you intend to \emph{hold and apply later}, we group it in
+parentheses:
+\begin{lstlisting}[style=l4style]
+scaled_by :: Scalar -> (Tensor[N] -> Tensor[N])   -- "returns a function"
+\end{lstlisting}
+By the right-grouping rule this is the \emph{same type} as the un-parenthesized
+\lstinline[style=l4style]|Scalar -> Tensor[N] -> Tensor[N]|---the parentheses
+change no types. They are a \emph{reader-intent marker}: they tell you the
+codomain is a closure you will hold and apply, not the last operand of a
+multi-argument call. We use them whenever a function's product is itself a
+function to be applied later---operator constructors, partial-application
+factories. \Cref{ch:operators} introduces a richer spelling,
+\lstinline[style=l4style]|Op[in -> out]|, for the special case where the returned
+function is an \emph{operator} carrying baked-in parameters; the parenthesis habit
+is its plainer sibling.
+\end{notationbox}
+
+\subsection{Why ``higher-order'' is worth the effort}
+
+It is fair to ask whether this machinery earns its conceptual cost. It does, and
+the reason is the one from \cref{ch:bigidea}: half this book is the discovery
+that six different-looking simulators are built from one small set of pieces,
+combined in slightly different ways. ``Combined'' is doing real work in that
+sentence. The \emph{verbs} of an algorithm (apply this operator, take this inner
+product) are ordinary functions; but the \emph{coordination}---do this step, then
+this, repeat until converged, map over a family of right-hand sides---is expressed
+by functions that \emph{take} the verbs as arguments and orchestrate them. A loop
+that works for \emph{any} step function is a higher-order function; a solver that
+is configured once and applied many times is a closure. Without functions as
+values, we would have to rewrite the coordination from scratch for every verb;
+with them, we write the coordination \emph{once} and feed it the verbs. That is
+the entire economy of \cref{part:framework}.
+
+\section{Lambda, \code{let}, and the absence of hidden order}
+
+Three loose ends remain, all small, all in service of reading the bodies of
+functions fluently.
+
+\subsection{Lambda: anonymous functions}
+
+We met the lambda \lstinline[style=l4style]|\v -> a .* v| above. It is just a
+function written without giving it a name. The general form is
+\lstinline[style=l4style]|\x -> body|: the backslash, a parameter, an arrow, and a
+body expression. We reach for a lambda whenever a function is small and used in
+exactly one place---most often as the argument to a higher-order function, where
+naming it would be ceremony:
+
+\begin{lstlisting}[style=l4style]
+apply_twice (\x -> x + 1) 10   -- = 12; the increment function, written inline
+\end{lstlisting}
+
+\noindent Anything written as a lambda could be given a name with \code{let} and a
+signature instead; the lambda is a convenience for the throwaway case. The two
+forms below are interchangeable:
+
+\begin{lstlisting}[style=l4style]
+let inc = \x -> x + 1 in apply_twice inc 10   -- named
+apply_twice (\x -> x + 1) 10                   -- inline lambda
+\end{lstlisting}
+
+\subsection{\code{let}: naming intermediates}
+
+We have used \code{let} throughout; here is its job stated plainly.
+\lstinline[style=l4style]|let name = expr in body| evaluates \code{expr},
+binds its value to \code{name}, and then evaluates \code{body} with that name
+available. It is how we name an intermediate result so we can refer to it more
+than once, or simply to give a complicated computation readable, step-by-step
+structure. A chain of \code{let}s reads top to bottom like a recipe:
+
+\begin{lstlisting}[style=l4style]
+let r  = b - matvec A x in   -- the residual
+let p  = precond r in        -- the preconditioned residual
+let a  = dot r p in          -- a scalar
+...
+\end{lstlisting}
+
+\noindent Each name binds an immutable value; none is ever reassigned. (When a
+chain of \code{let}s threads \emph{evolving state}---a counter that advances, a
+state vector that steps---we will switch to the \code{do}-block notation of
+\cref{ch:monad}, which is the same recipe-like reading with state made explicit.
+Plain \code{let} suffices until then.)
+
+\subsection{No hidden order: data dependencies are the only order}
+
+Here is a quietly profound consequence of purity, and the bridge to the rest of
+Part~III. Because every function is pure---its output depends only on its
+inputs---the \emph{value} of an expression depends on \emph{nothing but the values
+of its sub-expressions}. The order in which we happen to write the \code{let}s, or
+the order a machine happens to evaluate them, cannot change any answer. The
+\emph{only} ordering that matters is forced by the data: if computing \code{p}
+needs \code{r}, then \code{r} must be computed first---but two intermediates that
+do not depend on each other may be computed in either order, or at the same time.
+
+This means an expression is really a \emph{tree} (more generally, a graph) whose
+edges are data dependencies, and that tree carries no order beyond what the edges
+demand. \Cref{fig:exprtree} draws one. Read the figure and the lesson of
+\cref{ch:bigidea} lands with full force: the \emph{program text is the
+dependency graph}, with no hidden arrows from sequencing, because there is no
+hidden sequencing---only data flowing along visible edges.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm and 12mm]
+  % leaves
+  \node[data] (b)  at (-3.2,0)   {\code{b}};
+  \node[data] (A)  at (-1.4,-0.9){\code{A}};
+  \node[data] (x)  at (0.2,-0.9) {\code{x}};
+  % matvec A x
+  \node[opbox, minimum width=16mm] (mv) at (-0.6,0.1) {\code{matvec}};
+  \draw[flow] (A) -- (mv);
+  \draw[flow] (x) -- (mv);
+  % r = b - matvec
+  \node[opbox, minimum width=12mm] (sub) at (-1.7,1.2) {$-$};
+  \draw[flow] (b)  -- (sub);
+  \draw[flow] (mv) -- (sub);
+  \node[font=\scriptsize\ttfamily, simBlue, left=0.5mm of sub] {r};
+  % precond r
+  \node[opbox, minimum width=16mm] (pc) at (0.4,1.2) {\code{precond}};
+  \draw[flow] (sub) -- (pc);
+  \node[font=\scriptsize\ttfamily, simBlue, right=0.5mm of pc] {p};
+  % dot r p
+  \node[opbox, minimum width=12mm] (dot) at (-0.6,2.5) {\code{dot}};
+  \draw[flow] (sub) to[out=70,in=200] (dot);
+  \draw[flow] (pc)  -- (dot);
+  \node[product, minimum width=10mm, above=7mm of dot] (a) {\code{a}};
+  \draw[flow] (dot) -- (a);
+  % annotation
+  \node[align=left,font=\scriptsize\itshape,simGray,text width=46mm]
+    at (4.6,1.2) {The edges are the \emph{only} ordering. \code{precond} must wait
+    for \code{r}; but reading \code{b} and forming \code{matvec A x} are unordered
+    relative to each other. There is no hidden ``step 1, step 2''---only data
+    flowing up the tree.};
+\end{tikzpicture}
+\caption[An expression is a dependency tree with no hidden order]{The expression
+\lstinline[style=l4style]|let r = b - matvec A x in let p = precond r in dot r p|,
+drawn as a tree. Leaves are inputs; internal nodes are pure operations; edges are
+data dependencies. The only ordering the computation imposes is the one the edges
+force (\code{p} after \code{r}, the final \code{dot} after both). Anything the
+edges leave unordered may happen in any order, or in parallel---because every node
+is a pure function of its inputs and nothing else. The program text \emph{is} this
+graph. Reading an algorithm's structure off its written form, exactly here, is the
+skill \cref{ch:fold} turns into a method.}
+\label{fig:exprtree}
+\end{figure}
+
+\section{A first look at operator values}
+
+We close with a forward glance, kept deliberately light. Several times we have met
+the pattern ``build a function once with configuration baked in, apply it many
+times.'' This pattern is so central---it is how every assembled operator, every
+preconditioner, every constructed step works---that the calculus gives it a
+dedicated spelling. An \emph{operator value} is written
+
+\begin{lstlisting}[style=l4style]
+Op[Tensor[N] -> Tensor[N]]
+\end{lstlisting}
+
+\noindent and you should read it as ``a function value from \code{Tensor[N]} to
+\code{Tensor[N]} that \emph{also carries baked-in parameters}''---the captured
+configuration (matrix entries, a factorization, basis tables) that a plain closure
+would hold invisibly, here made a first-class, named thing. An operator
+constructor then has a signature like
+
+\begin{lstlisting}[style=l4style]
+make_operator :: Config -> Op[Tensor[N] -> Tensor[N]]
+\end{lstlisting}
+
+\noindent ``give me a configuration, I return an operator value you apply later.''
+The \lstinline[style=l4style]|Op[...]| brackets play exactly the role the
+closure-returning parentheses played for \code{scaled\_by}: they announce ``the
+result is a thing you hold and apply.'' (Because the brackets already group the
+in/out arrow, an \lstinline[style=l4style]|Op[...]| codomain wants no extra outer
+parentheses.) Why operators deserve their own spelling rather than just being
+plain closures---the answer is about \emph{ownership}, the second of our three
+questions, namely \emph{who owns the baked-in parameters} and that they are
+read-only for the operator's whole life---is the subject of \cref{ch:operators}.
+For now, just recognize the shape: \lstinline[style=l4style]|Op[in -> out]| is a
+configured function you apply many times.
+
+\begin{workedexample}{Reading a real signature, token by token}{axpy}
+The workhorse update of every linear solver in this book is \code{axpy}---``$a$
+times $x$ plus $y$,'' the operation we met in \cref{ch:bigidea}. Here is its
+full definition in the notation:
+\begin{lstlisting}[style=l4style]
+axpy :: Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]
+axpy a x y = a .* x .+ y
+\end{lstlisting}
+We read \emph{every} token, top line first.
+\begin{description}[style=nextline,leftmargin=1.4em,nosep]
+  \item[\code{axpy}] the name of the function.
+  \item[\code{::}] ``has type.'' Everything after it is the type.
+  \item[\code{Scalar}] the type of the \emph{first} argument: a single number $a$.
+  \item[the first \code{->}] ``maps to''---and, by right-grouping, ``\dots then
+  returns a function that takes\dots''
+  \item[\code{Tensor[N]} (second)] the type of the second argument: a length-$N$
+  vector $x$. (Shapes are types; \cref{ch:tensors}.)
+  \item[\code{Tensor[N]} (third)] the third argument: another length-$N$ vector
+  $y$. All three of \code{x}, \code{y}, and the result share the same length $N$.
+  \item[\code{Tensor[N]} (last)] the \emph{result} type: a length-$N$ vector. This
+  is the codomain---what you get once all three arguments are supplied.
+\end{description}
+So the signature reads: ``\code{axpy} takes a scalar, then a length-$N$ vector,
+then another length-$N$ vector, and returns a fresh length-$N$ vector.'' Now the
+body:
+\begin{description}[style=nextline,leftmargin=1.4em,nosep]
+  \item[\code{axpy a x y}] names the three parameters, in order: \code{a}, \code{x},
+  \code{y}.
+  \item[\code{a .* x}] the scalar \code{a} times the tensor
+  \code{x}, elementwise---a fresh tensor (the \code{.*} dot marks
+  scalar-times-tensor; \cref{ch:tensors}).
+  \item[\code{.+ y}] add the tensor \code{y} elementwise---a
+  fresh tensor, the result.
+\end{description}
+Three readings worth stating out loud, because each is a habit this chapter is
+trying to build. (1) \emph{Nothing is overwritten}: \code{x} and \code{y} name
+exactly the same tensors after the call as before; the result is a brand-new
+value. (2) \emph{It is curried}: \lstinline[style=l4style]|axpy 2| is already a
+legal value---the function ``$2x + y$ awaiting $x$ and $y$''---and
+\lstinline[style=l4style]|axpy 2 x| is the function ``$2x + y$ awaiting $y$.''
+(3) \emph{It is pure}: hand \code{axpy} the same $a$, $x$, $y$ on any machine, any
+day, and you get the identical result; it reads no hidden state and writes none.
+\end{workedexample}
+
+\begin{workedexample}{Building and applying a closure, with numbers}{scaledby}
+We trace \code{scaled\_by} from \cref{sec:higherorder} through to concrete
+numbers, to make the higher-order idea tangible. Recall:
+\begin{lstlisting}[style=l4style]
+scaled_by :: Scalar -> (Tensor[N] -> Tensor[N])
+scaled_by a = \v -> a .* v
+\end{lstlisting}
+Take $N = 3$ and a concrete input tensor $v = [10, 20, 30]$.
+
+\textbf{Step 1 --- build the closure.} Evaluate \lstinline[style=l4style]|scaled_by 2|.
+We supply $a = 2$. By the definition, the result is the lambda
+\lstinline[style=l4style]|\v -> a .* v| \emph{with $a$ captured as $2$}:
+\begin{lstlisting}[style=l4style]
+let double = scaled_by 2 in ...
+-- double is the closure (\v -> 2 .* v); the 2 is baked in.
+-- double :: Tensor[3] -> Tensor[3]
+\end{lstlisting}
+No tensor has been touched yet---we have only \emph{produced a function}. This is
+the value flowing \emph{out} of the factory in \cref{fig:higherorder} (right).
+
+\textbf{Step 2 --- apply the closure.} Now, possibly much later in the program,
+we apply \code{double} to our $v$:
+\begin{lstlisting}[style=l4style]
+let y = double v in ...   -- substitute v = [10,20,30] into (\v -> 2 .* v)
+\end{lstlisting}
+Applying the closure substitutes $v = [10,20,30]$ into the captured body
+$2 .* v$:
+\[
+  y \;=\; 2 \cdot [10,\,20,\,30] \;=\; [20,\,40,\,60].
+\]
+
+\textbf{Step 3 --- a second, independent closure.} Build another from the same
+factory with a different captured scalar:
+\begin{lstlisting}[style=l4style]
+let halve = scaled_by 0.5 in
+let z = halve v in ...     -- z = 0.5 .* [10,20,30] = [5,10,15]
+\end{lstlisting}
+\code{double} and \code{halve} are two distinct closures, born from one factory,
+each carrying its own captured scalar; \code{v} was never disturbed by either
+(immutability), and neither closure can interfere with the other (purity). The
+two events---\emph{building} the function and \emph{applying} it---are cleanly
+separated, which is exactly the ``configure once, apply many times'' shape that
+\cref{ch:operators} elevates into constructed operators.
+\end{workedexample}
+
+\summarysection
+The calculus exists to make three structural questions explicit---what operations
+happen, who owns the state, how evolution is coordinated---and this chapter does
+the first by teaching the notation for \emph{values and functions}. A
+\emph{value} (number, tensor, record, function) is immutable: it never changes
+once created; we never overwrite, we compute fresh values and name them with
+\code{let}; \code{clone()} is meaningless because nothing can be disturbed. A
+\emph{function} is written as a \emph{type signature}---\code{f :: A -> B}, where
+\code{::} reads ``has type'' and \code{->} ``maps to''---and a \emph{definition}
+applied by juxtaposition; our functions are \emph{pure} (output depends only on
+declared inputs, no side effects). A function is itself a \emph{value}, which
+gives us two powerful moves. \emph{Currying} reads \code{A -> B -> C} as one
+argument at a time, so \emph{partial application} can freeze some arguments now
+and supply the rest later (``build once, apply many''). \emph{Higher-order
+functions} take a function as an argument (\code{apply\_twice}, the shape of every
+combinator) or return one (\code{scaled\_by}, a \emph{closure} that has captured a
+value). The closure-returning parenthesis convention
+\lstinline[style=l4style]|A -> (B -> C)| marks ``returns a function you hold and
+apply later.'' \emph{Lambdas} \lstinline[style=l4style]|\x -> ...| are anonymous
+functions; \code{let} names intermediates; and because every function is pure, an
+expression is a \emph{dependency tree with no hidden order}---the program text
+\emph{is} the dependency graph. The operator-value spelling
+\lstinline[style=l4style]|Op[in -> out]|, a configured function carrying baked-in
+parameters, previews \cref{ch:operators}.
+
+\furtherreading
+The shift from mutable variables to immutable values and first-class functions is
+the foundation of typed functional programming; the most readable entry points are
+the standard reference for the language whose notation we borrow~\citep{peytonjones2003}
+and Wadler's exposition of how a pure language nonetheless models stateful
+computation~\citep{wadler1995monads}, which we will need in earnest in
+\cref{ch:monad}. No prior background is assumed here or anywhere in the book; each
+of the four pillars of the notation gets its own careful chapter---records and
+immutability (\cref{ch:records}), tensors and shapes (\cref{ch:tensors}), the fold
+and the combinators (\cref{ch:fold}), and the state monad (\cref{ch:monad}).
+Readers who want the term ``currying'' in its original setting will find it in any
+text on the lambda calculus.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Read this signature.} In one English sentence each, say what these
+  functions take and return:
+  \code{nrm2 :: Tensor[N] -> Scalar};
+  \code{dot :: Tensor[N] -> Tensor[N] -> Scalar};
+  \code{matvec :: Tensor[m, n] -> Tensor[n] -> Tensor[m]}.
+  For \code{matvec}, why is the result length $m$ rather than $n$?
+  \item \textbf{What does it curry to?} Recall \code{axpy} has type
+  \code{Scalar -> Tensor[N] -> Tensor[N] -> Tensor[N]}.
+  Write the type of \lstinline[style=l4style]|axpy 2|, the type of
+  \lstinline[style=l4style]|axpy 2 x| (with \code{x : Tensor[N]}), and the type of
+  \lstinline[style=l4style]|axpy 2 x y|. Which of the three is \emph{not} a
+  function?
+  \item \textbf{Spot the side effect.} One of the following describes a
+  \emph{pure} function and one does not: (a) ``returns its first argument plus its
+  second''; (b) ``adds its argument to a running total kept in a global counter
+  and returns the new total.'' Which is impure, and what specifically about it
+  violates purity? Why can the impure one give different answers on the same
+  input?
+  \item \textbf{Higher-order or not.} For each signature, say whether it is a
+  higher-order function and \emph{why}: (a)
+  \lstinline[style=l4style]|(Float -> Float) -> Float -> Float|; (b)
+  \lstinline[style=l4style]|Float -> Float -> Float|; (c)
+  \lstinline[style=l4style]|Scalar -> (Tensor[N] -> Tensor[N])|. For the
+  higher-order ones, say whether the function-ness is in an \emph{argument} or in
+  the \emph{result}.
+  \item \textbf{Build the closure.} Using \code{scaled\_by} from
+  \cref{wex:scaledby}, write down (i) the value of
+  \lstinline[style=l4style]|scaled_by 3| in words, (ii) its type, and (iii) the
+  result of applying it to $[1, 0, 2]$. Then explain why \code{scaled\_by 3} and
+  \code{scaled\_by 5} cannot interfere with each other even though they came from
+  the same factory.
+  \item \textbf{Parentheses matter.} Explain, in terms of the right-grouping rule,
+  why \lstinline[style=l4style]|(Float -> Float) -> Float| and
+  \lstinline[style=l4style]|Float -> Float -> Float| are \emph{different} types.
+  Describe a value of each. (Hint: count how many \emph{numbers} each ultimately
+  needs.)
+  \item \textbf{No hidden order.} In the dependency tree of \cref{fig:exprtree},
+  list every pair of operations whose relative order is \emph{not} forced by the
+  data, and one pair whose order \emph{is}. What property of the functions
+  guarantees that the unforced pairs may be evaluated in either order without
+  changing the answer?
+  \item \textbf{The mutable-box trap.} A reader writes: ``after
+  \lstinline[style=l4style]|let r = axpy a x y|, the tensor \code{y} now holds
+  $a x + y$.'' Identify the exact mental-model error in this sentence and rewrite
+  it correctly. What \emph{does} \code{y} refer to after that line?
+\end{enumerate}

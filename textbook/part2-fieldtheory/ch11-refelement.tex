@@ -1,0 +1,962 @@
+\chapter{Reference Elements, Basis Functions, and Quadrature}
+\label{ch:refelement}
+
+\chapterorient{The previous chapter named four function spaces and told you which
+field belongs in each, but it left the basis functions themselves as abstractions:
+``the hat function on a vertex,'' ``the edge function with unit circulation.'' This
+chapter opens the engine room. We will see how a basis function is actually
+\emph{represented} inside a finite-element code, how it is \emph{integrated} to fill
+in a matrix entry, and why both jobs are done not on the physical mesh but on a
+single canonical \emph{reference element}. Three ideas carry the chapter: shape
+functions defined once on a reference cell, a geometric map that carries them to
+each physical cell, and a quadrature rule that turns the integral defining each
+matrix entry into a finite weighted sum. By the end you will be able to write the
+hat functions of a triangle in closed form, transform a derivative through a
+Jacobian, integrate a product of basis functions by Gauss quadrature and check it
+against the exact answer, and read the element-local tensor whose axes
+($E,L,P,C,G$) the matrix-free pipeline of \cref{ch:matrixfree} runs on. This is the
+layer where the finite-element method stops being a theory and becomes arithmetic.}
+
+\section{One element, tabulated once}
+
+A mesh of an engineering device has thousands to millions of cells. Each cell needs
+its own basis functions, its own integrals, its own contribution to the global
+matrix. If we defined a fresh set of polynomials on every physical cell---fitting
+them to that cell's particular vertices, recomputing their integrals from
+scratch---the cost would be enormous and the bookkeeping hopeless. Worse, it would
+be \emph{wasteful}, because the cells are not really different: a tetrahedron is a
+tetrahedron, whatever its size or orientation. The shape of a linear basis function
+on one tetrahedron is, in a precise sense we are about to make, the \emph{same} as on
+any other.
+
+The finite-element method exploits this with a single organizing decision: define
+the basis functions \emph{once}, on a fixed canonical cell called the
+\emph{reference element}, and reach every physical cell by a geometric map. The
+reference element $\hat K$ is a cell of standard shape in its own coordinate
+system---we use the \emph{reference triangle} $\hat K = \{(\hat x,\hat y): \hat
+x\ge 0,\ \hat y\ge 0,\ \hat x+\hat y\le 1\}$ in two dimensions and the
+\emph{reference tetrahedron} in three. On $\hat K$ we lay down a family of
+\emph{shape functions} $\hat\phi_1,\dots,\hat\phi_L$ once and for all, and we
+\emph{tabulate} them: we compute and store their values, and the values of their
+derivatives, at a fixed set of points. That single table serves the entire mesh.
+
+\begin{keyidea}
+The reference element is the finite-element method's central act of reuse. Shape
+functions are defined and tabulated \emph{once}, on a canonical reference cell
+$\hat K$; each physical cell $K$ is reached by a geometric map $\vx = F_K(\hat\vx)$.
+A basis function on $K$ is just a reference shape function composed with the inverse
+map. One tabulation---a small table of basis values and derivatives at a few
+points---drives the integration of every cell in the mesh. The mesh contributes only
+its geometry (through the map $F_K$); the polynomial content is shared.
+\end{keyidea}
+
+\Cref{fig:refmap} shows the arrangement. The reference cell sits on the left in its
+own $(\hat x,\hat y)$ coordinates; the map $F_K$ carries it to a physical cell $K$
+somewhere in the mesh. Everything hard---the choice of polynomials, their values,
+their derivatives---lives on the left, computed once. Everything cell-specific---the
+size, the shape, the orientation---lives in the map $F_K$, which is cheap to apply.
+This split is not merely an optimization; it is the conceptual backbone of the whole
+construction, and it recurs at every level. When \cref{ch:matrixfree} factors the
+operator into $\mathsf{G}$ (gather to elements), $\mathsf{B}$ (apply the tabulated
+basis), $\mathsf{D}$ (apply the per-point geometry and material), and their
+transposes, the tabulated basis $\mathsf{B}$ is exactly the reference shape
+functions of this chapter, and the geometry factor $\mathsf{D}$ is exactly the map's
+Jacobian.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% --- reference triangle on the left ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.0,2.35) {reference $\hat K$};
+  \fill[simBgBlue] (0,0)--(2,0)--(0,2)--cycle;
+  \draw[simInk,thick] (0,0)--(2,0)--(0,2)--cycle;
+  \fill[simBlue] (0,0) circle (2.2pt) node[below left]{$\hat\vx_0$};
+  \fill[simBlue] (2,0) circle (2.2pt) node[below right]{$\hat\vx_1$};
+  \fill[simBlue] (0,2) circle (2.2pt) node[above left]{$\hat\vx_2$};
+  \draw[->,simGray] (-0.35,-0.35)--(0.7,-0.35) node[right]{$\hat x$};
+  \draw[->,simGray] (-0.35,-0.35)--(-0.35,0.7) node[above]{$\hat y$};
+  \node[simGray] at (0.7,0.6) {$\hat\phi_i$ tabulated here};
+\end{scope}
+% --- the map ---
+\draw[flow, simRust, thick] (2.6,1.0) .. controls (3.4,1.5) and (4.0,1.5) .. (4.8,1.0)
+  node[midway, above, font=\scriptsize]{$\vx = F_K(\hat\vx)$};
+% --- physical cell on the right (skewed) ---
+\begin{scope}[shift={(5.4,0)}]
+  \node[font=\footnotesize\bfseries] at (1.3,2.35) {physical $K$};
+  \fill[simBgRust] (0.2,0.1)--(2.4,0.5)--(1.0,2.0)--cycle;
+  \draw[simInk,thick] (0.2,0.1)--(2.4,0.5)--(1.0,2.0)--cycle;
+  \fill[simRust] (0.2,0.1) circle (2.2pt) node[below left]{$\vx_0$};
+  \fill[simRust] (2.4,0.5) circle (2.2pt) node[below right]{$\vx_1$};
+  \fill[simRust] (1.0,2.0) circle (2.2pt) node[above]{$\vx_2$};
+  \draw[->,simGray] (-0.2,-0.35)--(0.85,-0.35) node[right]{$x$};
+  \draw[->,simGray] (-0.2,-0.35)--(-0.2,0.7) node[above]{$y$};
+  \node[simGray] at (1.2,0.7) {$\phi_i = \hat\phi_i\circ F_K^{-1}$};
+\end{scope}
+\end{tikzpicture}
+\caption[The reference element and the geometric map]{The organizing picture of the
+chapter. Shape functions $\hat\phi_i$ are defined and tabulated once on the reference
+cell $\hat K$ (left, in its own $(\hat x,\hat y)$ coordinates). The geometric map
+$F_K$ carries $\hat K$ onto each physical cell $K$ of the mesh (right). A physical
+basis function is the reference shape function pulled back through the map,
+$\phi_i = \hat\phi_i\circ F_K^{-1}$. The mesh supplies only the map; the polynomials
+are shared across every cell. This is the $\hat\phi\to\mathsf{B}$, $F_K\to\mathsf{D}$
+split that \cref{ch:matrixfree} runs on.}
+\label{fig:refmap}
+\end{figure}
+
+The rest of the chapter fills in the three pieces. \Cref{sec:shape} builds the shape
+functions on $\hat K$. \Cref{sec:map} builds the map $F_K$ and shows how it
+transforms values, derivatives, and volumes. \Cref{sec:quad} replaces the integrals
+by quadrature. \Cref{sec:vector} notes how the vector spaces of
+\cref{ch:functionspaces} fit the same frame. \Cref{sec:tensor} collects the data
+into the element-local tensor. Two worked examples (\cref{wex:massmatrix},
+\cref{wex:jacobian}) carry the arithmetic all the way through.
+
+\section{Nodal shape functions on the reference simplex}
+\label{sec:shape}
+
+We begin with the simplest and most important family: the \emph{nodal} or
+\emph{Lagrange} shape functions, the basis of the $\Hone$ space of
+\cref{ch:functionspaces}. These are the building blocks of every scalar potential
+problem and the scaffolding from which the vector elements are built.
+
+\subsection{Barycentric coordinates}
+
+The natural coordinate system on a simplex (a triangle, a tetrahedron) is not
+Cartesian but \emph{barycentric}. On the reference triangle with vertices
+$\hat\vx_0,\hat\vx_1,\hat\vx_2$, the barycentric coordinates
+$\lambda_0,\lambda_1,\lambda_2$ of a point $\hat\vx$ are the unique weights, summing
+to one, that express $\hat\vx$ as a weighted average of the vertices:
+\[
+  \hat\vx = \lambda_0\hat\vx_0 + \lambda_1\hat\vx_1 + \lambda_2\hat\vx_2,
+  \qquad \lambda_0+\lambda_1+\lambda_2 = 1.
+\]
+Geometrically, $\lambda_i$ is the fractional area of the sub-triangle opposite
+vertex $i$: it is $1$ at vertex $i$, $0$ on the opposite edge, and falls off linearly
+in between. For the standard reference triangle with $\hat\vx_0=(0,0)$,
+$\hat\vx_1=(1,0)$, $\hat\vx_2=(0,1)$ they have the closed form
+\[
+  \lambda_0 = 1-\hat x-\hat y, \qquad
+  \lambda_1 = \hat x, \qquad
+  \lambda_2 = \hat y.
+\]
+The barycentric coordinates \emph{are} the lowest-order nodal shape functions: each
+$\lambda_i$ is a linear polynomial equal to $1$ at its own vertex and $0$ at the
+other two. We write $\hat\phi_i = \lambda_i$ for the $P_1$ (degree-one) basis. The
+defining property is the \emph{cardinality} (or \emph{interpolation}, or
+\emph{unisolvence}) relation from \cref{ch:functionspaces},
+\begin{equation}
+  \hat\phi_i(\hat\vx_j) = \delta_{ij},
+  \label{eq:cardinality}
+\end{equation}
+``the $i$-th shape function is one at its own node and zero at every other node.''
+This single relation is what makes the coefficients of a finite-element field equal
+to its \emph{nodal values}: if $u_h = \sum_j c_j\hat\phi_j$, then evaluating at node
+$i$ and using \eqref{eq:cardinality} gives $u_h(\hat\vx_i)=c_i$. The coefficient on
+$\hat\phi_i$ is literally the field's value at node $i$---the DoF functional
+$\sigma_i(u)=u(\hat\vx_i)$ of \cref{ch:functionspaces} reads it directly.
+
+\begin{notationbox}
+We mark reference-cell quantities with a hat: $\hat\vx$ for a reference point,
+$\hat\phi_i$ for a reference shape function, $\hat K$ for the reference cell, and
+$\Grad_{\hat\vx}$ for a gradient in reference coordinates. Unhatted symbols
+($\vx,\phi_i,K,\Grad_\vx$) live on the physical cell. The map $F_K$ and its Jacobian
+$J$ are the bridge between the two, and keeping the hats straight is the single most
+common source of sign and transpose errors in finite-element code.
+\end{notationbox}
+
+\Cref{fig:reftet} shows the reference triangle and tetrahedron with their node
+numbering. The triangle has three vertices (three $P_1$ nodes); the tetrahedron has
+four. On the tetrahedron the barycentric coordinates are
+$\lambda_0=1-\hat x-\hat y-\hat z$, $\lambda_1=\hat x$, $\lambda_2=\hat y$,
+$\lambda_3=\hat z$---the same pattern, one more coordinate.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% --- reference triangle with barycentric labels ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.1,2.55) {reference triangle};
+  \fill[simBgBlue] (0,0)--(2.2,0)--(0,2.2)--cycle;
+  \draw[simInk,thick] (0,0)--(2.2,0)--(0,2.2)--cycle;
+  \fill[simBlue] (0,0)   circle (2.4pt) node[below left] {$0$};
+  \fill[simBlue] (2.2,0) circle (2.4pt) node[below right]{$1$};
+  \fill[simBlue] (0,2.2) circle (2.4pt) node[above left] {$2$};
+  \node[simGray] at (0.35,0.35) {$\lambda_0$};
+  \node[simGray] at (1.55,0.28) {$\lambda_1$};
+  \node[simGray] at (0.3,1.55)  {$\lambda_2$};
+  \node[simInk] at (1.1,-0.55) {$\lambda_0=1{-}\hat x{-}\hat y,\ \lambda_1=\hat x,\ \lambda_2=\hat y$};
+\end{scope}
+% --- reference tetrahedron ---
+\begin{scope}[shift={(5.2,0)}]
+  \node[font=\footnotesize\bfseries] at (1.1,2.55) {reference tetrahedron};
+  \coordinate (n0) at (0,0);
+  \coordinate (n1) at (2.2,0.3);
+  \coordinate (n2) at (0.9,1.9);
+  \coordinate (n3) at (1.0,0.7);
+  \fill[simBgBlue,opacity=0.6] (n0)--(n1)--(n2)--cycle;
+  \draw[simGray,densely dashed] (n0)--(n3) (n1)--(n3) (n2)--(n3);
+  \draw[simInk,thick] (n0)--(n1)--(n2)--cycle;
+  \fill[simBlue] (n0) circle (2.4pt) node[below left] {$0$};
+  \fill[simBlue] (n1) circle (2.4pt) node[below right]{$1$};
+  \fill[simBlue] (n2) circle (2.4pt) node[above]      {$2$};
+  \fill[simBlue] (n3) circle (2.4pt) node[right]      {$3$};
+  \node[simInk] at (1.1,-0.55) {$4$ vertices, $6$ edges, $4$ faces};
+\end{scope}
+\end{tikzpicture}
+\caption[Reference simplices with node numbering]{The reference simplices and their
+barycentric coordinates. \emph{Left:} the reference triangle, vertices numbered
+$0,1,2$; the barycentric coordinate $\lambda_i$ is the $P_1$ shape function that
+equals $1$ at node $i$ and falls linearly to $0$ on the opposite edge. \emph{Right:}
+the reference tetrahedron, vertices $0$--$3$ (back edges dashed), with four
+barycentric coordinates following the same pattern. These node counts---$3$ for the
+triangle, $4$ for the tetrahedron---are the lowest-order $\Hone$ DoF counts of
+\cref{ch:functionspaces}.}
+\label{fig:reftet}
+\end{figure}
+
+\subsection{Higher order: the $P_p$ families}
+
+The $P_1$ basis represents a field as piecewise-linear: exact on linear fields,
+first-order accurate on smooth ones. To do better we raise the polynomial degree.
+The degree-$p$ Lagrange space $P_p$ on the triangle consists of all bivariate
+polynomials of total degree $\le p$; it has
+\[
+  \dim P_p = \binom{p+2}{2} = \frac{(p+1)(p+2)}{2}
+\]
+shape functions (the count of monomials $\hat x^a\hat y^b$ with $a+b\le p$). For
+$p=1$ that is $3$ (the vertices); for $p=2$ it is $6$. The $P_2$ basis adds one node
+at the midpoint of each edge, so its six nodes are the three vertices plus the three
+edge midpoints. Each $P_2$ shape function is still defined by the cardinality
+relation \eqref{eq:cardinality}---one at its own node, zero at the other five---and
+each has a clean barycentric form. The three vertex functions are
+$\hat\phi_i = \lambda_i(2\lambda_i-1)$, and the three edge-midpoint functions are
+$\hat\phi_{ij} = 4\lambda_i\lambda_j$. (You can verify directly that
+$\lambda_0(2\lambda_0-1)$ is $1$ at vertex $0$, where $\lambda_0=1$, and $0$ at every
+other node, where either $\lambda_0=0$ or $\lambda_0=\tfrac12$.)
+
+\Cref{fig:shapefns} plots the $P_1$ and $P_2$ shape functions in their
+one-dimensional analogue, where the picture is cleanest. On the reference interval
+$[0,1]$ the two $P_1$ hats are the straight lines $1-\hat x$ and $\hat x$; the three
+$P_2$ functions are the parabolas $(1-\hat x)(1-2\hat x)$, $\hat x(2\hat x-1)$, and
+the bump $4\hat x(1-\hat x)$ on the midpoint. In every case the cardinality property
+is visible: each curve passes through $1$ at its own node and $0$ at the others.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+% --- P1 panel ---
+\begin{axis}[
+  name=p1, width=6.4cm, height=4.4cm,
+  xlabel={$\hat x$}, ylabel={},
+  title={\footnotesize $P_1$ shape functions (1-D)},
+  xmin=0, xmax=1, ymin=-0.15, ymax=1.15,
+  xtick={0,0.5,1}, ytick={0,0.5,1},
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  title style={font=\footnotesize}, axis lines=left, every axis plot/.append style={thick},
+]
+  \addplot[simBlue,  domain=0:1, samples=2] {1-x};
+  \addplot[simRust,  domain=0:1, samples=2] {x};
+  \node[font=\scriptsize,simBlue] at (axis cs:0.18,0.92) {$\hat\phi_0$};
+  \node[font=\scriptsize,simRust] at (axis cs:0.82,0.92) {$\hat\phi_1$};
+  \addplot[only marks, mark=*, mark size=1.2pt, black] coordinates {(0,1)(1,0)(0,0)(1,1)};
+\end{axis}
+% --- P2 panel ---
+\begin{axis}[
+  name=p2, at={(p1.east)}, anchor=west, xshift=14mm,
+  width=6.4cm, height=4.4cm,
+  xlabel={$\hat x$}, ylabel={},
+  title={\footnotesize $P_2$ shape functions (1-D)},
+  xmin=0, xmax=1, ymin=-0.35, ymax=1.15,
+  xtick={0,0.5,1}, ytick={0,0.5,1},
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  title style={font=\footnotesize}, axis lines=left, every axis plot/.append style={thick},
+]
+  \addplot[simBlue,   domain=0:1, samples=60] {(1-x)*(1-2*x)};
+  \addplot[simRust,   domain=0:1, samples=60] {x*(2*x-1)};
+  \addplot[simGreen,  domain=0:1, samples=60] {4*x*(1-x)};
+  \node[font=\scriptsize,simBlue]  at (axis cs:0.12,0.95) {$\hat\phi_0$};
+  \node[font=\scriptsize,simRust]  at (axis cs:0.88,0.95) {$\hat\phi_1$};
+  \node[font=\scriptsize,simGreen] at (axis cs:0.5,1.02)  {$\hat\phi_{01}$};
+  \addplot[only marks, mark=*, mark size=1.2pt, black] coordinates {(0,1)(0.5,0)(1,0)(0,0)(0.5,1)(1,1)};
+\end{axis}
+\end{tikzpicture}
+\caption[$P_1$ and $P_2$ shape functions]{Lagrange shape functions, shown in their
+one-dimensional analogue where the curves are uncluttered. \emph{Left:} the two
+$P_1$ ``hat'' functions, $\hat\phi_0=1-\hat x$ and $\hat\phi_1=\hat x$, each linear,
+each one at its own node ($\hat x=0$ and $\hat x=1$) and zero at the other.
+\emph{Right:} the three $P_2$ functions on $[0,1]$: two vertex parabolas
+$\hat\phi_0=(1-\hat x)(1-2\hat x)$, $\hat\phi_1=\hat x(2\hat x-1)$, and the
+edge-midpoint bump $\hat\phi_{01}=4\hat x(1-\hat x)$ centred at $\hat x=\tfrac12$.
+The dots mark the cardinality property \eqref{eq:cardinality}: every shape function
+passes through $1$ at its own node and $0$ at all the others. On the triangle the
+same functions appear in barycentric form, $\lambda_i(2\lambda_i-1)$ and
+$4\lambda_i\lambda_j$.}
+\label{fig:shapefns}
+\end{figure}
+
+The pattern continues to any order. Raising $p$ is exactly the $p$-refinement of
+\cref{ch:functionspaces}: more shape functions per cell, a richer polynomial space,
+faster convergence on smooth fields---and, in Palace, the family of collections
+\code{H1\_FECollection}, \code{ND\_FECollection}, and the rest selecting both the de
+Rham slot and the order. The point for this chapter is structural: \emph{whatever}
+the order, the shape functions live on the reference cell and are tabulated once.
+
+\section{The geometric map and how it transforms calculus}
+\label{sec:map}
+
+The reference cell carries the polynomials; the mesh carries the geometry. The bridge
+is the geometric map $F_K$, and the heart of this section is what that map does to
+the three operations a weak form needs: \emph{evaluating} a field, \emph{differentiating}
+it, and \emph{integrating} it. Get the map's bookkeeping right and the same reference
+tabulation serves cells of every size, shape, and orientation.
+
+\subsection{The map and its Jacobian}
+
+For each physical cell $K$ the geometric map is a function
+\[
+  \vx = F_K(\hat\vx)
+\]
+taking reference coordinates $\hat\vx\in\hat K$ to physical coordinates $\vx\in K$.
+For a straight-sided (\emph{affine}) simplex the map is itself built from the nodal
+shape functions: writing the physical vertices as $\vx_0,\vx_1,\vx_2$,
+\[
+  F_K(\hat\vx) = \sum_i \vx_i\,\hat\phi_i(\hat\vx)
+  = \vx_0 + (\vx_1-\vx_0)\,\hat x + (\vx_2-\vx_0)\,\hat y .
+\]
+The map is \emph{affine}: a constant matrix times $\hat\vx$ plus a shift. Its
+derivative, the \emph{Jacobian}, is the constant matrix
+\[
+  J = \frac{\partial F_K}{\partial\hat\vx}
+    = \bigl[\;\vx_1-\vx_0 \quad \vx_2-\vx_0\;\bigr]
+    \in\Real^{d\times d},
+\]
+whose columns are the physical edge vectors emanating from vertex $0$. (When the cell
+is \emph{curved}---a high-order ``isoparametric'' element whose faces bend to follow
+a curved boundary---the map is built from higher-order shape functions and $J$ varies
+from point to point. Palace handles both; the affine case is the one to hold in your
+head, and the one this chapter computes.) The Jacobian is the single object that
+encodes how this particular cell differs from the reference: its determinant measures
+how the cell's \emph{volume} compares to the reference, and its inverse-transpose
+measures how \emph{directions} are bent.
+
+\subsection{Three transformation rules}
+
+A scalar field is the simplest case. A physical basis function is just the reference
+shape function read in reference coordinates:
+\[
+  \phi_i(\vx) = \hat\phi_i\bigl(F_K^{-1}(\vx)\bigr),
+  \qquad\text{equivalently}\qquad
+  \phi_i\bigl(F_K(\hat\vx)\bigr) = \hat\phi_i(\hat\vx).
+\]
+\emph{Values do not change}: to evaluate $\phi_i$ at a physical point, find its
+reference preimage and read the table. This is why basis values need to be tabulated
+only once.
+
+Derivatives are where the map bites. The weak forms of \cref{ch:weak} integrate
+\emph{gradients} of basis functions---the $\Grad\phi_i\cdot\Grad\phi_j$ of the
+stiffness matrix---and a gradient taken in physical coordinates is not the gradient
+taken in reference coordinates. By the chain rule, differentiating
+$\hat\phi_i(\hat\vx)=\phi_i(F_K(\hat\vx))$ with respect to $\hat\vx$,
+\[
+  \Grad_{\hat\vx}\hat\phi_i = J^{\!\top}\,\Grad_{\vx}\phi_i,
+  \qquad\text{hence}\qquad
+  \boxed{\;\Grad_{\vx}\phi_i = J^{-\top}\,\Grad_{\hat\vx}\hat\phi_i\;}.
+\]
+The physical gradient is the \emph{inverse-transpose} Jacobian applied to the
+reference gradient. The reference gradient $\Grad_{\hat\vx}\hat\phi_i$ is tabulated
+once (for $P_1$ it is the constant $\Grad\lambda_i$ we already wrote down); the cell
+contributes only the small matrix $J^{-\top}$. \Cref{fig:jacobian} draws the picture:
+the inverse-transpose is precisely the operator that keeps a gradient pointing
+``across'' the level sets of $\phi_i$ after the cell is stretched and skewed.
+
+Finally, integration. The change-of-variables theorem turns a physical integral into
+a reference integral, paying a \emph{volume factor} $|\det J|$:
+\[
+  \int_K g(\vx)\,d\vx = \int_{\hat K} g\bigl(F_K(\hat\vx)\bigr)\,\abs{\det J}\,d\hat\vx .
+\]
+The factor $|\det J|$ is the ratio of the physical cell's volume to the reference
+cell's: for the affine triangle, $|\det J| = 2\,\mathrm{area}(K)$ (since the reference
+triangle has area $\tfrac12$). Every matrix entry in the book is an integral of this
+form, and the recipe is always: \emph{pull back to the reference cell, multiply by
+$|\det J|$, and integrate there}---where the basis values are already tabulated.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% reference: gradient perpendicular to level sets
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.0,2.4) {reference $\hat K$};
+  \fill[simBgBlue] (0,0)--(2,0)--(0,2)--cycle;
+  \draw[simInk,thick] (0,0)--(2,0)--(0,2)--cycle;
+  % level sets of lambda1 = xhat (vertical lines)
+  \foreach \x in {0.5,1.0,1.5}{\draw[simGray,densely dotted] (\x,0)--(\x,{2-\x});}
+  % gradient arrow (points +x)
+  \draw[-{Stealth[length=2.4mm]},simBlue,very thick] (0.7,0.5)--(1.5,0.5);
+  \node[simBlue] at (1.1,0.78) {$\Grad_{\hat\vx}\hat\phi$};
+  \node[simGray] at (1.45,1.55) {level sets};
+\end{scope}
+% the J^{-T} map arrow
+\draw[flow,simRust,thick] (2.5,1.0) .. controls (3.3,1.4) and (3.9,1.4) .. (4.7,1.0)
+  node[midway,above,font=\scriptsize]{$J^{-\top}$};
+% physical: skewed level sets, gradient still perpendicular to THEM
+\begin{scope}[shift={(5.3,0)}]
+  \node[font=\footnotesize\bfseries] at (1.2,2.4) {physical $K$};
+  \fill[simBgRust] (0,0)--(2.4,0.4)--(0.7,2.0)--cycle;
+  \draw[simInk,thick] (0,0)--(2.4,0.4)--(0.7,2.0)--cycle;
+  % skewed level sets
+  \draw[simGray,densely dotted] (0.6,0.1)--(0.25,1.1);
+  \draw[simGray,densely dotted] (1.2,0.2)--(0.5,1.55);
+  \draw[simGray,densely dotted] (1.8,0.3)--(0.78,1.85);
+  % gradient: must stay perpendicular to the SKEWED level sets (so it tilts)
+  \draw[-{Stealth[length=2.4mm]},simBlue,very thick] (0.8,0.55)--(1.55,0.78);
+  \node[simBlue] at (1.25,1.05) {$\Grad_{\vx}\phi$};
+  \node[simGray] at (1.6,1.6) {level sets bent};
+\end{scope}
+\end{tikzpicture}
+\caption[The inverse-transpose Jacobian transforms gradients]{Why the gradient
+transforms by $J^{-\top}$, not by $J$. \emph{Left:} on the reference cell the level
+sets of a shape function $\hat\phi$ (dotted) are evenly spaced and the gradient (blue
+arrow) is perpendicular to them. \emph{Right:} the map skews the cell and bends the
+level sets; the physical gradient must remain perpendicular to the \emph{bent} level
+sets. The operator that does this is the inverse-transpose Jacobian $J^{-\top}$,
+applied to the tabulated reference gradient. Tabulate $\Grad_{\hat\vx}\hat\phi$ once;
+each cell supplies only its small matrix $J^{-\top}$. In \cref{ch:matrixfree} this
+$J^{-\top}$, combined with $|\det J|$ and the material coefficient, is exactly the
+per-quadrature-point geometry factor that the $\mathsf{D}$ stage applies.}
+\label{fig:jacobian}
+\end{figure}
+
+\subsection{The geometry factor: assembling the metric}
+
+Collect the pieces and a clean pattern emerges. The two integrals every solver in
+this book needs are the \emph{mass} term, $\int_K \phi_i\,\phi_j\,d\vx$, and the
+\emph{stiffness} (grad--grad) term, $\int_K \Grad\phi_i\cdot\Grad\phi_j\,d\vx$.
+Pulling each back to the reference cell:
+\[
+  \int_K \phi_i\phi_j\,d\vx
+  = \int_{\hat K} \hat\phi_i\hat\phi_j\;\underbrace{\abs{\det J}}_{\text{mass factor}}\,d\hat\vx,
+\]
+\[
+  \int_K \Grad\phi_i\cdot\Grad\phi_j\,d\vx
+  = \int_{\hat K} \bigl(J^{-\top}\Grad_{\hat\vx}\hat\phi_i\bigr)\cdot
+                  \bigl(J^{-\top}\Grad_{\hat\vx}\hat\phi_j\bigr)\,\abs{\det J}\,d\hat\vx
+  = \int_{\hat K} \Grad_{\hat\vx}\hat\phi_i\cdot
+      \underbrace{\bigl(J^{-1}J^{-\top}\abs{\det J}\bigr)}_{\text{metric }G}\,
+      \Grad_{\hat\vx}\hat\phi_j\;d\hat\vx .
+\]
+The mass integral needs only the scalar $|\det J|$; the stiffness integral needs the
+$d\times d$ symmetric matrix $G = J^{-1}J^{-\top}\,|\det J|$, the \emph{metric}
+introduced by the map. These two objects---$|\det J|$ for mass terms,
+$J^{-1}J^{-\top}|\det J|$ for grad--grad terms---are \emph{all} the geometry a cell
+contributes. Everything else is reference data.
+
+\begin{keyidea}
+A cell contributes to the integrals only through a small \emph{geometry factor}: the
+scalar $|\det J|$ for mass terms and the matrix $G = J^{-1}J^{-\top}\,|\det J|$ for
+grad--grad terms. The basis values and reference gradients are tabulated once and
+shared by every cell; the cell supplies only its Jacobian-derived factor. This is
+precisely the \code{geom\_factor\_build} stage of the matrix-free pipeline: it
+precomputes $G$ (or $|\det J|$), per quadrature point, once per mesh, and the
+material coefficient is pre-multiplied into it so the run-time apply is a single
+pointwise multiply.
+\end{keyidea}
+
+This factorization is the content of Palace's \code{geom\_factor\_build}: a
+\emph{setup-stratum} pass that computes the geometry metric at every quadrature point
+once per mesh and stores it, so that the per-apply work---which happens thousands of
+times inside a Krylov solve---is reduced to multiplying by a stored number. We meet
+that stratification again, in full, in \cref{ch:matrixfree}; the point here is that it
+falls straight out of the change-of-variables rules above. On an affine cell $J$ is
+constant, so $G$ is constant over the cell and the stored factor is one matrix per
+cell; on a curved cell $J$ varies and $G$ is stored per quadrature point.
+
+\section{Quadrature: integrals as weighted sums}
+\label{sec:quad}
+
+We can now pull every integral back to the reference cell. One step remains: actually
+\emph{evaluating} the reference integral $\int_{\hat K} g(\hat\vx)\,d\hat\vx$. Except
+in the simplest cases we do not compute it in closed form. We approximate it by a
+\emph{quadrature rule}---a finite weighted sum of the integrand sampled at a few
+chosen points.
+
+\subsection{The quadrature idea}
+
+A quadrature rule on $\hat K$ is a set of \emph{points} $\hat\vx_q\in\hat K$ and
+\emph{weights} $w_q$ such that
+\begin{equation}
+  \int_{\hat K} g(\hat\vx)\,d\hat\vx \;\approx\; \sum_{q=1}^{Q} w_q\,g(\hat\vx_q).
+  \label{eq:quad}
+\end{equation}
+The integral---an infinite, continuous operation---is replaced by a finite sum: sample
+the integrand at the $Q$ quadrature points, scale each sample by its weight, add them
+up. The art is in choosing the points and weights so the sum is accurate. The
+classical answer is \emph{Gauss quadrature}: for a given number of points, place them
+and weight them so that the rule integrates polynomials \emph{exactly} up to as high
+a degree as possible.
+
+\begin{definition}[Exactness degree]
+A quadrature rule has \emph{exactness degree} $r$ if \eqref{eq:quad} is an exact
+equality for every polynomial $g$ of total degree $\le r$, and fails for some
+polynomial of degree $r+1$. A $Q$-point Gauss rule on an interval achieves exactness
+degree $2Q-1$: $Q$ points buy $2Q$ free parameters (the points and the weights), and
+$2Q$ parameters pin down a polynomial of degree $2Q-1$.
+\end{definition}
+
+Exactness degree is the contract a quadrature rule offers, and it is exactly what a
+finite-element assembler needs to honor. The integrand of a mass-matrix entry is
+$\hat\phi_i\hat\phi_j\,|\det J|$; on $P_p$ elements with an affine map ($|\det J|$
+constant) this is a polynomial of degree $2p$. To integrate it without error the rule
+must have exactness degree at least $2p$. Choose the rule too weak and the mass matrix
+is computed inaccurately---\emph{under-integrated}, a real and sometimes deliberate
+choice; choose it stronger than needed and you simply pay for extra points
+(\emph{over-integration}, sometimes used to tame variable coefficients). The
+exactness degree is the dial.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.55, every node/.style={font=\scriptsize}]
+% three reference triangles with quadrature points
+\foreach \dx/\ttl/\desc in {0/{1-point}/{degree 1}, 2.7/{3-point}/{degree 2}, 5.4/{6-point}/{degree 4}}{
+  \begin{scope}[shift={(\dx,0)}]
+    \fill[simBgBlue] (0,0)--(1.4,0)--(0,1.4)--cycle;
+    \draw[simInk,thick] (0,0)--(1.4,0)--(0,1.4)--cycle;
+    \node[font=\footnotesize\bfseries] at (0.6,1.62) {\ttl};
+    \node[simGray] at (0.6,-0.3) {\desc};
+  \end{scope}
+}
+% 1-point: centroid
+\fill[simRust] (0.467,0.467) circle (1.6pt);
+% 3-point: at (1/6,1/6),(2/3,1/6),(1/6,2/3) scaled by 1.4
+\foreach \px/\py in {0.233/0.233, 0.933/0.233, 0.233/0.933}{
+  \fill[simRust] (2.7+\px,\py) circle (1.4pt);}
+% 6-point (degree 4): two orbits — approximate symmetric points
+\foreach \px/\py in {0.63/0.63, 0.13/0.63, 0.63/0.13, 1.04/0.18, 0.18/1.04, 0.18/0.18}{
+  \fill[simRust] (5.4+\px,\py) circle (1.2pt);}
+\end{tikzpicture}
+\caption[Gauss quadrature points on the reference triangle]{Symmetric Gauss
+quadrature rules on the reference triangle, in order of increasing exactness.
+\emph{Left:} the $1$-point rule places a single node at the centroid with weight
+equal to the triangle's area; it is exact to degree $1$ (it integrates linear
+functions exactly). \emph{Middle:} the $3$-point rule (nodes near the edge midpoints,
+each weight one-third of the area) is exact to degree $2$. \emph{Right:} a $6$-point
+rule, exact to degree $4$, suitable for $P_2$ mass matrices. More points buy higher
+exactness; the assembler picks the smallest rule whose exactness degree covers the
+integrand's polynomial degree. These points and weights are the discrete realization
+of the integral $\int_{\hat K}(\cdot)\,d\hat\vx$, and they are the $P$ axis of the
+element-local tensor (\cref{sec:tensor}).}
+\label{fig:quadpts}
+\end{figure}
+
+\Cref{fig:quadpts} shows three symmetric rules on the reference triangle. The
+$1$-point rule samples only the centroid; the $3$-point rule samples three interior
+points; a $6$-point rule reaches exactness degree $4$. On the triangle the weights are
+fractions of the reference area $\tfrac12$, and the points are placed symmetrically so
+that the rule respects the triangle's symmetry. The quadrature points and weights are,
+quite literally, the discrete realization of the integral: once the rule is chosen,
+``integrate over the cell'' \emph{means} ``sample at these points and take this
+weighted sum,'' nothing more.
+
+\begin{physicsbox}
+Quadrature is where the continuous integral of the weak form becomes a finite
+computation a machine can run. In the matrix-free pipeline of \cref{ch:matrixfree},
+the quadrature points are the $P$ axis, the basis tabulation $\mathsf{B}$ evaluates
+the trial field \emph{at} those points, the geometry-and-material factor $\mathsf{D}$
+multiplies pointwise \emph{at} those points, and the transpose $\mathsf{B}^{\!\top}$
+sums the contributions back with the weights folded in. The entire operator apply is
+organized around the quadrature points: they are the grain at which the discrete
+physics is evaluated.
+\end{physicsbox}
+
+\subsection{Tying quadrature to the matrix-free \texttt{D} stage}
+
+It is worth being explicit about where quadrature lands in the pipeline, because it
+is the conceptual hinge between this chapter and \cref{ch:matrixfree}. An operator
+apply $\vy = \mathsf{A}\vx$ in the matrix-free scheme is the composition
+\[
+  \mathsf{A} = \mathsf{G}^{\!\top}\,\mathsf{B}^{\!\top}\,\mathsf{D}\,\mathsf{B}\,\mathsf{G},
+\]
+read right to left: $\mathsf{G}$ gathers the global coefficient vector into
+per-element local tensors; $\mathsf{B}$ applies the tabulated reference basis to get
+field values at the quadrature points; $\mathsf{D}$ multiplies, point by point, by the
+geometry-and-material factor (the $|\det J|$ or $G$ of \cref{sec:map}, with the
+quadrature weight $w_q$ and the material coefficient pre-multiplied in); $\mathsf{B}^{\!\top}$
+contracts the weighted point values back against the basis; $\mathsf{G}^{\!\top}$
+scatters to the global vector. The weighted sum \eqref{eq:quad} is split across two
+stages: the weight $w_q$ rides inside $\mathsf{D}$, and the summation $\sum_q$ is the
+contraction that $\mathsf{B}^{\!\top}$ performs. Quadrature is not a separate step
+bolted on---it \emph{is} the structure of the apply.
+
+\section{Vector elements and the Piola maps}
+\label{sec:vector}
+
+The nodal elements of \cref{sec:shape} are the scalar case. The vector spaces
+$\Hcurl$ and $\Hdiv$ of \cref{ch:functionspaces}---the homes of $\vE$, $\vA$, and the
+fluxes $\vB$, $\vD$---use \emph{vector-valued} shape functions, and they map to the
+physical cell by a different rule. We flag the essentials here and leave the full
+edge-basis machinery to the references; the point is that the reference-element frame
+carries over intact, with one twist in the transformation.
+
+A N\'ed\'elec ($\Hcurl$) reference shape function is a vector field on $\hat K$---the
+Whitney function $\hat\phi_{01}=\lambda_0\Grad\lambda_1-\lambda_1\Grad\lambda_0$ of
+\cref{wex:whitney} is the lowest-order example. A Raviart--Thomas ($\Hdiv$) reference
+function is likewise vector-valued. The subtlety is that mapping a vector field to a
+skewed physical cell by the \emph{value-preserving} rule of the scalar case would
+\emph{destroy} the tangential or normal continuity that \cref{ch:functionspaces}
+showed is the whole point of these spaces. A scalar value is the same in any
+coordinates; a vector's tangential and normal parts are not.
+
+The fix is the \emph{Piola transforms}, which are designed to preserve exactly the
+right component:
+\[
+  \text{covariant (}\Hcurl\text{):}\quad \vu(\vx) = J^{-\top}\hat\vu(\hat\vx),
+  \qquad
+  \text{contravariant (}\Hdiv\text{):}\quad \vu(\vx) = \frac{1}{\det J}\,J\,\hat\vu(\hat\vx).
+\]
+The covariant (curl-conforming) map applies $J^{-\top}$---the same operator that
+transforms gradients---and it preserves \emph{tangential} components along edges; this
+is why edge circulations survive the map and tangential continuity is maintained
+cell to cell. The contravariant (divergence-conforming) map applies $J/\det J$ and
+preserves \emph{normal} components through faces, maintaining the flux continuity of
+$\Hdiv$.
+
+\begin{keyidea}
+The reference-element idea extends to the vector spaces, but with a
+\emph{component-preserving} map in place of the value-preserving one. The covariant
+Piola map $J^{-\top}$ preserves tangential traces (so $\Hcurl$ edge circulations
+survive) and the contravariant Piola map $J/\det J$ preserves normal traces (so
+$\Hdiv$ face fluxes survive). The continuity that \cref{ch:functionspaces} built into
+the DoFs is preserved by the map---which is what makes a single edge or face DoF,
+shared by two cells, mean the same physical quantity on both.
+\end{keyidea}
+
+The remarkable fact---which \cref{ch:derham}'s de Rham complex explains---is that the
+three maps fit together: nodal values transform trivially, gradients and $\Hcurl$
+fields transform by $J^{-\top}$, $\Hdiv$ fields by $J/\det J$, and the chain
+$\Grad\to\Curl\to\Div$ commutes with the maps. For this chapter the operative point is
+narrow and practical: a vector element is still a reference shape function tabulated
+once, carried to each cell by a Jacobian-built map. Only the map's formula changes.
+
+\section{The element-local tensor: $E$, $L$, $P$, $C$, $G$}
+\label{sec:tensor}
+
+We close by collecting everything this chapter has produced into the single data
+structure the matrix-free pipeline of \cref{ch:matrixfree} runs on. Every quantity
+we have met---the local degrees of freedom, the quadrature points, the field
+components, the geometry factor---is an axis of a small per-element tensor. Naming
+those axes now makes \cref{ch:matrixfree} a matter of contraction bookkeeping rather
+than fresh concepts.
+
+Restrict the global field to one element and you have a small vector: one coefficient
+for each local DoF of that element. Stacked over all elements, this is a tensor with
+two axes,
+\[
+  \texttt{Tensor[(E, L)]},
+\]
+where $E$ counts the mesh elements and $L$ counts the local DoFs per element (for
+$P_1$ on a triangle, $L=3$; the reference shape functions of \cref{sec:shape}).
+Apply the tabulated basis $\mathsf{B}$---evaluate those $L$ shape functions at the
+$P$ quadrature points---and you get the field's values at every quadrature point of
+every element,
+\[
+  \texttt{Tensor[(E, P, C)]},
+\]
+where $P$ counts quadrature points per element (the rule of \cref{sec:quad}) and $C$
+counts value components ($C=1$ for a scalar field; $C=d$ for a gradient or a vector
+field). Finally the geometry factor of \cref{sec:map}---the per-point $|\det J|$ or
+metric $G$, with weight and material pre-multiplied in---is itself a per-point tensor,
+\[
+  \texttt{Tensor[(E, P, G)]},
+\]
+with $G$ counting the stored geometry-metric components. These three tensors, over the
+five named axes $E,L,P,C,G$, are the complete vocabulary of element-local finite
+element computation.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% [E,L] block
+\node[draw, simBlue, fill=simBgBlue, thick, minimum width=20mm, minimum height=13mm,
+  align=center] (el) at (0,0) {\code{Tensor}\\\code{[(E, L)]}};
+\node[font=\scriptsize, simGray, align=center] at (0,-1.35)
+  {per-element\\local DoFs};
+% B arrow
+\draw[flow, simInk] (1.1,0)--(3.0,0)
+  node[midway, above, font=\footnotesize] {$\mathsf{B}$}
+  node[midway, below, font=\scriptsize, simGray] {tabulated basis};
+% [E,P,C] block
+\node[draw, simRust, fill=simBgRust, thick, minimum width=22mm, minimum height=13mm,
+  align=center] (epc) at (4.2,0) {\code{Tensor}\\\code{[(E, P, C)]}};
+\node[font=\scriptsize, simGray, align=center] at (4.2,-1.35)
+  {values at\\quad points};
+% D arrow (with geom factor coming in)
+\draw[flow, simInk] (5.4,0)--(7.3,0)
+  node[midway, above, font=\footnotesize] {$\mathsf{D}$}
+  node[midway, below, font=\scriptsize, simGray] {pointwise};
+% geom factor feeding D
+\node[draw, simGreen, fill=simBgGreen, semithick, minimum width=20mm, minimum height=9mm,
+  align=center] (epg) at (6.35,1.5) {\code{Tensor[(E, P, G)]}};
+\node[font=\scriptsize, simGreen] at (6.35,2.15) {geometry factor};
+\draw[depedge, simGreen] (epg.south)--(6.35,0.42);
+% output
+\node[draw, simRust, fill=simBgRust, thick, minimum width=22mm, minimum height=13mm,
+  align=center] (out) at (8.5,0) {\code{Tensor}\\\code{[(E, P, C)]}};
+\node[font=\scriptsize, simGray, align=center] at (8.5,-1.35)
+  {weighted\\values};
+\end{tikzpicture}
+\caption[The element-local tensor and its axes]{The element-local tensor pipeline,
+the data structure \cref{ch:matrixfree} runs on. A field restricted to elements is a
+\code{Tensor[(E, L)]} of per-element local DoFs ($E$ elements, $L$ local DoFs). The
+tabulated basis $\mathsf{B}$ of \cref{sec:shape}---the reference shape functions
+evaluated at the quadrature points---contracts it to a \code{Tensor[(E, P, C)]} of
+field values at the $P$ quadrature points ($C$ components). The pointwise stage
+$\mathsf{D}$ multiplies by the geometry-and-material factor
+\code{Tensor[(E, P, G)]}---the $|\det J|$ or metric $G$ of \cref{sec:map}, with
+quadrature weight and material coefficient pre-multiplied ($G$ metric components).
+The five axes $E$, $L$, $P$, $C$, $G$ are exactly the quantities this chapter built:
+elements, reference DoFs, quadrature points, field components, and geometry-metric
+storage.}
+\label{fig:elemtensor}
+\end{figure}
+
+\Cref{fig:elemtensor} draws the flow. Read it against the three sections that built
+the pieces: the $L$ axis is the reference shape functions of \cref{sec:shape}; the
+$P$ axis is the quadrature rule of \cref{sec:quad}; the $C$ axis is the value or
+derivative components selected by the weak-form differential operator; the $G$ axis is
+the geometry factor of \cref{sec:map}; and $E$ simply ranges over the cells of the
+mesh, each carrying its own Jacobian but sharing the one reference tabulation. This is
+the payoff of the reference-element idea stated as a data structure: the expensive,
+shared content (the basis) is the small $\mathsf{B}$ table indexed by $(L,P)$, and the
+cell-specific content (the geometry) is the $(E,P,G)$ factor---built once, by
+\code{geom\_factor\_build}, and reused across every apply.
+
+\begin{notationbox}
+The five element-local axes recur throughout the framework chapters:
+$E$ (mesh elements), $L$ (local DoFs per element), $P$ (quadrature points per
+element), $C$ (field/derivative components), $G$ (geometry-metric components). The
+global true-DoF axis $N$ of \cref{ch:functionspaces} is \emph{not} one of
+them---$N$ is the flat global vector, and the element-restriction operator
+$\mathsf{G}$ is precisely the boundary between the global $N$ vocabulary and the
+element-local $(E,L)$ vocabulary. \Cref{ch:matrixfree} works entirely in these axes.
+\end{notationbox}
+
+\section{Worked examples}
+
+The two examples carry the chapter's arithmetic to the end. The first integrates a
+product of shape functions by quadrature and checks it against the exact mass-matrix
+entry, exhibiting the exactness-degree contract concretely. The second computes a
+Jacobian and transforms a gradient, exhibiting the map's three rules on a specific
+physical triangle.
+
+\subsection{A mass-matrix entry by quadrature}
+
+\begin{workedexample}{Integrating two $P_1$ hats: exact, 1-point, and 3-point}{massmatrix}
+Work on the reference triangle $\hat K$ with vertices $(0,0),(1,0),(0,1)$ and area
+$\tfrac12$. The three $P_1$ shape functions are the barycentric coordinates
+\[
+  \hat\phi_0 = 1-\hat x-\hat y, \qquad \hat\phi_1 = \hat x, \qquad \hat\phi_2 = \hat y .
+\]
+We compute the reference mass-matrix entry
+$m_{01} = \int_{\hat K}\hat\phi_0\hat\phi_1\,d\hat\vx
+        = \int_{\hat K}(1-\hat x-\hat y)\,\hat x\,d\hat\vx$
+three ways.
+
+\smallskip\noindent\textbf{Exact.} There is a standard formula for integrating
+products of barycentric coordinates over a triangle of area $A$:
+\[
+  \int_{\hat K}\lambda_0^{a}\lambda_1^{b}\lambda_2^{c}\,d\hat\vx
+  = 2A\,\frac{a!\,b!\,c!}{(a+b+c+2)!}.
+\]
+With $A=\tfrac12$ and $(a,b,c)=(1,1,0)$ this gives
+$m_{01} = 2\cdot\tfrac12\cdot\dfrac{1!\,1!\,0!}{4!} = \dfrac{1}{24}\approx 0.041667$.
+(For comparison, the diagonal entry with $(a,b,c)=(2,0,0)$ is
+$2\cdot\tfrac12\cdot\tfrac{2!}{4!}=\tfrac{1}{12}$.) So the exact answer is
+$m_{01} = \tfrac{1}{24}$.
+
+\smallskip\noindent\textbf{1-point rule (centroid, degree 1).} The one-point Gauss
+rule samples the centroid $\hat\vx_c=(\tfrac13,\tfrac13)$ with weight equal to the
+area, $w=\tfrac12$. The integrand there is
+$\hat\phi_0\hat\phi_1 = (1-\tfrac13-\tfrac13)\cdot\tfrac13 = \tfrac13\cdot\tfrac13 = \tfrac19$,
+so
+\[
+  m_{01}^{(1)} = w\,\hat\phi_0(\hat\vx_c)\hat\phi_1(\hat\vx_c)
+              = \tfrac12\cdot\tfrac19 = \tfrac{1}{18} \approx 0.055556 .
+\]
+This is \emph{wrong}---off by a third. The reason is the exactness contract: the
+integrand $\hat\phi_0\hat\phi_1$ is a quadratic (degree $2$), but the $1$-point rule
+is exact only to degree $1$. Under-integration shows up as a concrete numerical error.
+
+\smallskip\noindent\textbf{3-point rule (degree 2).} The symmetric three-point rule
+places nodes at $(\tfrac16,\tfrac16)$, $(\tfrac23,\tfrac16)$, $(\tfrac16,\tfrac23)$,
+each with weight $w_q=\tfrac16$ (one-third of the area $\tfrac12$). Evaluate the
+integrand $\hat\phi_0\hat\phi_1=(1-\hat x-\hat y)\,\hat x$ at each:
+\begin{align*}
+  q=1:\ (\tfrac16,\tfrac16) &: (1-\tfrac13)\cdot\tfrac16 = \tfrac23\cdot\tfrac16 = \tfrac{1}{9}, \\
+  q=2:\ (\tfrac23,\tfrac16) &: (1-\tfrac56)\cdot\tfrac23 = \tfrac16\cdot\tfrac23 = \tfrac{1}{9}, \\
+  q=3:\ (\tfrac16,\tfrac23) &: (1-\tfrac56)\cdot\tfrac16 = \tfrac16\cdot\tfrac16 = \tfrac{1}{36}.
+\end{align*}
+The weighted sum is
+\[
+  m_{01}^{(3)} = \tfrac16\Bigl(\tfrac19+\tfrac19+\tfrac1{36}\Bigr)
+              = \tfrac16\cdot\Bigl(\tfrac{4+4+1}{36}\Bigr)
+              = \tfrac16\cdot\tfrac{9}{36} = \tfrac16\cdot\tfrac14 = \tfrac{1}{24}.
+\]
+This is \emph{exact}. The three-point rule has exactness degree $2$, the integrand
+has degree $2$, and the contract is honored: the quadrature equals the closed-form
+integral to the last digit. The lesson is the practical rule of \cref{sec:quad}: to
+integrate a $P_p$ mass matrix exactly on an affine cell, use a rule of exactness
+degree $\ge 2p$. Here $p=1$, $2p=2$, and the three-point (degree-$2$) rule is the
+smallest that suffices---the one-point rule, degree $1<2$, is not enough.
+\end{workedexample}
+
+\subsection{A Jacobian and a transformed gradient}
+
+\begin{workedexample}{The map of one physical triangle, and a gradient through it}{jacobian}
+Map the reference triangle $\hat K$ (vertices $(0,0),(1,0),(0,1)$) onto the physical
+triangle $K$ with vertices
+\[
+  \vx_0 = (1,1), \qquad \vx_1 = (4,2), \qquad \vx_2 = (2,5).
+\]
+\textbf{The Jacobian.} The affine map is
+$F_K(\hat\vx) = \vx_0 + (\vx_1-\vx_0)\hat x + (\vx_2-\vx_0)\hat y$, so the Jacobian is
+the constant matrix whose columns are the physical edge vectors from $\vx_0$:
+\[
+  J = \bigl[\,\vx_1-\vx_0 \ \ \vx_2-\vx_0\,\bigr]
+    = \begin{bmatrix} 3 & 1 \\ 1 & 4 \end{bmatrix}.
+\]
+Its determinant is $\det J = 3\cdot 4 - 1\cdot 1 = 11$, so $|\det J| = 11$, and indeed
+the area of $K$ is $\tfrac12|\det J| = \tfrac{11}{2}$, eleven times the reference
+area $\tfrac12$. The volume factor for any mass integral on this cell is $11$.
+
+\smallskip\noindent\textbf{The inverse-transpose.} The inverse Jacobian is
+\[
+  J^{-1} = \frac{1}{11}\begin{bmatrix} 4 & -1 \\ -1 & 3 \end{bmatrix},
+  \qquad
+  J^{-\top} = \frac{1}{11}\begin{bmatrix} 4 & -1 \\ -1 & 3 \end{bmatrix},
+\]
+which here equals $J^{-1}$ because $J$ is symmetric (an accident of this example;
+in general $J^{-\top}\ne J^{-1}$).
+
+\smallskip\noindent\textbf{A transformed gradient.} On the reference cell the shape
+function $\hat\phi_1=\hat x$ has constant reference gradient
+$\Grad_{\hat\vx}\hat\phi_1 = (1,0)^{\!\top}$. Its physical gradient is
+\[
+  \Grad_{\vx}\phi_1 = J^{-\top}\Grad_{\hat\vx}\hat\phi_1
+  = \frac{1}{11}\begin{bmatrix} 4 & -1 \\ -1 & 3 \end{bmatrix}
+    \begin{bmatrix} 1 \\ 0 \end{bmatrix}
+  = \frac{1}{11}\begin{bmatrix} 4 \\ -1 \end{bmatrix}
+  = \bigl(\tfrac{4}{11},\,-\tfrac{1}{11}\bigr).
+\]
+Notice it has \emph{tilted}: the reference gradient pointed purely along $\hat x$, but
+on the skewed physical cell the gradient of $\phi_1$ has acquired a $y$-component,
+exactly as \cref{fig:jacobian} promised---it stays perpendicular to the (now bent)
+level sets of $\phi_1$. Likewise $\hat\phi_2=\hat y$ has reference gradient
+$(0,1)^{\!\top}$ and physical gradient
+$J^{-\top}(0,1)^{\!\top}=(-\tfrac{1}{11},\tfrac{3}{11})$, and
+$\hat\phi_0=1-\hat x-\hat y$ has reference gradient $(-1,-1)^{\!\top}$ and physical
+gradient $(-\tfrac{3}{11},-\tfrac{2}{11})$. As a check, the three physical gradients
+sum to zero---because $\phi_0+\phi_1+\phi_2\equiv 1$ on the cell, a constant, whose
+gradient vanishes.
+
+\smallskip\noindent\textbf{Assembling a stiffness entry.} With the gradients in hand,
+a grad--grad (stiffness) entry on this affine cell---where $J$, hence everything, is
+constant---is just the constant integrand times the cell volume:
+\[
+  k_{12} = \int_K \Grad\phi_1\cdot\Grad\phi_2\,d\vx
+  = \bigl(\Grad_{\vx}\phi_1\cdot\Grad_{\vx}\phi_2\bigr)\,\mathrm{area}(K)
+  = \Bigl(\tfrac{4}{11}\cdot(-\tfrac{1}{11}) + (-\tfrac{1}{11})\cdot\tfrac{3}{11}\Bigr)\cdot\tfrac{11}{2}.
+\]
+The dot product is $\tfrac{-4-3}{121}=-\tfrac{7}{121}$, so
+$k_{12} = -\tfrac{7}{121}\cdot\tfrac{11}{2} = -\tfrac{7}{22}\approx -0.318$. No
+quadrature was needed: on an affine cell the grad--grad integrand of $P_1$ elements
+is constant, so ``integrate'' is just ``multiply by the volume''---the degenerate,
+one-effective-point case of the quadrature of \cref{sec:quad}. This single number is
+one entry of the element stiffness matrix that \cref{ch:assembly} scatters into the
+global operator.
+\end{workedexample}
+
+\summarysection
+A finite-element code does not build basis functions cell by cell. It defines a small
+family of \emph{shape functions} once, on a canonical \emph{reference element}
+$\hat K$, and reaches every physical cell $K$ by a geometric map $\vx=F_K(\hat\vx)$.
+On the reference simplex the nodal ($\Hone$) shape functions are the barycentric
+coordinates $\lambda_i$ (the $P_1$ hats) and their higher-order $P_p$ relatives, each
+fixed by the cardinality property $\hat\phi_i(\hat\vx_j)=\delta_{ij}$ that makes a
+coefficient equal a nodal value. The map's Jacobian $J$ carries calculus across:
+values are unchanged, gradients transform by the inverse-transpose
+$\Grad_\vx=J^{-\top}\Grad_{\hat\vx}$, and integrals pay a volume factor $|\det J|$.
+The two integrals every solver needs collapse to a per-cell geometry factor---the
+scalar $|\det J|$ for mass terms, the metric $G=J^{-1}J^{-\top}|\det J|$ for
+grad--grad terms---which is exactly Palace's \code{geom\_factor\_build}. The remaining
+integral over $\hat K$ is evaluated by \emph{quadrature}, a weighted sum
+$\int_{\hat K}g\approx\sum_q w_q g(\hat\vx_q)$ whose \emph{exactness degree} must
+cover the integrand's polynomial degree ($\ge 2p$ for a $P_p$ mass matrix), as the
+worked mass-matrix example showed concretely: the one-point rule under-integrates a
+quadratic, the three-point rule nails it. The vector spaces $\Hcurl$ and $\Hdiv$ use
+the same reference frame with \emph{Piola} maps ($J^{-\top}$ covariant,
+$J/\det J$ contravariant) that preserve the tangential and normal continuity built
+into their DoFs. Everything collects into the element-local tensor over five axes:
+\code{[(E,L)]} per-element DoFs, \code{[(E,P,C)]} values at quadrature points, and
+\code{[(E,P,G)]} the geometry factor---the data structure the matrix-free pipeline of
+\cref{ch:matrixfree} runs on, with $\mathsf{B}$ the tabulated basis and $\mathsf{D}$
+the per-point geometry-and-material multiply.
+
+\furtherreading
+The reference-element construction, the Lagrange and higher-order shape functions, the
+Jacobian transformation rules, and the quadrature theory of this chapter are developed
+rigorously in Brenner and Scott~\citep{brennerscott2008}, the standard graduate text on
+the mathematics of finite elements; their treatment of the affine-equivalence of
+elements is the precise version of \cref{fig:refmap}. For the engineering view---tables
+of shape functions and quadrature rules on triangles, tetrahedra, and hexahedra, with
+the electromagnetics applications of this book---Jin~\citep{jin2014} is the natural
+companion, and it carries the N\'ed\'elec and Raviart--Thomas vector elements of
+\cref{sec:vector} with their Piola maps in full. The matrix-free realization---the
+$\mathsf{B}$/$\mathsf{D}$ tensor-contraction pipeline of \cref{sec:tensor}, sum
+factorization on tensor-product elements, and the element-local tensor axes---is the
+subject of the libCEED project and its reference~\citep{ceed2021}; \cref{ch:matrixfree}
+takes it up in detail. The Piola transforms and the way the three maps commute with
+$\Grad,\Curl,\Div$ are the bridge to the de Rham complex of \cref{ch:derham}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+\item Write out the six $P_2$ shape functions on the reference triangle in
+  barycentric form ($\lambda_i(2\lambda_i-1)$ for the three vertices and
+  $4\lambda_i\lambda_j$ for the three edge midpoints) and verify the cardinality
+  property \eqref{eq:cardinality} for one vertex function and one edge function by
+  evaluating it at all six nodes (the three vertices and the three edge midpoints).
+\item How many shape functions does the $P_3$ space on a triangle have? On a
+  tetrahedron the count is $\binom{p+3}{3}$; evaluate it for $p=1,2,3$ and identify
+  which DoFs (vertex, edge, face, interior) the new ones at each order sit on.
+\item For the reference mass matrix of the $P_1$ triangle, use the barycentric
+  integration formula of \cref{wex:massmatrix} to compute every entry $m_{ij}$, and
+  show the result is $\tfrac{1}{24}\begin{psmallmatrix}2&1&1\\1&2&1\\1&1&2\end{psmallmatrix}$
+  (diagonal $\tfrac{1}{12}$, off-diagonal $\tfrac{1}{24}$). Confirm the row sums equal
+  the integrals $\int_{\hat K}\hat\phi_i\,d\hat\vx=\tfrac16$.
+\item Repeat the three-way quadrature comparison of \cref{wex:massmatrix} for the
+  \emph{diagonal} entry $m_{00}=\int_{\hat K}\hat\phi_0^2\,d\hat\vx$. Compute the exact
+  value, the one-point estimate, and the three-point estimate. Does the one-point rule
+  do better or worse on the diagonal than on the off-diagonal? Why is the three-point
+  rule still exact?
+\item Map the reference triangle onto the physical triangle with vertices
+  $\vx_0=(0,0)$, $\vx_1=(2,0)$, $\vx_2=(1,3)$. Compute $J$, $\det J$, the area of $K$,
+  and the physical gradient $\Grad_\vx\phi_0$ of the shape function
+  $\hat\phi_0=1-\hat x-\hat y$. Verify that $\Grad_\vx\phi_0+\Grad_\vx\phi_1+\Grad_\vx\phi_2=\mathbf 0$.
+\item Explain why the volume factor for a mass integral is $|\det J|$ but the gradient
+  transform involves $J^{-\top}$. Using \cref{wex:jacobian}'s $J$, show by direct
+  substitution that $\int_K\Grad\phi_i\cdot\Grad\phi_j\,d\vx$ pulls back to
+  $\int_{\hat K}\Grad_{\hat\vx}\hat\phi_i\cdot(J^{-1}J^{-\top}|\det J|)\Grad_{\hat\vx}\hat\phi_j\,d\hat\vx$,
+  and identify the metric matrix $G=J^{-1}J^{-\top}|\det J|$ for that cell.
+\item A $Q$-point Gauss rule on an interval is exact to degree $2Q-1$. What is the
+  minimum number of one-dimensional Gauss points needed to integrate a $P_4$ mass
+  matrix exactly (integrand degree $2p=8$) on an affine element? What if the map is
+  curved, so that $|\det J|$ is itself a degree-$2$ polynomial---what integrand degree
+  must the rule now cover?
+\item Identify, for each of the five element-local axes $E,L,P,C,G$ of
+  \cref{sec:tensor}, which earlier chapter or section fixes its extent: which is set
+  by the mesh, which by the FE order, which by the quadrature rule, which by the
+  weak-form differential operator, and which by the space dimension. Then state which
+  axes are \emph{build-stratum} (fixed once per mesh and order) and which is
+  \emph{run-stratum} (a per-apply field value), connecting to the
+  \code{geom\_factor\_build} setup pass.
+\end{enumerate}

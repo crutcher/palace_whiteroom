@@ -1,0 +1,138 @@
+\chapter*{How to read this book}
+\addcontentsline{toc}{chapter}{How to read this book}
+\markboth{How to read this book}{How to read this book}
+
+\section*{Who this book is for}
+
+This book assumes you have completed roughly two years of an undergraduate
+engineering or applied-mathematics curriculum. Concretely, we assume you are
+comfortable with:
+
+\begin{itemize}[nosep]
+  \item \textbf{Vector calculus}---gradient, divergence, and curl; line, surface,
+  and volume integrals; the divergence and Stokes theorems; integration by parts.
+  \item \textbf{Linear algebra}---matrices and vectors, inner products and norms,
+  orthogonality and projections, symmetric/positive-definite matrices,
+  eigenvalues and eigenvectors, and the idea of solving $\mat{A}\vx=\vb$.
+  \item \textbf{Ordinary differential equations}---linear systems, and the idea
+  of marching a solution forward in time.
+  \item \textbf{A first course in electromagnetism}---you have seen Maxwell's
+  equations at least once, even if they are hazy.
+\end{itemize}
+
+We do \emph{not} assume any background in functional programming, type theory,
+the finite-element method, or numerical iterative solvers. Those are precisely
+what the book teaches. Where a topic needs more mathematics than the list above,
+we build it up from the list above.
+
+\section*{The shape of the book}
+
+The book has six parts and a set of appendices, arranged so that each part rests
+on the ones before it. \Cref{fig:roadmap} shows how they depend on one another;
+you can read it as a suggested route.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm and 10mm,
+  pt/.style={stage, minimum width=34mm, minimum height=9mm},
+  ap/.style={opbox, minimum width=34mm, minimum height=8mm, fill=simBgViolet, draw=simViolet}]
+  \node[pt] (p1) {\textbf{I.}~Orientation};
+  \node[pt, below left=of p1, xshift=-6mm] (p2) {\textbf{II.}~Field Theory};
+  \node[pt, below right=of p1, xshift=6mm] (p3) {\textbf{III.}~The Calculus};
+  \node[pt, below=18mm of p1] (p4) {\textbf{IV.}~Numerical Machinery};
+  \node[pt, below=of p4] (p5) {\textbf{V.}~The Modalities};
+  \node[pt, below=of p5] (p6) {\textbf{VI.}~The Collection};
+  \node[ap, right=22mm of p4] (app) {Appendices:\\\footnotesize deep semantics};
+  \draw[depedge] (p1) -- (p2);
+  \draw[depedge] (p1) -- (p3);
+  \draw[depedge] (p2) -- (p4);
+  \draw[depedge] (p3) -- (p4);
+  \draw[depedge] (p4) -- (p5);
+  \draw[depedge] (p5) -- (p6);
+  \draw[refedge] (app) -- (p3);
+  \draw[refedge] (app) -- (p4);
+  \node[cornertag, right=1mm of p1] {start here};
+\end{tikzpicture}
+\caption[Reading roadmap]{The parts and their dependencies. Solid arrows mean
+``rests on''; the dotted arrows mark the appendices, which deepen the calculus
+(Part~III) and the machinery (Part~IV) and can be read on demand.}
+\label{fig:roadmap}
+\end{figure}
+
+\textbf{Part~I (Orientation)} is the map of the whole territory. It introduces
+the six analyses, the program that runs them, and the single idea---fields as
+tensors, steps as pure functions---that the rest of the book elaborates. Read it
+first and in full; everything later refers back to it.
+
+\textbf{Parts~II and~III} are the two halves of the foundation, and they are
+independent of each other. \textbf{Part~II (The Field Theory)} builds the
+physics and the finite-element method from your vector calculus.
+\textbf{Part~III (The Abstract Framework)} builds the small functional calculus
+from your linear algebra. A reader who wants the physics first can read
+II~then~III; a reader who wants the computational language first can read
+III~then~II. Both are needed before Part~IV.
+
+\textbf{Part~IV (The Numerical Machinery)} is the algorithmic heart: how linear
+systems, eigenproblems, time evolution, mesh adaptation, and physical-quantity
+extraction actually run. \textbf{Part~V (The Constituent Modalities)} then walks
+through the six analyses one at a time, each as a specific composition of the
+machinery. \textbf{Part~VI (The Collection)} reassembles everything into the
+synthesized library and steps back to view the whole machine.
+
+The \textbf{appendices} hold the precise version of the computational
+semantics---the formal grammar, the reduction and typing rules, the algebraic
+laws, the floating-point conventions, and the inner details of the matrix-free
+kernel. They are written with the same diagrams and discussion as the main text,
+but they are reference material: reach for them when you want the exact rule
+behind a picture, not on a first pass.
+
+\section*{The order in which ideas are introduced}
+
+Part~III teaches the functional calculus in a deliberate sequence, each idea
+built only from the ones before it. If you have never programmed in this style,
+follow this order and resist the urge to skip:
+
+\begin{enumerate}[nosep]
+  \item \emph{Values and immutability}---a tensor is a value you never modify.
+  \item \emph{Higher-order functions}---functions that take and return functions.
+  \item \emph{The fold}---one loop combinator, \texttt{iterate\_while}, from
+  which every iteration is built.
+  \item \emph{Records}---bundles of named fields, updated by making fresh copies.
+  \item \emph{The state monad}---a disciplined way to thread one evolving piece
+  of state so that its single point of change stays visible.
+  \item \emph{Operators as values}---built once, applied many times.
+  \item \emph{Shapes}---symbolic contracts on a tensor's axes.
+  \item \emph{Rotations}---the idea that ties the layered representations together.
+\end{enumerate}
+
+\section*{The boxes}
+
+Four kinds of boxed aside recur throughout, each with its own color so you can
+find them at a glance:
+
+\begin{keyidea}
+A \textbf{Key idea} box distills the single most important takeaway of a section
+into one or two sentences. If you remember nothing else from a section, remember
+the box.
+\end{keyidea}
+
+\begin{pitfall}
+A \textbf{Pitfall} box flags a tempting mistake---an algorithm that looks
+correct but quietly computes the wrong thing, or a notation that means something
+other than it appears to.
+\end{pitfall}
+
+\begin{physicsbox}
+A \textbf{physical picture} box anchors an abstract construction to the concrete
+device or experiment it models, so the mathematics never floats free of the
+engineering.
+\end{physicsbox}
+
+\begin{notationbox}
+A \textbf{Notation} box introduces or clarifies a piece of the pseudo-language
+or the mathematical notation at the moment you first need it.
+\end{notationbox}
+
+\noindent Numbered \textbf{worked examples} carry a calculation all the way
+through, by hand, on a small enough problem that you can check every step. They
+are the rungs of the ladder; do them with pencil in hand.

@@ -1,0 +1,998 @@
+\chapter{The Matrix-Free Kernel in Detail}
+\label{app:kernel}
+
+\chapterorient{\Cref{ch:matrixfree} factored the finite-element operator into five
+element-local stages, $\mat{A}\vv = G^{\mathsf T}B_{\diffop}^{\mathsf T}\,D\,
+B_{\diffop}\,G\,\vv$, and promised this appendix as the deep version. Here we
+deliver it. We take each of the five stages apart down to its exact tensor shape,
+write out the index maps that $G$ and $G^{\mathsf T}$ actually perform, show how
+the differential operator $\diffop$ selects the basis mode and shapes the
+component axis $C$, and build the geometry factor that the diagonal $D$ consumes
+from the Jacobian metric up. We separate, in full, the build-time stratum (the
+geometry computed once per mesh) from the run-time stratum (the action recomputed
+on every apply); we count the operations sum-factorization saves and present it as
+a contraction reordering; and we draw the libCEED library boundary precisely,
+distinguishing the kernel \emph{API} we call from the kernel \emph{implementation}
+---the contraction chain of this appendix---that realizes it. By the end the whole
+operator stands exposed as a composition of tensor contractions over named axes:
+the GPU-native form, with no sparse matrix anywhere, that the book's
+implementation view (\cref{ch:synthlib}) consumes. This is where the mathematics
+meets the silicon.}
+
+\section{Scope: the chain this appendix opens}
+\label{sec:appk-scope}
+
+\Cref{ch:matrixfree} established the central factorization and verified it against
+an assembled matrix on a two-element 1-D mesh. We restate it once, because every
+section below is a magnification of one of its factors:
+\begin{equation}
+  \mat{A}\,\vv
+   \;=\;
+   \underbrace{G^{\mathsf T}}_{\text{scatter}}\;
+   \underbrace{B_{\diffop}^{\mathsf T}}_{\text{integrate}}\;
+   \underbrace{D}_{\text{weight}}\;
+   \underbrace{B_{\diffop}}_{\text{evaluate}}\;
+   \underbrace{G}_{\text{gather}}\;
+   \vv .
+  \label{eq:appk-chain}
+\end{equation}
+The five factors carry a tensor through a sequence of named shapes,
+\begin{equation}
+\begin{aligned}
+  \texttt{[(N: \dots)]}
+  &\xrightarrow{\,G\,}
+  \texttt{[(E, L)]}
+  \xrightarrow{\,B_{\diffop}\,}
+  \texttt{[(E, P, C)]}
+  \xrightarrow{\,D\,}
+  \texttt{[(E, P, C')]} \\
+  &\xrightarrow{\,B_{\diffop}^{\mathsf T}\,}
+  \texttt{[(E, L)]}
+  \xrightarrow{\,G^{\mathsf T}\,}
+  \texttt{[(N: \dots)]},
+\end{aligned}
+  \label{eq:appk-shapes}
+\end{equation}
+where the five axes are the element-local family fixed in \cref{ch:refelement} and
+catalogued in \cref{app:shapes}: $N$ the global true-degree-of-freedom count, $E$
+the element count, $L$ the local dofs per element, $P$ the quadrature points per
+element, $C$ the value/derivative components carried at a quadrature point, and
+$G$ the geometry-metric components stored per point. \Cref{tab:appk-axes} is the
+working legend for this appendix; \cref{app:shapes} carries the full algebra.
+
+\begin{table}[t]
+\centering
+\caption[The five element-local axes, with extents]{The element-local tensor axes
+used throughout this appendix, with their typical extents on a degree-$p$,
+$d$-dimensional tensor-product element. The stratum column---built once per
+$(\text{mesh},\text{order})$ versus produced afresh on every apply---is the subject
+of \cref{sec:appk-strata}. The global axis $N$ is \emph{not} an element-local axis;
+it is the flat solver vector, and $G$ is the boundary between it and the
+$(E,L)$ vocabulary.}
+\label{tab:appk-axes}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}cllcl@{}}
+\toprule
+axis & name & meaning & extent & stratum \\
+\midrule
+$N$ & global dofs & true dofs of the global vector & --- & solver vector \\
+$E$ & element count & mesh elements assembled over & --- & build-time \\
+$L$ & local dofs & dofs local to one element & $(p{+}1)^d$ & build-time \\
+$P$ & quad points & quadrature points per element & $(p{+}1)^d$ & build-time \\
+$C$ & components & value/deriv.\ components per point & $1$ or $d$ & run-time \\
+$G$ & geom comps & stored metric comps per point & $2+d^2$ & build-time \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{fig:appk-pipeline} is the deep version of \cref{ch:matrixfree}'s hero
+diagram: the same five stages, but with the \emph{exact} shape on every wire,
+including the build-time inputs each stage draws from below. The sections that
+follow walk it stage by stage.
+
+\begin{figure}[p]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[node distance=7mm and 8mm]
+  % input
+  \node[data, text width=20mm] (in) {global vector\\\code{[(N: \dots)]}};
+  \node[stage, right=of in, text width=19mm] (G)  {$G$\\\footnotesize gather\\element restrict};
+  \node[stage, right=of G,  text width=19mm] (B)  {$B_{\diffop}$\\\footnotesize evaluate\\basis apply};
+  \node[extern, right=of B, text width=19mm] (D)  {$D$\\\footnotesize weight\\\code{\#extern}};
+  \node[stage, right=of D,  text width=19mm] (Bt) {$B_{\diffop}^{\mathsf T}$\\\footnotesize integrate};
+  \node[stage, right=of Bt, text width=19mm] (Gt) {$G^{\mathsf T}$\\\footnotesize scatter-add};
+  \node[data, right=of Gt, text width=20mm] (out) {global vector\\\code{[(N: \dots)]}};
+
+  \draw[flow] (in) -- (G);  \draw[flow] (G) -- (B); \draw[flow] (B) -- (D);
+  \draw[flow] (D) -- (Bt);  \draw[flow] (Bt) -- (Gt); \draw[flow] (Gt) -- (out);
+
+  % exact shapes on every wire
+  \node[font=\scriptsize\ttfamily, simGray, below=2.4mm of G.south]  {[(E, L)]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.4mm of B.south]  {[(E, P, C)]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.4mm of D.south]  {[(E, P, C')]};
+  \node[font=\scriptsize\ttfamily, simGray, below=2.4mm of Bt.south] {[(E, L)]};
+  \node[font=\scriptsize\ttfamily, simBlue, below=3mm of in.south, align=center] {action\\input};
+  \node[font=\scriptsize\ttfamily, simBlue, below=3mm of out.south, align=center] {action\\output};
+
+  % build-time inputs fed from below
+  \node[data, fill=simBgGold, draw=simGold, below=15mm of G, text width=22mm]
+    (restr) {\footnotesize\itshape restriction\\index map (build)};
+  \node[data, fill=simBgGold, draw=simGold, below=15mm of B, text width=22mm]
+    (basis) {\footnotesize\itshape tabulated basis\\$\hat B,\,\hat G$ (build)};
+  \node[data, fill=simBgGold, draw=simGold, below=15mm of D, text width=24mm]
+    (geom) {\footnotesize\itshape geom\_data \code{[(E,P,G)]}\\(build)};
+  \draw[flow, simGold] (restr) -- (G);
+  \draw[flow, simGold] (basis) -- (B);
+  \draw[flow, simGold] (geom)  -- (D);
+  % Bt and Gt reuse the same build-time tables (dotted back-refs)
+  \draw[refedge, simGold] (basis.north) .. controls +(0,0.9) and +(0,-1.0) .. (Bt.south);
+  \draw[refedge, simGold] (restr.north) .. controls +(0,1.1) and +(0,-1.2) .. (Gt.south);
+
+  % brackets: element-local middle
+  \draw[decorate, decoration={brace, amplitude=4pt}, simRust]
+    ([yshift=7mm]G.north west) -- ([yshift=7mm]Gt.north east)
+    node[midway, above=4pt, font=\scriptsize, simRust]
+    {element-local: block-diagonal in $E$, fully parallel};
+\end{tikzpicture}%
+}
+\caption[The five-stage pipeline with exact tensor shapes]{The matrix-free
+operator of \cref{eq:appk-chain}, drawn with the \emph{exact} element-local shape
+on every wire (the deep version of \cref{ch:matrixfree}'s pipeline figure). A flat
+global vector \code{[(N: \dots)]} enters; the gather $G$ produces per-element local
+blocks \code{[(E, L)]}; basis evaluation $B_{\diffop}$ lifts them to
+\code{[(E, P, C)]} values at the quadrature points; the center stage $D$, the
+\code{\#extern} libCEED boundary (violet, \cref{sec:appk-extern}), weights each
+point against the precomputed \code{geom\_data}, possibly changing the component
+count to $C'$; $B_{\diffop}^{\mathsf T}$ integrates back to \code{[(E, L)]}; and
+$G^{\mathsf T}$ scatters into a fresh global vector. The three build-time tables
+(gold, fed from below)---the restriction index map, the tabulated basis $\hat B$
+and reference-gradient $\hat G$, and the geometry factor---are computed once and
+reused by both the forward stages and their transposes (dotted back-references).
+The element-local middle (rust brace) is block-diagonal in $E$.}
+\label{fig:appk-pipeline}
+\end{figure}
+
+\section{The element-local tensor, axis by axis}
+\label{sec:appk-anatomy}
+
+Before opening the stages we fix the three tensors they move between, because
+their axes are the entire vocabulary. The flat solver vector is rank-1,
+\code{[(N: \dots)]}; the moment the gather runs we acquire an explicit element
+axis $E$ and the per-element structure under it. \Cref{fig:appk-anatomy} is the
+anatomy chart.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % --- [E, L] ---
+  \begin{scope}[shift={(-4.6,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgBlue, draw=simBlue] (-0.7,-0.5) rectangle (0.7,0.5);
+        \foreach \y in {-0.25,0,0.25}{\draw[simBlue!40] (-0.7,\y)--(0.7,\y);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.05,0.0) {$L$};
+    \node[font=\scriptsize, simRust] at (0.55,0.78) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.1,-1.0) {[(E, L)]};
+    \node[font=\scriptsize\itshape, simGray, text width=26mm, align=center]
+      at (0.1,-1.52) {per-element local dofs\\(restricted field)};
+  \end{scope}
+  \node[font=\large] at (-2.7,0) {$\xrightarrow{\,B_{\diffop}\,}$};
+  % --- [E, P, C] ---
+  \begin{scope}[shift={(-0.6,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgGreen, draw=simGreen] (-0.78,-0.5) rectangle (0.78,0.5);
+        \foreach \y in {-0.17,0.17}{\draw[simGreen!40] (-0.78,\y)--(0.78,\y);}
+        \foreach \x in {-0.26,0.26}{\draw[simGreen!40] (\x,-0.5)--(\x,0.5);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.13,0.0) {$P$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.83) {$C$};
+    \node[font=\scriptsize, simRust] at (0.62,0.78) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.05,-1.0) {[(E, P, C)]};
+    \node[font=\scriptsize\itshape, simGray, text width=28mm, align=center]
+      at (0.05,-1.52) {$C$ values at\\$P$ quad points};
+  \end{scope}
+  \node[font=\large] at (1.55,0) {$\odot$};
+  % --- [E, P, G]  geom_data ---
+  \begin{scope}[shift={(3.7,0)}]
+    \foreach \k in {0,1,2}{
+      \begin{scope}[shift={(0.12*\k,0.09*\k)}]
+        \fill[simBgGold, draw=simGold] (-0.78,-0.5) rectangle (0.78,0.5);
+        \foreach \y in {-0.17,0.17}{\draw[simGold!50] (-0.78,\y)--(0.78,\y);}
+        \foreach \x in {-0.26,0.26}{\draw[simGold!50] (\x,-0.5)--(\x,0.5);}
+      \end{scope}}
+    \node[font=\scriptsize, simInk] at (-1.13,0.0) {$P$};
+    \node[font=\scriptsize, simInk] at (0.0,-0.83) {$G$};
+    \node[font=\scriptsize, simRust] at (0.62,0.78) {$E$};
+    \node[font=\scriptsize\ttfamily, simInk] at (0.05,-1.0) {[(E, P, G)]};
+    \node[font=\scriptsize\itshape, simGray, text width=28mm, align=center]
+      at (0.05,-1.52) {geom\_data\\(build-time)};
+  \end{scope}
+\end{tikzpicture}
+\caption[Anatomy of the element-local tensor family]{The three element-local
+tensors and the axes they share. Gather produces \code{[(E, L)]} (blue): an
+element axis $E$ over per-element local-dof blocks of length $L$. Basis evaluation
+$B_{\diffop}$ maps it to \code{[(E, P, C)]} (green): $C$ components at each of $P$
+quadrature points, per element. The weight $D$ multiplies it pointwise ($\odot$)
+against the precomputed geometry carrier \code{[(E, P, G)]} (gold). The element
+axis $E$ (rust) threads through all three: every stage between gather and scatter
+is block-diagonal in $E$. The $G$ axis is purely build-time storage; the $C$ axis
+is the only run-time-shaped axis, and even it is fixed once the differential
+operator $\diffop$ is chosen.}
+\label{fig:appk-anatomy}
+\end{figure}
+
+\begin{notationbox}
+The libCEED library, which owns the device kernel (\cref{sec:appk-extern}), names
+two of these axes \emph{oppositely} to this book. Its basis constructor's
+parameter \code{P} counts \emph{nodes per element}---our $L$---and its \code{Q}
+counts \emph{quadrature points}---our $P$. This appendix uses $L$ for local dofs
+and $P$ for quadrature points throughout; if you read the library source expect the
+letters to swap. The binding is exact; only the labels differ.
+\end{notationbox}
+
+The $G$ axis deserves an early word because it is the one whose extent we have not
+yet pinned. The geometry carrier stores $G = 2 + d^2$ components per quadrature
+point: in three dimensions, $2 + 9 = 11$. The two scalar slots hold the
+quadrature-weighted volume factor and an attribute (the material-region tag); the
+$d^2$ slots hold the full metric matrix $J^{-1}J^{-\mathsf T}|\det J|$ that a
+grad--grad term needs (\cref{sec:appk-geom}). A pure mass term uses only the volume
+scalar, but the storage size is fixed by the largest term, so $G=2+d^2$ is the
+allocation. This is a positive fact read off the library's build pass, not an
+estimate: the assembler verifies \code{geom\_data\_size == 2 + space\_dim*dim}
+before it runs.
+
+\section{Stage 1: \texorpdfstring{$G$}{G}, element restriction (the gather)}
+\label{sec:appk-gather}
+
+The gather $G$ is the boundary between two vocabularies. On its left sits the
+flat global vector \code{[(N: \dots)]}, a rank-1 list the solver owns; on its right
+sit the per-element blocks \code{[(E, L)]} the rest of the pipeline runs on. $G$
+is the map that crosses it.
+
+\subsection{The index map}
+
+$G$ performs no arithmetic. It is a pure \emph{indexed copy}, defined by a fixed
+table---the \emph{element-to-dof map}---that records, for each element $e$ and each
+of its $L$ local dof slots $\ell$, which global dof index $n = \iota(e,\ell)$ it
+reads from. The action is simply
+\begin{equation}
+  (G\vv)[e,\ell] \;=\; \vv\bigl[\iota(e,\ell)\bigr],
+  \qquad e\in\{0,\dots,E-1\},\ \ell\in\{0,\dots,L-1\}.
+  \label{eq:appk-gather}
+\end{equation}
+For each element, $G$ walks that element's $L$ slots and copies in the global
+values they point at. A global dof that several elements share---a vertex,
+edge, or face dof on an inter-element boundary---is read by \emph{every} element
+that touches it, so its value is \emph{copied out} into several local blocks. That
+duplication is deliberate; it is what lets the middle stages run element by element
+in ignorance of the sharing, and it is undone, by summation, at the far end of the
+pipeline. \Cref{fig:appk-gatherscatter} draws the copy-out and the matching
+sum-back.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+  % ---- gather (top): one shared global dof fans out ----
+  \begin{scope}
+    \node[font=\footnotesize\bfseries, simBlue] at (-2.4,1.1) {$G$ (gather)};
+    % global slots
+    \foreach \i/\lab in {0/$v_0$,1/$v_1$,2/$v_2$,3/$v_3$}{
+      \node[draw=simGray, fill=simBgGray, minimum size=5.5mm] (g\i) at (\i*0.9,1.1) {\lab};}
+    \node[simGray] at (1.35,1.7) {global \code{[(N)]}};
+    % element blocks e0=(v0,v1) e1=(v1,v2) e2=(v2,v3)
+    \foreach \k/\a/\b/\la/\lb in {0/0/0.9/$v_0$/$v_1$, 1/2.2/3.1/$v_1$/$v_2$, 2/4.4/5.3/$v_2$/$v_3$}{
+      \node[draw=simBlue, fill=simBgBlue, minimum size=5.0mm] (e\k a) at (\a,-0.2) {\la};
+      \node[draw=simBlue, fill=simBgBlue, minimum size=5.0mm] (e\k b) at (\b,-0.2) {\lb};
+      \node[simRust] at ({(\a+\b)/2},-0.75) {$e_\k$};}
+    % copy arrows for the shared dof v1 and v2 (fan-out)
+    \draw[flow, simBlue] (g0.south) -- (e0a.north);
+    \draw[flow, simBlue] (g1.south) -- (e0b.north);
+    \draw[flow, simRust, thick] (g1.south) -- (e1a.north);   % v1 fans to e1 too
+    \draw[flow, simBlue] (g2.south) -- (e1b.north);
+    \draw[flow, simRust, thick] (g2.south) -- (e2a.north);   % v2 fans to e2 too
+    \draw[flow, simBlue] (g3.south) -- (e2b.north);
+    \node[simRust, font=\scriptsize\itshape] at (6.6,0.4) {shared dof};
+    \node[simRust, font=\scriptsize\itshape] at (6.6,0.05) {copied out};
+  \end{scope}
+  % ---- scatter (bottom): contributions sum back ----
+  \begin{scope}[shift={(0,-3.4)}]
+    \node[font=\footnotesize\bfseries, simGreen] at (-2.4,-0.2) {$G^{\mathsf T}$ (scatter-add)};
+    \foreach \k/\a/\b/\la/\lb in {0/0/0.9/$c^0_0$/$c^0_1$, 1/2.2/3.1/$c^1_0$/$c^1_1$, 2/4.4/5.3/$c^2_0$/$c^2_1$}{
+      \node[draw=simBlue, fill=simBgBlue, minimum size=5.0mm] (s\k a) at (\a,0.5) {\la};
+      \node[draw=simBlue, fill=simBgBlue, minimum size=5.0mm] (s\k b) at (\b,0.5) {\lb};}
+    \foreach \i/\lab in {0/{$c^0_0$},1/{$c^0_1{+}c^1_0$},2/{$c^1_1{+}c^2_0$},3/{$c^2_1$}}{
+      \node[draw=simGreen, fill=simBgGreen, minimum width=9mm, minimum height=5.5mm] (o\i) at (\i*1.55+0.0,-0.9) {\lab};}
+    \draw[flow, simGreen] (s0a.south) -- (o0.north);
+    \draw[flow, simGreen] (s0b.south) -- (o1.north);
+    \draw[flow, simGreen] (s1a.south) -- (o1.north);
+    \draw[flow, simGreen] (s1b.south) -- (o2.north);
+    \draw[flow, simGreen] (s2a.south) -- (o2.north);
+    \draw[flow, simGreen] (s2b.south) -- (o3.north);
+    \node[simGreen, font=\scriptsize\itshape] at (6.6,-0.5) {summed};
+    \node[simGreen, font=\scriptsize\itshape] at (6.6,-0.85) {at shared dofs};
+  \end{scope}
+\end{tikzpicture}
+\caption[Gather copies out; scatter sums back]{The $G$/$G^{\mathsf T}$ transpose
+pair on a 1-D mesh of three elements sharing two interior nodes. \emph{Top:} the
+gather $G$ copies each global value into every element that references it; the
+shared dofs $v_1,v_2$ (rust) fan out to two elements each. No arithmetic---pure
+copying. \emph{Bottom:} the scatter-add $G^{\mathsf T}$ runs the table in reverse,
+\emph{summing} the per-element contributions $c^e_\ell$ back into each global slot;
+at a shared node the two elements' contributions add (e.g.\ $c^0_1+c^1_0$). The
+copy-out/sum-back pair is the entire content of finite-element assembly, here
+applied to a vector. Because $G^{\mathsf T}$ is the literal transpose of $G$,
+$\inner{G^{\mathsf T}\vw}{\vv}=\inner{\vw}{G\vv}$ holds exactly---which is why the
+assembled value is a \emph{sum} and not an average.}
+\label{fig:appk-gatherscatter}
+\end{figure}
+
+\subsection{$G^{\mathsf T}$ is the scatter-add; $G^{\mathsf T}G$ is the multiplicity}
+
+The transpose $G^{\mathsf T}$ runs the same index table backwards. Where $G$ read
+$n=\iota(e,\ell)$ and copied $\vv[n]$ into slot $(e,\ell)$, the transpose takes a
+per-element tensor $\vc\in\code{[(E, L)]}$ and \emph{adds} each local contribution
+into the global slot it came from:
+\begin{equation}
+  (G^{\mathsf T}\vc)[n] \;=\; \sum_{(e,\ell)\,:\,\iota(e,\ell)=n} \vc[e,\ell].
+  \label{eq:appk-scatter}
+\end{equation}
+This is exactly a \emph{scatter-add}: indexed writes that accumulate where indices
+collide. It is the only stage in the pipeline that reduces---every other stage is a
+map or a per-block contraction---and on a parallel machine it is the one stage that
+needs an atomic or a coloring to make the colliding writes safe. The summation is
+finite-element \emph{assembly} (\cref{ch:assembly}), here applied to a vector
+rather than stamped into a matrix.
+
+The composition $G^{\mathsf T}G$ is worth isolating, because it has a clean
+meaning. Gather then immediately scatter-add: each global dof is copied out to
+every element that touches it, then those copies are summed straight back with no
+intervening computation. The result is the global dof scaled by how many elements
+share it:
+\begin{equation}
+  (G^{\mathsf T}G\,\vv)[n] \;=\; m_n\,\vv[n],
+  \qquad m_n = \#\{(e,\ell): \iota(e,\ell)=n\},
+  \label{eq:appk-mult}
+\end{equation}
+the \emph{dof-multiplicity diagonal} $\mat{M}_{\mathrm{mult}}=\operatorname{diag}(m_n)$.
+An interior vertex of a hex mesh has $m_n=8$; a face dof has $m_n=2$; a dof on the
+domain boundary touched by one element has $m_n=1$. The multiplicity diagonal is
+cheap, build-time, and useful: it is exactly the operator that converts a
+\emph{summed} (assembled) quantity into an \emph{averaged} one, and it appears
+whenever the pipeline must reconcile the redundant element-local representation
+with the unique global one---for instance in building a diagonal for a smoother
+(\cref{ch:smoothers}) or projecting between the two representations.
+
+\begin{keyidea}
+The gather $G$ and scatter $G^{\mathsf T}$ are a transpose pair built from one
+index table $\iota(e,\ell)$: $G$ copies global dofs out to elements (duplicating
+shared dofs), $G^{\mathsf T}$ sums element contributions back (assembling shared
+dofs). All inter-element coupling in the whole operator lives in these two ends;
+everything between them is block-diagonal in $E$. Their composition
+$G^{\mathsf T}G=\operatorname{diag}(m_n)$ is the dof-multiplicity diagonal that
+reconciles the duplicated element-local view with the unique global one.
+\end{keyidea}
+
+\section{Stage 2: \texorpdfstring{$B_{\diffop}$}{B}, basis evaluation}
+\label{sec:appk-basis}
+
+With the field restricted to elements, the weak form needs it---and its
+derivative---sampled at the quadrature points. That is what $B_{\diffop}$ delivers:
+it contracts each element's $L$ local coefficients against the tabulated reference
+basis to produce $C$ components at each of $P$ quadrature points.
+
+\subsection{The tabulated basis tensor}
+
+The reference shape functions of \cref{ch:refelement} are sampled \emph{once} at
+the quadrature nodes and stored. For the value (interpolation) mode this is a dense
+matrix
+\[
+  \hat B \in \Real^{P\times L},
+  \qquad \hat B_{q\ell} = \hat\phi_\ell(\hat\vx_q),
+\]
+the $\ell$-th reference shape function evaluated at the $q$-th quadrature point. For
+a derivative mode the table is the reference \emph{gradient}
+$\hat G\in\Real^{P\times L\times d}$ with $\hat G_{q\ell k}=\partial_k\hat\phi_\ell
+(\hat\vx_q)$. Both are pure build-time data: tabulated once, shared by every element
+of the mesh, independent of the input vector. The value-mode evaluation, per
+element $e$, is the contraction over the local-dof axis $L$:
+\begin{equation}
+  (B\,\vc)[e,q,c] \;=\; \sum_{\ell=0}^{L-1} \hat B_{q\ell}\;\vc[e,\ell],
+  \qquad C=1\ \text{for a scalar value},
+  \label{eq:appk-basis}
+\end{equation}
+producing \code{[(E, P, C)]} from \code{[(E, L)]}. The same small $\hat B$ is
+applied independently inside each of the $E$ elements---a batched matrix-vector
+product, block-diagonal in $E$.
+
+\subsection{The mode is selected by \texorpdfstring{$\diffop$}{D}}
+
+The differential operator $\diffop$ of the weak-form term selects which tabulated
+table $B_{\diffop}$ uses, and with it the meaning and extent of the component axis
+$C$. \Cref{tab:appk-modes} lists the four de Rham modes (\cref{ch:refelement}).
+
+\begin{table}[t]
+\centering
+\caption[Basis-evaluation modes and the component axis]{The four basis-evaluation
+modes selected by the term's differential operator $\diffop$, with the
+component-axis extent $C$ each produces. The interpolation mode evaluates basis
+\emph{values} ($C=1$ scalar); the gradient, curl, and divergence modes evaluate
+derivatives, with $C$ set by the de Rham slot. The same five-stage skeleton serves
+all of them; only the tabulated table and the geometry-factor shape change.}
+\label{tab:appk-modes}
+\small
+\setlength{\tabcolsep}{7pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llll@{}}
+\toprule
+$\diffop$ & mode & table & components $C$ \\
+\midrule
+$\mathrm{Id}$ & interp (values) & $\hat B$, $P\times L$ & $1$ (scalar) \\
+$\Grad$ & grad & $\hat G$, $P\times L\times d$ & $d$ \\
+$\Curl$ & curl & $\hat G$, curl-combined & $d$ (3-D), $1$ (2-D) \\
+$\Div$ & div & $\hat G$, trace-combined & $1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For a gradient term the contraction carries the extra $k$ axis,
+\[
+  (B_{\Grad}\vc)[e,q,c] \;=\; \sum_{\ell} \hat G_{q\ell c}\;\vc[e,\ell],
+  \qquad c\in\{0,\dots,d-1\},
+\]
+so $C=d$: the reference gradient of the field at each quadrature point. (The
+\emph{physical} gradient---the one the weak form actually integrates---needs the
+inverse-transpose Jacobian $J^{-\mathsf T}$ applied to this reference gradient; that
+multiplication is folded into the geometry factor and applied in stage 3, not here,
+which keeps $B$ a pure reference-table contraction. We return to this in
+\cref{sec:appk-geom}.) The curl and divergence modes combine the reference
+derivatives the way the differential operator prescribes; the structural shape is
+identical, only the table differs.
+
+\subsection{The transpose $B_{\diffop}^{\mathsf T}$ integrates}
+
+Stage 4 is the exact transpose. Where $B$ contracted the local-dof axis $L$ against
+the table to produce quadrature-point values, $B_{\diffop}^{\mathsf T}$ contracts
+the quadrature-point axis $P$ against the \emph{same} table to produce local-dof
+contributions:
+\begin{equation}
+  (B^{\mathsf T}\vu)[e,\ell] \;=\; \sum_{q=0}^{P-1} \hat B_{q\ell}\;\vu[e,q,c],
+  \label{eq:appk-basist}
+\end{equation}
+mapping \code{[(E, P, C)]} back to \code{[(E, L)]}. This is the discrete integral
+$\int(\cdot)\,\phi_\ell$ against each test basis function: the quadrature sum
+$\sum_q$ of \cref{ch:refelement} \emph{is} this transpose contraction, with the
+quadrature weight already folded into the weighted values $\vu$ that reach it from
+stage 3. The same tabulated $\hat B$ serves both directions---one of the reasons
+the build-time stratum is so small.
+
+\section{Stage 4 in passing, Stage 3 in full: the diagonal weight \texorpdfstring{$D$}{D}}
+\label{sec:appk-diagonal}
+
+We have already described stage 4 as the transpose of stage 2. The center stage
+$D$---logically stage 3, the weight---is the simplest object in the pipeline and
+the one that carries all the physics, so we give it its own treatment.
+
+After basis evaluation the field is a tensor of values at quadrature points,
+\code{[(E, P, C)]}. The weight stage multiplies each point's value, independently,
+by a single precomputed factor read from \code{geom\_data}:
+\begin{equation}
+  (D\,\vu)[e,p,c'] \;=\; \sum_{c} \texttt{geom\_data}[e,p]\,{}_{c'c}\;\vu[e,p,c],
+  \label{eq:appk-diagonal}
+\end{equation}
+where for a scalar (mass) term the factor is a single number and \cref{eq:appk-diagonal}
+is a plain scaling; for a vector (grad--grad) term the factor is a small $d\times d$
+block---the metric---and the sum over $c$ is a tiny per-point matrix-vector product
+that may change the component count to $C'$. \Cref{fig:appk-diagonal} draws the
+structure: the output at index $(e,p)$ depends only on the input at $(e,p)$ and on
+\code{geom\_data}$[e,p]$, never on any other point.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  \foreach \i in {0,...,4}{
+    \foreach \j in {0,...,2}{
+      \node[draw=simGreen, fill=simBgGreen, rounded corners=1pt,
+            minimum size=7mm, font=\scriptsize] (c\i\j) at (\i*1.05, \j*0.9) {$u_{\i\j}$};
+    }
+  }
+  \foreach \i in {0,...,4}{
+    \foreach \j in {0,...,2}{
+      \node[font=\scriptsize, simGold] at (\i*1.05+0.35, \j*0.9+0.35) {$\odot g$};
+    }
+  }
+  \node[font=\scriptsize\itshape, simRust] at (-0.95, 0.9) {$(e,p)$};
+  \node[font=\scriptsize, simInk] at (2.1,-0.85) {$P$ points $\times$ $E$ elements (flattened)};
+  \draw[decorate, decoration={brace, amplitude=5pt}, simBlue]
+    (-0.5, 2.2) -- (4.7, 2.2)
+    node[midway, above=5pt, font=\footnotesize, simBlue]
+    {every cell independent --- no coupling, any order, fully parallel};
+\end{tikzpicture}
+\caption[The weight stage as an embarrassingly parallel diagonal]{The weight stage
+$D$ over the flattened $(e,p)$ index. Each cell is one quadrature point's evaluated
+value $u_{ep}$, multiplied ($\odot$) by its own precomputed geometry block $g_{ep}$
+from \code{geom\_data}. No cell depends on any other: $D$ is \emph{diagonal} in the
+$(E,P)$ index---a per-point lift, mapped across the whole point set at once. There
+is no reduction, no recurrence, no order-dependence; the output at $(e,p)$ is a
+function of the input at $(e,p)$ alone. This is the embarrassingly parallel core of
+the operator and the form a tensor accelerator consumes most directly.}
+\label{fig:appk-diagonal}
+\end{figure}
+
+This is why we call $D$ the \emph{diagonal} of the operator. The basis stages
+couple the $L$ local dofs to the $P$ quadrature points (a dense small contraction);
+the gather and scatter couple elements through shared dofs. But $D$, sandwiched
+between them, couples nothing: it is a diagonal scaling in the quadrature-point
+basis, block-diagonal not merely in $E$ but in the full $(E,P)$ index. Everything
+that distinguishes a mass term from a stiffness term, this material from that one,
+a curved element from a straight one, is packed into the contents of
+\code{geom\_data}---and that packing is the build-time pass we turn to now.
+
+\section{Building the geometry factor: \texttt{geom\_factor\_build}}
+\label{sec:appk-geom}
+
+The tensor \code{geom\_data} of shape \code{[(E, P, G)]} is the one piece of the
+build-time stratum that costs real arithmetic. It is produced by a setup pass,
+\code{geom\_factor\_build}, whose signature is
+\begin{lstlisting}[style=l4style]
+-- the geometry-factor build pass: a pure setup-stratum function
+geom_factor_build :: MeshNodes -> QuadWeights -> Tensor[(E, P, G)]
+  -- per (e, p):  geom_data[e,p] = metric( J(mesh_nodes)[e,p] ) * w[e,p] * Q[e,p]
+  --   E = elements;  P = quad points per element;  G = 2 + d*d metric components
+\end{lstlisting}
+At each quadrature point of each element it forms the Jacobian, combines it into
+the metric the weak-form term needs, scales by the quadrature weight, and folds in
+the material coefficient.
+
+\subsection{From the Jacobian to the metric}
+
+Recall from \cref{ch:refelement} that the geometric map $F_K$ carries the reference
+element onto the physical element, and its derivative is the Jacobian $J=\partial
+F_K/\partial\hat\vx\in\Real^{d\times d}$, whose columns are the physical edge
+vectors. Two objects derived from $J$ are all the geometry a term needs:
+\begin{equation}
+\begin{aligned}
+  \text{mass term ($\diffop=\mathrm{Id}$):}\quad & g = \abs{\det J}\,; \\
+  \text{grad--grad ($\diffop=\Grad$):}\quad & \mat{G}_{\mathrm{metric}} = J^{-1}J^{-\mathsf T}\,\abs{\det J}.
+\end{aligned}
+  \label{eq:appk-metric}
+\end{equation}
+The mass factor is a scalar; the grad--grad metric is a symmetric $d\times d$
+matrix. The metric arises by pulling both gradients in $\Grad\phi_i\cdot\Grad\phi_j$
+back through $J^{-\mathsf T}$ and collecting the volume factor (\cref{ch:refelement}
+derives it). Storing $J^{-1}J^{-\mathsf T}|\det J|$ is exactly the device that lets
+the run-time $D$ apply the physical-gradient transformation as a single per-point
+matrix multiply, with no Jacobian inversion at apply time.
+
+\subsection{Folding in the weight and the coefficient}
+
+The build pass does not stop at the bare metric. It pre-multiplies two more
+factors, so that the run-time stage $D$ is a single multiply with nothing left to
+combine:
+\begin{equation}
+  \texttt{geom\_data}[e,p] \;=\;
+    \underbrace{\bigl(\text{metric from } J[e,p]\bigr)}_{\abs{\det J}\ \text{or}\ J^{-1}J^{-\mathsf T}\abs{\det J}}
+    \;\cdot\;
+    \underbrace{w_p}_{\text{quad weight}}
+    \;\cdot\;
+    \underbrace{Q[e,p]}_{\text{material coeff}}.
+  \label{eq:appk-geomdata}
+\end{equation}
+The quadrature weight $w_p$ (\cref{ch:refelement}) rides inside \code{geom\_data}
+rather than appearing as a separate stage---the weighted sum
+$\sum_q w_q(\cdot)$ of the discrete integral is split across $D$ (the $w_q$ factor)
+and $B^{\mathsf T}$ (the $\sum_q$ contraction). The material coefficient $Q$---the
+$\varepsilon$, $\mu^{-1}$, or conductivity of the term, looked up by the element's
+material-region attribute---is folded in the same way. The result is one number
+(mass) or one small matrix (grad--grad) per quadrature point, $G=2+d^2$ stored
+components, computed once and read by every apply.
+
+\begin{remark}
+On a \emph{straight-sided} (affine) element the Jacobian $J$ is constant over the
+element, so the metric is constant in $p$ and \code{geom\_data}$[e,\cdot]$ repeats
+the same block at every quadrature point---a degenerate case the build pass may
+exploit by storing one block per element instead of $P$. On a \emph{curved}
+(isoparametric high-order) element $J$ varies point to point and the full
+\code{[(E, P, G)]} storage is needed. The pipeline is identical either way; only
+the storage compresses.
+\end{remark}
+
+\section{Build-time versus run-time stratification}
+\label{sec:appk-strata}
+
+The single most consequential structural fact about the operator is that its data
+divides into two strata by \emph{lifetime}. \Cref{ch:strata} treats this division
+across the whole simulator; here we make it concrete for the kernel.
+
+\begin{description}[leftmargin=1.4em, style=nextline]
+\item[Build-time (setup) stratum.] Data fixed once per
+$(\text{mesh},\text{FE order},\text{quadrature rule})$ and reused across every
+application of the operator: the restriction index map $\iota(e,\ell)$, the
+tabulated basis tables $\hat B$ and $\hat G$, and---the one with real
+arithmetic---\code{geom\_data}. Their axis extents $E$, $L$, $P$, $G$ are all
+build-time.
+\item[Run-time (apply) stratum.] Data produced afresh on every action
+$\vv\mapsto\mat{A}\vv$: the gathered \code{[(E, L)]} block, the evaluated and
+weighted \code{[(E, P, C)]} values, the integrated contributions. These are
+transient, born inside one apply and discarded when it returns. The only
+run-time-\emph{shaped} axis is $C$, and even it is fixed once $\diffop$ is chosen;
+what truly varies per apply is the field \emph{value} at each $(e,p,c)$ index.
+\end{description}
+
+\Cref{fig:appk-strata} draws the split. A setup pass runs the build \emph{once} and
+produces the three tables; thereafter every operator application---and a Krylov
+solve performs hundreds---reads them without rebuilding. The expensive geometry
+work is amortized across the entire solve. Only when the mesh changes---adaptive
+refinement (\cref{ch:amr}) being the usual cause---is the setup pass rerun, a
+setup-stratum invalidation, not a per-apply cost.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 12mm]
+  % --- build-time row (gold) ---
+  \node[data, fill=simBgGold, draw=simGold, text width=20mm] (mesh)
+    {mesh nodes\\$+$ quad rule};
+  \node[stage, fill=simBgGold, draw=simGold, right=of mesh, text width=27mm]
+    (build) {\textbf{setup pass}\\\footnotesize $J,\;\abs{\det J},\;Q,\;w$\\(\code{geom\_factor\_build})};
+  \node[data, fill=simBgGold, draw=simGold, right=of build, text width=23mm]
+    (gd) {\code{geom\_data}\\\code{[(E, P, G)]}\\$+$ basis $+$ restr};
+  \draw[flow, simGold] (mesh) -- (build);
+  \draw[flow, simGold] (build) -- (gd);
+  \node[font=\scriptsize\bfseries, simGold, left=1mm of mesh, rotate=90, anchor=south]
+    {build-time};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of build]
+    {runs \emph{once} per (mesh, order)};
+
+  % --- run-time row (blue): many applies reading the tables ---
+  \node[stage, below=18mm of build, text width=30mm] (apply1)
+    {apply $\mat{A}\vv_1$\\\footnotesize $G^{\mathsf T}B^{\mathsf T}\,D\,B\,G$};
+  \node[stage, right=5mm of apply1, text width=13mm] (apply2)
+    {apply\\$\mat{A}\vv_2$};
+  \node[font=\large, right=2mm of apply2] (dots) {$\cdots$};
+  \node[stage, right=2mm of dots, text width=13mm] (applyk)
+    {apply\\$\mat{A}\vv_k$};
+  \node[font=\scriptsize\bfseries, simBlue, left=1mm of apply1, rotate=90, anchor=south]
+    {run-time};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of apply1, xshift=14mm]
+    {runs \emph{every} Krylov iteration --- reads the tables, never rebuilds them};
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (apply1.north);
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (apply2.north);
+  \draw[flow, simGold] (gd.south) -- ++(0,-0.4) -| (applyk.north);
+\end{tikzpicture}
+\caption[Build-time versus run-time stratification]{The geometry factor and the two
+index/basis tables are computed \emph{once}. A setup pass (gold, top) consumes the
+mesh nodes and the quadrature rule and produces \code{geom\_data} together with the
+restriction map and tabulated basis. Every subsequent operator application (blue,
+bottom)---and an iterative solve performs hundreds---simply \emph{reads} these
+build-time tables as it runs the five stages. The expensive geometry work is
+amortized across the whole solve; only a mesh change (e.g.\ adaptive refinement,
+\cref{ch:amr}) reruns the setup pass. This setup/apply split is the kernel's
+instance of the stratification that organizes the whole simulator
+(\cref{ch:strata}).}
+\label{fig:appk-strata}
+\end{figure}
+
+\begin{keyidea}
+The kernel carries two strata. The \emph{build-time} stratum---restriction map,
+tabulated basis $\hat B,\hat G$, and the geometry factor \code{geom\_data}---is
+computed once per $(\text{mesh},\text{order})$ and reused. The \emph{run-time}
+stratum---the gathered, evaluated, weighted, integrated tensors---is rebuilt on
+every application. Folding the Jacobian metric, quadrature weight, and material
+coefficient into one precomputed \code{geom\_data} is precisely what reduces the
+run-time weight stage $D$ to a single pointwise multiply.
+\end{keyidea}
+
+\section{Sum-factorization: the basis stage, reordered}
+\label{sec:appk-sumfac}
+
+The one stage with non-trivial arithmetic per apply is the basis evaluation $B$ and
+its transpose. Taken naively, $B$ is a dense $P\times L$ contraction per element,
+and at high order that is the dominant cost. On tensor-product elements
+\emph{sum-factorization} cuts it dramatically by exploiting the product structure
+of the basis---and it does so as a pure contraction reordering, computing
+bit-for-bit the same result.
+
+\subsection{The product structure}
+
+On a tensor-product ($Q_p$) element the local dofs and the quadrature points each
+lie on a $d$-dimensional grid of side $p+1$, so $L=P=(p+1)^d$, and the
+$d$-dimensional basis factors into a product of one-dimensional bases:
+\[
+  \hat\phi_{i_1\cdots i_d}(\hat\xi_1,\dots,\hat\xi_d)
+  \;=\; \hat\phi_{i_1}(\hat\xi_1)\,\cdots\,\hat\phi_{i_d}(\hat\xi_d).
+\]
+The naive evaluation ignores this and contracts against the full dense table:
+\begin{equation}
+  \text{naive cost} \;=\; P\cdot L \;=\; (p+1)^d\cdot(p+1)^d \;=\; (p+1)^{2d}
+  \quad\text{multiply-adds per element.}
+  \label{eq:appk-naive}
+\end{equation}
+Sum-factorization instead applies the \emph{one}-dimensional basis along each axis
+in turn. Contract axis $1$ (a $(p+1)\times(p+1)$ matrix applied along one grid
+direction, the other $d-1$ directions carried along as batch), then axis $2$, and
+so on. Each of the $d$ sweeps costs $(p+1)$---the 1-D contraction---times
+$(p+1)^d$---the rest of the grid carried along:
+\begin{equation}
+  \text{sum-factored cost} \;=\; d\cdot(p+1)\cdot(p+1)^d \;=\; d\,(p+1)^{d+1}.
+  \label{eq:appk-factored}
+\end{equation}
+In the operator-count notation of \cref{ch:matrixfree} this is the move from
+$O(P\cdot L)$ to $O(d\cdot P^{1/d}\cdot L)$, since one grid axis has length
+$P^{1/d}=(p+1)$. \Cref{fig:appk-sumfac} draws the reordering for $d=3$ as a chain
+of three batched 1-D contractions.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm and 9mm]
+  % naive: one dense contraction
+  \node[data, text width=16mm] (din) {dofs\\$(p{+}1)^3$};
+  \node[opbox, fill=simBgRust, draw=simRust, right=of din, text width=26mm]
+    (naive) {dense $P\times L$\\\footnotesize $(p{+}1)^6$ ops};
+  \node[data, right=of naive, text width=16mm] (dpts) {pts\\$(p{+}1)^3$};
+  \draw[flow] (din) -- (naive);
+  \draw[flow] (naive) -- (dpts);
+  \node[font=\scriptsize\bfseries, simRust, left=1mm of din, rotate=90, anchor=south]
+    {naive};
+
+  % factored: three 1-D sweeps (d=3)
+  \node[data, below=15mm of din, text width=16mm] (fin) {dofs\\$(p{+}1)^3$};
+  \node[opbox, right=of fin, text width=17mm] (s1)
+    {sweep $\xi_3$\\\footnotesize $(p{+}1)^4$};
+  \node[opbox, right=of s1, text width=17mm] (s2)
+    {sweep $\xi_2$\\\footnotesize $(p{+}1)^4$};
+  \node[opbox, right=of s2, text width=17mm] (s3)
+    {sweep $\xi_1$\\\footnotesize $(p{+}1)^4$};
+  \node[data, right=of s3, text width=16mm] (fpts) {pts\\$(p{+}1)^3$};
+  \draw[flow] (fin) -- (s1);
+  \draw[flow] (s1) -- node[above, font=\scriptsize, simGray] {partial} (s2);
+  \draw[flow] (s2) -- node[above, font=\scriptsize, simGray] {partial} (s3);
+  \draw[flow] (s3) -- (fpts);
+  \node[font=\scriptsize\bfseries, simBlue, left=1mm of fin, rotate=90, anchor=south]
+    {factored};
+\end{tikzpicture}
+\caption[Sum-factorization as a contraction reordering ($d=3$)]{Basis evaluation on
+a 3-D tensor-product element, two ways. \emph{Top (rust):} the naive contraction
+treats the basis as one dense $P\times L$ matrix, costing $(p+1)^6$ multiply-adds
+per element. \emph{Bottom (blue):} sum-factorization applies the one-dimensional
+basis along each of the three axes in turn---a sweep in $\xi_3$, then $\xi_2$, then
+$\xi_1$, each carrying the other two grid directions as batch and costing
+$(p+1)^4$---for $3(p+1)^4$ total. The two produce \emph{identical} values; only the
+contraction order differs. The saving is the move from $O(P\cdot L)$ to
+$O(d\,P^{1/d}L)$, and the exponent gap ($2d$ versus $d+1$) makes it decisive at
+high order.}
+\label{fig:appk-sumfac}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption[Sum-factorization operation counts, $d=3$]{Multiply-adds per element for
+the basis-evaluation stage in three dimensions, naive $(p+1)^{2d}=(p+1)^6$ versus
+sum-factored $d\,(p+1)^{d+1}=3(p+1)^4$. The speedup is unbounded in $p$: the
+exponent drops from $2d=6$ to $d+1=4$, so the ratio grows like $(p+1)^{d-1}/d$.}
+\label{tab:appk-sumfac}
+\small
+\setlength{\tabcolsep}{9pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+order $p$ & naive $(p{+}1)^6$ & factored $3(p{+}1)^4$ & speedup \\
+\midrule
+1 & 64               & 48                & $1.3\times$ \\
+2 & 729              & 243               & $3.0\times$ \\
+4 & \num{15625}      & \num{1875}        & $8.3\times$ \\
+8 & \num{531441}     & \num{19683}       & $27\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:appk-sumfac} tabulates the 3-D savings. At $p=8$ it is the difference
+between $9^6=\num{531441}$ and $3\cdot 9^4=\num{19683}$ operations per element---a
+factor of $27$, widening with every increment of $p$. Without sum-factorization the
+basis stage would reintroduce the very $O(p^{2d})$ cost the matrix-free form set out
+to escape; with it, high-order matrix-free is not merely affordable but the fastest
+form available.
+
+\begin{pitfall}
+Sum-factorization is a \emph{transparent} performance trick (\cref{ch:bigidea}):
+same result, faster, with no change to the answer, the conditioning, or the
+rounding behavior that the algorithm depends on. It is recorded as a one-line note
+on the basis stage, never as a separate algebraic claim. Do not mistake it for a
+\emph{load-bearing} numerical trick---it reorders the sums of a single linear map
+and nothing more. The reason to know it is that it is \emph{why} the high-order
+kernel is fast, not a change to what the kernel computes.
+\end{pitfall}
+
+\section{The libCEED boundary: API versus implementation}
+\label{sec:appk-extern}
+
+We have now specified all five stages as tensor contractions. One honest
+qualification remains, and it is the subject of this section: in the real Palace
+build the innermost element-quadrature kernel is not hand-written from these
+contractions but handed to a specialized accelerator library, libCEED, which owns
+the device-level details---which loops to fuse, how to tile the quadrature points,
+how to map them onto warps or wavefronts. The book draws this as a clean boundary
+with two sides, and the distinction between them is load-bearing.
+
+\subsection{The two surfaces}
+
+The boundary has a \emph{kernel API} and a \emph{kernel implementation}, and the
+spec keeps both, linked for review (\cref{ch:synthlib}).
+
+\paragraph{The kernel API---what we call.} The API surface is the opaque library
+contract: the shape signature and the semantics of the innermost kernel, with
+\emph{no} claim about how it is realized. In the calculus it is written with the
+\code{\#extern} marker---a node whose contract we state precisely but whose body we
+delegate:
+\begin{lstlisting}[style=l4style]
+-- the kernel API: the contract is ours, the device body is libCEED's
+quad_kernel :: GeomData -> Tensor[(E, P, C)] -> Tensor[(E, P, C')]
+#extern quad_kernel   -- shape + semantics specified; body delegated
+\end{lstlisting}
+This is the violet, dashed \code{\#extern} node at the center of
+\cref{fig:appk-pipeline}. Its contract is exactly the pointwise diagonal of
+\cref{sec:appk-diagonal}: a shape-preserving (up to $C\to C'$) elementwise multiply
+against \code{geom\_data}. The library owns the machine; we own the contract.
+
+\paragraph{The kernel implementation---the contraction chain.} The implementation
+surface is the constructive realization in our own tensor vocabulary: the five-stage
+chain $G^{\mathsf T}B_{\diffop}^{\mathsf T}D B_{\diffop}G$ of this entire appendix,
+built from the firm substrate operators \code{element\_restrict}, \code{basis\_apply},
+\code{quad\_point\_contract}, and \code{geom\_factor\_build}. It makes a positive
+claim and carries a normal rank: it \emph{is} the kernel, expressed from our
+primitives.
+
+\begin{lstlisting}[style=l4style]
+-- the kernel implementation: the contraction chain that realizes quad_kernel,
+-- written from our own firm substrate operators.  apply A v = scatter . Bt . D . B . gather
+apply_kernel :: Operator -> Tensor[(N: ..)] -> Tensor[(N: ..)]
+apply_kernel op v =
+  scatter   op.restr           $   -- G^T  : [(E, L)]      -> [(N: ..)]   element_restrict^T
+  integrate op.mode op.basis   $   -- B_D^T: [(E, P, C')]  -> [(E, L)]    basis_apply^T
+  weight    op.geom            $   -- D    : [(E, P, C)]   -> [(E, P, C')] quad_point_contract  (= #extern quad_kernel)
+  evaluate  op.mode op.basis   $   -- B_D  : [(E, L)]      -> [(E, P, C)] basis_apply
+  gather    op.restr v             -- G    : [(N: ..)]     -> [(E, L)]    element_restrict
+  where
+    -- op.geom is the build-time geom_data, computed once:
+    -- op.geom = geom_factor_build mesh_nodes quad_weights
+\end{lstlisting}
+
+\subsection{The correspondence}
+
+The two surfaces are tied by a typed \emph{\code{realizes-kernel-api}}
+correspondence: an edge from the implementation node to the API node asserting
+``this contraction chain realizes that opaque contract.'' \Cref{fig:appk-extern}
+draws it. The edge is a \emph{reference}, not a dependency: the implementation does
+not build on the opaque API---it is an \emph{alternative} to it---so the edge
+carries no rank or liveness constraint. A reviewer reads both sides and checks they
+match: the opaque \code{\#extern} contract against the from-our-primitives chain.
+That review is the discipline the boundary buys; the lowering-verifier audits the
+correspondence.
+
+\begin{figure}[t]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[node distance=9mm and 22mm]
+  % API node (extern, violet)
+  \node[extern, text width=42mm] (api)
+    {\textbf{kernel API}\;\code{\#extern}\\[2pt]
+     \footnotesize \code{quad\_kernel ::}\\
+     \footnotesize \code{GeomData -> [(E,P,C)] -> [(E,P,C')]}\\[2pt]
+     \footnotesize\itshape opaque libCEED contract\\(shape $+$ semantics; body delegated)};
+  % impl node (stage, blue)
+  \node[stage, below=of api, text width=58mm] (impl)
+    {\textbf{kernel implementation}\\[2pt]
+     \footnotesize $G^{\mathsf T}\,B_{\diffop}^{\mathsf T}\,D\,B_{\diffop}\,G$\\[2pt]
+     \footnotesize from firm substrate:\\
+     \footnotesize \code{element\_restrict}, \code{basis\_apply},\\
+     \footnotesize \code{quad\_point\_contract}, \code{geom\_factor\_build}};
+  % the realizes-kernel-api reference edge (free, navigational)
+  \draw[refedge] (impl.north) -- node[right, font=\scriptsize, simGray, align=left]
+     {\code{realizes-}\\\code{kernel-api}\\(reference:\\free, reviewed)} (api.south);
+  % the substrate, to the side
+  \node[opbox, right=34mm of impl, text width=30mm] (sub)
+    {\footnotesize firm \code{[(E,L)]}/\code{[(E,P,C)]}/\code{[(E,P,G)]}\\substrate ops};
+  \draw[depedge] (impl.east) -- node[above, font=\scriptsize, simBlue] {composes} (sub.west);
+\end{tikzpicture}%
+}
+\caption[The kernel API and the kernel implementation]{The two surfaces of the
+libCEED boundary, kept distinct and linked for review (\cref{ch:synthlib}).
+\emph{Top (violet, \code{\#extern}):} the kernel \emph{API}---the opaque libCEED
+contract, stating the shape signature and pointwise semantics of the innermost
+kernel with no claim about its realization. \emph{Bottom (blue):} the kernel
+\emph{implementation}---the five-stage contraction chain of this appendix, built by
+composing the firm \code{[(E,L)]}/\code{[(E,P,C)]}/\code{[(E,P,G)]} substrate
+operators. The \code{realizes-kernel-api} edge (dotted) is a \emph{reference}, not a
+dependency: the implementation is an alternative to the opaque API, not a consumer
+of it, so the edge carries no rank or liveness---it is a correspondence a reviewer
+checks. The same \code{\#extern} pattern recurs at the SLEPc eigensolve
+(\cref{ch:eigenvalues}) and the triangular solves inside a smoother
+(\cref{ch:smoothers}).}
+\label{fig:appk-extern}
+\end{figure}
+
+\begin{keyidea}
+The matrix-free operator is a chain of element-local tensor contractions over named
+axes---the GPU-native form, and the kernel \emph{implementation} behind the libCEED
+boundary. The boundary has two surfaces: the kernel \emph{API}, an opaque
+\code{\#extern} contract stating shape and semantics; and the kernel
+\emph{implementation}, the chain $G^{\mathsf T}B_{\diffop}^{\mathsf T}D B_{\diffop}G$
+built from firm substrate operators. A \code{realizes-kernel-api} reference edge
+links them for review. We own the mathematics; the library owns the machine; and
+the two meet at a narrow, well-typed, reviewable interface.
+\end{keyidea}
+
+\section{Why this is the accelerator target}
+\label{sec:appk-gpu}
+
+Step back from the stages and look at what the whole operator turned out to be. The
+finite-element operator $\mat{A}$---the discretization of Maxwell's weak form, the
+object every solver in the book applies---is a composition of tensor contractions
+over named axes. Gather is an indexed copy. Evaluate and integrate are dense
+contractions of an \code{[(E, L)]} tensor against a tabulated basis, yielding
+\code{[(E, P, C)]}, and on tensor-product elements they factor further into batched
+1-D contractions. Weight is an elementwise multiply of \code{[(E, P, C)]} against
+\code{[(E, P, G)]}. Scatter is an indexed sum. There is no sparse-matrix data
+structure anywhere---no row pointers, no column indices, no stored entries. There
+are only tensors and contractions.
+
+This is precisely the shape a tensor accelerator is built to run. Every stage is a
+pure function from tensors to tensors with no aliasing and no ordering hazard; the
+element axis $E$ is a large batch dimension the hardware maps directly onto its
+parallel units; the weight stage is a perfectly diagonal map; and the only stages
+that couple data---gather and scatter---are pure index movement at the two ends,
+not arithmetic in the hot loop. The assembled-matrix form, by contrast, is a
+CPU-era data structure: irregular, pointer-chasing, bandwidth-bound, something a
+tensor backend must be coaxed into. The matrix-free kernel is the form the
+accelerator was built for, and it is exactly what the book's implementation view
+(\cref{ch:synthlib}) expands the ``\,\lstinline[style=l4style]|apply A v|\,'' of
+every solver into.
+
+\summarysection
+This appendix opened the five factors of $\mat{A}\vv=
+G^{\mathsf T}B_{\diffop}^{\mathsf T}\,D\,B_{\diffop}\,G\,\vv$ down to their exact
+tensor shapes. The gather $G$ is a pure indexed copy
+$\texttt{[(N: \dots)]}\to\texttt{[(E, L)]}$ defined by the element-to-dof index map
+$\iota(e,\ell)$; its transpose $G^{\mathsf T}$ is the scatter-add (assembly), the
+operator's only reduction, and the composition $G^{\mathsf T}G=\operatorname{diag}
+(m_n)$ is the dof-multiplicity diagonal. Basis evaluation $B_{\diffop}$ contracts
+the local-dof axis $L$ against the tabulated reference basis to produce
+\code{[(E, P, C)]}, with the mode---interp, grad, curl, div---and the component
+count $C$ selected by the term's differential operator $\diffop$; $B^{\mathsf T}$
+contracts the quadrature axis $P$ back to local dofs, carrying the discrete
+integral. The center stage $D$ is the embarrassingly parallel diagonal: a pointwise
+multiply against \code{geom\_data}, block-diagonal in the full $(E,P)$ index. That
+geometry factor, of shape \code{[(E, P, G)]} with $G=2+d^2$ components, is built
+once by \code{geom\_factor\_build} from the Jacobian metric
+($\abs{\det J}$ for mass, $J^{-1}J^{-\mathsf T}\abs{\det J}$ for grad--grad), with
+the quadrature weight and material coefficient pre-multiplied in. This is the
+build-time stratum---computed once per $(\text{mesh},\text{order})$ and reused
+across the hundreds of applies a solve performs---as against the transient run-time
+tensors rebuilt on every action. On tensor-product elements sum-factorization
+reorders the basis contraction from $O(P\cdot L)=O((p+1)^{2d})$ to
+$O(d\,P^{1/d}L)=O(d(p+1)^{d+1})$---a transparent reordering, same answer, $27\times$
+at $p=8$ in 3-D. The innermost kernel is sealed behind the libCEED boundary, which
+the spec gives two surfaces: an opaque \code{\#extern} kernel \emph{API} stating
+shape and semantics, and a kernel \emph{implementation}---the contraction chain of
+this appendix from firm substrate operators---tied to it by a
+\code{realizes-kernel-api} reference edge for review. Because every stage is a
+contraction over named axes with no sparse-matrix structure anywhere, the
+matrix-free kernel \emph{is} the GPU-native implementation view (\cref{ch:synthlib})
+that the book has been building toward.
+
+\furtherreading
+The matrix-free, sum-factorized, tensor-contraction view of high-order
+finite-element operators, and the kernel-API/implementation split realized through
+libCEED's \code{\#extern} boundary, are the design philosophy of the CEED project;
+its co-design survey~\citep{ceed2021} is the entry point to the libraries (libCEED,
+MFEM) that realize the five-stage decomposition and the operation-count argument for
+sum-factorization. For the finite-element foundations this appendix builds on---the
+reference element, the tabulated bases and quadrature, the Jacobian metric, and the
+element matrices the operator factors---Jin's text on the finite-element method in
+electromagnetics~\citep{jin2014} gives the Maxwell-specific grounding, and the
+mathematical theory of the spaces and their approximation properties is developed in
+Brenner and Scott~\citep{brennerscott2008}. The build-time/run-time stratification
+the geometry factor relies on is treated in its own right in \cref{ch:strata}; the
+implementation view the contraction chain feeds is \cref{ch:synthlib}.

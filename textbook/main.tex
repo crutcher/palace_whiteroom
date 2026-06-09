@@ -1,0 +1,203 @@
+% Tensor-Field Simulation: How the Synthesis Surface Simulates Its Targets
+% Build: latexmk -pdf main.tex   (pdflatex + bibtex; TeX Live 2023)
+\documentclass[11pt,letterpaper,oneside,openany]{memoir}
+
+\usepackage{style/simbook}
+\usepackage{style/simtikz}
+
+% ── memoir page layout ───────────────────────────────────────────────────────
+\setlrmarginsandblock{1.15in}{1.15in}{*}
+\setulmarginsandblock{1.1in}{1.25in}{*}
+\checkandfixthelayout
+\setsecnumdepth{subsection}
+\maxtocdepth{section}
+
+% memoir chapter style
+\chapterstyle{veelo}
+\setlength{\beforechapskip}{0pt}
+
+% running heads
+\makepagestyle{simhead}
+\makeevenhead{simhead}{\thepage}{}{\small\itshape\leftmark}
+\makeoddhead{simhead}{\small\itshape\rightmark}{}{\thepage}
+\makeevenfoot{simhead}{}{}{}
+\makeoddfoot{simhead}{}{}{}
+\pagestyle{simhead}
+
+\title{\Huge\bfseries Tensor-Field Simulation\\[2mm]
+  \Large How the Synthesis Surface Simulates Its Targets}
+\author{The Palace Whiteroom}
+\date{Draft --- \today}
+
+\includeonly{
+  frontmatter/preface,
+  frontmatter/howtoread,
+  frontmatter/notation,
+  part1-orientation/ch01-simulator-and-targets,
+  part1-orientation/ch02-lifecycle,
+  part1-orientation/ch03-big-idea,
+  part1-orientation/ch04-situating,
+  part2-fieldtheory/ch05-maxwell,
+  part2-fieldtheory/ch06-reductions,
+  part2-fieldtheory/ch07-weak,
+  part2-fieldtheory/ch08-galerkin,
+  part2-fieldtheory/ch09-functionspaces,
+  part2-fieldtheory/ch10-derham,
+  part2-fieldtheory/ch11-refelement,
+  part2-fieldtheory/ch12-assembly,
+  part2-fieldtheory/ch13-matrixfree,
+  part2-fieldtheory/ch14-bc,
+  part3-calculus/ch15-language,
+  part3-calculus/ch16-records,
+  part3-calculus/ch17-tensors,
+  part3-calculus/ch18-shapes,
+  part3-calculus/ch19-fold,
+  part3-calculus/ch20-combinators,
+  part3-calculus/ch21-monad,
+  part3-calculus/ch22-strata,
+  part3-calculus/ch23-operators,
+  part3-calculus/ch24-rotations,
+  part4-machinery/ch25-krylov,
+  part4-machinery/ch26-cg,
+  part4-machinery/ch27-gmres,
+  part4-machinery/ch28-orthog,
+  part4-machinery/ch29-givens,
+  part4-machinery/ch30-precond,
+  part4-machinery/ch31-smoothers,
+  part4-machinery/ch32-multigrid,
+  part4-machinery/ch33-eigenvalues,
+  part4-machinery/ch34-krylovschur,
+  part4-machinery/ch35-deflation,
+  part4-machinery/ch36-time,
+  part4-machinery/ch37-amr,
+  part4-machinery/ch38-reductions,
+  part5-modalities/ch39-electrostatics,
+  part5-modalities/ch40-magnetostatics,
+  part5-modalities/ch41-eigenmodes,
+  part5-modalities/ch42-driven,
+  part5-modalities/ch43-transient,
+  part5-modalities/ch44-waveports,
+  part5-modalities/ch45-fulltrace,
+  part6-synthesis/ch46-synthlib,
+  part6-synthesis/ch47-fivelibs,
+  part6-synthesis/ch48-composing,
+  part6-synthesis/ch49-wholemachine,
+  appendices/appA-calculus,
+  appendices/appB-shapes,
+  appendices/appC-laws,
+  appendices/appD-numerics,
+  appendices/appE-kernel,
+  appendices/appF-stack,
+  appendices/appG-glossary,
+}
+
+\begin{document}
+
+\frontmatter
+\begin{titlingpage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Tensor-Field Simulation\par}
+  \vspace{6mm}
+  {\Large How the Synthesis Surface Simulates Its Targets\par}
+  \vspace{2cm}
+  {\large An illustrated introduction to simulating Maxwell's equations\\
+   as a calculus of immutable tensors and combinators\par}
+  \vfill
+  {\large The Palace Whiteroom\par}
+  \vspace{4mm}
+  {\itshape Draft --- \today\par}
+\end{titlingpage}
+
+\cleardoublepage
+\tableofcontents*
+\clearpage
+\listoffigures*
+
+\include{frontmatter/preface}
+\include{frontmatter/howtoread}
+\include{frontmatter/notation}
+
+\mainmatter
+
+\part{Orientation}\label{part:orientation}
+\include{part1-orientation/ch01-simulator-and-targets}
+\include{part1-orientation/ch02-lifecycle}
+\include{part1-orientation/ch03-big-idea}
+\include{part1-orientation/ch04-situating}
+
+\part{The Field Theory}\label{part:fieldtheory}
+\include{part2-fieldtheory/ch05-maxwell}
+\include{part2-fieldtheory/ch06-reductions}
+\include{part2-fieldtheory/ch07-weak}
+\include{part2-fieldtheory/ch08-galerkin}
+\include{part2-fieldtheory/ch09-functionspaces}
+\include{part2-fieldtheory/ch10-derham}
+\include{part2-fieldtheory/ch11-refelement}
+\include{part2-fieldtheory/ch12-assembly}
+\include{part2-fieldtheory/ch13-matrixfree}
+\include{part2-fieldtheory/ch14-bc}
+
+\part{The Abstract Framework}\label{part:framework}
+\include{part3-calculus/ch15-language}
+\include{part3-calculus/ch16-records}
+\include{part3-calculus/ch17-tensors}
+\include{part3-calculus/ch18-shapes}
+\include{part3-calculus/ch19-fold}
+\include{part3-calculus/ch20-combinators}
+\include{part3-calculus/ch21-monad}
+\include{part3-calculus/ch22-strata}
+\include{part3-calculus/ch23-operators}
+\include{part3-calculus/ch24-rotations}
+
+\part{The Numerical Machinery}\label{part:machinery}
+\include{part4-machinery/ch25-krylov}
+\include{part4-machinery/ch26-cg}
+\include{part4-machinery/ch27-gmres}
+\include{part4-machinery/ch28-orthog}
+\include{part4-machinery/ch29-givens}
+\include{part4-machinery/ch30-precond}
+\include{part4-machinery/ch31-smoothers}
+\include{part4-machinery/ch32-multigrid}
+\include{part4-machinery/ch33-eigenvalues}
+\include{part4-machinery/ch34-krylovschur}
+\include{part4-machinery/ch35-deflation}
+\include{part4-machinery/ch36-time}
+\include{part4-machinery/ch37-amr}
+\include{part4-machinery/ch38-reductions}
+
+\part{The Constituent Modalities}\label{part:modalities}
+\include{part5-modalities/ch39-electrostatics}
+\include{part5-modalities/ch40-magnetostatics}
+\include{part5-modalities/ch41-eigenmodes}
+\include{part5-modalities/ch42-driven}
+\include{part5-modalities/ch43-transient}
+\include{part5-modalities/ch44-waveports}
+\include{part5-modalities/ch45-fulltrace}
+
+\part{The Collection}\label{part:collection}
+\include{part6-synthesis/ch46-synthlib}
+\include{part6-synthesis/ch47-fivelibs}
+\include{part6-synthesis/ch48-composing}
+\include{part6-synthesis/ch49-wholemachine}
+
+\appendix
+\part{Appendices --- Deep Computation Semantics}\label{part:appendices}
+\include{appendices/appA-calculus}
+\include{appendices/appB-shapes}
+\include{appendices/appC-laws}
+\include{appendices/appD-numerics}
+\include{appendices/appE-kernel}
+\include{appendices/appF-stack}
+\include{appendices/appG-glossary}
+% \part{The Abstract Framework}      ...
+% \part{The Numerical Machinery}     ...
+% \part{The Constituent Modalities}  ...
+% \part{The Collection}              ...
+% \appendix \part{Appendices}        ...
+
+\backmatter
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

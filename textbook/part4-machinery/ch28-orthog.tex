@@ -1,0 +1,1191 @@
+\chapter{Orthogonalization: Arnoldi, Lanczos, and Gram--Schmidt}
+\label{ch:orthog}
+
+\chapterorient{Every Krylov solver in this Part rests on one ability: to take a
+growing pile of nearly parallel vectors and straighten them into an orthonormal
+basis. GMRES (\cref{ch:gmres}) called this step \code{orthogonalize} and moved
+on; this is the careful version. We build Gram--Schmidt from its geometry, then
+meet its two faces---classical and modified---and discover that the difference
+between them is not arithmetic but \emph{order}: modified Gram--Schmidt is a
+genuine sequential dependency, a concrete specimen of the obstruction of
+\cref{ch:rotations}. We watch both lose orthogonality in finite precision, learn
+the ``twice is enough'' repair, and then assemble the orthogonalizer into the two
+recurrences the rest of the book runs on: Arnoldi, which feeds GMRES, and
+Lanczos, which---for symmetric operators---collapses to a miraculous three-term
+recurrence and then, just as miraculously, falls apart numerically. The thread
+running through all of it is a single \emph{contract}: ``the basis is
+orthonormal, to a tolerance.'' Everything downstream depends on that contract
+holding.}
+
+% local: lowercase bold-a for the worked-example input vectors (not in the shared preamble)
+\providecommand{\va}{\mathbf{a}}
+
+\section{The goal: an orthonormal basis for a Krylov subspace}
+\label{sec:goal}
+
+A Krylov subspace solver does not work with the operator $\mat{A}$ directly. It
+works inside the \emph{Krylov subspace}
+\[
+  \mathcal{K}_m(\mat{A}, \vv)
+    \;=\; \operatorname{span}\bigl\{\vv,\;\mat{A}\vv,\;\mat{A}^2\vv,\;\dots,\;
+      \mat{A}^{m-1}\vv\bigr\},
+\]
+the span of the vector $\vv$ and its repeated images under $\mat{A}$. The reason
+this subspace is useful is the subject of \cref{ch:gmres} and \cref{ch:cg}; here
+we take it as given and ask a narrower question. To compute \emph{inside}
+$\mathcal{K}_m$---to solve a least-squares problem there, to project the operator
+onto it---we need a \emph{basis}: a set of $m$ vectors that span it and that we
+can compute with. The obvious basis is the one in the definition, the
+\emph{power basis} $\{\vv, \mat{A}\vv, \mat{A}^2\vv, \dots\}$. It is also,
+catastrophically, the worst possible basis to compute with.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % ===== LEFT: the power basis collapses toward a line =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simRust] at (1.5,2.7) {power basis: nearly parallel};
+    \draw[->,simGray] (-0.2,0)--(3.1,0);
+    \draw[->,simGray] (0,-0.2)--(0,2.4);
+    % v, Av, A2v all crowding one direction
+    \draw[flow,simRust] (0,0)--(2.6,1.5) node[right,font=\scriptsize]{$\vv$};
+    \draw[flow,simRust] (0,0)--(2.75,1.25) node[right,font=\scriptsize]{$\mat{A}\vv$};
+    \draw[flow,simRust] (0,0)--(2.85,1.05) node[right,font=\scriptsize]{$\mat{A}^2\vv$};
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (1.5,-0.7)
+      {they crowd one direction:\\the dominant eigenvector};
+  \end{scope}
+  \draw[simGray!45, thick] (3.7,-1.0) -- (3.7,3.0);
+  % ===== RIGHT: the orthonormal basis spreads out =====
+  \begin{scope}[xshift=5.0cm]
+    \node[font=\small\bfseries, text=simGreen] at (1.3,2.7) {orthonormal basis: spread out};
+    \draw[->,simGray] (-0.2,0)--(2.6,0);
+    \draw[->,simGray] (0,-0.2)--(0,2.4);
+    \draw[flow,simGreen] (0,0)--(2.0,0) node[right,font=\scriptsize]{$\vq_1$};
+    \draw[flow,simGreen] (0,0)--(0,2.0) node[above,font=\scriptsize]{$\vq_2$};
+    \draw (1.7,0) -- (1.7,0.3) -- (2.0,0.3);
+    \node[font=\scriptsize] at (1.9,0.5) {$90^\circ$};
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (1.3,-0.7)
+      {mutually orthogonal,\\unit length: well-conditioned};
+  \end{scope}
+\end{tikzpicture}
+\caption[Power basis versus orthonormal basis]{Why the Krylov subspace needs an
+orthonormal basis. \emph{Left:} the natural power basis
+$\{\vv, \mat{A}\vv, \mat{A}^2\vv, \dots\}$ is a disaster to compute with---each
+application of $\mat{A}$ pulls the vector further toward the dominant eigenvector,
+so successive members crowd into nearly the same direction. A matrix whose columns
+are these vectors is severely ill-conditioned, and in finite precision the later
+members are numerically indistinguishable from the earlier ones. \emph{Right:} an
+\emph{orthonormal} basis $\{\vq_1, \vq_2, \dots\}$ spanning the same subspace
+spreads the directions out to mutual right angles and unit length. It is the basis
+every Krylov method actually uses, and producing it from the power basis is the
+business of this chapter.}
+\label{fig:powerbasis}
+\end{figure}
+
+The trouble is visible in \cref{fig:powerbasis}. Each multiplication by $\mat{A}$
+amplifies the component of the vector along the \emph{dominant} eigenvector---the
+one with the largest eigenvalue in magnitude---more than any other. So $\mat{A}\vv$
+leans toward that eigenvector, $\mat{A}^2\vv$ leans further, and within a handful
+of steps the power-basis vectors are all crowding into nearly the same direction.
+They still, in exact arithmetic, span the full subspace; but the matrix whose
+columns they are is wildly ill-conditioned, and in floating point the later columns
+carry almost no new information. This is the same effect that makes the
+\emph{power method} converge to the dominant eigenvector---a feature there, a bug
+here.
+
+The cure is to build, as we go, an \emph{orthonormal} basis for the same subspace:
+a set of vectors $\vq_1, \vq_2, \dots, \vq_m$ that are mutually orthogonal and of
+unit length,
+\[
+  \inner{\vq_i}{\vq_j} = \delta_{ij}
+    \;=\;
+    \begin{cases} 1 & i = j,\\ 0 & i \ne j, \end{cases}
+\]
+and that span $\mathcal{K}_m$ exactly as the power basis does. An orthonormal basis
+is perfectly conditioned---the matrix $\mat{Q}$ with these columns satisfies
+$\mat{Q}^{\!\top}\mat{Q} = \mat{I}$, the best-conditioned matrix there is---so every
+later computation inside $\mathcal{K}_m$ is numerically clean. The procedure that
+manufactures such a basis, one vector at a time, from the power basis is
+\emph{Gram--Schmidt orthogonalization}, and it is the foundation everything in this
+chapter is built on.
+
+\begin{keyidea}
+A Krylov solver works inside the subspace
+$\mathcal{K}_m(\mat{A},\vv) = \operatorname{span}\{\vv, \mat{A}\vv, \dots,
+\mat{A}^{m-1}\vv\}$, but never in the natural power basis, which collapses toward
+the dominant eigenvector and is hopelessly ill-conditioned. It works instead in an
+\emph{orthonormal} basis $\vq_1,\dots,\vq_m$ for the same subspace---mutually
+orthogonal, unit length, $\inner{\vq_i}{\vq_j} = \delta_{ij}$. Building that basis
+incrementally, as each new Krylov vector arrives, is the job of Gram--Schmidt, and
+the quality of the basis it produces is what every downstream method silently
+relies on.
+\end{keyidea}
+
+\section{Gram--Schmidt: subtract the projections, then normalize}
+\label{sec:gschmidt}
+
+Gram--Schmidt is one idea, applied repeatedly. Suppose we have already built an
+orthonormal set $\vq_1, \dots, \vq_{m}$ and a new vector $\vw$ arrives (in the
+Krylov setting, $\vw = \mat{A}\vq_m$, the next power-basis member). We want to turn
+$\vw$ into the next basis vector $\vq_{m+1}$. The new vector almost certainly
+overlaps the directions we already have; the orthonormal basis must point somewhere
+\emph{new}. So we do two things, in order:
+
+\begin{enumerate}
+  \item \textbf{Subtract off the part of $\vw$ that lies in the span we already
+  have.} The component of $\vw$ along a unit vector $\vq_j$ is the scalar
+  projection $\inner{\vw}{\vq_j}$, and the vector projection is
+  $\inner{\vw}{\vq_j}\,\vq_j$. Subtracting all of these leaves the
+  \emph{orthogonal residual}
+  \[
+    \vw' \;=\; \vw \;-\; \sum_{j=1}^{m} \inner{\vw}{\vq_j}\,\vq_j,
+  \]
+  the part of $\vw$ that points outside $\operatorname{span}\{\vq_1,\dots,\vq_m\}$.
+  \item \textbf{Normalize.} The residual $\vw'$ has the right \emph{direction} but
+  not unit length, so we scale it:
+  \[
+    \vq_{m+1} \;=\; \frac{\vw'}{\norm{\vw'}}.
+  \]
+\end{enumerate}
+
+The first step is the heart of the matter; the second is bookkeeping.
+\Cref{fig:gschmidt} draws the geometry in three dimensions, where it can be seen
+all at once. The vector $\vw$ casts a ``shadow'' onto the plane spanned by
+$\vq_1, \vq_2$; subtracting that shadow leaves exactly the vertical component, which
+points out of the plane in a brand-new direction.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.05, >={Stealth[length=2.4mm]}]
+  % the q1-q2 plane drawn as a parallelogram
+  \fill[simBgGreen, opacity=0.7] (-0.3,-0.4) -- (3.0,-0.1) -- (3.6,0.9) -- (0.3,0.6) -- cycle;
+  \node[font=\scriptsize\itshape, text=simGreen] at (3.1,1.2) {$\operatorname{span}\{\vq_1,\vq_2\}$};
+  % basis vectors q1, q2 in the plane (origin at O)
+  \coordinate (O) at (0.6,0.1);
+  \draw[flow,simGreen] (O) -- ++(2.0,0.15) node[below right,font=\scriptsize]{$\vq_1$};
+  \draw[flow,simGreen] (O) -- ++(0.55,0.45) node[above left,font=\scriptsize]{$\vq_2$};
+  % w sticking up out of the plane
+  \coordinate (Wtip) at (2.3,2.5);
+  \draw[flow,simRust,very thick] (O) -- (Wtip) node[above,font=\scriptsize]{$\vw$};
+  % the shadow (projection onto the plane)
+  \coordinate (Ptip) at (2.55,1.0);
+  \draw[flow,simBlue] (O) -- (Ptip)
+    node[pos=0.6,below right,font=\scriptsize,text=simBlue]
+      {$\displaystyle\sum_j\inner{\vw}{\vq_j}\vq_j$};
+  % the orthogonal residual w' (vertical), drawn from Ptip up to Wtip
+  \draw[flow,simViolet,very thick] (Ptip) -- (Wtip)
+    node[pos=0.5,right,font=\scriptsize,text=simViolet]{$\vw'$ (residual)};
+  % dashed drop line emphasising the shadow
+  \draw[densely dashed,simGray] (Wtip) -- (Ptip);
+  % right-angle mark at Ptip between plane and residual
+  \draw[simInk] ($(Ptip)+(-0.18,0.0)$) -- ($(Ptip)+(-0.18,0.18)$) -- ($(Ptip)+(0.0,0.18)$);
+  % normalize annotation
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (4.0,2.3)
+    {\textbf{1.} subtract the shadow\\(projection onto the span)};
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (4.0,1.3)
+    {\textbf{2.} normalize $\vw'$:\\$\vq_3 = \vw'/\norm{\vw'}$};
+  \node[opbox, anchor=west] at (4.0,0.3) {$\vq_3 \perp \operatorname{span}\{\vq_1,\vq_2\}$};
+\end{tikzpicture}
+\caption[Gram--Schmidt, geometrically]{One Gram--Schmidt step, seen in three
+dimensions. The new vector $\vw$ (rust) sticks up out of the plane already spanned
+by $\vq_1,\vq_2$ (green). Its \emph{shadow} on that plane is the projection
+$\sum_j \inner{\vw}{\vq_j}\vq_j$ (blue)---the part of $\vw$ we already have.
+Subtracting the shadow leaves the orthogonal residual $\vw'$ (violet), which by
+construction meets the plane at a right angle and so points in a genuinely new
+direction. Normalizing $\vw'$ to unit length yields the next basis vector $\vq_3$.
+Every orthogonalization method in this chapter is some scheduling of exactly this
+\emph{subtract-the-projections-then-normalize} step; what differs is the
+\emph{order} in which the projections are subtracted.}
+\label{fig:gschmidt}
+\end{figure}
+
+That the residual really is orthogonal to everything we kept is a one-line
+calculation, and worth doing once because it is the contract the whole chapter
+guarantees.
+
+\begin{lemma}[The residual is orthogonal to the span]
+\label{lem:residorthog}
+Let $\vq_1,\dots,\vq_m$ be orthonormal and
+$\vw' = \vw - \sum_{j=1}^m \inner{\vw}{\vq_j}\vq_j$. Then
+$\inner{\vw'}{\vq_i} = 0$ for every $i \in \{1,\dots,m\}$.
+\end{lemma}
+\begin{proof}
+Take the inner product of $\vw'$ with $\vq_i$ and use linearity:
+\[
+  \inner{\vw'}{\vq_i}
+    = \inner{\vw}{\vq_i} - \sum_{j=1}^m \inner{\vw}{\vq_j}\,\inner{\vq_j}{\vq_i}
+    = \inner{\vw}{\vq_i} - \sum_{j=1}^m \inner{\vw}{\vq_j}\,\delta_{ji}
+    = \inner{\vw}{\vq_i} - \inner{\vw}{\vq_i} = 0,
+\]
+where the middle step used orthonormality, $\inner{\vq_j}{\vq_i} = \delta_{ji}$, to
+collapse the sum to its single $j = i$ term. \qedhere
+\end{proof}
+
+The coefficients $\inner{\vw}{\vq_j}$ are not waste; they are the record of
+\emph{how much} of $\vw$ lay in each previous direction. Stacked into a column they
+become the entries of the \emph{Hessenberg matrix} that Arnoldi produces
+(\cref{sec:arnoldi}), and the solver downstream reads them as the projection of the
+operator onto the Krylov basis. Orthogonalization thus produces two things at once:
+the new basis vector, and the column of coefficients. Keep both in view---they are
+the $(\vw', H)$ pair that the framework's \code{orthogonalize} operator returns.
+
+\begin{notationbox}
+We follow the framework's \code{orthogonalize} contract: the operator
+\emph{orthogonalizes against a normalized basis but does not itself normalize its
+output.} It returns the residual $\vw'$ and the coefficient column $H$ where
+$H_j = \inner{\vw}{\vq_j}$; the caller takes $\norm{\vw'}$ (which becomes the next
+Hessenberg sub-diagonal entry) and divides. We keep the normalization explicit and
+separate throughout, because the two recurrences of \cref{sec:arnoldi,sec:lanczos}
+attach different meaning to that final norm.
+\end{notationbox}
+
+\section{Classical versus modified Gram--Schmidt}
+\label{sec:cgsmgs}
+
+The recipe of \cref{sec:gschmidt} hides a scheduling decision that does not matter
+in exact arithmetic and matters enormously in floating point. The residual is a sum
+of $m$ projection-subtractions; the question is \emph{against which vector each
+projection coefficient is computed}. There are two natural answers, and they are the
+two classical algorithms.
+
+\subsection{Classical Gram--Schmidt (CGS)}
+
+The literal reading of the formula
+$\vw' = \vw - \sum_j \inner{\vw}{\vq_j}\vq_j$ computes every coefficient against the
+\emph{same original} $\vw$:
+\[
+  H_j = \inner{\vw}{\vq_j} \quad\text{for all } j, \qquad
+  \vw' = \vw - \sum_{j=1}^m H_j\,\vq_j .
+\]
+All $m$ inner products read the input $\vw$ and nothing else, so they are mutually
+independent: they can be computed in any order, batched into a single matrix-vector
+product $\mat{Q}^{\!\top}\vw$, and---on a parallel machine---reduced in one
+collective communication. This is \emph{classical Gram--Schmidt}, CGS, and its
+defining structural feature is that \emph{the $m$ projections do not depend on one
+another}.
+
+\subsection{Modified Gram--Schmidt (MGS)}
+
+The alternative subtracts the projections \emph{one at a time}, and each coefficient
+is computed against the \emph{partially-orthogonalized} vector left by the previous
+subtractions. Write $\vw^{(0)} = \vw$ and, for $j = 1, \dots, m$,
+\[
+  H_j = \inner{\vw^{(j-1)}}{\vq_j}, \qquad
+  \vw^{(j)} = \vw^{(j-1)} - H_j\,\vq_j,
+\]
+and set $\vw' = \vw^{(m)}$. This is \emph{modified Gram--Schmidt}, MGS. Each step
+projects the \emph{running residual} onto the next basis vector, rather than
+projecting the original. Equivalently, MGS applies a left-to-right composition of
+rank-one projectors,
+\[
+  \vw' = \bigl(\mat{I} - \vq_m\vq_m^{\!\top}\bigr)\cdots
+         \bigl(\mat{I} - \vq_1\vq_1^{\!\top}\bigr)\,\vw,
+\]
+where CGS applies the single combined projector
+$\bigl(\mat{I} - \sum_j \vq_j\vq_j^{\!\top}\bigr)\vw$ in one shot.
+
+\begin{keyidea}
+CGS and MGS compute the \emph{same orthogonal residual in exact arithmetic}---both
+are the projection $(\mat{I} - \mat{Q}\mat{Q}^{\!\top})\vw$, and the projection does
+not care how you bracket the subtractions. They differ only in
+\emph{against which vector each coefficient is taken}: CGS uses the original $\vw$
+for all of them (independent, parallelizable), MGS uses the running residual
+$\vw^{(j-1)}$ for the $j$-th (each depends on the last). That single difference of
+\emph{ordering} is the whole story---it has no effect in exact arithmetic and a
+decisive effect in finite precision, and it is the reason both algorithms exist.
+\end{keyidea}
+
+\subsection{The same residual, two schedules}
+
+The algebraic equivalence is worth seeing directly. In MGS,
+\[
+  \vw^{(j)} = \vw^{(j-1)} - \inner{\vw^{(j-1)}}{\vq_j}\vq_j .
+\]
+But $\vw^{(j-1)} = \vw - \sum_{i<j}\inner{\vw^{(i-1)}}{\vq_i}\vq_i$ already has the
+$\vq_i$ ($i<j$) components removed, and since the basis is orthonormal,
+$\inner{\vw^{(j-1)}}{\vq_j} = \inner{\vw}{\vq_j}$ exactly---subtracting components
+along \emph{other} basis vectors does not change the component along $\vq_j$. So in
+exact arithmetic MGS's coefficient equals CGS's, the running subtraction reaches the
+same place, and $\vw^{(m)} = \vw - \sum_j \inner{\vw}{\vq_j}\vq_j$. The two are one
+computation with two bracketings. \Cref{fig:cgsmgs} draws the data-flow difference
+that this algebraic identity papers over.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: CGS = fan-out, independent =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.4,3.0) {CGS: independent projections};
+    \node[data, minimum width=10mm] (w) at (1.4,2.2) {$\vw$};
+    \foreach \i/\x in {1/0,2/1.4,3/2.8}{
+      \node[opbox, minimum width=11mm] (p\i) at (\x,1.0)
+        {$\inner{\vw}{\vq_{\i}}$};
+      \draw[flow] (w.south) -- (p\i.north);
+    }
+    \node[product, minimum width=30mm] (sum) at (1.4,-0.3)
+      {$\vw' = \vw - \sum_j H_j\vq_j$};
+    \foreach \i in {1,2,3}{\draw[flow] (p\i.south) -- (sum.north);}
+    \node[font=\scriptsize, text=simGreen, align=center] at (1.4,-1.3)
+      {all read the \emph{same} $\vw$:\\one batched reduction $\mat{Q}^{\!\top}\vw$,\\
+       \emph{parallelizable}};
+  \end{scope}
+  \draw[simGray!50, thick] (4.2,-1.7) -- (4.2,3.2);
+  % ===== RIGHT: MGS = sequential chain =====
+  \begin{scope}[xshift=5.2cm]
+    \node[font=\small\bfseries, text=simRust] at (2.3,3.0) {MGS: sequential subtraction};
+    \node[data, minimum width=9mm] (w0) at (-0.4,1.0) {$\vw^{(0)}$};
+    \foreach \i/\x in {1/1.0,2/2.5,3/4.0}{
+      \node[opbox, minimum width=10mm] (s\i) at (\x,1.0) {$-H_{\i}\vq_{\i}$};
+    }
+    \node[product, minimum width=10mm] (w3) at (5.4,1.0) {$\vw'$};
+    \draw[flow] (w0.east) -- (s1.west);
+    \draw[flow] (s1.east) -- node[above,font=\scriptsize]{$\vw^{(1)}$} (s2.west);
+    \draw[flow] (s2.east) -- node[above,font=\scriptsize]{$\vw^{(2)}$} (s3.west);
+    \draw[flow] (s3.east) -- (w3.west);
+    % each coefficient READS the incoming running residual
+    \foreach \i/\x in {1/1.0,2/2.5,3/4.0}{
+      \node[font=\scriptsize, text=simGold!80!black] at (\x,2.05)
+        {$H_{\i}=\inner{\vw^{(\the\numexpr\i-1\relax)}}{\vq_{\i}}$};
+      \draw[refedge, simGold!80!black] (\x,1.85) -- (s\i.north);
+    }
+    \node[font=\scriptsize, text=simRust, align=center] at (2.5,-0.6)
+      {each $H_j$ reads the previous residual $\vw^{(j-1)}$:\\
+       \textbf{column order is a sequential dependency},\\ \emph{not parallelizable}};
+  \end{scope}
+\end{tikzpicture}
+\caption[Classical versus modified Gram--Schmidt]{The data-flow contrast that the
+algebra hides. \emph{Left (CGS):} every projection coefficient $H_j$ reads the
+\emph{same} original $\vw$, so the $m$ inner products fan out independently---they
+are a single batched reduction $\mat{Q}^{\!\top}\vw$, reorderable and parallelizable,
+with no arrows \emph{between} them. \emph{Right (MGS):} the coefficient $H_j$ reads
+the \emph{running residual} $\vw^{(j-1)}$ left by the previous subtraction (gold
+read-arrows), so the steps form a strict chain $\vw^{(0)}\!\to\!\vw^{(1)}\!\to\!
+\cdots\!\to\!\vw'$ in which step $j$ cannot start until step $j-1$ finishes. This is
+exactly the \code{map}-versus-\code{fold} split of \cref{ch:combinators}: CGS is a
+\code{map} of independent dots, MGS is a \code{fold} threading the residual. The
+column order is a genuine sequential dependency, the obstruction of
+\cref{ch:rotations} in miniature.}
+\label{fig:cgsmgs}
+\end{figure}
+
+\subsection{MGS is a sequential obstruction}
+
+The right-hand side of \cref{fig:cgsmgs} should look familiar: it is precisely the
+\code{fold} of \cref{ch:combinators}, and its carried dependency is precisely the
+\emph{sequential obstruction} of \cref{ch:rotations}. MGS threads a running residual
+through a chain of subtractions; the $j$-th step \emph{reads the output of the
+$(j-1)$-th}. That is the loop-carried dependency that blocks the iteration rotation
+($L_2 \to L_3$): you cannot turn MGS into a single ``orthogonalize against all
+columns at once'' whole-field operation, because there is no such operation---the
+later subtractions must see the results of the earlier ones.
+
+\begin{pitfall}
+The temptation, looking at CGS, is to ``optimize'' MGS into it: both compute the same
+residual in exact arithmetic, and CGS parallelizes, so why not always use CGS? Because
+the equivalence is \emph{exact-arithmetic only}. In finite precision CGS is
+numerically unstable---it loses orthogonality fast for ill-conditioned bases
+(\cref{sec:lossorthog})---while MGS holds it far better. The sequential dependency of
+MGS is not an accident to be optimized away; it is \emph{load-bearing}. Each step's
+subtraction against the freshly-cleaned residual is exactly what keeps the rounding
+error from accumulating. Replacing MGS with CGS for speed silently degrades the
+basis, and the degradation only shows up later, as a solver that stalls or a
+spurious eigenvalue. This is the canonical case where a \emph{sequential dependency
+is the algorithm}, not an obstacle to it.
+\end{pitfall}
+
+There is an algebraic fingerprint of this dependency, and it is the cleanest way to
+state ``MGS does not parallelize.'' For CGS, permuting the columns of $\mat{Q}$
+permutes the coefficients but leaves the residual unchanged (up to reduction-order
+rounding), because the combined projector $\mat{I} - \sum_j\vq_j\vq_j^{\!\top}$ is
+symmetric in its terms. For MGS, permuting the columns changes the intermediate
+residuals $\vw^{(j)}$ and hence the bit-level result: the rank-one projectors
+$(\mat{I} - \vq_j\vq_j^{\!\top})$ do not commute in finite precision. \emph{Column
+order matters for MGS and not for CGS}---that non-commutativity is the algebraic
+shadow of the sequential obstruction.
+
+\subsection{A worked comparison on nearly parallel vectors}
+
+The whole point of preferring MGS is invisible until we watch both run in finite
+precision on an ill-conditioned input. \Cref{wex:cgsmgs} does exactly that.
+
+\begin{workedexample}{CGS versus MGS on three nearly parallel vectors}{cgsmgs}
+We orthonormalize three nearly parallel vectors in $\Real^3$ and measure how
+orthogonal the resulting basis actually is. Take a small parameter
+$\varepsilon = 10^{-4}$ and the columns
+\[
+  \va_1 = \begin{psmallmatrix} 1 \\ \varepsilon \\ 0 \end{psmallmatrix},\quad
+  \va_2 = \begin{psmallmatrix} 1 \\ 0 \\ \varepsilon \end{psmallmatrix},\quad
+  \va_3 = \begin{psmallmatrix} 1 \\ \varepsilon \\ \varepsilon \end{psmallmatrix}.
+\]
+All three are within $\varepsilon$ of the vector $(1,0,0)^{\!\top}$, so they are
+\emph{nearly parallel}: a textbook ill-conditioned input, exactly the situation the
+power basis produces. We carry the arithmetic as if in a precision coarse enough
+that terms of order $\varepsilon^2$ relative to $1$ are lost---the qualitative
+behavior is the same in IEEE double, just at $\varepsilon \approx 10^{-8}$.
+
+\smallskip
+\emph{Step 1 (shared by both).} Normalize $\va_1$. Its norm is
+$\sqrt{1 + \varepsilon^2} \approx 1$, so $\vq_1 = \va_1 = (1, \varepsilon, 0)^{\!\top}$
+to working precision.
+
+\smallskip
+\emph{Step 2 (shared).} Orthogonalize $\va_2$ against $\vq_1$. The coefficient is
+$\inner{\va_2}{\vq_1} = 1\cdot 1 + 0\cdot\varepsilon + \varepsilon\cdot 0 = 1$, so
+\[
+  \vw' = \va_2 - 1\cdot\vq_1
+       = \begin{psmallmatrix}1\\0\\\varepsilon\end{psmallmatrix}
+       - \begin{psmallmatrix}1\\\varepsilon\\0\end{psmallmatrix}
+       = \begin{psmallmatrix}0\\-\varepsilon\\\varepsilon\end{psmallmatrix},
+  \qquad
+  \vq_2 = \frac{\vw'}{\norm{\vw'}}
+        = \frac{1}{\sqrt2}\begin{psmallmatrix}0\\-1\\1\end{psmallmatrix}.
+\]
+So far CGS and MGS agree---the divergence is in step 3, the first step with
+\emph{two} prior vectors to project against.
+
+\smallskip
+\emph{Step 3, CGS.} Both coefficients are taken against the \emph{original} $\va_3$:
+\[
+  H_1 = \inner{\va_3}{\vq_1} = 1 + \varepsilon^2 \approx 1, \qquad
+  H_2 = \inner{\va_3}{\vq_2}
+      = \tfrac{1}{\sqrt2}(0 - \varepsilon + \varepsilon) = 0.
+\]
+Then
+\[
+  \vw'_{\text{CGS}} = \va_3 - H_1\vq_1 - H_2\vq_2
+    = \begin{psmallmatrix}1\\\varepsilon\\\varepsilon\end{psmallmatrix}
+    - \begin{psmallmatrix}1\\\varepsilon\\0\end{psmallmatrix}
+    = \begin{psmallmatrix}0\\0\\\varepsilon\end{psmallmatrix},
+  \qquad
+  \vq_3^{\text{CGS}} = \begin{psmallmatrix}0\\0\\1\end{psmallmatrix}.
+\]
+This looks clean---but the trap is in $H_1$. The exact $\inner{\va_3}{\vq_1}$ is
+$1 + \varepsilon^2$, and in finite precision the $\varepsilon^2$ term is
+\emph{below the rounding threshold relative to $1$} and is dropped. The CGS residual
+is computed by subtracting a rounded $H_1 \vq_1$ from $\va_3$, and the small error in
+$H_1$ contaminates the $\vq_1$-direction of the residual: $\vq_3^{\text{CGS}}$ retains
+a component of size $\sim\varepsilon$ along $\vq_1$ that should have been removed.
+Measuring the residual orthogonality after the fact:
+\[
+  \inner{\vq_3^{\text{CGS}}}{\vq_1} \;\sim\; \varepsilon, \qquad
+  \inner{\vq_3^{\text{CGS}}}{\vq_2} \;\sim\; \varepsilon .
+\]
+
+\smallskip
+\emph{Step 3, MGS.} Now subtract sequentially. First against $\vq_1$:
+\[
+  H_1 = \inner{\va_3}{\vq_1} \approx 1, \qquad
+  \vw^{(1)} = \va_3 - H_1\vq_1
+    = \begin{psmallmatrix}0\\0\\\varepsilon\end{psmallmatrix}
+    \quad(\text{to working precision}).
+\]
+Then take the \emph{second} coefficient against the cleaned residual $\vw^{(1)}$, not
+against $\va_3$:
+\[
+  H_2 = \inner{\vw^{(1)}}{\vq_2}
+      = \tfrac{1}{\sqrt2}(0 - 0 + \varepsilon) = \tfrac{\varepsilon}{\sqrt2},
+  \qquad
+  \vw^{(2)} = \vw^{(1)} - H_2\vq_2
+    = \begin{psmallmatrix}0\\0\\\varepsilon\end{psmallmatrix}
+      - \tfrac{\varepsilon}{2}\begin{psmallmatrix}0\\-1\\1\end{psmallmatrix}
+    = \tfrac{\varepsilon}{2}\begin{psmallmatrix}0\\1\\1\end{psmallmatrix}.
+\]
+The crucial difference: MGS \emph{noticed} the residual's small $\vq_2$-overlap
+($H_2 = \varepsilon/\sqrt2$, which CGS computed as $0$ because it looked at the
+original $\va_3$ where the overlap was masked by the large shared component) and
+removed it. The resulting $\vq_3^{\text{MGS}} = \tfrac{1}{\sqrt2}(0,1,1)^{\!\top}$
+satisfies, to working precision,
+\[
+  \inner{\vq_3^{\text{MGS}}}{\vq_1} \;\sim\; \varepsilon^2, \qquad
+  \inner{\vq_3^{\text{MGS}}}{\vq_2} \;\sim\; \varepsilon^2 .
+\]
+
+\smallskip
+\emph{The verdict.} Both algorithms produce a unit vector roughly orthogonal to the
+first two; but the \emph{residual orthogonality} differs by a full power of
+$\varepsilon$: CGS leaves overlaps of size $\varepsilon$, MGS of size
+$\varepsilon^2$. At $\varepsilon = 10^{-4}$ that is $10^{-4}$ versus $10^{-8}$; at the
+IEEE-double analogue it is the difference between a basis that is orthogonal to four
+digits and one orthogonal to eight. The reason is exactly the sequential dependency:
+MGS's second projection sees a residual from which the first overlap has \emph{already}
+been cleaned, so it can detect and remove the small leftover; CGS's second projection
+looks at the raw input, where the same small overlap is buried under the dominant
+shared component and rounds away. Order is what bought the extra digits.
+\end{workedexample}
+
+\section{Loss of orthogonality and re-orthogonalization}
+\label{sec:lossorthog}
+
+\Cref{wex:cgsmgs} showed a single step; the effect compounds. As the basis grows and
+the input vectors grow more nearly parallel---which is exactly what the Krylov power
+basis does---both algorithms accumulate error, and the orthogonality of the computed
+basis decays. The standard way to measure the decay is the \emph{loss of
+orthogonality},
+\[
+  \eta_m \;=\; \norm{\mat{Q}_m^{\!\top}\mat{Q}_m - \mat{I}}_2,
+\]
+the distance of the Gram matrix from the identity after $m$ vectors. For a perfectly
+orthonormal basis $\eta_m = 0$; in finite precision it grows, and how fast it grows
+is the sharpest distinction among the methods.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=11.5cm, height=6.6cm,
+  xlabel={basis size $m$},
+  ylabel={loss of orthogonality $\eta_m=\norm{\mat{Q}_m^{\!\top}\mat{Q}_m-\mat{I}}$},
+  ymode=log, ymin=1e-17, ymax=1e0,
+  xmin=0, xmax=30,
+  grid=both, grid style={simGray!18},
+  legend pos=south east, legend cell align=left,
+  legend style={font=\scriptsize, fill=white, draw=simGray!40},
+  label style={font=\footnotesize}, tick label style={font=\scriptsize},
+  ytick={1e-16,1e-12,1e-8,1e-4,1e0},
+]
+% CGS: loses orthogonality quadratically in the condition number -> climbs fast to O(1)
+\addplot[simRust, very thick, mark=*, mark size=1.1pt] coordinates {
+  (1,2e-16)(3,5e-15)(5,8e-13)(7,4e-11)(9,9e-10)(11,3e-8)(13,6e-7)(15,2e-5)
+  (17,4e-4)(19,6e-3)(21,5e-2)(23,3e-1)(25,7e-1)(27,9e-1)(29,1.0)};
+\addlegendentry{CGS (unstable: $\eta\!\sim\!\kappa^2 u$)}
+% MGS: loses orthogonality linearly in kappa -> climbs slowly, stays well below 1
+\addplot[simBlue, very thick, mark=square*, mark size=1.1pt] coordinates {
+  (1,2e-16)(3,4e-16)(5,9e-16)(7,2e-15)(9,5e-15)(11,1e-14)(13,3e-14)(15,7e-14)
+  (17,2e-13)(19,5e-13)(21,1e-12)(23,3e-12)(25,7e-12)(27,1.4e-11)(29,3e-11)};
+\addlegendentry{MGS (stable: $\eta\!\sim\!\kappa u$)}
+% CGS2 / MGS+reorth: flat at machine epsilon
+\addplot[simGreen, very thick, mark=triangle*, mark size=1.3pt] coordinates {
+  (1,2e-16)(3,2e-16)(5,3e-16)(7,3e-16)(9,3e-16)(11,4e-16)(13,4e-16)(15,4e-16)
+  (17,5e-16)(19,5e-16)(21,5e-16)(23,5e-16)(25,6e-16)(27,6e-16)(29,6e-16)};
+\addlegendentry{CGS2 / re-orthogonalized (flat at $u$)}
+% machine epsilon reference line
+\addplot[simGray, densely dashed, thick, domain=0:30, samples=2] {2.2e-16};
+\node[font=\scriptsize, text=simGray, anchor=west] at (axis cs:0.5,5e-16) {machine $u$};
+\end{axis}
+\end{tikzpicture}
+\caption[Loss of orthogonality versus iteration]{How orthogonality decays as the
+basis grows, on an ill-conditioned (nearly rank-deficient) input---a schematic of the
+classic experiment. The vertical axis is the loss of orthogonality
+$\eta_m = \norm{\mat{Q}_m^{\!\top}\mat{Q}_m - \mat{I}}$, log-scaled. \emph{CGS}
+(rust) loses orthogonality \emph{quadratically} in the condition number,
+$\eta\sim\kappa^2 u$, climbing all the way to $O(1)$---a basis that is no longer
+orthogonal at all. \emph{MGS} (blue) loses it only \emph{linearly},
+$\eta\sim\kappa u$, staying many orders of magnitude better for the same input.
+\emph{CGS2}---classical Gram--Schmidt done twice---and MGS-with-one-reorthogonalization
+(green) stay pinned at machine precision $u$ regardless of $m$: full orthogonality,
+recovered. The flat green line is the ``twice is enough'' result of
+\cref{sec:twiceenough} made visible.}
+\label{fig:lossorthog}
+\end{figure}
+
+\Cref{fig:lossorthog} is the picture to carry away. On an ill-conditioned input the
+three regimes separate cleanly. CGS loses orthogonality \emph{quadratically} in the
+condition number $\kappa$ of the input: $\eta \sim \kappa^2 u$, where $u$ is the unit
+roundoff. For an input with $\kappa = 10^8$ in double precision
+($u \approx 10^{-16}$), that is $\eta \sim 10^{16}\cdot 10^{-16} = 1$---total loss of
+orthogonality, exactly what \cref{wex:cgsmgs} foreshadowed compounding over many
+steps. MGS loses it only \emph{linearly}, $\eta \sim \kappa u$, which for the same
+input is $\eta \sim 10^{-8}$: degraded, but usable. The extra factor of $\kappa$ that
+CGS pays is the price of computing every coefficient against the contaminated
+original instead of the cleaned residual.
+
+\begin{pitfall}
+Even MGS is not safe for the worst inputs. Its loss $\eta \sim \kappa u$ is small only
+while $\kappa$ is moderate; for a sufficiently ill-conditioned basis---and a Krylov
+power basis becomes arbitrarily ill-conditioned as $m$ grows---$\kappa u$ can itself
+reach $O(1)$, and MGS too produces a basis that is no longer orthogonal. The blue
+curve in \cref{fig:lossorthog} stays low because the example's $\kappa$ is moderate;
+push $\kappa$ high enough and it climbs. The lesson is that \emph{neither} classical
+nor modified Gram--Schmidt is unconditionally trustworthy. When orthogonality must be
+guaranteed to machine precision---and for Krylov eigensolvers it must---one needs the
+re-orthogonalization of the next subsection.
+\end{pitfall}
+
+\subsection{``Twice is enough'': CGS2 and re-orthogonalization}
+\label{sec:twiceenough}
+
+The repair is disarmingly simple: \emph{do it again}. After computing a residual
+$\vw'$ that should be orthogonal to the basis but, in finite precision, retains a
+small overlap, run the \emph{whole} Gram--Schmidt step a second time on $\vw'$. The
+second pass projects out the small residual overlap that the first pass left behind.
+For classical Gram--Schmidt this two-pass version is called \emph{CGS2}; the same
+idea applied to MGS is \emph{MGS with re-orthogonalization}.
+
+The remarkable fact, due to Kahan and analyzed by Parlett and others, is that
+\emph{one} extra pass suffices: after re-orthogonalizing once, the basis is
+orthogonal to machine precision, and a third pass buys nothing. This is the ``twice
+is enough'' result, and it is what flattens the green curve in \cref{fig:lossorthog}
+at $u$.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0, >={Stealth[length=2.4mm]}]
+  % the span (a horizontal line in 2D representing span{q1,...})
+  \draw[very thick, simGreen] (-0.3,0) -- (5.5,0);
+  \node[font=\scriptsize\itshape, text=simGreen, anchor=west] at (4.6,-0.35)
+    {$\operatorname{span}\{\vq_1,\dots\}$};
+  \coordinate (O) at (0.4,0);
+  % input w (well off the span)
+  \draw[flow,simRust,very thick] (O) -- (1.0,2.4) node[above,font=\scriptsize]{$\vw$};
+  % first pass result: SHOULD be vertical but tilts slightly (residual overlap)
+  \coordinate (w1) at (2.6,2.3);
+  \draw[flow,simBlue,very thick] (O) -- (w1)
+    node[right,font=\scriptsize]{$\vw'$ (pass 1)};
+  \node[font=\scriptsize,text=simBlue] at (3.1,1.4) {small residual overlap $\swarrow$};
+  % the leftover horizontal component of w1
+  \draw[densely dashed, simGray] (w1) -- (2.6,0);
+  \draw[<->, simRust, thick] (0.4,-0.55) -- (2.6,-0.55)
+    node[midway,below,font=\scriptsize,text=simRust]{$\sim u\kappa$ overlap remains};
+  % second pass result: truly vertical
+  \coordinate (w2) at (0.4,2.3);
+  \draw[flow,simGreen,very thick] (O) -- (w2)
+    node[left,font=\scriptsize]{$\vw''$ (pass 2)};
+  \draw[simInk] (0.4,0.0) ++(0,0.2) -- ++(0.2,0) -- ++(0,-0.2);
+  \node[font=\scriptsize,text=simGreen,anchor=west] at (0.7,2.0)
+    {orthogonal to $\sim u$};
+  % the correction arrow from w1 to w2
+  \draw[->, simViolet, densely dashed, thick] (w1) -- (w2)
+    node[midway,above,font=\scriptsize,text=simViolet]{2nd projection removes it};
+\end{tikzpicture}
+\caption[``Twice is enough'' re-orthogonalization]{Why one extra pass restores
+orthogonality. The input $\vw$ (rust) is orthogonalized against the span (green
+line). In finite precision the first pass produces $\vw'$ (blue) that is \emph{nearly}
+perpendicular but retains a small residual overlap with the span---of relative size
+$\sim u\kappa$, the loss of orthogonality. Running the \emph{same} Gram--Schmidt step
+a second time on $\vw'$ projects out that small leftover (violet correction),
+yielding $\vw''$ (green) orthogonal to machine precision $u$. The Kahan/Parlett
+result is that this happens in \emph{one} re-pass: the second residual overlap is of
+size $\sim u\cdot u\kappa$, already negligible, so a third pass is unnecessary. Twice
+is enough.}
+\label{fig:twice}
+\end{figure}
+
+\begin{notationbox}
+CGS2 returns the \emph{combined} coefficients. The first pass computes a coefficient
+column $H$ and a residual $\vw'$; the second pass computes a small \emph{correction}
+column $\Delta H$ against $\vw'$ and a twice-projected residual $\vw''$. The operator
+returns $H + \Delta H$ (so that $\vw = \vw'' + \sum_j (H_j + \Delta H_j)\vq_j$ still
+recovers the input exactly) and the residual $\vw''$. The second pass is \emph{not}
+algebraically fusible into the first---it reads the once-orthogonalized $\vw'$, which
+did not exist until the first pass ran---so CGS2 genuinely costs two passes of inner
+products. That doubled cost, traded against $\kappa^2 u \to u$ orthogonality, is the
+CGS2 bargain.
+\end{notationbox}
+
+The cost/stability trade is now a clean menu, and it is worth tabulating because the
+solver chooses from it at configuration time (\cref{tab:gstradeoff}).
+
+\begin{table}[t]
+\centering
+\caption[The orthogonalization cost/stability trade]{The orthogonalization menu. The
+\emph{communication} column counts global reductions per orthogonalization against an
+$m$-vector basis (the cost that dominates on a parallel machine): CGS batches all $m$
+inner products into one reduction, MGS needs $m$ separate ones because each waits on
+the previous subtraction. The \emph{orthogonality} column is the resulting loss
+$\eta\sim\norm{\mat{Q}^{\!\top}\mat{Q}-\mat{I}}$ in terms of the condition number
+$\kappa$ and unit roundoff $u$. There is no free lunch: the cheapest-to-communicate
+method (CGS) is the least stable, and the most stable (CGS2) pays double.}
+\label{tab:gstradeoff}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Method & Passes & Communication & Orthogonality $\eta$ \\
+\midrule
+CGS  & 1 & 1 reduction (batched) & $\sim \kappa^2 u$ \quad(unstable) \\
+MGS  & 1 & $m$ reductions (sequential) & $\sim \kappa\, u$ \quad(stable) \\
+CGS2 & 2 & 2 reductions (batched) & $\sim u$ \quad(full) \\
+MGS+reorth & 2 & $2m$ reductions & $\sim u$ \quad(full) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CGS2 occupies a sweet spot the table makes plain: it recovers full orthogonality
+($\eta\sim u$) like MGS-with-reorthogonalization, but because each of its two passes
+\emph{batches} its $m$ inner products into a single reduction, it pays only
+\emph{two} communications rather than $2m$. On a parallel machine where communication
+dominates, CGS2 is often the method of choice precisely because it buys MGS-quality
+stability while keeping CGS-style batched communication. The sequential dependency
+that made MGS stable is also what makes it communication-bound; CGS2 sidesteps both
+by re-running the parallel-friendly classical pass.
+
+\section{Arnoldi: Gram--Schmidt on the Krylov sequence}
+\label{sec:arnoldi}
+
+We now assemble the orthogonalizer into the recurrence that drives GMRES. The
+\emph{Arnoldi iteration} is nothing more than Gram--Schmidt applied to the Krylov
+sequence as it is generated: start from a unit vector $\vq_1$, and at each step form
+the next power-basis vector $\mat{A}\vq_j$, orthogonalize it against all the basis
+vectors so far, and normalize the residual to get $\vq_{j+1}$.
+
+\begin{lstlisting}[style=l4style]
+arnoldi_step :: LinOp -> Basis -> Tensor[$S] -> (Tensor[$S], Tensor[$m+1])
+arnoldi_step A V q_j =
+  let w        = apply A q_j                    -- next power-basis vector A q_j
+      (w', h)  = orthogonalize w V CGS2         -- project off span(V); h = coeffs H[1..m]
+      beta     = nrm2 w'                         -- the sub-diagonal entry h_{m+1,m}
+      q_next   = scal (1 / beta) w'              -- normalize: the new basis vector
+  in (q_next, append h beta)                     -- (new column of V, full Hessenberg column)
+\end{lstlisting}
+
+The coefficients produced along the way are not discarded---they are the entries of a
+matrix. After $m$ steps, the basis vectors $\vq_1,\dots,\vq_m$ form the columns of an
+$N\times m$ matrix $\mat{V}_m$, and the orthogonalization coefficients fill an
+$(m+1)\times m$ matrix $\bar{\mat{H}}_m$ that is \emph{upper Hessenberg}: zero below
+the first sub-diagonal. The entry $H_{ij}$ is the coefficient of $\vq_i$ when
+$\mat{A}\vq_j$ was orthogonalized---which is zero whenever $i > j+1$, because at step
+$j$ there were only $j$ basis vectors to project against plus the one new
+sub-diagonal normalization. These fit together into the \emph{Arnoldi relation}
+\[
+  \mat{A}\,\mat{V}_m \;=\; \mat{V}_{m+1}\,\bar{\mat{H}}_m,
+\]
+which says: applying $\mat{A}$ to the basis and re-expressing the result in the basis
+\emph{is} the Hessenberg matrix. \Cref{fig:arnoldi} draws the relation and the shapes
+involved.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.9]
+  % A V_m
+  \node[font=\small] at (-5.4,0) {$\mat{A}\,\mat{V}_m$};
+  \node[font=\small] at (-4.3,0) {$=$};
+  % V_{m+1} (tall thin block)
+  \draw[thick, fill=simBgGreen] (-3.7,-1.5) rectangle (-2.5,1.5);
+  \foreach \x in {-3.45,-3.2,-2.95,-2.7}{\draw[simGreen!60] (\x,-1.5)--(\x,1.5);}
+  \node[font=\small] at (-3.1,-2.0) {$\mat{V}_{m+1}$};
+  \node[font=\scriptsize,text=simGray] at (-3.1,1.85) {$N\times(m{+}1)$};
+  \node[font=\small] at (-2.15,0) {$\cdot$};
+  % H-bar (upper Hessenberg: staircase)
+  \draw[thick, fill=simBgBlue] (-1.6,-1.5) rectangle (0.4,1.5);
+  % shade the zero (below sub-diagonal) region
+  \fill[white] (-1.6,-1.5) -- (0.4,1.5) ++(0,-0.6) -- (0.4,-1.5) -- cycle;
+  % redraw the staircase boundary of the nonzero (upper Hessenberg) part
+  \draw[thick, simBlue]
+    (-1.6,1.5) -- (0.4,1.5) -- (0.4,0.9)
+    -- (0.0,0.9) -- (0.0,0.3) -- (-0.4,0.3) -- (-0.4,-0.3)
+    -- (-0.8,-0.3) -- (-0.8,-0.9) -- (-1.2,-0.9) -- (-1.2,-1.5) -- (-1.6,-1.5) -- cycle;
+  \node[font=\small] at (-0.6,-2.0) {$\bar{\mat{H}}_m$};
+  \node[font=\scriptsize,text=simGray] at (-0.6,1.85) {$(m{+}1)\times m$};
+  \node[font=\scriptsize,text=simBlue] at (-0.55,0.55) {upper};
+  \node[font=\scriptsize,text=simBlue] at (-0.55,0.15) {Hessenberg};
+  \node[font=\scriptsize,text=simGray] at (-0.05,-1.15) {sub-diag};
+  \node[font=\scriptsize,text=simGray] at (-1.15,-0.55) {$=\norm{\vw'}$};
+  % annotation on the right
+  \node[align=left, font=\scriptsize, text=simGray, anchor=west] at (1.2,0.6)
+    {$\bar{\mat{H}}_m[i,j]$ = coefficient of $\vq_i$\\
+     when $\mat{A}\vq_j$ was orthogonalized;\\
+     the \emph{projection coefficients} $H$\\
+     of \cref{sec:gschmidt} stacked column by column.};
+  \node[align=left, font=\scriptsize, text=simGreen, anchor=west] at (1.2,-0.7)
+    {sub-diagonal $\bar{\mat{H}}_m[j{+}1,j]=\norm{\vw'}$\\
+     is the caller's \code{nrm2} normalization;\\
+     zeros below it $\Rightarrow$ Hessenberg shape.};
+\end{tikzpicture}
+\caption[Arnoldi produces $\mat{V}$ and an upper-Hessenberg $\bar{\mat{H}}$]{The
+Arnoldi relation $\mat{A}\mat{V}_m = \mat{V}_{m+1}\bar{\mat{H}}_m$, the output of
+running Gram--Schmidt on the Krylov sequence. The basis vectors fill the tall thin
+$\mat{V}_{m+1}$ (green); the orthogonalization coefficients fill the small
+\emph{upper-Hessenberg} $\bar{\mat{H}}_m$ (blue)---zero below the first sub-diagonal,
+because at step $j$ only the first $j$ basis vectors and one new normalization
+contribute. Each column of $\bar{\mat{H}}_m$ is exactly the $(\vw', H)$ coefficient
+pair of \cref{sec:gschmidt}: the entries $H_{ij}=\inner{\mat{A}\vq_j}{\vq_i}$ above
+the diagonal, and the sub-diagonal entry the residual norm $\norm{\vw'}$ from the
+caller's normalization. GMRES (\cref{ch:gmres}) reads this small Hessenberg matrix to
+solve its least-squares problem; the Arnoldi eigensolvers of \cref{ch:krylovschur}
+read its eigenvalues. The orthogonalizer of this chapter is the engine that fills
+both matrices.}
+\label{fig:arnoldi}
+\end{figure}
+
+This is precisely the \code{orthogonalize} step GMRES (\cref{ch:gmres}) calls once
+per inner iteration, and the upper-Hessenberg matrix it fills is the small dense
+matrix on which GMRES solves its least-squares problem. The Arnoldi eigensolvers of
+\cref{ch:krylovschur} use the very same recurrence and read $\bar{\mat{H}}_m$'s
+\emph{eigenvalues} (the Ritz values) as approximations to $\mat{A}$'s. Either way,
+the orthogonalizer is the engine: feed it the Krylov sequence, and it produces both
+the orthonormal basis and the Hessenberg matrix that is the projection of $\mat{A}$
+onto that basis.
+
+\section{Lanczos: the three-term recurrence for symmetric operators}
+\label{sec:lanczos}
+
+Now specialize to a \emph{symmetric} operator, $\mat{A} = \mat{A}^{\!\top}$ (the case
+of the eigenmode analysis and of conjugate gradients). Something remarkable happens
+to Arnoldi: almost all of the orthogonalization coefficients turn out to be zero in
+advance, and the long Gram--Schmidt sum collapses to a \emph{three-term recurrence}.
+
+\subsection{Why symmetry shortens the recurrence}
+
+The Hessenberg matrix $\bar{\mat{H}}_m$ of Arnoldi is the projection of $\mat{A}$ onto
+the Krylov basis: $H_{ij} = \inner{\mat{A}\vq_j}{\vq_i}$. If $\mat{A}$ is symmetric,
+then so is this projection,
+\[
+  H_{ij} = \inner{\mat{A}\vq_j}{\vq_i} = \inner{\vq_j}{\mat{A}\vq_i}
+         = \inner{\mat{A}\vq_i}{\vq_j} = H_{ji},
+\]
+where the middle equality is the symmetry of $\mat{A}$. But $\bar{\mat{H}}_m$ is
+\emph{already} upper Hessenberg---zero below the first sub-diagonal. A matrix that is
+both upper Hessenberg \emph{and} symmetric is \emph{tridiagonal}: zero everywhere
+except the diagonal and the two adjacent off-diagonals. So in the symmetric case the
+Hessenberg matrix is a tridiagonal matrix $\mat{T}_m$, and the Arnoldi
+orthogonalization of $\mat{A}\vq_j$ has \emph{only three nonzero coefficients}: against
+$\vq_{j-1}$, against $\vq_j$, and the new sub-diagonal normalization for $\vq_{j+1}$.
+Every projection against $\vq_1,\dots,\vq_{j-2}$ is zero, automatically.
+
+\begin{keyidea}
+For a symmetric operator $\mat{A}$, the Arnoldi Hessenberg matrix is symmetric, and a
+symmetric Hessenberg matrix is \emph{tridiagonal}. So orthogonalizing
+$\mat{A}\vq_j$---which in general requires projecting against \emph{all} $j$ previous
+basis vectors---requires projecting against only the \emph{two} most recent ones,
+$\vq_j$ and $\vq_{j-1}$; the projections against all earlier vectors are exactly zero.
+The long Gram--Schmidt sum collapses to a three-term recurrence. This is the same
+miracle that gives conjugate gradients its short recurrence (\cref{ch:cg}): symmetry
+makes a quantity that would otherwise depend on the whole history depend on only the
+last two steps.
+\end{keyidea}
+
+The recurrence is the \emph{Lanczos iteration}. Writing the three coefficients as
+$\alpha_j$ (diagonal), $\beta_{j-1}$ (the sub-diagonal coupling to the previous
+vector), and $\beta_j$ (the new normalization), the step is
+\[
+  \vw \;=\; \mat{A}\vq_j - \alpha_j\,\vq_j - \beta_{j-1}\,\vq_{j-1},
+  \qquad
+  \alpha_j = \inner{\mat{A}\vq_j}{\vq_j},
+  \qquad
+  \beta_j = \norm{\vw},
+  \qquad
+  \vq_{j+1} = \frac{\vw}{\beta_j}.
+\]
+Only $\vq_j$ and $\vq_{j-1}$ appear---the two previous vectors, nothing earlier. In
+code:
+
+\begin{lstlisting}[style=l4style]
+lanczos_step :: LinOp -> Tensor[$S] -> Tensor[$S] -> Scalar
+                      -> (Tensor[$S], Scalar, Scalar)
+lanczos_step A q_j q_prev beta_prev =
+  let u      = apply A q_j                       -- A q_j
+      alpha  = dot u q_j                          -- diagonal coeff <A q_j, q_j>
+      w      = axpby (-alpha) q_j 1 u             -- subtract the q_j component
+      w'     = axpy (-beta_prev) q_prev w         -- subtract the q_{j-1} component (only TWO!)
+      beta   = nrm2 w'                            -- new sub-diagonal / normalization
+      q_next = scal (1/beta) w'
+  in (q_next, alpha, beta)
+\end{lstlisting}
+
+The contrast with \code{arnoldi\_step} is the whole point: Arnoldi's
+\code{orthogonalize w V} projects against the \emph{entire} basis \code{V}, a sum
+that grows with $m$; Lanczos projects against exactly two stored vectors,
+$\vq_j$ and $\vq_{j-1}$, a fixed-size step. \Cref{fig:lanczos} draws the difference,
+and the tridiagonal matrix the recurrence fills.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.95]
+  % ===== LEFT: the three-term recurrence, only two previous vectors =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simGreen] at (1.4,2.9) {three-term recurrence};
+    % the stored vectors
+    \node[data, minimum width=11mm] (qm1) at (-0.4,1.6) {$\vq_{j-1}$};
+    \node[data, minimum width=11mm] (qj)  at (1.4,1.6) {$\vq_j$};
+    \node[stage, minimum width=14mm] (Aqj) at (1.4,0.5) {$\mat{A}\vq_j$};
+    \draw[flow] (qj) -- (Aqj);
+    \node[product, minimum width=11mm] (qn) at (1.4,-0.8) {$\vq_{j+1}$};
+    % only the two recent vectors feed the new one
+    \draw[flow,simGreen] (qj.south west) .. controls +(-0.2,-0.6) .. (qn.north)
+      node[pos=0.5,left,font=\scriptsize,text=simGreen]{$-\alpha_j$};
+    \draw[flow,simGreen] (qm1.south) .. controls +(0,-1.4) .. (qn.west)
+      node[pos=0.3,left,font=\scriptsize,text=simGreen]{$-\beta_{j-1}$};
+    \draw[flow] (Aqj) -- (qn);
+    % the OLD vectors that are NOT needed
+    \node[data, minimum width=9mm, draw=simGray!40, text=simGray!60] (old) at (-1.7,1.6) {$\vq_{j-2}\dots$};
+    \draw[refedge, simRust] (old.south) .. controls +(0,-1.8) .. (qn.north west);
+    \node[font=\scriptsize, text=simRust] at (-1.5,-0.5) {coeff $=0$:};
+    \node[font=\scriptsize, text=simRust] at (-1.5,-0.85) {not needed};
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (0.4,-1.7)
+      {only $\vq_j,\vq_{j-1}$ stored:\\$O(1)$ memory per step};
+  \end{scope}
+  \draw[simGray!50, thick] (3.2,-1.9) -- (3.2,2.9);
+  % ===== RIGHT: the tridiagonal T =====
+  \begin{scope}[xshift=5.0cm]
+    \node[font=\small\bfseries, text=simBlue] at (1.5,2.9) {tridiagonal $\mat{T}_m$};
+    % draw a 5x5 tridiagonal pattern
+    \def\cell{0.55}
+    \foreach \r in {0,1,2,3,4}{
+      \foreach \c in {0,1,2,3,4}{
+        \pgfmathtruncatemacro\diff{abs(\r-\c)}
+        \ifnum\diff<2
+          \ifnum\r=\c
+            \node[fill=simBgGold, draw=simGold, minimum size=\cell cm, font=\scriptsize]
+              at (\c*\cell, -\r*\cell) {$\alpha_{\the\numexpr\r+1\relax}$};
+          \else
+            \node[fill=simBgBlue, draw=simBlue, minimum size=\cell cm, font=\scriptsize]
+              at (\c*\cell, -\r*\cell) {$\beta$};
+          \fi
+        \else
+          \node[draw=simGray!25, minimum size=\cell cm, font=\scriptsize, text=simGray!50]
+            at (\c*\cell, -\r*\cell) {$0$};
+        \fi
+      }
+    }
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (1.1,-3.1)
+      {symmetric + Hessenberg\\$=$ tridiagonal: $\alpha$ diag, $\beta$ off-diag};
+  \end{scope}
+\end{tikzpicture}
+\caption[The Lanczos three-term recurrence and its tridiagonal matrix]{The Lanczos
+specialization of Arnoldi for symmetric $\mat{A}$. \emph{Left:} the new basis vector
+$\vq_{j+1}$ is built from $\mat{A}\vq_j$ by subtracting components along only the
+\emph{two} most recent vectors, $\vq_j$ (coefficient $-\alpha_j$) and $\vq_{j-1}$
+(coefficient $-\beta_{j-1}$). All earlier vectors $\vq_{j-2},\dots$ have coefficient
+exactly zero (rust, ``not needed''), so they need not be stored: Lanczos uses $O(1)$
+memory per step where Arnoldi stores the whole growing basis. \emph{Right:} the
+coefficients fill a \emph{tridiagonal} matrix $\mat{T}_m$---the diagonal carries the
+$\alpha_j = \inner{\mat{A}\vq_j}{\vq_j}$, the two off-diagonals carry the
+$\beta_j = \norm{\vw}$, and everything else is zero. This is Arnoldi's Hessenberg
+matrix made tridiagonal by symmetry. The short recurrence is the same economy
+symmetry buys conjugate gradients (\cref{ch:cg}).}
+\label{fig:lanczos}
+\end{figure}
+
+\subsection{A worked Lanczos: two steps on a small symmetric matrix}
+
+To make the recurrence concrete, run it by hand on a $3\times 3$ symmetric matrix and
+watch the tridiagonal $\mat{T}$ assemble.
+
+\begin{workedexample}{Two Lanczos steps building a tridiagonal $\mat{T}$}{lanczos}
+Take the symmetric matrix and starting vector
+\[
+  \mat{A} = \begin{psmallmatrix} 2 & 1 & 0 \\ 1 & 2 & 1 \\ 0 & 1 & 2 \end{psmallmatrix},
+  \qquad
+  \vq_1 = \begin{psmallmatrix} 1 \\ 0 \\ 0 \end{psmallmatrix}
+  \quad(\text{already unit length}).
+\]
+
+\emph{Step 1.} Form $\mat{A}\vq_1$, the diagonal coefficient $\alpha_1$, and the
+residual:
+\[
+  \mat{A}\vq_1 = \begin{psmallmatrix} 2 \\ 1 \\ 0 \end{psmallmatrix},
+  \qquad
+  \alpha_1 = \inner{\mat{A}\vq_1}{\vq_1} = 2 .
+\]
+There is no $\vq_0$, so the recurrence has only the $\alpha_1$ term on the first step:
+\[
+  \vw = \mat{A}\vq_1 - \alpha_1\vq_1
+      = \begin{psmallmatrix} 2 \\ 1 \\ 0 \end{psmallmatrix}
+      - 2\begin{psmallmatrix} 1 \\ 0 \\ 0 \end{psmallmatrix}
+      = \begin{psmallmatrix} 0 \\ 1 \\ 0 \end{psmallmatrix},
+  \qquad
+  \beta_1 = \norm{\vw} = 1,
+  \qquad
+  \vq_2 = \frac{\vw}{\beta_1} = \begin{psmallmatrix} 0 \\ 1 \\ 0 \end{psmallmatrix}.
+\]
+Check orthogonality: $\inner{\vq_2}{\vq_1} = 0$. Good.
+
+\emph{Step 2.} Now the full three-term step, using $\vq_2$ and the previous $\vq_1$
+with its coupling $\beta_1 = 1$:
+\[
+  \mat{A}\vq_2 = \begin{psmallmatrix} 1 \\ 2 \\ 1 \end{psmallmatrix},
+  \qquad
+  \alpha_2 = \inner{\mat{A}\vq_2}{\vq_2} = 2 .
+\]
+Subtract \emph{both} the $\vq_2$ component (coefficient $\alpha_2$) and the $\vq_1$
+component (coefficient $\beta_1$):
+\[
+  \vw = \mat{A}\vq_2 - \alpha_2\vq_2 - \beta_1\vq_1
+      = \begin{psmallmatrix} 1 \\ 2 \\ 1 \end{psmallmatrix}
+      - 2\begin{psmallmatrix} 0 \\ 1 \\ 0 \end{psmallmatrix}
+      - 1\begin{psmallmatrix} 1 \\ 0 \\ 0 \end{psmallmatrix}
+      = \begin{psmallmatrix} 0 \\ 0 \\ 1 \end{psmallmatrix},
+  \qquad
+  \beta_2 = \norm{\vw} = 1,
+  \qquad
+  \vq_3 = \begin{psmallmatrix} 0 \\ 0 \\ 1 \end{psmallmatrix}.
+\]
+Check: $\inner{\vq_3}{\vq_2} = 0$ and $\inner{\vq_3}{\vq_1} = 0$---the second of these
+\emph{automatically}, even though we never projected against $\vq_1$ in step 2. That
+is the symmetry miracle in action: the $\vq_1$ component of $\mat{A}\vq_2$ was already
+exactly accounted for by the $\beta_1\vq_1$ term, so no further projection against
+$\vq_1$ (or any earlier vector) was needed.
+
+\emph{The assembled matrix.} The coefficients fill the tridiagonal
+\[
+  \mat{T}_2 = \begin{psmallmatrix} \alpha_1 & \beta_1 \\ \beta_1 & \alpha_2 \end{psmallmatrix}
+            = \begin{psmallmatrix} 2 & 1 \\ 1 & 2 \end{psmallmatrix},
+\]
+and after the third step $\mat{T}_3 = \mathrm{tridiag}(\beta;\,\alpha;\,\beta)$ with
+$\alpha = (2,2,2)$, $\beta = (1,1)$---which for this particular $\mat{A}$ is just
+$\mat{A}$ itself expressed in the Lanczos basis, since the Krylov subspace happened to
+fill all of $\Real^3$ in three steps. The eigenvalues of $\mat{T}_3$ are therefore
+exactly those of $\mat{A}$, namely $2$ and $2\pm\sqrt2$---which is the basis on which
+the eigensolvers of \cref{ch:krylovschur} read approximate eigenvalues off the small
+tridiagonal $\mat{T}_m$ for $m < N$, where the agreement is approximate rather than
+exact.
+\end{workedexample}
+
+\subsection{The catastrophe: Lanczos loses orthogonality}
+
+The three-term recurrence is beautiful and economical, and in finite precision it is
+treacherous. The short recurrence is short precisely because it \emph{trusts} that
+the projections against $\vq_1,\dots,\vq_{j-2}$ are zero and so skips them. In exact
+arithmetic they are zero. In floating point they are not---and because Lanczos never
+re-checks them, the small errors are never corrected. Orthogonality against the
+\emph{old} vectors is lost, and lost fast.
+
+\begin{pitfall}
+Lanczos loses orthogonality far more violently than Gram--Schmidt, and for a reason
+peculiar to the short recurrence: it never looks at the old basis vectors, so it
+cannot notice (let alone repair) the orthogonality it loses against them. The
+practical symptom is \emph{ghost eigenvalues}. As orthogonality decays, the Lanczos
+basis silently develops near-duplicate directions, and the tridiagonal $\mat{T}_m$
+reports the \emph{same} eigenvalue several times over---spurious copies of converged
+eigenvalues that are artifacts of the lost orthogonality, not real eigenvalues of
+$\mat{A}$. A naive Lanczos eigensolver will confidently return a multiplicity-three
+eigenvalue that has multiplicity one. The cure is a re-orthogonalization
+\emph{policy}---full re-orthogonalization against the whole stored basis (expensive,
+defeating the $O(1)$-memory point), or selective/partial re-orthogonalization that
+re-orthogonalizes only when a monitored loss-of-orthogonality estimate crosses a
+threshold. Which policy a solver chooses, and how the practical Krylov--Schur method
+of \cref{ch:krylovschur} manages it, is a central design question of the eigensolver.
+\end{pitfall}
+
+This is the trade Lanczos forces. Arnoldi, with its full orthogonalization, is
+expensive (storing and projecting against the whole basis) but stable. Lanczos, with
+its three-term recurrence, is cheap ($O(1)$ memory, two projections) but unstable, and
+buying back the stability with re-orthogonalization gives back some of the cost it
+saved. The eigensolver chapters live inside exactly this tension.
+
+\section{The orthogonality contract}
+\label{sec:contract}
+
+Step back from the four algorithms and notice what they all \emph{deliver}. CGS, MGS,
+CGS2, Arnoldi, Lanczos---each is a different schedule, a different cost, a different
+stability, a different memory footprint. But every one of them is in the business of
+producing the same thing: a basis that satisfies
+\[
+  \inner{\vq_i}{\vq_j} \approx \delta_{ij}
+  \qquad\text{to a stated tolerance,}
+\]
+and a coefficient matrix ($\bar{\mat{H}}$ or $\mat{T}$) that records the projection of
+the operator onto that basis. This is the \emph{orthogonality contract}, and it is the
+single interface every downstream method programs against.
+
+\begin{keyidea}
+\textbf{The orthogonality contract.} Every orthogonalization method in this chapter
+guarantees one thing: an orthonormal basis $\mat{Q}$ with
+$\mat{Q}^{\!\top}\mat{Q} \approx \mat{I}$ to a tolerance, together with the
+coefficients of the projection it performed. The methods differ \emph{only} in how
+well they hold the contract and at what cost---CGS cheaply but loosely, MGS stably but
+sequentially, CGS2 fully but at double cost, Lanczos cheaply but fragilely. They are
+therefore \emph{substitutable}: a caller that depends only on the contract (``give me
+an orthonormal basis'') can swap one for another without changing its own code. This
+is exactly the algorithmic-substitution that \cref{ch:rotations} calls a genuine
+rotation---one slot, \lstinline[style=l4style]@orthog := mgs | cgs | cgs2@, three
+different algorithms behind one interface.
+\end{keyidea}
+
+That substitutability is not a coincidence of notation; it is the contract doing its
+job. GMRES does not care \emph{how} its basis was orthogonalized---it cares that the
+basis is orthonormal so that its least-squares problem is well-conditioned. An Arnoldi
+eigensolver does not care which Gram--Schmidt variant filled the Hessenberg
+matrix---it cares that the Ritz values it reads are not corrupted by a basis that
+secretly lost orthogonality. The contract is what lets the solver authors reason about
+their algorithm \emph{above} the orthogonalizer, treating it as a black box with a
+guarantee, while the orthogonalizer authors reason about stability and cost
+\emph{below} the interface. And it is what makes ``did orthogonality hold?'' the first
+question to ask when a Krylov method misbehaves: a stalled GMRES or a ghost eigenvalue
+is, far more often than not, a contract quietly violated by a basis that lost its
+orthogonality and a method that never noticed.
+
+\summarysection
+A Krylov solver works inside $\mathcal{K}_m(\mat{A},\vv)$ but never in its natural
+power basis, which collapses toward the dominant eigenvector and is hopelessly
+ill-conditioned; it works in an \emph{orthonormal} basis, built incrementally by
+\emph{Gram--Schmidt}: subtract off the projections onto the previous basis vectors,
+then normalize. Gram--Schmidt has two faces. \emph{Classical} (CGS) computes every
+projection coefficient against the same original vector---independent, batchable,
+parallelizable, but numerically unstable, losing orthogonality as $\kappa^2 u$.
+\emph{Modified} (MGS) subtracts the projections one at a time against the running
+residual---stable, losing orthogonality only as $\kappa u$, but at the price of a
+genuine \emph{sequential dependency}: the column order is a loop-carried dependency, a
+concrete specimen of the obstruction of \cref{ch:rotations}, and exactly the
+\code{map}-versus-\code{fold} split of \cref{ch:combinators}. For the worst inputs
+even MGS is not enough, and \emph{re-orthogonalization} (CGS2, ``twice is enough'') one
+extra pass restores full machine-precision orthogonality. Applied to the Krylov
+sequence, Gram--Schmidt becomes \emph{Arnoldi}, producing the orthonormal $\mat{V}_m$
+and the upper-Hessenberg $\bar{\mat{H}}_m$ that GMRES (\cref{ch:gmres}) and the
+Arnoldi eigensolvers (\cref{ch:krylovschur}) consume. For \emph{symmetric} operators
+Arnoldi collapses to the \emph{Lanczos} three-term recurrence---the Hessenberg matrix
+becomes tridiagonal, the orthogonalization needs only the two most recent vectors, the
+same short-recurrence miracle that powers conjugate gradients (\cref{ch:cg})---but in
+finite precision Lanczos loses orthogonality catastrophically, producing ghost
+eigenvalues and demanding a re-orthogonalization policy. Underneath all of it is one
+\emph{orthogonality contract}: an orthonormal basis to a tolerance, plus the
+projection coefficients. The methods differ only in how well and how cheaply they hold
+it, which makes them substitutable behind one interface---the genuine rotation of
+\cref{ch:rotations}.
+
+\furtherreading
+The definitive textbook development of orthogonalization, conditioning, and the
+stability of Gram--Schmidt is Trefethen and Bau's \emph{Numerical Linear
+Algebra}~\citep{trefethenbau1997}, whose lectures on QR factorization and on the
+sensitivity of the classical versus modified algorithms are the ideal companion to
+\cref{sec:cgsmgs,sec:lossorthog}. For the full algebraic and floating-point analysis---
+the $\kappa^2 u$ versus $\kappa u$ loss-of-orthogonality bounds, the ``twice is
+enough'' re-orthogonalization result, and the Arnoldi and Lanczos recurrences with
+their reorthogonalization variants---Golub and Van Loan's \emph{Matrix
+Computations}~\citep{golubvanloan2013} is the standard reference. For the eigenvalue
+side specifically---the ghost-eigenvalue phenomenon, selective and partial
+reorthogonalization, and the practical Lanczos and Arnoldi eigensolvers that
+\cref{ch:krylovschur} builds on---Saad's \emph{Numerical Methods for Large Eigenvalue
+Problems}~\citep{saad2011eig} is the place to go deeper. Read all three with the
+\emph{orthogonality contract} of \cref{sec:contract} in mind: each is, at bottom, a
+study of how well that contract can be held and at what cost.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \emph{(Geometry.)} In $\Real^3$, let $\vq_1 = (1,0,0)^{\!\top}$,
+  $\vq_2 = (0,1,0)^{\!\top}$, and $\vw = (3, 4, 5)^{\!\top}$. Compute the
+  Gram--Schmidt residual $\vw' = \vw - \inner{\vw}{\vq_1}\vq_1 -
+  \inner{\vw}{\vq_2}\vq_2$ and verify by direct inner product that
+  $\inner{\vw'}{\vq_1} = \inner{\vw'}{\vq_2} = 0$ (the contract of
+  \cref{lem:residorthog}). What is $\vq_3$ after normalization?
+  \item \emph{(CGS versus MGS.)} Repeat \cref{wex:cgsmgs} with $\varepsilon = 10^{-3}$
+  and confirm that the residual orthogonality is $\sim\varepsilon$ for CGS and
+  $\sim\varepsilon^2$ for MGS. Then explain in one sentence why MGS's second
+  projection coefficient $H_2$ was nonzero while CGS's was (numerically) zero, in
+  terms of \emph{which vector each coefficient was taken against}.
+  \item \emph{(The sequential obstruction.)} Explain why classical Gram--Schmidt can
+  batch its $m$ inner products into a single matrix-vector product
+  $\mat{Q}^{\!\top}\vw$ but modified Gram--Schmidt cannot. Which combinator
+  (\cref{ch:combinators}) is each---\code{map} or \code{fold}? Why does permuting the
+  columns of $\mat{Q}$ change the MGS result (at the bit level) but not the CGS result?
+  \item \emph{(Twice is enough.)} A first Gram--Schmidt pass leaves a residual with a
+  relative overlap of $\sim u\kappa$ against the span. Argue heuristically why a second
+  pass reduces the overlap to $\sim u\cdot(u\kappa)$ and hence why a third pass is
+  unnecessary. Under what condition on $\kappa$ does even \emph{one} pass already
+  suffice (so that CGS2 is overkill)?
+  \item \emph{(Arnoldi shape.)} The Arnoldi relation is
+  $\mat{A}\mat{V}_m = \mat{V}_{m+1}\bar{\mat{H}}_m$. Give the dimensions of each of the
+  three matrices, and explain why $\bar{\mat{H}}_m$ has exactly one more row than
+  column and is zero below its first sub-diagonal. Which entry of $\bar{\mat{H}}_m$ is
+  the residual norm $\norm{\vw'}$ from the normalization step, and which chapter
+  (\cref{ch:gmres} or \cref{ch:krylovschur}) reads which feature of this matrix?
+  \item \emph{(Lanczos by hand.)} Run two Lanczos steps as in \cref{wex:lanczos} on
+  $\mat{A} = \begin{psmallmatrix} 4 & 1 & 0 \\ 1 & 4 & 1 \\ 0 & 1 & 4 \end{psmallmatrix}$
+  with $\vq_1 = (1,0,0)^{\!\top}$. Compute $\alpha_1, \beta_1, \vq_2, \alpha_2,
+  \beta_2, \vq_3$, assemble $\mat{T}_2$, and verify that $\vq_3$ is automatically
+  orthogonal to $\vq_1$ even though you never projected against $\vq_1$ in step~2.
+  \item \emph{(Why symmetry shortens the recurrence.)} Prove that the Arnoldi
+  Hessenberg matrix is symmetric when $\mat{A}$ is symmetric, and conclude that it is
+  tridiagonal. Then state precisely which orthogonalization coefficients Lanczos is
+  entitled to skip, and explain---in terms of finite-precision arithmetic---why
+  skipping them is exactly what causes Lanczos to lose orthogonality and produce ghost
+  eigenvalues.
+  \item \emph{(The contract as an interface.)} \cref{ch:rotations} calls
+  \lstinline[style=l4style]@orthog := mgs | cgs | cgs2@ a genuine rotation by the
+  algorithmic-substitution test. Identify the contract that all three satisfy and
+  argue that a GMRES solver written against that contract is correct regardless of
+  which variant is installed. Give one concrete way the \emph{choice} of variant could
+  still affect the solver's observable behavior, even though all three satisfy the
+  contract. (Hint: \cref{sec:lossorthog}.)
+\end{enumerate}

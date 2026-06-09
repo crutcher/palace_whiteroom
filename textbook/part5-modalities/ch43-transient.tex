@@ -1,0 +1,897 @@
+\chapter{Transient Simulations}
+\label{ch:transient}
+
+% local: velocity unknown in the first-order recast (no \vv collision; \vv is defined in simbook)
+
+\chapterorient{We return to the anchor of \cref{ch:electrostatics} one last time,
+and this time we swap the corner that the rest of Part~V has been circling. The
+electrostatic and driven analyses solve a \emph{family} of problems---a fan of
+independent solves, a \texttt{map}, parallel over terminals or frequencies. The
+transient analysis does something the other four cannot: it \emph{marches}. Each
+timestep begins exactly where the last one ended, so the solves form a chain, a
+\texttt{fold}, that no machine on earth can run out of order. This is the one
+genuinely sequential driver of the simulator. We assemble the three operators
+$\Kop,\Cop,\Mop$ once, build an implicit ODE integrator once, and then thread a
+single field-state forward through time, one opaque step at a time---and out
+falls not a matrix but a \emph{movie}, the whole time history of the field. The
+machinery of one step we built in \cref{ch:time}; here we compose it into the
+driver and draw, as vividly as we can, the contrast between the map drivers and
+this fold.}
+
+\section{The physical question}
+\label{sec:tr-question}
+
+An engineer hands us a device and a \emph{pulse}: ``inject this current burst and
+show me what happens.'' Not a steady voltage, not a single tone---a short,
+broadband packet of current $\vJ(t)$ that arrives, excites the structure, and
+rings down. The question is not ``what is the capacitance'' or ``what is the
+response at \SI{5}{GHz}''; it is \emph{``what does the field do, frame by frame,
+as time runs?''} The answer is a time history: the fields, the port voltages and
+currents, the stored energy, each sampled at every instant of a simulated
+interval. A movie, not a snapshot (\cref{fig:tr-setup}).
+
+\begin{physicsbox}
+A current pulse $\vJ(t)$---a modulated wave packet, a step, an impulse---is
+injected into a device at $t=t_0$. The fields it launches propagate, reflect off
+boundaries, couple into ports, and decay as energy bleeds away through loss and
+radiation. At each instant $t_n$ the simulation holds a complete field-state: the
+electric field $\vE(\vx,t_n)$ and magnetic field $\vB(\vx,t_n)$ everywhere in the
+domain. The output is the whole sequence
+$\vE(\cdot,t_0),\vE(\cdot,t_1),\vE(\cdot,t_2),\dots$---a time-march filmstrip, one
+frame per timestep. Nothing here is frozen ($\partial_t\neq0$) and nothing is
+assumed single-frequency: time is kept in full.
+\end{physicsbox}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.0]
+  % the drive pulse on the left
+  \begin{scope}[shift={(-4.4,0)}]
+    \draw[->, simGray] (-0.3,0)--(1.7,0) node[right,font=\scriptsize]{$t$};
+    \draw[->, simGray] (0,-0.5)--(0,0.95);
+    \draw[simRust, very thick, domain=-0.2:1.5, samples=60, smooth]
+      plot (\x, {0.75*exp(-9*(\x-0.55)^2)*cos(deg(13*(\x-0.55)))});
+    \node[font=\scriptsize, text=simRust] at (0.7,-0.85) {pulse $\vJ(t)$};
+  \end{scope}
+  \draw[flow] (-2.5,0) -- (-1.7,0);
+  % three field snapshots t0, t1, t2 ...
+  \foreach \k/\dx/\amp in {0/0/0.15, 1/2.4/0.55, 2/4.8/0.32}{
+    \begin{scope}[shift={(\dx,0)}]
+      \draw[simGray, semithick, rounded corners=2pt] (-0.85,-1.05) rectangle (0.85,1.05);
+      % wavy field inside, amplitude grows then shrinks
+      \draw[simBlue, thick, domain=-0.8:0.8, samples=40, smooth]
+        plot (\x, {\amp*sin(deg(7*\x))});
+      \draw[simBlue, thick, domain=-0.8:0.8, samples=40, smooth]
+        plot (\x, {-\amp*sin(deg(7*\x))});
+      \node[font=\scriptsize, anchor=north] at (0,-1.1) {$t_\k$};
+    \end{scope}}
+  \node[font=\scriptsize] at (6.1,0) {$\cdots$};
+  \node[font=\scriptsize\itshape, text=simGreen] at (2.4,1.5)
+    {the field evolves: a frame per timestep};
+\end{tikzpicture}
+\caption[The transient setup---a pulse and a filmstrip]{The transient analysis
+in one picture. A current pulse $\vJ(t)$ (rust, left) is injected into the device;
+the fields it launches evolve in time, and the simulation records a complete
+field-state snapshot $(\vE,\vB)$ at every timestep $t_0,t_1,t_2,\dots$ (blue, the
+field amplitude rising as the pulse arrives and decaying as energy leaves). The
+product is not a single number but the \emph{whole filmstrip}---the time history
+of the field. This is the analysis of choice for broadband excitation, for
+nonlinear materials, or simply for watching a wave propagate.}
+\label{fig:tr-setup}
+\end{figure}
+
+When do you reach for it? Three situations recommend the transient analysis over
+its frequency-domain cousins. First, \emph{broadband excitation}: a single pulse
+contains a whole band of frequencies at once (a narrow pulse in time is a wide
+band in frequency), so one transient run can recover the response across an entire
+band---where the driven analysis of \cref{ch:driven} sweeps one frequency per
+solve. Second, \emph{nonlinearity}: a material whose properties depend on the
+field amplitude has no single-frequency steady state to solve for, and only a
+time-march can follow it. Third, simply \emph{watching a wave move}: when the
+physical insight you want is spatial and temporal---a pulse crossing a junction, a
+mode building up in a cavity---the movie \emph{is} the answer.
+
+The transient analysis is the time-domain complement of the driven analysis. The
+two compute the same physics by two routes of the harmonic rule
+(\cref{ch:reductions-pde}): the driven analysis works one frequency at a time; the
+transient analysis works all frequencies at once, through a pulse, and recovers
+the spectrum afterward by a Fourier transform. We will close the chapter on
+exactly that bridge (\S\ref{sec:tr-fourier}).
+
+\section{Assemble, once: the three operators and the integrator}
+\label{sec:tr-assemble}
+
+The transient pipeline runs the same skeleton as the anchor
+(\cref{ch:situating}),
+\[
+  \texttt{config} \to \underbrace{\texttt{assemble}}_{\S\ref{sec:tr-assemble}}
+  \to \underbrace{\texttt{solve}}_{\S\ref{sec:tr-solve}}
+  \to \underbrace{\texttt{reduce}}_{\S\ref{sec:tr-reduce}} \to \texttt{product},
+\]
+and the assemble stage, as always, runs \emph{once}, before any marching begins.
+What differs from electrostatics is only \emph{how many} operators it builds and
+\emph{what} it hands them to.
+
+\subsection{Three operators on \texorpdfstring{$\Hcurl$}{H(curl)}}
+
+The governing physics is the time-domain wave equation we derived in
+\cref{ch:reductions-pde} (\S\ref{sec:transient}). Discretizing it in space only
+(the method of lines) turns Maxwell's time-domain system into a \emph{second-order}
+semi-discrete system of ordinary differential equations in the
+degree-of-freedom vector $\vs(t)$:
+\begin{equation}
+  \boxed{\;\Mop\,\ddot\vs + \Cop\,\dot\vs + \Kop\,\vs = \vJ(t)\;}
+  \label{eq:tr-secondorder}
+\end{equation}
+the damped-oscillator system of \cref{eq:transient-ode}. Here $\Mop$ is the
+$\varepsilon$-weighted \emph{mass}, $\Cop$ the $\sigma$-weighted \emph{damping},
+$\Kop$ the curl--curl \emph{stiffness}, and $\vJ(t)$ the discretized forcing
+$-\partial_t\vJ_{\text{src}}$. The unknown is the electric field, a vector field,
+so it lives in the Nédélec edge space $\Hcurl$ of \cref{ch:functionspaces}---the
+same space as the driven, magnetostatic, and eigenmode analyses, and the swap from
+electrostatics' scalar $\Hone$ that \cref{tab:es-swaps} recorded.
+
+Where electrostatics assembled one operator, transient assembles \emph{three}, by
+three calls to the same assembly fold \code{fe\_assemble} (\cref{ch:fem}), each
+over its own one-term weak form:
+\begin{lstlisting}[style=l4style]
+-- assemble the three time-domain operators, each a one-term fe_assemble fold; ALL once
+space = nd_space cfg                              -- the Nedelec H(curl) FE space (read-only)
+k = fe_assemble space [ curl_curl  (reluctivity   cfg) ]  -- (1) stiffness K  (nu * curl)
+c = fe_assemble space [ damping     (conductivity  cfg) ]  --     damping  C  (sigma * .)
+m = fe_assemble space [ mass        (permittivity  cfg) ]  --     mass     M  (epsilon * .)
+\end{lstlisting}
+This is the $\Kop/\Mop/\Cop$ recurrence of \cref{ch:reductions-pde} made concrete:
+the three operators are the fixed, reusable raw material, and every analysis is a
+recipe for recombining them. The transient recipe is
+\cref{eq:tr-secondorder}.\footnote{In Palace the three matrices are assembled once
+inside the \code{TimeOperator} constructor:
+\code{K = space\_op.GetStiffnessMatrix(...)},
+\code{C = space\_op.GetDampingMatrix(...)},
+\code{M = space\_op.GetMassMatrix(...)}
+(\code{palace/models/timeoperator.cpp:65-67}). All three are built before the time
+loop and held unchanged for the entire march.}
+
+\subsection{Build the integrator once, and seed the state}
+
+The assemble stage does two more things, both once. First it constructs the
+\emph{ODE integrator}---the routine that will advance the state one step at a time.
+As \cref{ch:time} explained at length, the semi-discrete system
+\cref{eq:tr-secondorder} is stiff (its largest eigenvalue is set by the smallest
+mesh element), so an explicit integrator would be pinned to absurdly tiny steps,
+and Palace integrates \emph{implicitly}. It recasts \cref{eq:tr-secondorder} as a
+first-order system in the doubled state $\vy=(\vs,\dot\vs)$ and hands it to a
+library integrator---generalized-$\alpha$, SDIRK, or an ARKStep---chosen by a
+config token and constructed \emph{once}, outside the loop
+(\cref{sec:integrators}).\footnote{Palace builds a
+\code{TimeDependentFirstOrderOperator} from $\Kop,\Cop,\Mop$ and constructs the
+integrator at \code{palace/models/timeoperator.cpp:311-335}, before the driver's
+time loop at \code{palace/drivers/transientsolver.cpp:77}.} Second it seeds the
+initial field-state $\vy_0$---typically rest, $\vs_0=\dot\vs_0=\mathbf0$---the value
+the fold will thread forward.
+
+\begin{keyidea}
+The transient assemble stage builds, \emph{once}, everything the march will reuse:
+the three operators $\Kop,\Cop,\Mop$ on $\Hcurl$ (by three \code{fe\_assemble}
+folds), the implicit ODE integrator (constructed from those operators, the step
+machinery of \cref{ch:time}), and the seed field-state $\vy_0$. None of these
+changes during the march---the operator capture is hoisted out of the time loop,
+exactly as the electrostatic operator was hoisted out of the terminal loop
+(\cref{ch:electrostatics}). The hoist is the same; what differs is the loop it sits
+outside of.
+\end{keyidea}
+
+\section{Solve: the state-threaded fold}
+\label{sec:tr-solve}
+
+Here is the corner this chapter exists to teach. With the operators assembled, the
+integrator built, and the state seeded, the solve stage marches. And the march is
+\emph{not} a map. It is a \texttt{fold}: the one solve corner of \cref{ch:situating}
+in which each solve begins from the previous solve's output. This is the structural
+centerpiece of the chapter, and the rest of Part~V has been pointing at it.
+
+\subsection{The crucial contrast: a fold, not a map}
+
+Recall the fundamental split of \cref{ch:combinators}, which the anchor chapter
+leaned on (\cref{fig:es-solvefamily}). A \texttt{map} runs a family of
+\emph{independent} computations: no carry passes between elements, so they
+reorder freely and run in parallel. A \texttt{fold} threads a \emph{carry} through
+a chain: each step consumes what the last produced, so the steps are strictly
+ordered. The electrostatic and driven solve corners are maps---a fan of
+independent solves over a family of terminals or frequencies. The transient solve
+corner is a fold, and the difference is the whole point.
+
+In the transient march the field-state at time $t_{n+1}$ is computed \emph{from}
+the field-state at time $t_n$ by one timestep. Step $n+1$ cannot begin until step
+$n$ has finished, because step $n$'s output \emph{is} step $n+1$'s input. The state
+is threaded forward along a single timeline. You cannot solve the timesteps in
+parallel, in any order, or on separate machines, because there is no ``step 5'' to
+hand a machine until ``step 4'' has produced the state it starts from. This is the
+\emph{state-threaded fold}---the combinator \code{fold\_solve}---and the transient
+march is its purest and primary witness. \Cref{fig:tr-foldvmap} sets it against the
+electrostatic map, the two side by side.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: the map drivers (electrostatic / driven) =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (2.1,3.0)
+      {\textsc{map} drivers: independent, parallel};
+    \node[font=\scriptsize\itshape, text=simBlue] at (2.1,2.6)
+      {electrostatic, driven};
+    \node[opbox, minimum width=13mm, fill=simBgBlue, draw=simBlue] (K) at (2.1,1.7)
+      {operator};
+    \foreach \i/\x in {1/0.3,2/1.5,3/2.7,4/3.9}{
+      \node[data, minimum width=7mm, minimum height=5mm] (b\i) at (\x,0.75) {$\vb_{\i}$};
+      \node[product, minimum width=7mm, minimum height=5mm] (x\i) at (\x,-0.3) {$\vx_{\i}$};
+      \draw[flow, shorten >=1pt] (K.south) -- (b\i.north);
+      \draw[flow, shorten >=1pt] (b\i.south) -- (x\i.north);
+    }
+    \node[font=\scriptsize, text=simGreen, align=center] at (2.1,-1.1)
+      {NO arrows between solves:\\ reorderable, embarrassingly parallel};
+  \end{scope}
+  \draw[simGray!55, very thick] (4.9,-1.5) -- (4.9,3.2);
+  % ===== RIGHT: the transient fold =====
+  \begin{scope}[xshift=5.6cm]
+    \node[font=\small\bfseries, text=simRust] at (2.4,3.0)
+      {\textsc{fold} driver: chained, sequential};
+    \node[font=\scriptsize\itshape, text=simRust] at (2.4,2.6)
+      {transient (the one fold driver)};
+    \node[data, minimum width=8mm] (y0) at (-0.25,1.5) {$\vy_0$};
+    \foreach \i/\x in {1/1.0,2/2.5,3/4.0}{
+      \node[opbox, minimum width=11mm] (g\i) at (\x,1.5) {step};
+    }
+    \node[data, minimum width=8mm] (y3) at (5.25,1.5) {$\vy_3$};
+    \draw[flow] (y0.east) -- (g1.west);
+    \draw[flow] (g1.east) -- node[above,font=\scriptsize]{$\vy_1$} (g2.west);
+    \draw[flow] (g2.east) -- node[above,font=\scriptsize]{$\vy_2$} (g3.west);
+    \draw[flow] (g3.east) -- (y3.west);
+    % each step hides a ksp_solve
+    \foreach \i/\x in {1/1.0,2/2.5,3/4.0}{
+      \node[extern, minimum width=11mm, minimum height=5mm, font=\scriptsize]
+        (k\i) at (\x,0.3) {\code{ksp\_solve}};
+      \draw[refedge] (g\i.south) -- (k\i.north);
+    }
+    \node[font=\scriptsize, text=simRust, align=center] at (2.4,-0.85)
+      {horizontal carry $\vy_n\!\to\!\vy_{n+1}$:\\ strictly ordered---cannot overlap timesteps};
+  \end{scope}
+\end{tikzpicture}
+\caption[The map drivers versus the transient fold]{The centerpiece contrast. On
+the \emph{left}, the map drivers (electrostatic, driven): one operator feeds a fan
+of independent solves $\vb_i\mapsto\vx_i$, with \emph{no} arrows between them---they
+are reorderable, parallelizable, embarrassingly parallel over the family. On the
+\emph{right}, the transient fold: the doubled state $\vy_0\to\vy_1\to\vy_2\to\vy_3$
+is threaded \emph{forward}, each step consuming the prior state, so the steps are
+strictly ordered and \emph{cannot} overlap. The horizontal carry arrows---present on
+the right, absent on the left---are the whole difference: \code{fold\_solve} versus
+\code{solve\_family}. Each fold step \emph{additionally} hides an implicit
+\code{ksp\_solve} (\cref{ch:krylov}), but the implicit solve is not what makes it a
+fold; the \emph{carry} is.}
+\label{fig:tr-foldvmap}
+\end{figure}
+
+\begin{keyidea}
+\textbf{Transient is the one sequential driver: a fold where each step begins where
+the last ended---the opposite of the map drivers.} Electrostatic and driven solve a
+\emph{family} of independent problems (a \texttt{map}: reorderable, parallel over
+terminals or frequencies). Transient threads a \emph{single field-state} forward
+through time (a \texttt{fold}: each step's input is the prior step's output). The
+presence or absence of the carry between solves is the entire structural
+difference, and it is the difference between a contact sheet of independent
+snapshots and a movie in which every frame depends on the last. No amount of
+hardware can parallelize the transient march across timesteps, because step $n+1$
+literally has nothing to compute until step $n$ is done.
+\end{keyidea}
+
+\subsection{\texttt{fold\_solve}, in the calculus}
+
+In the vocabulary of \cref{ch:combinators}, the march is one expression. Capture
+the operator once, seed the state once, and \code{foldl} the opaque per-step
+operator over the schedule of times:
+\begin{lstlisting}[style=l4style]
+-- the state-threaded march: foldl the per-step operator over the fixed schedule
+fold_solve :: OpParams -> TimeState -> [Time] -> TimeState
+fold_solve op s0 schedule = foldl (\s t -> time_step_op op s t) s0 schedule
+
+-- the OPAQUE per-step operator the fold quantifies over:
+-- advances the field-state one step; bottoms out in the library integrator
+time_step_op :: OpParams -> TimeState -> Time -> TimeState
+\end{lstlisting}
+Read the signature and the whole structure of the march is in it. The seed
+\code{s0} and the result are both a \code{TimeState}---the field-state carried
+forward. The operator \code{op} (the captured $\Kop,\Cop,\Mop$ and the chosen
+integrator) is bound \emph{once}, before the fold, and threaded unchanged into every
+step: the construction hoist of \S\ref{sec:tr-assemble} made structural by the type.
+And the step \lstinline[style=l4style]|time_step_op op s t| \emph{reads} \code{s},
+the prior carry---\emph{that read} is what makes this a fold and forbids reordering
+at the type level. A map's step would ignore the accumulator; a fold's reads it.
+
+\code{time\_step\_op} is deliberately \emph{opaque}. It bottoms out in the library
+integrator's one step---an MFEM \code{ODESolver::Step} call---which internally does
+the implicit linear solve that \cref{ch:time} dissected
+(\cref{fig:tr-innersolve}).\footnote{The fold body is \code{time\_op.Step(t,
+delta\_t)} (\code{palace/drivers/transientsolver.cpp:93}), which dispatches to
+\code{ode->Step(sol, t, dt)} (\code{palace/models/timeoperator.cpp:410})---the
+opaque MFEM step advancing the persistent \code{sol} field-state in place. The prior
+step's \code{sol} is the next step's input: the genuine \code{foldl}.} The
+combinator only quantifies over that step; it does not look inside it.
+\code{fold\_solve} owns the loop, and the library owns one step.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the fold spine
+  \node[data, minimum width=8mm] (sn) at (0,0) {$\vy_n$};
+  \node[opbox, minimum width=26mm, minimum height=16mm, fill=simBgRust, draw=simRust,
+    align=center] (step) at (3.0,0) {\code{time\_step\_op}\\[1pt]\scriptsize one implicit step};
+  \node[data, minimum width=10mm] (sn1) at (6.2,0) {$\vy_{n+1}$};
+  \draw[flow] (sn) -- (step);
+  \draw[flow] (step) -- (sn1);
+  % the inner ksp_solve, blown up below
+  \node[extern, minimum width=30mm, minimum height=10mm, align=center]
+    (ksp) at (3.0,-2.2) {\scriptsize MFEM \code{ODESolver::Step}\\[-1pt]\scriptsize $(\mat I-\Delta t\,\mat J)\,\vy_{n+1}=\text{rhs}$\\[-1pt]\scriptsize one \code{ksp\_solve}};
+  \draw[refedge] (step.south) -- (ksp.north)
+    node[midway, right, font=\scriptsize]{hides};
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (-1.6,-2.2)
+    {\emph{inside} each};
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (-1.6,-2.55)
+    {opaque step:};
+\end{tikzpicture}
+\caption[The implicit solve inside each fold step]{Each fold step is opaque, but it
+is not empty: inside \code{time\_step\_op} the integrator solves one linear system.
+Because the integrator is \emph{implicit} (the cure for the stiffness of
+\cref{ch:time}), advancing $\vy_n\to\vy_{n+1}$ requires solving
+$(\mat I-\Delta t\,\mat J)\,\vy_{n+1}=\text{rhs}$ for the unknown next state---a
+single \code{ksp\_solve}, the Krylov solve of \cref{ch:krylov}, nested in the march.
+The fold quantifies over this step; the library performs it. Note the two distinct
+costs the fold carries: the \emph{carry} (which makes the march sequential) and the
+\emph{implicit solve} (which makes each step expensive). They are independent---a
+fold could be cheap per step, and a map could be expensive per step---but the
+transient march has both.}
+\label{fig:tr-innersolve}
+\end{figure}
+
+\subsection{The pipeline in one line}
+
+The two stages compose into a single expression. At the framework level the whole
+transient feature is
+\begin{lstlisting}[style=l4style]
+transient = fold_solve . fe_assemble
+\end{lstlisting}
+read right to left: \code{fe\_assemble} builds the operators once, and
+\code{fold\_solve} threads the time-march fold over them. Spelled out with the data
+flowing through it,
+\begin{lstlisting}[style=l4style]
+-- inputs = config; output = the time-domain field-state trajectory (the product)
+transient :: TransientConfig -> FieldTrajectory
+transient cfg =
+  let space    = nd_space cfg                             -- the H(curl) FE space
+      (k,c,m)  = ( fe_assemble space [ curl_curl (reluctivity cfg) ]   -- (1) K, C, M
+                 , fe_assemble space [ damping    (conductivity cfg) ]  --     assembled
+                 , fe_assemble space [ mass       (permittivity cfg) ] )--     ONCE
+      op       = time_operator (k,c,m) (dJdt cfg)         -- captured ODE operator (read-only)
+      s0       = init_state cfg                           -- seed field-state (rest)
+      schedule = uniform_steps (delta_t cfg) (n_step cfg) -- the FIXED [Time] schedule
+  in  fold_solve op s0 schedule                           -- (2) the state-threaded march FOLD
+\end{lstlisting}
+\Cref{fig:tr-pipeline} draws it. Set it beside the anchor diagram
+(\cref{fig:es-pipeline}) and the swap is exactly the one \cref{tab:es-swaps}
+promised: the FE space moves from $\Hone$ to $\Hcurl$, the solve corner moves from
+the \code{solve\_family} \emph{map} to the \code{fold\_solve} \emph{fold}, and the
+reduction moves from the Gram to a trajectory table. The skeleton is identical; one
+corner is swapped.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[node distance=6mm and 6mm, font=\footnotesize]
+  \node[data, align=center, text width=18mm] (cfg)
+    {config\\[1pt]\footnotesize $\varepsilon,\sigma,\nu$,\\mesh, pulse};
+  \node[stage, right=of cfg, align=center, text width=21mm] (asm)
+    {\textbf{assemble}\\[1pt]\footnotesize \code{fe\_assemble}\\$\Kop,\Cop,\Mop$ (once)};
+  \node[stage, right=of asm, align=center, text width=22mm, fill=simBgRust, draw=simRust]
+    (solve) {\textbf{solve}\\[1pt]\footnotesize \code{fold\_solve}\\(time march)};
+  \node[stage, right=of solve, align=center, text width=18mm, fill=simBgGold, draw=simGold]
+    (red) {\textbf{reduce}\\[1pt]\footnotesize per-step\\readout};
+  \node[product, right=of red, align=center, text width=17mm] (prod)
+    {trajectory\\[1pt]\footnotesize field history};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{$\Kop,\Cop,\Mop$} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{$\{\vy_n\}$} (red);
+  \draw[flow] (red) -- (prod);
+  % the self-loop on the solve box: the carry
+  \draw[backflow, shorten >=1pt] (solve.north) ++(-0.4,0)
+    .. controls +(0,7mm) and +(0,7mm) .. ($(solve.north)+(0.4,0)$)
+    node[midway, above, font=\scriptsize, text=simRust]
+      {the carry $\vy_n\!\to\!\vy_{n+1}$};
+  % corner annotations
+  \node[font=\scriptsize\itshape, text=simRust, below=9mm of solve, align=center]
+    {state-threaded fold\\(\cref{ch:situating}, corner 3)};
+  \node[font=\scriptsize\itshape, text=simGold, above=8mm of red, align=center]
+    {trajectory, not a matrix};
+\end{tikzpicture}
+\caption[The transient pipeline]{The complete transient pipeline, the composition
+$\code{fold\_solve}\circ\code{fe\_assemble}$. A configuration of
+materials, mesh, and excitation pulse enters; \code{fe\_assemble} builds the three
+operators $\Kop,\Cop,\Mop$ \emph{once} (and, with them, the integrator and seed
+state); \code{fold\_solve} threads the time-march fold, producing the field-state
+trajectory $\{\vy_n\}$; and a per-step readout reduces each state to the physical
+products. The rust self-loop on the solve box is the feature special to this
+analysis: the \emph{carry}, $\vy_n\to\vy_{n+1}$, that makes the march sequential.
+Compared with the anchor (\cref{fig:es-pipeline}), exactly one corner is swapped:
+the \code{solve\_family} map becomes the \code{fold\_solve} fold.}
+\label{fig:tr-pipeline}
+\end{figure}
+
+\subsection{Checkpoint and resume: the schedule-split property}
+
+The fold's sequentiality sounds like pure cost, but it comes with a genuine
+compensation that the map cannot offer: \emph{restartability}. A left fold over a
+concatenated schedule satisfies a clean algebraic law (\cref{ch:time},
+\cref{eq:schedule-split}). Split the schedule into a prefix $a$ and a suffix $b$;
+then folding the whole is the same as folding the prefix and folding the suffix
+\emph{from the state the prefix produced}:
+\begin{equation}
+  \code{fold\_solve}\ \code{op}\ \vy_0\ (a \mathbin{+\!\!+} b)
+  \;=\;
+  \code{fold\_solve}\ \code{op}\ \bigl(\code{fold\_solve}\ \code{op}\ \vy_0\ a\bigr)\ b .
+  \label{eq:tr-split}
+\end{equation}
+Read operationally, this says: run the prefix, save the final state $\vy_{|a|}$ to
+disk, stop; later, load it and run the suffix seeded from it. The law guarantees the
+result is the \emph{identical} trajectory---bit for bit---as the uninterrupted run,
+because the only thing that crosses the split point is the carry, and the carry is
+exactly what we saved (\cref{fig:tr-checkpoint}). Long runs survive faults; expensive
+runs split across job-scheduler windows; none of it perturbs the answer. The same
+single threaded carry that \emph{forbids} parallelism across timesteps is what makes
+a checkpoint a single saved value rather than a replay of the whole history. A map
+parallelizes but has no notion of ``resume''---there is no carry to save.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % top: uninterrupted
+  \node[font=\scriptsize\bfseries, text=simInk, anchor=west] at (-0.3,1.9)
+    {one uninterrupted march};
+  \node[data, minimum width=8mm] (u0) at (0,1.2) {$\vy_0$};
+  \foreach \i/\x in {1/0.95,2/1.95,3/2.95,4/3.95}{
+    \node[opbox, minimum width=7mm, minimum height=5mm] (us\i) at (\x,1.2) {};}
+  \node[data, minimum width=8mm] (u4) at (4.95,1.2) {$\vy_4$};
+  \draw[flow] (u0)--(us1);\draw[flow] (us1)--(us2);\draw[flow] (us2)--(us3);
+  \draw[flow] (us3)--(us4);\draw[flow] (us4)--(u4);
+  \node[font=\scriptsize, text=simGray] at (2.5,0.72) {schedule $a \mathbin{+\!\!+} b$};
+  % bottom: split
+  \node[font=\scriptsize\bfseries, text=simRust, anchor=west] at (-0.3,-0.1)
+    {split: run $a$, save carry, resume $b$};
+  \node[data, minimum width=8mm] (b0) at (0,-0.8) {$\vy_0$};
+  \foreach \i/\x in {1/0.95,2/1.95}{
+    \node[opbox, minimum width=7mm, minimum height=5mm] (bs\i) at (\x,-0.8) {};}
+  \node[product, minimum width=9mm, fill=simBgGold, draw=simGold] (ckpt) at (2.95,-0.8) {$\vy_2$};
+  \foreach \i/\x in {3/3.95,4/4.95}{
+    \node[opbox, minimum width=7mm, minimum height=5mm] (bs\i) at (\x,-0.8) {};}
+  \node[data, minimum width=8mm] (b4) at (5.95,-0.8) {$\vy_4$};
+  \draw[flow] (b0)--(bs1);\draw[flow] (bs1)--(bs2);\draw[flow] (bs2)--(ckpt);
+  \draw[flow] (ckpt)--(bs3);\draw[flow] (bs3)--(bs4);\draw[flow] (bs4)--(b4);
+  \node[font=\scriptsize, text=simRust] at (1.4,-1.3) {fold $a$};
+  \node[font=\scriptsize, text=simRust] at (4.4,-1.3) {fold $b$ from $\vy_2$};
+  \node[font=\scriptsize, text=simGold!75!black, align=center] at (2.95,-1.75)
+    {save / load (checkpoint)};
+  \node[font=\Large, text=simGray] at (5.6,0.2) {$=$};
+\end{tikzpicture}
+\caption[Checkpoint and resume as a schedule split]{The schedule-split law
+\cref{eq:tr-split} drawn as checkpoint-and-resume. \emph{Top}: the uninterrupted
+march folds the whole schedule $a\mathbin{+\!\!+}b$ from $\vy_0$ to $\vy_4$.
+\emph{Bottom}: the same march split at the midpoint---fold the prefix $a$ to the
+carry $\vy_2$, \emph{save it} (the gold checkpoint), stop, then later load $\vy_2$
+and fold the suffix $b$ from it. The two produce the identical $\vy_4$, because the
+only thing crossing the cut is the carry. Restartability is not bolted onto the
+fold; it \emph{is} what the fold structure means---a clean algebraic property, not
+an engineering approximation.}
+\label{fig:tr-checkpoint}
+\end{figure}
+
+\section{Reduce: reading the trajectory}
+\label{sec:tr-reduce}
+
+The solve stage has handed us not a family of fields but a \emph{trajectory}: the
+field-state at every step of the march. The reduce stage reads the physical products
+from it. Where the electrostatic reduction collapsed a family into a single
+capacitance matrix (\cref{ch:electrostatics}), the transient ``reduction'' is
+mostly a per-step \emph{readout}---it runs once per frame, and the output is the
+whole time history, not one number.
+
+\subsection{What the driver reads at each step}
+
+At each step the transient driver recovers three kinds of product from the current
+field-state:
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The fields.] From each step's state the electric and magnetic fields
+  $(\vE,\vB)$ are recovered (the \code{GetE}/\code{GetB} of the time operator) and
+  written out---the ``movie'' frames, one per timestep.\footnote{The per-step readout
+  is \code{time\_op.GetE()} / \code{time\_op.GetB()}
+  (\code{palace/drivers/transientsolver.cpp:98-99}), consumed immediately by the
+  per-step postprocess \code{post\_op.MeasureAndPrintAll(...)}
+  (\code{:104}).}
+  \item[Port voltages and currents.] Integrating the fields against the port modes
+  gives a time-domain voltage and current at each terminal: the waveforms an
+  engineer reads off an oscilloscope, computed step by step.
+  \item[Energy versus time.] The field energy, evaluated at each step, traces how
+  energy enters with the pulse, sloshes between electric and magnetic forms, and
+  bleeds away through the damping $\Cop$ and the ports. This is the
+  \emph{driver-agnostic} energy reduction of \cref{ch:reductions}---the same
+  field-energy form the electrostatic diagonal used (\cref{ch:electrostatics}),
+  here evaluated once per frame instead of once per terminal.
+\end{description}
+
+\Cref{fig:tr-energy} draws a representative trajectory: an injected pulse rings up
+the stored energy, which then decays as loss and radiation carry it off. Because
+each curve is sampled once per fold step, the resolution of the readout is exactly
+the resolution of the march---one frame per timestep.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.80\linewidth, height=50mm,
+    xlabel={time $t$}, ylabel={},
+    xmin=0, xmax=10, ymin=-1.15, ymax=1.30,
+    axis lines=left, xtick={0,2,4,6,8,10}, ytick={-1,0,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.98,0.98)},
+      anchor=north east, legend cell align=left},
+    every axis plot/.append style={very thick, samples=120, domain=0:10},
+  ]
+  \addplot[simRust] {0.9*exp(-2*(x-1.5)^2)*cos(deg(6*(x-1.5)))};
+  \addlegendentry{drive $\vJ(t)$ (a pulse)}
+  \addplot[simBlue] {0.8*(1-exp(-3*x))*exp(-0.35*x)*cos(deg(4*x-1))};
+  \addlegendentry{field $E(t)$ (rings, decays)}
+  \addplot[simGreen, densely dashed] {0.95*(1-exp(-2.2*x))*exp(-0.5*x)};
+  \addlegendentry{stored energy (rise then decay)}
+\end{axis}
+\end{tikzpicture}
+\caption[A transient field and energy trajectory]{A representative readout of the
+transient march. The pulse drive $\vJ(t)$ (rust) injects a short burst; a field
+component $E(t)$ (blue) rings up as the pulse arrives and decays as energy leaves;
+the stored energy (green, dashed) rises with the injection and decays monotonically
+thereafter, bled away by the damping $\Cop$ and carried off through the ports. Each
+curve is sampled once per fold step: the readout resolution is the march resolution,
+one frame per timestep. The output is this \emph{whole history}, not a single
+reduced number.}
+\label{fig:tr-energy}
+\end{figure}
+
+\section{The bridge to the frequency domain}
+\label{sec:tr-fourier}
+
+One readout deserves its own section, because it ties the transient analysis back
+to the driven analysis of \cref{ch:driven} and closes a loop the whole of Part~V has
+left open. A transient run injects a \emph{broadband} pulse---a superposition of
+many frequencies at once. Record the input waveform and the corresponding output
+waveform in time, take the Fourier transform of each, and divide: the quotient is
+the frequency response across the \emph{whole band} of the pulse, recovered \emph{in
+a single run}.
+
+This is the time-domain route to the same S-parameters the driven analysis computes
+frequency by frequency. Where the driven analysis sweeps a \code{frequency\_sweep}
+map---one frequency per solve, an independent family (\cref{ch:driven})---the
+transient analysis folds one march and Fourier-transforms the result. The two compute
+the same physics by the two routes of the harmonic rule
+(\cref{ch:reductions-pde}): one frequency at a time, or all frequencies at once
+through a pulse. \Cref{fig:tr-fourier} shows a sampled port-voltage signal beside its
+transform, a resonance appearing as a peak in the spectrum.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+% LEFT: time-domain port signal
+\begin{axis}[
+    name=tplot,
+    width=0.46\linewidth, height=44mm,
+    xlabel={time $t$}, ylabel={port voltage $v(t)$},
+    xmin=0, xmax=12, ymin=-1.1, ymax=1.1,
+    axis lines=left, xtick={0,4,8,12}, ytick={-1,0,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    title style={font=\scriptsize\itshape}, title={time domain (the march)},
+    every axis plot/.append style={very thick, samples=160, domain=0:12},
+  ]
+  % a decaying ring at a single frequency: the "resonance"
+  \addplot[simBlue] {exp(-0.32*x)*cos(deg(5*x))};
+\end{axis}
+% RIGHT: frequency-domain magnitude with a peak
+\begin{axis}[
+    at={(tplot.right of east)}, anchor=left of west, xshift=10mm,
+    width=0.46\linewidth, height=44mm,
+    xlabel={frequency $f$}, ylabel={$|\hat v(f)|$},
+    xmin=0, xmax=2, ymin=0, ymax=1.15,
+    axis lines=left, xtick={0,0.5,1,1.5,2}, ytick={0,0.5,1},
+    yticklabel style={font=\scriptsize}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    title style={font=\scriptsize\itshape}, title={frequency domain (FFT)},
+    every axis plot/.append style={very thick, samples=160, domain=0:2},
+  ]
+  % a Lorentzian peak at f0 ~ 0.8 (= 5/(2 pi)), the spectrum of the decaying ring
+  \addplot[simRust] {1/sqrt(1 + 80*(x-0.8)^2)};
+  \draw[simGray, densely dashed] (axis cs:0.8,0) -- (axis cs:0.8,1.0);
+  \node[font=\scriptsize, text=simGray, anchor=south] at (axis cs:0.8,1.0) {$f_0$};
+\end{axis}
+\end{tikzpicture}
+\caption[A port signal and its Fourier transform]{The time$\to$frequency bridge.
+\emph{Left}: a sampled port-voltage waveform $v(t)$ from one transient march---a
+decaying ring at the structure's resonant frequency. \emph{Right}: its Fourier
+transform $|\hat v(f)|$, a peak at the resonance $f_0$ (a slow decay in time is a
+sharp peak in frequency---a high-$Q$ resonance). Dividing the transform of the
+\emph{output} by that of the \emph{input} pulse recovers the frequency response
+across the whole band, in one run. This is the same frequency-domain information the
+driven analysis (\cref{ch:driven}) computes one frequency at a time; the transient
+fold plus an FFT is its broadband, all-at-once complement.}
+\label{fig:tr-fourier}
+\end{figure}
+
+\section{Cost and stability}
+\label{sec:tr-cost}
+
+Two practical facts about the march, both carried over from the machinery of
+\cref{ch:time}, are worth collecting before the worked examples.
+
+\paragraph{Implicit stepping, and the timestep trade.} Each fold step hides an
+implicit linear solve precisely because the semi-discrete system is \emph{stiff}: an
+explicit step would be pinned to $\Delta t<2/\lambda_{\max}$ by the fastest mesh
+mode, a mode physically irrelevant to the answer (\cref{ch:time}). An implicit step
+is unconditionally stable, so $\Delta t$ is chosen for \emph{accuracy on the modes we
+care about}, not forced small by modes we do not. The trade is direct: a smaller
+$\Delta t$ resolves faster physics and reduces truncation error but costs more steps
+(more \code{ksp\_solve}s); a larger $\Delta t$ is cheaper but coarser. The integrator's
+order (\cref{ch:time}) sets how fast that error falls as $\Delta t$ shrinks.
+
+\paragraph{Reuse the factorization across steps.} For a \emph{uniform} schedule the
+step operator $\mat I-\Delta t\,\mat J$ is built from the captured $\Kop,\Cop,\Mop$
+and the fixed $\Delta t$, none of which change from step to step---so it is a
+\emph{constructed operator}, fixed for the whole march (\cref{ch:operators}). Its
+factorization (or its preconditioner) is therefore computed \emph{once} and reused
+every step, exactly as the electrostatic operator's factorization was reused across
+the terminal family (\cref{ch:electrostatics}). The operator-capture-once hoist of
+\code{fold\_solve} is what licenses it: \code{op} is bound before the fold, and every
+step reads the same operator. This is the fold's version of the dividend the
+fixed-operator map paid---``assemble once'' quietly licenses ``factor once'' here too,
+even though the solves are chained rather than independent.
+
+\begin{notationbox}
+The transient march carries \emph{two} costs that are easy to conflate but logically
+independent. The \emph{carry} makes the march \emph{sequential}: timesteps cannot
+overlap, regardless of how cheap each one is. The \emph{implicit solve} makes each
+step \emph{expensive}: one \code{ksp\_solve} per step, regardless of whether the
+steps are chained. A hypothetical explicit transient march would still be a fold
+(sequential) but with cheap steps; an electrostatic map is parallel but with
+expensive steps. Transient is the corner that pays both: sequential \emph{and}
+per-step-expensive. Keeping the two costs separate is the key to reasoning about it.
+\end{notationbox}
+
+\section{Two worked examples}
+\label{sec:tr-worked}
+
+The pipeline is general; we now run it on problems small enough to do by hand. The
+first marches a two-degree-of-freedom oscillator a few implicit steps, showing each
+step solve a small linear system and the state thread forward---and contrasts it
+explicitly with the independent map a \code{solve\_family} would run. The second
+takes a sampled port signal and shows its DFT recovering a resonance, making the
+time$\to$frequency bridge of \S\ref{sec:tr-fourier} numerical.
+
+\begin{workedexample}{Marching a two-DoF oscillator---a fold, not a map}{tr-twodof}
+We run the real machinery---the recast, the per-step implicit solve, and the state
+threading---on the smallest non-trivial system: a two-degree-of-freedom
+mass--spring--damper $\Mop\ddot\vs+\Cop\dot\vs+\Kop\vs=\vJ(t)$, a hand-sized
+stand-in for the semi-discrete transient system, with
+\[
+  \Mop=\begin{psmallmatrix}1&0\\0&1\end{psmallmatrix},\quad
+  \Cop=\begin{psmallmatrix}0.2&0\\0&0.2\end{psmallmatrix},\quad
+  \Kop=\begin{psmallmatrix}2&-1\\-1&2\end{psmallmatrix},\quad
+  \vJ=\begin{psmallmatrix}1\\0\end{psmallmatrix}\ (\text{constant}),
+\]
+starting from rest, $\vs_0=\vv_0=(0,0)$. The off-diagonal of $\Kop$ couples the two
+degrees of freedom.
+
+\medskip
+\emph{Recast and the step matrix.} With $\vv=\dot\vs$ the doubled state is
+$\vy=(\vs,\vv)$. Take backward Euler with $\Delta t=0.1$. Substituting
+$\vs_{n+1}=\vs_n+\Delta t\,\vv_{n+1}$ into the velocity update eliminates
+$\vs_{n+1}$ and leaves a linear system for $\vv_{n+1}$ alone:
+\[
+  \underbrace{\bigl(\mat I+\Delta t\,\Cop+\Delta t^2\,\Kop\bigr)}_{\displaystyle\mat A}
+  \,\vv_{n+1}=\vv_n+\Delta t\,(\vJ-\Kop\,\vs_n).
+\]
+This is the implicit step's linear solve---the $2\times2$ stand-in for the
+\code{ksp\_solve} (\cref{fig:tr-innersolve}). With our numbers,
+\[
+  \mat A=\mat I+0.1\,\Cop+0.01\,\Kop
+        =\begin{psmallmatrix}1.04&-0.01\\-0.01&1.04\end{psmallmatrix}.
+\]
+The matrix $\mat A$ is \emph{fixed for the whole march}---built from the captured
+operators and $\Delta t$, none of which change---so it is factored \emph{once} and
+reused every step (\S\ref{sec:tr-cost}). This is the operator-capture-once hoist of
+\code{fold\_solve} in miniature: \code{op} is bound before the fold, and every step
+reads the same $\mat A$.
+
+\medskip
+\emph{Thread the state forward.} Starting from $\vy_0=\mathbf0$, solve for $\vv_1$,
+set $\vs_1=\Delta t\,\vv_1$, feed $\vy_1=(\vs_1,\vv_1)$ into the next step, and
+repeat. Three steps:
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}clll@{}}
+\toprule
+step $n$ & RHS $\vv_n+\Delta t(\vJ-\Kop\vs_n)$ & solve $\vv_{n+1}=\mat A^{-1}(\cdot)$ & $\vs_{n+1}=\vs_n+\Delta t\,\vv_{n+1}$ \\
+\midrule
+0 & $(0.100,\ 0.000)$ & $(0.0961,\ 0.0009)$ & $(0.00961,\ 0.00009)$ \\
+1 & $(0.1854,\ 0.0105)$ & $(0.1784,\ 0.0118)$ & $(0.02745,\ 0.00127)$ \\
+2 & $(0.2589,\ 0.0264)$ & $(0.2492,\ 0.0278)$ & $(0.05237,\ 0.00405)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Each row's input is the previous row's output---the carry $\vy_n\to\vy_{n+1}$
+threaded forward, exactly the fold. The driven coordinate $s^{(1)}$ climbs toward
+its static deflection while the coupled coordinate $s^{(2)}$ follows through the
+off-diagonal stiffness; with the damping present, the march settles rather than
+oscillating forever.
+
+\medskip
+\emph{Contrast: what a \code{solve\_family} map would do instead.} Suppose we had,
+instead, three \emph{independent} right-hand sides $\vb_1,\vb_2,\vb_3$ and the one
+fixed operator $\mat A$---an electrostatic-style \code{solve\_family}. We would solve
+\[
+  \mat A\,\vx_1=\vb_1,\qquad \mat A\,\vx_2=\vb_2,\qquad \mat A\,\vx_3=\vb_3,
+\]
+and \emph{nothing in $\vb_2$ depends on $\vx_1$}. We could compute $\vx_2$ first, or
+on a separate machine, or all three at once: the solves commute. That is the map. The
+transient table above is its exact negation: the RHS of step~1 is built from
+$\vs_1$, which came from step~0; the RHS of step~2 from $\vs_2$, which came from
+step~1. The carry column \emph{is} the dependence chain. Same fixed operator $\mat A$
+in both; the difference is whether the right-hand sides are a fixed independent
+\emph{family} (map) or a sequence each \emph{generated by the previous solve} (fold).
+Three points are the chapter in miniature: \emph{(i)} the recast doubled
+$\mathbb R^2$ into $\mathbb R^4$; \emph{(ii)} each step \emph{solved a linear system}
+with $\mat A$ fixed and factored once; \emph{(iii)} the state was \emph{threaded}
+from each step into the next---a \code{fold\_solve}, not a \code{solve\_family}. Were
+we to checkpoint after step~1, saving $\vy_1$, and resume, the schedule-split law
+\cref{eq:tr-split} guarantees the identical $\vy_3$.
+\end{workedexample}
+
+\begin{workedexample}{From a port waveform to a resonance: the DFT bridge}{tr-dft}
+We make the time$\to$frequency bridge of \S\ref{sec:tr-fourier} numerical. Suppose a
+transient march produced a sampled port-voltage waveform---a decaying ring at the
+structure's resonant frequency. To keep the arithmetic in hand we sample $N=8$
+points of a clean cosine ring,
+\[
+  v_n=\cos\!\Bigl(\tfrac{2\pi}{8}\,2\,n\Bigr),\qquad n=0,1,\dots,7,
+\]
+that is, a cosine that completes exactly \emph{two} full cycles over the eight
+samples: $v=(1,0,-1,0,1,0,-1,0)$.
+
+\medskip
+\emph{The discrete Fourier transform.} The DFT of the sampled signal is
+\[
+  \hat v_k=\sum_{n=0}^{7} v_n\,e^{-i\,2\pi kn/8},\qquad k=0,1,\dots,7,
+\]
+each $\hat v_k$ measuring how much of the signal oscillates at frequency-index $k$
+(i.e.\ at $k$ cycles over the window). Our signal is, by construction, a pure cosine
+of \emph{two} cycles, so we expect all its weight to land on $k=2$ (and its mirror
+$k=6=N-2$, since a real cosine splits its energy between $+f$ and $-f$). Compute the
+suspect bins. For $k=2$, the exponential is $e^{-i\pi n/2}=(1,-i,-1,i,\dots)$, whose
+\emph{real} part is $(1,0,-1,0,1,0,-1,0)$---identical to $v_n$---so
+\[
+  \hat v_2=\sum_{n}v_n\,e^{-i\pi n/2}
+         =\underbrace{(1+1+1+1)}_{\text{the four }\pm1\text{ aligned}}=4,
+\]
+and by the same alignment $\hat v_6=4$. For a generic other bin, say $k=1$, the
+exponential is $e^{-i\pi n/4}$ and the four nonzero samples
+$v_0,v_2,v_4,v_6=(+1,-1,+1,-1)$ multiply phases that sum to zero:
+\[
+  \hat v_1=(1)(1)+(-1)(e^{-i\pi/2})+(1)(e^{-i\pi})+(-1)(e^{-i3\pi/2})
+         =1+i-1-i=0,
+\]
+and likewise $\hat v_0=\hat v_3=\hat v_4=\hat v_5=\hat v_7=0$.
+
+\medskip
+\emph{Read off the resonance.} The magnitude spectrum is
+\[
+  |\hat v_k|=(0,\,0,\,4,\,0,\,0,\,0,\,4,\,0),
+\]
+a single peak at $k=2$ (and its real-signal mirror at $k=6$). The transform has
+located the ring's frequency---two cycles per window---as cleanly as
+\cref{fig:tr-fourier} drew it. On a real port signal the ring is not a single pure
+tone but a band, and the peak has finite width set by the decay rate (a slow decay,
+a high-$Q$ resonance, gives a sharp peak); dividing the output spectrum by the input
+pulse's spectrum then yields the S-parameter across the whole band. But the essential
+move is exactly the one we just did by hand: a time-domain march, followed by a
+Fourier transform, recovers the frequency-domain answer the driven analysis
+(\cref{ch:driven}) computes one frequency at a time. One pulsed fold, one transform,
+the whole band.
+\end{workedexample}
+
+\summarysection
+The transient analysis computes the time-domain response of a device to an
+excitation pulse $\vJ(t)$: not a snapshot but a \emph{movie}, the whole field
+history. It runs the anchor skeleton of \cref{ch:situating} with one corner swapped.
+\emph{Assemble} (\S\ref{sec:tr-assemble}): three operators $\Kop,\Cop,\Mop$ on
+$\Hcurl$ by three \code{fe\_assemble} folds, plus an implicit ODE integrator and a
+seed state---all built \emph{once}, before the march (\cref{ch:time}). \emph{Solve}
+(\S\ref{sec:tr-solve}): the \code{fold\_solve} corner, the one genuinely sequential
+driver. Where the electrostatic and driven solves are \texttt{map}s---independent
+families, parallel over terminals or frequencies---the transient march is a
+\texttt{fold}: \code{foldl} of an opaque per-step operator over the timestep
+schedule, threading a single field-state carry forward, each step beginning where the
+last ended, each step hiding an implicit \code{ksp\_solve} (\cref{ch:krylov}). The
+whole feature is the one-line composition
+$\texttt{transient}=\code{fold\_solve}\circ\code{fe\_assemble}$. The fold's
+schedule-split law makes checkpoint-and-restart exact---the carry is the only thing
+crossing a split point. \emph{Reduce} (\S\ref{sec:tr-reduce}): a per-step readout of
+fields, port waveforms, and energy, producing the whole trajectory; and, by Fourier
+transform of a port signal (\S\ref{sec:tr-fourier}), the broadband bridge to the
+frequency-domain S-parameters of \cref{ch:driven}. \textbf{Transient is the one
+sequential driver: a fold where each step begins where the last ended---the opposite
+of the map drivers.}
+
+\furtherreading
+The finite-element time-domain formulation, the second-order semi-discrete system,
+and the specific implicit integrators (the generalized-$\alpha$ family and its
+numerical damping) are treated in Jin's finite-element electromagnetics
+text~\citep{jin2014} in the exact form Palace uses. The time-integration machinery
+this chapter composes---the stiffness phenomenon, A-stability, the per-step implicit
+solve---is developed in \cref{ch:time}, building on the matrix-computation and
+eigenvalue-spread material of Golub and Van Loan~\citep{golubvanloan2013}, who also
+cover the dense and sparse linear algebra behind each step's solve. For the physics
+of the time-domain response and the energy bookkeeping, Griffiths~\citep{griffiths2017}
+is the standard undergraduate source. The map-versus-fold distinction that organizes
+this chapter is the functional programmer's daily bread, built from scratch in
+\cref{ch:combinators}; the fixed-operator map it is contrasted against is the anchor
+of \cref{ch:electrostatics}, and the frequency-domain analysis it bridges to is
+\cref{ch:driven}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Map versus fold, by the picture.} Redraw \cref{fig:tr-foldvmap} from
+  memory. Which arrows are present in the fold panel but absent in the map panel, and
+  what do those arrows represent physically? State, in one sentence each, why the map
+  can be run on three machines at once and why the fold cannot.
+  \item \textbf{The one swapped corner.} Using \cref{tab:es-swaps}, describe the
+  transient analysis as ``the electrostatic anchor with these stages changed.''
+  Exactly which cells move (FE space, solve corner, reduction), and which stay? Which
+  single change is the structural heart of the chapter?
+  \item \textbf{Two independent costs.} The notation box of \S\ref{sec:tr-cost}
+  distinguishes the \emph{carry} cost from the \emph{implicit-solve} cost. Classify
+  each of the following as affected by one, the other, both, or neither: (a) doubling
+  the number of CPU cores; (b) switching from an implicit to a (hypothetical stable)
+  explicit integrator; (c) halving $\Delta t$; (d) refining the mesh so the largest
+  eigenvalue grows.
+  \item \textbf{One implicit step by hand.} For the two-DoF system of
+  \cref{wex:tr-twodof}, take \emph{one} backward-Euler step of size $\Delta t=0.2$
+  (rather than $0.1$) from rest. Form $\mat A=\mat I+\Delta t\,\Cop+\Delta t^2\Kop$,
+  write the right-hand side, and solve the $2\times2$ system for $\vv_1$. Confirm
+  $\mat A$ depends only on $\Delta t$ and the operators, not on the step index---the
+  operator-capture-once property.
+  \item \textbf{Checkpoint exactness.} Using the schedule-split law \cref{eq:tr-split},
+  argue that a transient run checkpointed after every $K$ steps and resumed produces
+  \emph{exactly} the same final state as an uninterrupted run, for any $K$. What
+  single quantity must the checkpoint save? Why does an electrostatic
+  \code{solve\_family} (\cref{ch:electrostatics}) have no analogous ``resume''?
+  \item \textbf{The DFT bridge, varied.} Repeat \cref{wex:tr-dft} for the $N=8$ signal
+  $v_n=\cos(2\pi\cdot1\cdot n/8)$ (one cycle per window instead of two). Predict which
+  bins $|\hat v_k|$ are nonzero \emph{before} computing, then verify by evaluating
+  $\hat v_1$ and $\hat v_3$. What does the shifted peak say about the resonant
+  frequency the march recorded?
+  \item \textbf{Why a pulse?} Explain, in terms of the harmonic rule
+  (\cref{ch:reductions-pde}), why a single \emph{narrow} pulse in time lets one
+  transient run recover a \emph{wide} band of the frequency response, whereas the
+  driven analysis (\cref{ch:driven}) needs one solve per frequency. Give one situation
+  where you would nonetheless prefer the driven sweep.
+  \item \textbf{The opaque step.} The chapter treats \code{time\_step\_op} as opaque,
+  quantifying over it rather than rendering it (\cref{fig:tr-innersolve}). What does
+  the fold combinator actually \emph{need} to know about one step for the
+  schedule-split law to hold, and what can it safely \emph{not} know? Relate your
+  answer to why the same \code{fold\_solve} combinator can also drive the
+  adaptive-mesh-refinement loop (\cref{ch:situating}), whose per-step body is an
+  entire solve rather than an ODE step.
+\end{enumerate}

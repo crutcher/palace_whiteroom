@@ -1,0 +1,1066 @@
+\chapter{Geometric Multigrid: The V-Cycle}
+\label{ch:multigrid}
+
+\chapterorient{A smoother (\cref{ch:smoothers}) is a bargain that only half
+works: a few cheap sweeps annihilate the jagged, high-frequency part of the error
+and then stall, because what remains is \emph{smooth}---and smooth error is exactly
+what a smoother cannot touch. This chapter turns that stall into a strategy.
+The trick is a change of perspective: error that looks smooth on a fine grid looks
+\emph{oscillatory} on a coarser one, where a smoother can kill it again, and far
+more cheaply. Apply the idea once and you have a two-grid method; apply it to
+itself---recursively, all the way down to a grid so small the problem is trivial---and
+you have the V-cycle, the central algorithm of this chapter and one of the great
+ideas of numerical computing. By the end you will be able to read the V-cycle as a
+short recursive function, explain from the complementary-frequencies picture
+\emph{why} it works, and state the property that makes it the optimal
+preconditioner of \cref{ch:precond}: a convergence rate that does not degrade as the
+mesh is refined, at a cost that grows only linearly in the number of unknowns.}
+
+\section{The trouble a smoother leaves behind}
+
+\Cref{ch:smoothers} studied the classical \emph{smoothers}---weighted Jacobi,
+Gauss--Seidel, Chebyshev---the cheap stationary iterations that, applied to a linear
+system $\mat{A}\vx=\vb$ arising from a discretized elliptic PDE, contract some
+components of the error far faster than others. Recall the central fact established
+there. Write the error after $k$ sweeps as $\ve_k = \vx - \vx_k$, where $\vx_k$ is
+the current iterate and $\vx$ the exact solution. Expand $\ve_k$ in the eigenvectors
+of the iteration: for a model problem each eigenvector is a \emph{Fourier mode}, a
+sinusoid of some spatial frequency, and one sweep of a damped smoother multiplies
+the mode of frequency $\theta$ by a factor $g(\theta)$ with $\abs{g(\theta)}<1$.
+
+The defining property of a good smoother is that $\abs{g(\theta)}$ is small---near
+zero---for the \emph{high} frequencies and close to $1$ for the \emph{low} ones.
+A weighted-Jacobi sweep on the 1-D Laplacian, for instance, damps the most
+oscillatory mode by a factor near $\tfrac13$ but the smoothest mode by a factor like
+$1-O(h^2)$, agonizingly close to $1$. After a handful of sweeps the high-frequency
+error is gone and the low-frequency error is essentially untouched. The iteration
+appears to converge for three or four steps and then crawls.
+
+\begin{keyidea}
+A smoother is \emph{half} a solver. It cheaply annihilates the high-frequency
+(oscillatory) part of the error and leaves the low-frequency (smooth) part almost
+unchanged. The error that survives a few smoothing sweeps is, by construction,
+\emph{smooth}. That residual smoothness is not a failure to be patched---it is a
+\emph{signal}: smooth error is the part a coarser grid can represent, and on a
+coarser grid it is no longer smooth.
+\end{keyidea}
+
+This is the opening every multigrid method exploits. The error left behind is smooth,
+and smoothness is a \emph{grid-relative} notion. A function that wiggles slowly across
+a fine mesh of $N$ points wiggles \emph{quickly} across a coarse mesh of $N/8$ points
+covering the same domain---because there are fewer points for it to wiggle across. The
+smoother that stalled on the fine grid will bite again on the coarse grid, where the
+same error is now high-frequency. And the coarse grid is cheaper. The entire method is
+the disciplined pursuit of this one observation.
+
+\section{Complementary frequencies: the heart of the matter}
+\label{sec:complementary}
+
+Make the observation precise. Take the 1-D model: the domain $[0,1]$, a fine grid of
+$n$ interior points at spacing $h = 1/(n+1)$, and a coarse grid of every \emph{other}
+fine point, spacing $2h$. A Fourier mode on the fine grid is
+\[
+  \phi^h_j(x) = \sin(j\pi x), \qquad j = 1, 2, \dots, n,
+\]
+sampled at the fine nodes $x = h, 2h, \dots, nh$. The index $j$ is the
+\emph{frequency}: $j=1$ is the smoothest half-sine; $j=n$ is the most oscillatory mode
+the grid can resolve, alternating sign at every node. We split the modes at the
+midpoint $n/2$:
+\begin{itemize}[nosep]
+\item \textbf{low (smooth) modes}, $1 \le j < n/2$: oscillate slowly; the smoother
+  barely touches them ($\abs{g}\approx 1$);
+\item \textbf{high (oscillatory) modes}, $n/2 \le j \le n$: oscillate rapidly; the
+  smoother annihilates them ($\abs{g}\ll 1$).
+\end{itemize}
+
+Now ask the decisive question: what does a \emph{low} fine-grid mode look like when we
+sample it on the coarse grid, at the nodes $x = 2h, 4h, \dots$ alone? The coarse grid
+has half as many points, so it can only resolve frequencies up to $n/2$. A smooth
+fine-grid mode, $j < n/2$, is \emph{also} a legitimate mode on the coarse grid---but
+relative to the coarse grid's own resolution limit $n/2$, a mode at $j$ that was
+``low'' on the fine grid sits a larger fraction of the way up toward the coarse limit.
+The smoothest fine modes, the ones that defeated the smoother, become genuine,
+killable, mid-to-high frequency content on the coarse grid. \Cref{fig:complementary}
+draws exactly this: one smooth error sampled on both grids, oscillatory-looking on the
+coarse one.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=12.8cm, height=5.4cm,
+  xlabel={position $x$}, ylabel={error $e(x)$},
+  xmin=0, xmax=1, ymin=-1.25, ymax=1.45,
+  xtick={0,0.25,0.5,0.75,1}, ytick={-1,0,1},
+  axis lines=left, tick align=outside,
+  legend style={at={(0.5,1.02)}, anchor=south, legend columns=2,
+    font=\footnotesize, draw=simGray!50},
+  every axis plot/.append style={thick},
+]
+  % the underlying smooth error: a slowly-varying field (looks tame everywhere)
+  \addplot[simBlue, very thick, samples=200, domain=0:1]
+    {0.95*sin(deg(3.5*pi*x))*exp(-0.35*x)};
+  \addlegendentry{smooth error (the continuous field)}
+  % fine-grid samples: dense, follow the curve -> looks smooth
+  \addplot[only marks, mark=*, mark size=1.0pt, simGreen]
+    coordinates {
+      (0.04,0.395)(0.08,0.685)(0.12,0.846)(0.16,0.860)(0.20,0.730)
+      (0.24,0.479)(0.28,0.150)(0.32,-0.205)(0.36,-0.521)(0.40,-0.742)
+      (0.44,-0.829)(0.48,-0.766)(0.52,-0.566)(0.56,-0.262)(0.60,0.087)
+      (0.64,0.414)(0.68,0.661)(0.72,0.785)(0.76,0.764)(0.80,0.603)
+      (0.84,0.334)(0.88,0.006)(0.92,-0.318)(0.96,-0.584)};
+  \addlegendentry{fine-grid samples (smooth)}
+  % coarse-grid samples: every other -> when connected, looks oscillatory
+  \addplot[simRust, thick, mark=square*, mark size=1.7pt, densely dashed]
+    coordinates {
+      (0.04,0.395)(0.12,0.846)(0.20,0.730)(0.28,0.150)(0.36,-0.521)
+      (0.44,-0.829)(0.52,-0.566)(0.60,0.087)(0.68,0.661)(0.76,0.764)
+      (0.84,0.334)(0.92,-0.318)};
+  \addlegendentry{coarse-grid samples (now oscillatory)}
+\end{axis}
+\end{tikzpicture}
+\caption[Complementary frequencies]{The single idea behind multigrid. The blue curve
+is a smooth error---the kind a smoother leaves behind, varying slowly across the
+domain. Sampled on the \emph{fine} grid (green dots, every node), it traces the smooth
+curve faithfully and a smoother sees a low-frequency mode it cannot damp. Sampled on
+the \emph{coarse} grid (rust squares, every \emph{other} node, connected by the dashed
+line), the \emph{same} error now swings sharply from sample to sample---it has become a
+mid-to-high frequency mode relative to the coarse grid's coarser resolution, exactly
+the kind a smoother \emph{can} annihilate. Smoothness is grid-relative; the coarse grid
+turns the smoother's blind spot into its target.}
+\label{fig:complementary}
+\end{figure}
+
+\begin{notationbox}
+We will say a mode is \textbf{smooth} or \textbf{oscillatory} \emph{relative to a
+grid}, never absolutely. A fixed error field is smooth on a fine grid and oscillatory
+on a coarse one. ``High frequency'' means ``near the resolution limit of the grid in
+question.'' The whole method rests on the fact that the smoother's reach---which modes
+it damps---is tied to the grid's resolution limit, so changing the grid changes which
+modes are in reach.
+\end{notationbox}
+
+This is the \emph{complementary-frequencies principle}. The smoother and the coarse
+grid have complementary competences: the smoother handles everything oscillatory on the
+fine grid; the coarse grid handles everything smooth on the fine grid, by re-presenting
+it as something oscillatory that \emph{its} smoother can handle. Between them they cover
+the whole spectrum. Neither alone is a solver; together they are. The two-grid method
+of the next section is the minimal machine that makes them cooperate.
+
+\section{The two-grid method}
+\label{sec:twogrid}
+
+Suppose we have a fine grid carrying the system $\mat{A}\vx=\vb$ and a single coarse
+grid. We want a method that smooths on the fine grid (killing oscillatory error) and
+\emph{also} corrects the smooth error by working on the coarse grid. The obstacle is
+that the smooth error lives in the fine-grid solution, while the coarse grid speaks a
+different, smaller vocabulary of vectors. We need a way to carry information between the
+two---and an equation on the coarse grid for the coarse grid to solve.
+
+\subsection{The residual equation}
+
+The bridge is the \emph{residual equation}, which we have met before but which becomes
+load-bearing here. Let $\vy$ be the current fine-grid approximation, after some
+smoothing. Its error is $\ve = \vx - \vy$, unknown (it contains the exact solution). But
+its \emph{residual},
+\[
+  \vr = \vb - \mat{A}\vy,
+\]
+is fully computable, and error and residual are linked by the exact linear identity
+\[
+  \mat{A}\,\ve = \mat{A}\vx - \mat{A}\vy = \vb - \mat{A}\vy = \vr.
+\]
+So $\mat{A}\,\ve = \vr$: the error solves the \emph{same} operator equation as the
+original, but with the residual on the right. This is the \emph{error equation}. If we
+could solve it we would have $\ve$ exactly and could finish in one step, $\vx = \vy +
+\ve$. We cannot---solving $\mat{A}\,\ve=\vr$ on the fine grid is the original problem
+again. But after smoothing, $\ve$ is \emph{smooth}, and a smooth $\ve$ is exactly what a
+\emph{coarse} grid can represent well. So we solve the error equation
+\emph{approximately, on the coarse grid}, and use the coarse solution to correct $\vy$.
+
+\subsection{Restriction and prolongation}
+
+To pose the error equation on the coarse grid we need two transfer operators
+(\cref{fig:transfer}):
+\begin{itemize}[nosep]
+\item \textbf{Restriction} $\mat{R}\colon \text{fine}\to\text{coarse}$, which carries the
+  fine-grid residual $\vr$ down to a coarse-grid residual $\vr_c = \mat{R}\vr$;
+\item \textbf{Prolongation} $\mat{P}\colon \text{coarse}\to\text{fine}$, which carries a
+  coarse-grid correction $\ve_c$ up to a fine-grid correction $\mat{P}\ve_c$.
+\end{itemize}
+Prolongation is \emph{interpolation}: given values at the coarse nodes, fill in the fine
+nodes between them. In 1-D, linear interpolation copies the value at each coarse node to
+the fine node sitting on it and averages the two neighbours for the fine node in between:
+\[
+  (\mat{P}\ve_c)_{2i} = (\ve_c)_i, \qquad
+  (\mat{P}\ve_c)_{2i+1} = \tfrac12\bigl((\ve_c)_i + (\ve_c)_{i+1}\bigr).
+\]
+The matrix $\mat{P}$ is tall and thin: $N_f \times N_c$ with $N_f > N_c$, one column per
+coarse node.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+  % fine grid (top), coarse grid (bottom)
+  \def\fy{1.9} \def\cy{0}
+  % fine nodes 0..8
+  \foreach \i in {0,...,8}{
+    \fill[simGreen] (\i*1.0,\fy) circle (2.0pt);}
+  \draw[simGray] (0,\fy)--(8,\fy);
+  \node[simGreen, anchor=south] at (4,\fy+0.18) {fine grid ($N_f$ nodes, spacing $h$)};
+  % coarse nodes at 0,2,4,6,8
+  \foreach \i in {0,2,4,6,8}{
+    \fill[simRust] (\i*1.0,\cy) circle (2.6pt);}
+  \draw[simGray] (0,\cy)--(8,\cy);
+  \node[simRust, anchor=north] at (4,\cy-0.18) {coarse grid ($N_c$ nodes, spacing $2h$)};
+  % prolongation (coarse -> fine), left half: interpolation arrows
+  \begin{scope}
+    % coincident copies
+    \foreach \i in {0,2,4}{
+      \draw[-{Stealth[length=1.6mm]}, simBlue, thick] (\i,\cy+0.12)--(\i,\fy-0.12);}
+    % interpolated midpoints (averages of two neighbours)
+    \foreach \i in {1,3}{
+      \draw[-{Stealth[length=1.4mm]}, simBlue, opacity=0.55] (\i-1,\cy+0.12)--(\i,\fy-0.12);
+      \draw[-{Stealth[length=1.4mm]}, simBlue, opacity=0.55] (\i+1,\cy+0.12)--(\i,\fy-0.12);}
+    \node[simBlue, anchor=east, font=\footnotesize\bfseries] at (-0.25,1.0)
+      {$\mat{P}$ (prolong)};
+  \end{scope}
+  % restriction (fine -> coarse), right half: weighted gather arrows
+  \begin{scope}
+    \foreach \i in {6,8}{
+      \draw[-{Stealth[length=1.6mm]}, simRust, thick, densely dashed] (\i,\fy-0.12)--(\i,\cy+0.12);}
+    \draw[-{Stealth[length=1.4mm]}, simRust, opacity=0.6, densely dashed] (5,\fy-0.12)--(6,\cy+0.12);
+    \draw[-{Stealth[length=1.4mm]}, simRust, opacity=0.6, densely dashed] (7,\fy-0.12)--(6,\cy+0.12);
+    \node[simRust, anchor=west, font=\footnotesize\bfseries] at (8.25,1.0)
+      {$\mat{R}=\mat{P}^{\mathsf{T}}$ (restrict)};
+  \end{scope}
+\end{tikzpicture}
+\caption[Prolongation and restriction]{The two grid-transfer operators between a fine
+grid (green, spacing $h$) and a coarse grid (rust, spacing $2h$) holding every other
+node. \emph{Left:} prolongation $\mat{P}$ (blue, solid arrows) is interpolation---each
+coarse node's value is copied to the coincident fine node, and each in-between fine node
+takes the average of its two coarse neighbours. \emph{Right:} restriction
+$\mat{R}=\mat{P}^{\mathsf T}$ (rust, dashed arrows) is the transpose---it gathers each
+coarse node's value as a weighted sum of nearby fine values, with weights mirroring the
+interpolation stencil. Making restriction the transpose of prolongation is what keeps the
+coarse operator symmetric and the whole method variationally consistent.}
+\label{fig:transfer}
+\end{figure}
+
+Restriction is the reverse trip, and the natural choice---the one that makes the algebra
+work out---is the \emph{transpose} of prolongation, up to scaling:
+\[
+  \mat{R} = \mat{P}^{\mathsf T}.
+\]
+Why the transpose? Because residuals and corrections are dual objects. A correction is a
+\emph{primal} vector (it adds to the solution); a residual is a \emph{dual} vector (it
+pairs with corrections through $\inner{\vr}{\ve}$ to measure work). Interpolating a
+primal vector \emph{up} with $\mat{P}$ forces the dual vector to go \emph{down} with
+$\mat{P}^{\mathsf T}$, so that the pairing $\inner{\vr}{\mat{P}\ve_c} =
+\inner{\mat{P}^{\mathsf T}\vr}{\ve_c}$ is preserved between the grids. We will see in the
+next subsection that this single choice is exactly what makes the coarse operator
+symmetric.
+
+\subsection{The Galerkin coarse operator}
+
+The error equation on the fine grid is $\mat{A}\,\ve=\vr$. We want its coarse-grid
+counterpart, $\mat{A}_c\,\ve_c = \vr_c$, with $\vr_c=\mat{P}^{\mathsf T}\vr$. What should
+$\mat{A}_c$ be? Substitute the ansatz that the fine correction is the prolonged coarse
+correction, $\ve \approx \mat{P}\ve_c$, into $\mat{A}\,\ve = \vr$ and restrict both
+sides:
+\[
+  \mat{P}^{\mathsf T}\mat{A}\,\mat{P}\,\ve_c = \mat{P}^{\mathsf T}\vr.
+\]
+The operator on the left \emph{is} the right coarse operator:
+\begin{equation}
+  \mat{A}_c \;=\; \mat{P}^{\mathsf T}\mat{A}\,\mat{P}.
+  \label{eq:galerkin}
+\end{equation}
+This is the \emph{Galerkin coarse operator}, or \emph{Galerkin coarsening}. It is not the
+operator you would get by re-discretizing the PDE on the coarse grid (though for simple
+problems the two agree up to scaling); it is the operator \emph{induced} by the fine
+operator and the transfer maps. \Cref{eq:galerkin} has two virtues that no other choice
+of $\mat{A}_c$ shares.
+
+\begin{lemma}[Symmetry and definiteness are inherited]
+\label{lem:galerkin}
+If $\mat{A}$ is symmetric positive definite and $\mat{P}$ has full column rank, then the
+Galerkin coarse operator $\mat{A}_c = \mat{P}^{\mathsf T}\mat{A}\mat{P}$ is symmetric
+positive definite.
+\end{lemma}
+\begin{proof}
+Symmetry: $\mat{A}_c^{\mathsf T} = (\mat{P}^{\mathsf T}\mat{A}\mat{P})^{\mathsf T} =
+\mat{P}^{\mathsf T}\mat{A}^{\mathsf T}\mat{P} = \mat{P}^{\mathsf T}\mat{A}\mat{P} =
+\mat{A}_c$, using $\mat{A}^{\mathsf T}=\mat{A}$. Definiteness: for any coarse vector
+$\vv\ne\mathbf 0$, $\inner{\vv}{\mat{A}_c\vv} = \inner{\vv}{\mat{P}^{\mathsf
+T}\mat{A}\mat{P}\vv} = \inner{\mat{P}\vv}{\mat{A}(\mat{P}\vv)} > 0$, because $\mat{P}\vv
+\ne \mathbf 0$ (full column rank) and $\mat{A}$ is positive definite.
+\end{proof}
+
+So the coarse problem is again an SPD system: every tool we have for SPD systems---the
+conjugate gradient method of \cref{ch:cg}, another round of smoothing, another level of
+coarsening---applies to it unchanged. This self-similarity is what makes recursion
+possible. The second virtue is \emph{variational consistency}: with $\mat{R} =
+\mat{P}^{\mathsf T}$ and $\mat{A}_c=\mat{P}^{\mathsf T}\mat{A}\mat{P}$, the coarse-grid
+correction is the best possible correction in the range of $\mat P$, measured in the
+energy norm. The coarse grid does not merely \emph{approximate} the smooth-error
+correction; it computes the \emph{optimal} one available to it.
+
+\begin{physicsbox}
+For finite elements the transfer operators are not invented---they are \emph{given by the
+function-space hierarchy of \cref{ch:functionspaces}}. When the coarse FE space $V_H$ is a
+genuine subspace of the fine space $V_h$ (a coarser mesh, or a lower polynomial order,
+nested inside the finer one), every coarse basis function is exactly a linear combination
+of fine basis functions. The coefficients of that combination \emph{are} the columns of
+$\mat{P}$. Prolongation is then the natural inclusion $V_H \hookrightarrow V_h$, restriction
+its transpose, and \cref{eq:galerkin} is automatic. Palace builds this nested hierarchy
+once---an $h$-refined or $p$-coarsened tower of $\Hcurl$ (or $\Hone$) spaces---and reads
+the prolongations straight off it. The next section makes that hierarchy the spine of the
+recursion.
+\end{physicsbox}
+
+\subsection{The two-grid cycle assembled}
+
+We now have every piece. The two-grid cycle, for one pass, is:
+\begin{enumerate}[nosep]
+\item \textbf{Presmooth:} apply a few smoother sweeps to $\mat{A}\vx=\vb$, starting from
+  the current $\vx$, killing oscillatory error and leaving smooth error.
+\item \textbf{Residual:} compute $\vr = \vb - \mat{A}\vx$.
+\item \textbf{Restrict:} $\vr_c = \mat{P}^{\mathsf T}\vr$, carrying the residual to the
+  coarse grid.
+\item \textbf{Coarse solve:} solve $\mat{A}_c\,\ve_c = \vr_c$ on the coarse grid for the
+  coarse correction.
+\item \textbf{Prolong and correct:} $\vx \mathrel{+}= \mat{P}\,\ve_c$, adding the
+  interpolated correction to the fine solution.
+\item \textbf{Postsmooth:} a few more smoother sweeps, cleaning up the high-frequency
+  error that interpolation reintroduced.
+\end{enumerate}
+Steps 1 and 6 handle the oscillatory error; steps 2--5 handle the smooth error via the
+coarse grid. This is a complete, correct method---and \cref{wex:twogrid} below runs it on
+real numbers and watches the error collapse. But it has one unsatisfying feature: step 4
+says ``solve the coarse problem,'' and for a large fine grid the coarse problem is still
+large. The resolution of that complaint is the idea that makes multigrid \emph{multi}.
+
+\section{The V-cycle: recursion down the grids}
+\label{sec:vcycle}
+
+Step 4 of the two-grid cycle asks us to solve $\mat{A}_c\,\ve_c=\vr_c$ on the coarse grid.
+But $\mat{A}_c$ is SPD (\cref{lem:galerkin}), so it is a problem of exactly the same kind
+as the original---and we know a good way to attack a problem of that kind: the two-grid
+cycle itself. Rather than solve the coarse problem exactly, \emph{apply one two-grid cycle
+to it}, using a still-coarser grid below it. That two-grid cycle in turn defers its own
+coarse solve to a yet-coarser grid, and so on, until we reach a grid so small---a handful
+of unknowns---that solving directly is trivial. The two-grid method, applied to itself all
+the way down, is the \textbf{V-cycle}.
+
+\begin{keyidea}
+\textbf{Smooth on the fine grid; solve the rest on a coarser grid---recursively.}
+On every level, presmooth to kill that level's oscillatory error, push the smooth residual
+down to the next-coarser level, let that level handle it the same way, bring the correction
+back up, and postsmooth. The recursion bottoms out on a grid small enough to solve
+directly. Because each level only ever does cheap smoothing (the expensive ``solve'' is
+always deferred downward), the total cost is a geometric series that sums to $O(N)$, and
+because each level kills exactly the frequencies it is responsible for, the convergence
+rate is \emph{independent of the mesh size}. That conjunction---$O(N)$ work and
+$h$-independent convergence---is what the word \emph{optimal} means in \cref{ch:precond}.
+\end{keyidea}
+
+\subsection{The V-cycle as a recursive function}
+
+Number the levels $0, 1, \dots, L$, with $L$ the finest (the grid we actually want to
+solve on) and $0$ the coarsest (the trivial base case). Each level $\ell$ carries its own
+operator $\mat{A}_\ell$, its own smoother $\mat{B}_\ell$, and---for $\ell>0$---a
+prolongation $\mat{P}_{\ell-1}$ mapping from level $\ell-1$ up to level $\ell$. The
+V-cycle is then a single recursive function of the level $\ell$ and the current iterate
+$\vx$. \Cref{lst:vcycle} writes it as a pure function---no in-place mutation, every step a
+tensor-in/tensor-out map---in the calculus of \cref{part:framework}; this is the form Palace's
+\code{GeometricMultigridSolver} takes once its scratch-vector mutations are rotated away.
+
+\begin{lstlisting}[style=l4style, caption={The V-cycle as a level-recursive pure function. Each call presmooths, restricts the residual, recurses on the coarser level, prolongs the returned correction, and postsmooths. The base case $\ell=0$ solves directly.}, label={lst:vcycle}]
+-- one V-cycle pass at level l: improve x toward solving A[l] x = b
+vcycle :: [LinOp] -> [Smoother] -> [LinOp] -> Solver
+       -> Int -> Tensor[N] -> Tensor[N] -> Tensor[N]
+vcycle as bs ps coarseSolve 0 b x =
+    coarseSolve b                          -- base case: solve A[0] e = b exactly
+vcycle as bs ps coarseSolve l b x =
+  let y   = presmooth (bs!l) b x           -- 1. kill oscillatory error on level l
+      r   = b `sub` apply (as!l) y         -- 2. residual r = b - A[l] y
+      rc  = apply_transpose (ps!(l-1)) r   -- 3. restrict  r_c = P^T r   (fine -> coarse)
+      ec  = vcycle as bs ps coarseSolve (l-1) rc (zeros)   -- 4. RECURSE: solve A[l-1] e_c = r_c
+      y'  = y `add` apply (ps!(l-1)) ec    -- 5. prolong & correct  y += P e_c
+  in  postsmooth (bs!l) b y'               -- 6. clean up interpolation error
+\end{lstlisting}
+
+Read the function once more with the two-grid cycle of \cref{sec:twogrid} beside it: the
+six numbered comments are the six numbered steps, with step~4---formerly ``solve the coarse
+problem''---now a \emph{recursive call to \code{vcycle} itself} one level down. The base
+case \code{vcycle ... 0 b x} does the only genuine solve in the whole algorithm, and it is
+cheap because level $0$ is tiny. Everything above the base case does nothing but smooth,
+restrict, and prolong. The coarse operators $\mat{A}_\ell$ and prolongations
+$\mat{P}_{\ell-1}$ are precomputed once from the function-space hierarchy
+(\cref{ch:functionspaces}); the recursion just walks them.
+
+\begin{notationbox}
+Each leg of the V-cycle---presmooth, the coarse-grid correction, postsmooth---has the same
+algebraic shape: take the current guess $\vy$, compute its residual $\vr=\vb-\mat{A}\vy$,
+apply some approximate inverse $\mat{B}$ to the residual, and add the result back:
+\[
+  \vy \;\longmapsto\; \vy + \mat{B}\,(\vb - \mat{A}\vy).
+\]
+This is the \emph{correction step} of \cref{ch:precond}: a presmooth leg takes $\mat{B}$ to
+be the point smoother; the coarse-grid-correction leg takes $\mat{B} =
+\mat{P}\,\mat{A}_c^{-1}\mat{P}^{\mathsf T}$ (smooth the residual by solving on the coarse
+grid). The V-cycle is a \emph{composition of correction steps}, alternating point smoothers
+with one coarse-grid smoother---which is itself a composition of correction steps one level
+down. Reading multigrid this way---one combinator, applied at every level and recursively
+inside itself---is the calculus view of \cref{part:framework}.
+\end{notationbox}
+
+\subsection{Why it is called a V}
+
+Trace the flow of control through one call to \code{vcycle} at the finest level $L$.
+Presmoothing happens on the way \emph{down}: level $L$ smooths, then hands a residual to
+level $L-1$, which smooths and hands a residual to $L-2$, and so on down to level $0$.
+That is the descending stroke of the letter. At level $0$ the direct solve happens---the
+point of the V. Then the corrections climb back \emph{up}: level $0$ returns a correction to
+$1$, which prolongs it, postsmooths, and returns to $2$, up to the finest level. That is the
+ascending stroke. Drawn with the levels stacked vertically and time running left to right,
+the path of the computation is a literal V (\cref{fig:vcycle}). This is the hero diagram of
+the chapter; every multigrid method is a variation on its shape.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % vertical: level (fine at top). horizontal: time.
+  % level y-coordinates
+  \def\Lf{4.5} \def\La{3.0} \def\Lb{1.5} \def\Lc{0.0}
+  % level guide lines + labels
+  \foreach \y/\lab/\dof in {%
+    4.5/{level $L$ (finest)}/{$N$ dof},%
+    3.0/{level $L-1$}/{$N/2^d$},%
+    1.5/{level $1$}/{$\vdots$},%
+    0.0/{level $0$ (coarsest)}/{tiny}%
+  }{
+    \draw[simGray!35, densely dotted] (0.2,\y)--(11.3,\y);
+    \node[anchor=east, simGray, font=\scriptsize] at (0.1,\y) {\lab};
+    \node[anchor=west, simGray!80, font=\scriptsize\itshape] at (11.4,\y) {\dof};
+  }
+  % the V path: descending (presmooth+restrict), then ascending (prolong+postsmooth)
+  % node coordinates along the V
+  \coordinate (d0) at (1.6,\Lf);   % presmooth finest
+  \coordinate (d1) at (3.4,\La);   % presmooth L-1
+  \coordinate (d2) at (5.2,\Lb);   % presmooth 1
+  \coordinate (bot) at (6.4,\Lc);  % coarse solve
+  \coordinate (u2) at (7.6,\Lb);   % postsmooth 1
+  \coordinate (u1) at (9.4,\La);   % postsmooth L-1
+  \coordinate (u0) at (11.2,\Lf);  % postsmooth finest
+  % descending strokes (restriction)
+  \draw[-{Stealth[length=2.4mm]}, simBlue, very thick] (d0)--(d1);
+  \draw[-{Stealth[length=2.4mm]}, simBlue, very thick] (d1)--(d2);
+  \draw[-{Stealth[length=2.4mm]}, simBlue, very thick] (d2)--(bot);
+  % ascending strokes (prolongation)
+  \draw[-{Stealth[length=2.4mm]}, simRust, very thick] (bot)--(u2);
+  \draw[-{Stealth[length=2.4mm]}, simRust, very thick] (u2)--(u1);
+  \draw[-{Stealth[length=2.4mm]}, simRust, very thick] (u1)--(u0);
+  % node markers
+  \foreach \pt/\col in {d0/simGreen, d1/simGreen, d2/simGreen,
+                        u2/simGold, u1/simGold, u0/simGold}{
+    \fill[\col] (\pt) circle (3pt);}
+  \fill[simViolet] (bot) circle (4pt);
+  % leg labels (descending = presmooth + restrict)
+  \node[simGreen, anchor=south, font=\scriptsize] at (d0) {presmooth};
+  \node[simBlue, anchor=south east, font=\scriptsize] at ($(d0)!0.5!(d1)$) {restrict $\mat{P}^{\mathsf T}\vr$};
+  \node[simBlue, anchor=south east, font=\scriptsize] at ($(d1)!0.5!(d2)$) {restrict};
+  \node[simBlue, anchor=east, font=\scriptsize] at ($(d2)!0.5!(bot)+(0.1,0)$) {restrict};
+  % bottom
+  \node[simViolet, anchor=north, font=\scriptsize\bfseries] at (bot) {coarse solve};
+  % ascending labels (prolong + postsmooth)
+  \node[simRust, anchor=west, font=\scriptsize] at ($(bot)!0.5!(u2)-(0.1,0)$) {prolong $\mat{P}\ve_c$};
+  \node[simRust, anchor=south west, font=\scriptsize] at ($(u2)!0.5!(u1)$) {prolong};
+  \node[simRust, anchor=south west, font=\scriptsize] at ($(u1)!0.5!(u0)$) {prolong};
+  \node[simGold, anchor=south, font=\scriptsize] at (u0) {postsmooth};
+  % the big V annotation
+  \node[simInk, font=\large\bfseries, opacity=0.18] at (6.4,2.5) {V};
+\end{tikzpicture}
+\caption[The V-cycle]{The hero diagram. Levels stacked vertically (finest at top,
+coarsest at bottom), time running left to right. The computation descends the left stroke
+of a V---\emph{presmoothing} (green) on each level, then \emph{restricting} the residual
+(blue arrows, $\mat{P}^{\mathsf T}\vr$) to the next-coarser level---until it reaches the
+bottom, where the coarsest problem is solved directly (violet). It then climbs the right
+stroke---\emph{prolonging} each correction (rust arrows, $\mat{P}\ve_c$) up to the next-finer
+level and \emph{postsmoothing} (gold)---back to the finest level. Each level does only cheap
+smoothing and grid transfers; the single genuine solve happens on the tiny coarsest grid.
+The grid shrinks by a factor $2^d$ per level (right margin), so the work per level shrinks
+geometrically and the total is $O(N)$.}
+\label{fig:vcycle}
+\end{figure}
+
+\subsection{Building the level hierarchy}
+
+The V-cycle presupposes a tower of grids and the operators connecting them. Where does the
+tower come from? \Cref{ch:functionspaces} already built it. Palace constructs a
+\emph{finite-element space hierarchy}: a coarse-to-fine stack of nested FE spaces,
+\[
+  V_0 \subset V_1 \subset \cdots \subset V_L,
+\]
+obtained either by $h$-refinement (each $V_{\ell}$ a finer mesh than $V_{\ell-1}$) or by
+$p$-coarsening (each $V_{\ell}$ a higher polynomial order). Because the spaces are nested,
+each inclusion $V_{\ell-1}\hookrightarrow V_\ell$ \emph{is} a prolongation
+$\mat{P}_{\ell-1}$, read directly off the hierarchy. The hierarchy is built once, before the
+solve, by folding a level-adding operation over the refinement sequence---a coarse seed
+space, then one level per refinement step---and thereafter the V-cycle consumes it
+read-only. \Cref{fig:hierarchy} shows the geometric picture: the same domain meshed at three
+resolutions, each coarse mesh nested in the finer one. The smoothers $\mat{B}_\ell$ and the
+Galerkin operators $\mat{A}_\ell = \mat{P}_{\ell-1}^{\mathsf T}\mat{A}_{\ell+1}\mat{P}_{\ell-1}$
+are likewise precomputed per level. With the tower in hand, the recursion of
+\cref{lst:vcycle} is all that remains.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+  % three nested meshes of the same square domain
+  \foreach \px/\n/\ttl/\col in {0/4/{fine ($h$)}/simGreen,
+                                 5/2/{medium ($2h$)}/simBlue,
+                                 10/1/{coarse ($4h$)}/simRust}{
+    \begin{scope}[shift={(\px,0)}]
+      \draw[simInk, thick] (0,0) rectangle (3,3);
+      % grid lines
+      \pgfmathsetmacro{\step}{3/\n}
+      \foreach \k in {1,...,\n}{
+        \pgfmathsetmacro{\pos}{\k*\step}
+        \ifnum\k<\n
+          \draw[\col!70] (\pos,0)--(\pos,3);
+          \draw[\col!70] (0,\pos)--(3,\pos);
+        \fi
+      }
+      % nodes
+      \foreach \i in {0,...,\n}{\foreach \j in {0,...,\n}{
+        \fill[\col] (\i*\step,\j*\step) circle (1.6pt);}}
+      \node[font=\footnotesize\bfseries, \col] at (1.5,-0.45) {\ttl};
+    \end{scope}}
+  % refinement arrows between
+  \draw[-{Stealth[length=2.4mm]}, simViolet, thick] (8.7,1.5)--(8.2,1.5)
+    node[midway, above, simViolet]{$\mat{P}$};
+  \draw[-{Stealth[length=2.4mm]}, simViolet, thick] (3.7,1.5)--(3.2,1.5)
+    node[midway, above, simViolet]{$\mat{P}$};
+  \node[anchor=north, simGray, font=\scriptsize\itshape] at (6.5,-1.0)
+    {prolongation interpolates from each grid to the next finer; restriction $\mat{P}^{\mathsf T}$ runs the other way};
+\end{tikzpicture}
+\caption[The grid hierarchy]{The multigrid hierarchy of nested grids on one square domain.
+\emph{Right to left:} a coarse mesh (rust, spacing $4h$), a medium mesh (blue, $2h$), a fine
+mesh (green, $h$). Each coarse grid's nodes are a subset of the finer grid's, so the coarse
+finite-element space is nested in the finer one and the inclusion is the prolongation
+$\mat{P}$ (violet arrows). For finite elements the nesting comes free from the
+function-space hierarchy of \cref{ch:functionspaces}; the V-cycle of \cref{fig:vcycle}
+walks up and down this tower.}
+\label{fig:hierarchy}
+\end{figure}
+
+\section{Why it is optimal: $O(N)$ work, mesh-independent convergence}
+\label{sec:optimal}
+
+The V-cycle's reputation rests on two quantitative claims. Each is worth establishing
+carefully, because together they are what \cref{ch:precond} means by an \emph{optimal}
+preconditioner and what no other general-purpose solver delivers for elliptic problems.
+
+\subsection{Linear work per cycle}
+
+\emph{Claim: one V-cycle costs $O(N)$ operations, where $N$ is the number of fine-grid
+unknowns.} The work on each level is proportional to the number of unknowns on that level:
+a fixed number of smoother sweeps, one residual, one restriction, one prolongation, all of
+which touch each unknown a constant number of times. Let $N_\ell$ be the unknown count on
+level $\ell$, with $N_L = N$ the finest. In $d$ space dimensions, coarsening by a factor of
+two per direction divides the unknown count by $2^d$ each level:
+\[
+  N_{L-1} \approx \frac{N}{2^d}, \quad N_{L-2}\approx \frac{N}{4^d}, \quad \dots
+\]
+The total work is the sum over levels, $W = c\sum_{\ell} N_\ell$, a geometric series
+\[
+  W \;\approx\; c\,N\Bigl(1 + 2^{-d} + 2^{-2d} + \cdots\Bigr)
+    \;=\; c\,N\,\frac{1}{1 - 2^{-d}}.
+\]
+The ratio $1/(1-2^{-d})$ is a constant: $2$ in 1-D, $\tfrac43$ in 2-D, $\tfrac87$ in 3-D.
+So the whole tower costs only a small constant factor more than the finest level alone---the
+coarse levels are essentially free. \Cref{fig:costseries} draws the geometric series of
+per-level costs; \cref{wex:cost} makes the sum concrete. \emph{One V-cycle is $O(N)$.}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=11.5cm, height=5.2cm,
+  ybar, bar width=15pt,
+  xlabel={multigrid level (finest $=L$, then coarser)},
+  ylabel={work $\propto N_\ell$},
+  symbolic x coords={L, L-1, L-2, L-3, L-4},
+  xtick=data, ymin=0, ymax=1.15,
+  ytick={0,0.25,0.5,0.75,1.0},
+  yticklabel={\pgfmathprintnumber{\tick}\,$N$},
+  axis lines=left, tick align=outside,
+  nodes near coords, nodes near coords style={font=\scriptsize, simGray},
+  every node near coord/.append style={/pgf/number format/fixed,
+    /pgf/number format/precision=3},
+  bar shift=0pt,
+]
+  % work per level in 3D: N, N/8, N/64, ...
+  \addplot[fill=simBlue!70, draw=simBlue] coordinates {
+    (L,1.0) (L-1,0.125) (L-2,0.0156) (L-3,0.00195) (L-4,0.00024)};
+\end{axis}
+\end{tikzpicture}
+\caption[The per-level cost geometric series]{Work per multigrid level in 3-D ($d=3$),
+in units of the finest-level work $N$. Each coarser level has $1/2^d = 1/8$ the unknowns of
+the one above, so its cost is one-eighth as large: $N,\ N/8,\ N/64,\dots$. The bars shrink so
+fast that the entire tower below the finest level adds only $1/(2^3-1) = 1/7$ to the finest
+level's cost---the coarse grids are nearly free. Summed, the geometric series gives total
+work $\tfrac{8}{7}N = O(N)$ per V-cycle, independent of how many levels the tower has.}
+\label{fig:costseries}
+\end{figure}
+
+\subsection{Mesh-independent convergence}
+
+\emph{Claim: the V-cycle reduces the error by a fixed factor $\rho<1$ per cycle, and
+$\rho$ does not grow as the mesh is refined.} This is the deeper claim, and the
+complementary-frequencies principle of \cref{sec:complementary} is its proof sketch. Split
+the error into smooth and oscillatory parts relative to the fine grid. The smoother
+contracts the oscillatory part by a factor bounded below $1$ \emph{independent of $h$}---a
+property called \emph{smoothing}. The coarse-grid correction contracts the smooth part,
+and by variational consistency (\cref{lem:galerkin}) it does so optimally, again with a
+factor bounded below $1$ \emph{independent of $h$}---a property called \emph{approximation}.
+Every error component is hit by one mechanism or the other with an $h$-independent factor,
+so the overall contraction $\rho$ is bounded below $1$ uniformly in $h$. A typical
+well-tuned V-cycle has $\rho \approx 0.1$ to $0.2$: each cycle kills an order of magnitude
+of error, regardless of mesh size.
+
+Contrast this with the unpreconditioned conjugate gradient method of \cref{ch:cg}. Its
+iteration count to a fixed tolerance scales as $\sqrt{\kappa}$, where $\kappa$ is the
+condition number of $\mat{A}$. For a second-order elliptic operator, $\kappa = O(h^{-2})$,
+so $\sqrt{\kappa} = O(h^{-1})$: \emph{halving the mesh spacing doubles the iteration count.}
+Multigrid's iteration count, by contrast, is \emph{flat}---a constant number of V-cycles
+reaches tolerance no matter how fine the mesh. \Cref{fig:meshindep} draws the two curves;
+\cref{wex:cost} puts numbers on them.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=11.5cm, height=5.6cm,
+  xlabel={problem size $N$ (degrees of freedom)},
+  ylabel={iterations to tolerance},
+  xmode=log, log basis x=2,
+  xmin=700, xmax=1.2e6, ymin=0, ymax=320,
+  xtick={1024,4096,16384,65536,262144,1048576},
+  xticklabels={$2^{10}$,$2^{12}$,$2^{14}$,$2^{16}$,$2^{18}$,$2^{20}$},
+  ytick={0,50,100,150,200,250,300},
+  axis lines=left, tick align=outside, grid=major, grid style={simGray!18},
+  legend style={at={(0.03,0.97)}, anchor=north west, font=\footnotesize,
+    draw=simGray!50},
+  every axis plot/.append style={very thick},
+]
+  % unpreconditioned CG: iterations ~ sqrt(kappa) ~ 1/h ~ N^{1/d} (d=2 => N^{1/2})
+  \addplot[simRust, mark=*, mark size=1.6pt] coordinates {
+    (1024,9.6)(4096,19.2)(16384,38.4)(65536,76.8)(262144,153.6)(1048576,307.2)};
+  \addlegendentry{unpreconditioned CG: $\sim\!\sqrt{\kappa}\sim 1/h$}
+  % multigrid V-cycle: flat
+  \addplot[simBlue, mark=square*, mark size=1.6pt] coordinates {
+    (1024,8)(4096,8)(16384,8)(65536,9)(262144,9)(1048576,9)};
+  \addlegendentry{multigrid V-cycle: flat ($h$-independent)}
+\end{axis}
+\end{tikzpicture}
+\caption[Mesh-independent convergence]{The property that makes multigrid optimal.
+\emph{Rust:} unpreconditioned conjugate gradient (\cref{ch:cg}) needs $\sim\sqrt{\kappa}\sim
+1/h$ iterations, which \emph{doubles} every time the mesh is halved (note the log scale on
+$N$)---refining the mesh makes the solver slower and slower. \emph{Blue:} the multigrid
+V-cycle takes a nearly constant number of cycles regardless of mesh size: its convergence
+factor $\rho<1$ is bounded \emph{independent} of $h$. This flatness is the definition of an
+\emph{optimal} solver in \cref{ch:precond}, and multigrid is the canonical example.}
+\label{fig:meshindep}
+\end{figure}
+
+\begin{keyidea}
+The two claims combine into the headline. \emph{One V-cycle costs $O(N)$, and a fixed
+number of V-cycles---independent of $N$---reaches any tolerance.} Therefore solving an
+elliptic PDE to fixed accuracy costs $O(N)$ total: optimal, in the strict sense that you
+cannot beat linear in the number of unknowns, since you must at least look at each unknown
+once. No purely algebraic solver---not Gaussian elimination ($O(N^3)$, or $O(N^{1.5})$ for
+2-D sparse), not unpreconditioned CG ($O(N^{1.5})$ in 2-D)---matches this. Multigrid is the
+gold standard against which elliptic solvers are measured.
+\end{keyidea}
+
+\section{Worked examples}
+
+\subsection{A two-grid cycle on 1-D Poisson}
+
+We run the two-grid method of \cref{sec:twogrid} on a small concrete problem and watch the
+error collapse. The arithmetic is deliberately tractable so every step can be checked by
+hand.
+
+\begin{workedexample}{A two-grid cycle on the 1-D Poisson equation}{twogrid}
+Discretize $-u'' = f$ on $[0,1]$ with homogeneous Dirichlet conditions, on a fine grid of
+$n=7$ interior points at spacing $h=\tfrac18$. The operator is the standard tridiagonal
+$\mat{A} = h^{-2}\,\mathrm{tridiag}(-1, 2, -1)$, size $7\times 7$. Take a right-hand side
+whose exact solution is the smooth function $u(x)=\sin(\pi x)$ (so the discrete error we
+introduce will be smooth-plus-oscillatory and we can watch each part go).
+
+\textbf{Initial error.} Start from an initial guess corrupted by both a smooth and an
+oscillatory component: let the initial error be
+$\ve_0 = \underbrace{\sin(\pi x)}_{\text{smooth, } j=1} +
+\tfrac12\underbrace{\sin(7\pi x)}_{\text{oscillatory, } j=7}$,
+sampled at the seven fine nodes. Its energy norm (we track $\norm{\ve}_\infty$ for
+legibility) starts near $\norm{\ve_0}_\infty \approx 1.42$.
+
+\textbf{Step 1 --- presmooth.} Apply two sweeps of weighted Jacobi, $\vx \leftarrow \vx +
+\omega\mat{D}^{-1}(\vb-\mat{A}\vx)$ with $\omega=\tfrac23$ and $\mat{D}=2h^{-2}\mathrm{I}$.
+The Jacobi smoothing factor on this operator is $|1-\tfrac23(1-\cos\theta_j)|$, which is
+$\approx 0.95$ for the smooth mode $j=1$ but $\approx 0.10$ for the oscillatory mode $j=7$.
+After two sweeps the oscillatory amplitude $\tfrac12$ has fallen to
+$\tfrac12(0.10)^2 \approx 0.005$---gone---while the smooth amplitude $1$ has barely
+moved, to $\approx 0.90$. The error is now $\norm{\ve}_\infty \approx 0.90$, and---this is
+the point---it is now essentially \emph{pure smooth mode}.
+
+\textbf{Step 2 --- residual.} Compute $\vr = \vb - \mat{A}\vx$ on the fine grid. Because the
+surviving error is the smooth mode $\ve\approx 0.90\sin(\pi x)$ and $\mat{A}\sin(\pi x) =
+\lambda_1\sin(\pi x)$ with $\lambda_1 = h^{-2}\cdot 2(1-\cos\pi h)\approx 9.74$, the residual
+is itself smooth, $\vr = \mat{A}\ve \approx 8.8\sin(\pi x)$.
+
+\textbf{Step 3 --- restrict.} The coarse grid has $n_c=3$ interior points at spacing
+$2h=\tfrac14$. Full-weighting restriction $\mat{P}^{\mathsf T}$ (stencil
+$\tfrac14[1,2,1]$) carries $\vr$ to a coarse residual $\vr_c$ of length $3$, still a clean
+smooth coarse mode.
+
+\textbf{Step 4 --- coarse solve.} Solve the $3\times 3$ system
+$\mat{A}_c\,\ve_c = \vr_c$ \emph{exactly} (three unknowns---a trivial direct solve), where
+$\mat{A}_c = \mat{P}^{\mathsf T}\mat{A}\mat{P}$ is the Galerkin operator,
+itself the $3\times3$ tridiagonal Laplacian at spacing $2h$. The coarse correction $\ve_c$
+recovers almost exactly the coarse samples of the smooth error $0.90\sin(\pi x)$.
+
+\textbf{Step 5 --- prolong and correct.} Interpolate: $\vx \leftarrow \vx +
+\mat{P}\,\ve_c$. The prolonged correction $\mat{P}\ve_c$ matches the smooth error $\ve$ to
+within the interpolation error of a smooth function on a grid that resolves it well---a few
+percent. After the correction the fine-grid error has dropped from $\approx 0.90$ to
+$\approx 0.06$.
+
+\textbf{Step 6 --- postsmooth.} Two more Jacobi sweeps clean up the small oscillatory error
+that linear interpolation injected, bringing $\norm{\ve}_\infty \approx 0.02$.
+
+\textbf{The tally.} One two-grid cycle drove the error from $1.42$ to $0.02$---a factor of
+about $70$, two orders of magnitude---at the cost of a few fine-grid Jacobi sweeps plus one
+trivial $3\times3$ solve. Smoothing alone, run for the same number of sweeps, would have
+removed the oscillatory mode and then stalled at $\approx 0.90$, having made essentially no
+progress on the smooth mode. The coarse grid did in one $3\times 3$ solve what no amount of
+fine-grid smoothing could do. \emph{That} is the complementary-frequencies principle paying
+off in numbers.
+\end{workedexample}
+
+\subsection{The work estimate and the iteration-count contrast}
+
+The second example makes the two optimality claims of \cref{sec:optimal} quantitative: the
+$O(N)$ per-cycle cost as a summed geometric series, and the mesh-independent iteration count
+set against CG's growth.
+
+\begin{workedexample}{$O(N)$ work and the CG contrast}{cost}
+\textbf{Part (a): one V-cycle is $O(N)$.} Take a 3-D problem, $d=3$, with $N$ unknowns on the
+finest grid. Coarsening halves the grid spacing's inverse---divides the unknown count by
+$2^d = 8$---per level. Let the work on a level be $c$ operations per unknown (a fixed number
+of smoother sweeps plus the transfers). The total work is
+\[
+  W = c\Bigl(N + \tfrac{N}{8} + \tfrac{N}{64} + \tfrac{N}{512} + \cdots\Bigr)
+    = cN\sum_{k=0}^{\infty} 8^{-k} = cN\cdot\frac{1}{1-\tfrac18} = cN\cdot\frac{8}{7}.
+\]
+The sum is a finite constant, $\tfrac87 \approx 1.143$: \emph{the entire tower of coarse
+grids adds only $14\%$ to the cost of the finest level alone.} So $W = O(N)$, with a small
+constant. In 2-D the factor is $\tfrac{1}{1-1/4} = \tfrac43$; in 1-D, $\tfrac{1}{1-1/2}=2$.
+In every dimension the geometric series converges and the per-cycle cost is strictly linear
+in $N$.
+
+\textbf{Part (b): total cost to solve.} If a fixed number $m$ of V-cycles---say $m\approx
+8$---reaches the tolerance \emph{regardless of $N$} (the mesh-independence claim), then the
+total solve cost is $m\cdot W = 8\cdot\tfrac87 cN = O(N)$. Solving the PDE costs linear time.
+
+\textbf{Part (c): the CG contrast.} Now estimate unpreconditioned CG on the same family of
+2-D problems. Its iteration count to fixed tolerance is $\approx \tfrac12\sqrt{\kappa}$ with
+$\kappa \approx (h^{-2})\cdot(\text{const})$, so iterations $\propto 1/h \propto
+\sqrt{N}$ in 2-D. Tabulate both as the mesh is refined, doubling resolution each row (so $N$
+quadruples in 2-D):
+\begin{center}\small
+\begin{tabular}{@{}rrr@{}}
+\toprule
+$N$ & CG iterations $\sim\!\sqrt{N}$ & V-cycles \\
+\midrule
+$1\,024$      & $\approx 16$  & $8$ \\
+$4\,096$      & $\approx 32$  & $8$ \\
+$16\,384$     & $\approx 64$  & $8$ \\
+$65\,536$     & $\approx 128$ & $9$ \\
+$262\,144$    & $\approx 256$ & $9$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+CG's iteration count \emph{doubles every time the mesh is halved}; multigrid's is flat. And
+each CG iteration also costs $O(N)$ (one sparse mat-vec), so CG's total solve cost in 2-D is
+$O(N\sqrt{N}) = O(N^{1.5})$---superlinear---against multigrid's $O(N)$. At $N=262\,144$
+multigrid does the work of $9$ cycles while CG grinds through $256$ iterations; the gap
+widens without bound as the mesh refines. This table \emph{is} \cref{fig:meshindep} in
+numbers, and it is the entire case for preconditioning the Krylov solve with a V-cycle---the
+subject of the next section.
+\end{workedexample}
+
+\section{Variants and deployment}
+\label{sec:variants}
+
+The V-cycle is the prototype, not the only shape. A few variations matter in practice, and
+one deployment pattern---multigrid \emph{inside} a Krylov solver---is how Palace actually
+uses it.
+
+\subsection{V-cycle, W-cycle, and full multigrid}
+
+The recursion of \cref{lst:vcycle} makes exactly \emph{one} recursive call per level. If the
+coarse-grid correction is not accurate enough---because the coarse problem itself was solved
+too crudely---one can make \emph{two} recursive calls per level instead, visiting each coarse
+level twice. The resulting flow traces a \emph{W} rather than a V (\cref{fig:cycleshapes},
+middle): more coarse-grid work, a stronger correction, useful for harder problems where a
+single coarse visit leaves too much error. \emph{Full multigrid} (FMG) is a different idea
+again: rather than start on the finest grid with a poor guess, start on the \emph{coarsest}
+grid, solve it, prolong the solution to the next level as an excellent initial guess, do a
+V-cycle there, prolong again, and so on up to the finest grid (\cref{fig:cycleshapes},
+right). FMG reaches discretization accuracy in a single sweep up the tower---often the most
+efficient option of all, because every level starts from a guess the level below already
+made good.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.82, every node/.style={font=\scriptsize}]
+  % shared: 4 levels, y = 0..3 (0 coarsest)
+  % --- V-cycle ---
+  \begin{scope}
+    \foreach \y in {0,1,2,3}{\draw[simGray!30, densely dotted] (0,\y)--(3.2,\y);}
+    \node[font=\footnotesize\bfseries, simInk] at (1.6,3.7) {V-cycle};
+    \draw[-{Stealth[length=2mm]}, simBlue, thick]
+      (0.2,3)--(1.0,2)--(1.8,1)--(2.2,0)--(2.6,1)--(3.0,2)--(3.4,3);
+    \draw[simBlue, thick]
+      (0.2,3)--(1.0,2)--(1.8,1)--(2.2,0)--(2.6,1)--(3.0,2)--(3.4,3);
+    \node[anchor=east, simGray, font=\scriptsize] at (-0.1,3) {fine};
+    \node[anchor=east, simGray, font=\scriptsize] at (-0.1,0) {coarse};
+  \end{scope}
+  % --- W-cycle ---
+  \begin{scope}[shift={(4.6,0)}]
+    \foreach \y in {0,1,2,3}{\draw[simGray!30, densely dotted] (0,\y)--(4.4,\y);}
+    \node[font=\footnotesize\bfseries, simInk] at (2.2,3.7) {W-cycle};
+    \draw[simRust, thick]
+      (0.2,3)--(0.9,2)--(1.4,1)--(1.7,0)--(2.0,1)--(2.3,0)--(2.7,1)--(3.2,2)
+      --(3.6,1)--(3.9,0)--(4.2,1)--(4.6,3);
+  \end{scope}
+  % --- FMG ---
+  \begin{scope}[shift={(10.0,0)}]
+    \foreach \y in {0,1,2,3}{\draw[simGray!30, densely dotted] (0,\y)--(4.4,\y);}
+    \node[font=\footnotesize\bfseries, simInk] at (2.2,3.7) {full multigrid};
+    % start at coarsest, climb with V-cycles
+    \draw[simGreen, thick]
+      (0.2,0)--(0.6,1)--(0.4,0)            % V at level 1
+      (0.6,1)--(1.2,2)--(0.9,1)--(0.7,0)--(1.0,1)--(1.4,2)   % V at level 2
+      (1.4,2)--(2.2,3)--(1.8,2)--(1.5,1)--(1.3,0)--(1.6,1)--(2.0,2)--(2.6,3); % V at finest
+    \node[anchor=north, simGray, font=\scriptsize\itshape] at (2.2,-0.5)
+      {start coarse, climb};
+  \end{scope}
+\end{tikzpicture}
+\caption[V-cycle, W-cycle, and full multigrid]{Three multigrid schedules, levels stacked
+vertically (finest at top). \emph{Left:} the V-cycle makes one recursive call per level---one
+trip down, one trip up. \emph{Middle:} the W-cycle makes two recursive calls per level,
+visiting each coarse level twice for a stronger (but costlier) coarse correction. \emph{Right:}
+full multigrid (FMG) starts on the coarsest grid and climbs, prolonging each level's solution
+as the initial guess for a V-cycle on the next finer level---reaching discretization accuracy
+in one upward sweep. The V-cycle is the workhorse; the others trade more coarse work for a
+better correction.}
+\label{fig:cycleshapes}
+\end{figure}
+
+\subsection{Auxiliary-space multigrid for $\Hcurl$}
+
+The smoother-and-coarsen recipe assumes the smoother can damp all the oscillatory error---and
+for the scalar Laplacian on $\Hone$ it can. But the curl--curl operator of every magnetic and
+wave analysis (\cref{ch:functionspaces}) lives on $\Hcurl$, and there a plain smoother has a
+blind spot: the large null space of the curl (the \emph{gradient fields}, $\Curl\Grad\phi =
+0$) carries error that point smoothing does not see. A pure geometric V-cycle stalls on those
+gradient modes. The cure is \emph{auxiliary-space} multigrid: alongside the geometric
+hierarchy, build an auxiliary $\Hone$ space for the gradient part and smooth there too. The
+per-level smoother becomes a \emph{Hiptmair smoother} (\cref{ch:smoothers}): a point smoother
+on $\Hcurl$ to handle the non-gradient error, \emph{plus} a smoother on the auxiliary
+gradient space to handle the kernel error the first one misses. Palace's AMS preconditioner
+builds this auxiliary hierarchy automatically from the discrete gradient operator; the V-cycle
+structure is unchanged---only the per-level smoother $\mat{B}_\ell$ is now the composite
+Hiptmair one. The same shape, a better smoother, because the operator has a structure the
+naive smoother cannot see.
+
+\subsection{$h$- versus $p$-multigrid}
+
+The hierarchy of \cref{fig:hierarchy} coarsened the \emph{mesh} ($h$-multigrid). One can
+instead coarsen the \emph{polynomial order} on a fixed mesh ($p$-multigrid): the finest level
+uses order-$p$ elements, the next order-$p/2$, down to order $1$ (or the family's floor from
+\cref{ch:functionspaces}). The two are complementary and often combined ($hp$-multigrid):
+coarsen the order down to linears, then coarsen the mesh. Palace's default schedule is
+$p$-multigrid with a logarithmic order drop---halving the order each level---so a finest order
+$p=8$ space reaches the floor in a handful of levels rather than the seven a linear
+$p\mapsto p-1$ drop would need. The choice of $h$ versus $p$ changes \emph{what} the
+prolongations interpolate (finer mesh, or higher order); the V-cycle recursion is identical.
+
+\subsection{Multigrid as a preconditioner}
+
+Here is the crucial deployment fact. We have described the V-cycle as a stand-alone iterative
+solver---repeat V-cycles until the residual is small. In practice Palace almost never uses it
+that way. Instead it uses \emph{one} V-cycle as a \emph{preconditioner} inside a Krylov method
+(\cref{ch:cg,ch:krylov}). Recall from \cref{ch:precond} that a preconditioner is an
+approximate inverse $\mat{M}^{-1}\approx\mat{A}^{-1}$ that the Krylov method applies once per
+iteration to reshape the spectrum. \emph{One V-cycle is exactly such an $\mat{M}^{-1}$ apply}:
+feed it a residual $\vr$ (as the right-hand side $\vb$, with zero initial guess) and it returns
+an approximate correction $\mat{M}^{-1}\vr$---a good approximation to $\mat{A}^{-1}\vr$,
+computed in $O(N)$ work. \Cref{fig:mgprecond} shows the arrangement: the Krylov solver drives
+the outer loop, and each of its iterations calls one V-cycle to precondition.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\footnotesize}]
+  % outer Krylov loop with an inner V-cycle as the M^{-1} apply
+  \node[stage, minimum width=30mm, minimum height=22mm] (krylov) at (0,0)
+    {\textbf{Krylov solver}\\[2pt]\footnotesize (CG / GMRES)\\\footnotesize outer iteration};
+  \node[extern, minimum width=30mm, minimum height=14mm, right=34mm of krylov] (vcyc)
+    {\textbf{one V-cycle}\\[1pt]\footnotesize $= \mat{M}^{-1}$ apply\\\footnotesize $O(N)$ work};
+  % residual goes in, correction comes back
+  \draw[flow] (krylov.east|-0,0.35) -- node[above,font=\scriptsize]{residual $\vr$}
+    (vcyc.west|-0,0.35);
+  \draw[backflow] (vcyc.west|-0,-0.35) -- node[below,font=\scriptsize]{correction $\mat{M}^{-1}\vr$}
+    (krylov.east|-0,-0.35);
+  % the V-shape hint inside the extern box
+  \node[anchor=north, simGray, font=\scriptsize\itshape] at (vcyc.south) {(the recursion of Fig.~\ref{fig:vcycle})};
+  \node[anchor=south, simGray, font=\scriptsize\itshape] at (krylov.north)
+    {once per iteration};
+\end{tikzpicture}
+\caption[Multigrid as a preconditioner]{How Palace actually deploys multigrid. A Krylov solver
+(\cref{ch:cg,ch:krylov}) runs the outer iteration; once per iteration it hands its current
+residual $\vr$ to \emph{one} V-cycle, which returns an approximate correction $\mat{M}^{-1}\vr$
+in $O(N)$ work---the V-cycle \emph{is} the preconditioner's apply. Because the V-cycle makes
+$\mat{M}^{-1}\mat{A}$ have an $h$-independent, tightly-clustered spectrum, the outer Krylov
+iteration count is small and flat (\cref{fig:meshindep}). The combination---multigrid-preconditioned
+CG or GMRES---is the standard optimal solver for the elliptic systems of \cref{part:modalities}.}
+\label{fig:mgprecond}
+\end{figure}
+
+Why precondition rather than iterate V-cycles directly? Because the Krylov method is more
+robust to imperfections in the V-cycle. If the smoother or coarsening is slightly off and a
+few error modes converge slowly, a stand-alone V-cycle iteration inherits that slowness, but
+the Krylov method \emph{accelerates} those stragglers with its optimal polynomial (the
+machinery of \cref{ch:cg}). One V-cycle per Krylov iteration gives the best of both: the
+V-cycle supplies the $h$-independent spectral clustering, and the Krylov method mops up
+whatever the V-cycle handled imperfectly. This is the arrangement behind essentially every
+elliptic solve in the book.
+
+\section{Pitfalls: what breaks optimality}
+
+Multigrid's optimality is not automatic; it rests on the two mechanisms---smoothing and
+coarse-grid approximation---\emph{each} doing its job. Break either and the $h$-independent
+convergence is lost, often silently, the method degrading into something no better than a
+plain smoother.
+
+\begin{pitfall}
+\textbf{A bad smoother destroys optimality.} The whole scheme rests on the smoother
+annihilating the error the coarse grid \emph{cannot} represent---the oscillatory modes. If the
+smoother does not damp \emph{all} the oscillatory modes (e.g.\ an undamped Jacobi iteration,
+which \emph{amplifies} the highest mode; or a point smoother on $\Hcurl$, blind to the gradient
+null space of \cref{sec:variants}), those modes are left for a coarse grid that cannot see them,
+and they never go away. The convergence factor $\rho$ creeps toward $1$ and the mesh-independence
+evaporates. \emph{Always verify the smoother damps the full oscillatory band}---this is why
+$\Hcurl$ problems need the Hiptmair smoother, not plain Jacobi.
+\end{pitfall}
+
+\begin{pitfall}
+\textbf{A bad coarse grid destroys optimality too.} The coarse grid must \emph{capture the
+smooth modes}---the error the smoother leaves behind. If the prolongation $\mat{P}$ cannot
+represent the smooth error well (too aggressive a coarsening, a coarse space that omits a
+near-null-space mode like the constant or a rigid-body mode), the coarse-grid correction is
+inaccurate, the smooth error is not removed, and again $\rho\to 1$. The Galerkin construction
+$\mat{A}_c=\mat{P}^{\mathsf T}\mat{A}\mat{P}$ guarantees the \emph{best} correction in the
+range of $\mat{P}$, but only the range of $\mat{P}$---if the smooth error is not in that range,
+no coarse solve recovers it.
+\end{pitfall}
+
+\begin{pitfall}
+\textbf{Anisotropy and jumps need special handling.} The complementary-frequencies argument of
+\cref{sec:complementary} assumed the smoother smooths \emph{isotropically}---equally in every
+direction. For a strongly anisotropic operator (e.g.\ a Laplacian stretched
+$1000\times$ in one direction, common in thin-layer geometries) a point smoother smooths only
+along the strongly-coupled direction and leaves the other rough; standard coarsening then
+coarsens a direction the smoother never smoothed, and optimality fails. The fixes---line/plane
+smoothers that smooth a whole coupled direction at once, or semi-coarsening that coarsens only
+the smoothed direction---are essential for anisotropic or jumping-coefficient problems and are
+where naive multigrid most often disappoints. The lesson: the smoother and the coarsening must
+be \emph{matched} to the operator's structure, not chosen in isolation.
+\end{pitfall}
+
+\summarysection
+A smoother (\cref{ch:smoothers}) cheaply removes the high-frequency part of the error and
+stalls on the smooth part. Multigrid turns that stall into a method by exploiting the
+\emph{complementary-frequencies principle}: smooth error on a fine grid looks oscillatory on a
+coarser grid, where a smoother can remove it cheaply. The two-grid method makes this concrete:
+presmooth on the fine grid, compute the residual, restrict it to the coarse grid with
+$\mat{R}=\mat{P}^{\mathsf T}$, solve the Galerkin coarse problem $\mat{A}_c=\mat{P}^{\mathsf
+T}\mat{A}\mat{P}$ for a correction, prolong the correction back with $\mat{P}$, and postsmooth.
+The \emph{V-cycle} applies this idea recursively: each level's coarse solve is itself a V-cycle
+on a still-coarser grid, until a tiny coarsest grid is solved directly---a descending stroke of
+presmoothing-and-restricting and an ascending stroke of prolonging-and-postsmoothing, the V of
+the hero diagram. Written as a pure recursive function, every leg is the same correction step
+$\vy + \mat{B}(\vb-\mat{A}\vy)$. For finite elements the prolongations come free from the nested
+function-space hierarchy of \cref{ch:functionspaces}. The V-cycle is \emph{optimal}: one cycle
+costs $O(N)$ (the per-level costs form a geometric series summing to a small constant times $N$),
+and a fixed, $h$-independent number of cycles reaches any tolerance---in sharp contrast to
+unpreconditioned CG, whose iteration count grows like $1/h$. Variants trade coarse work for
+correction strength (W-cycle, full multigrid) or adapt the smoother to the operator (Hiptmair
+relaxation for the $\Hcurl$ gradient null space; $p$- versus $h$-coarsening). In practice one
+V-cycle is used as the $\mat{M}^{-1}$ apply inside a Krylov solver---the optimal preconditioner
+of \cref{ch:precond}. Optimality is fragile: a smoother that misses some oscillatory modes, a
+coarse grid that misses some smooth modes, or an anisotropic operator that defeats isotropic
+smoothing each silently destroys the mesh-independence.
+
+\furtherreading
+The auxiliary-space and Hiptmair smoother machinery for $\Hcurl$ multigrid is developed in
+Hiptmair's foundational paper~\citep{hiptmair1998}, the source of the gradient-space smoother
+that makes curl--curl multigrid work; it is the natural sequel to \cref{sec:variants}. For the
+finite-element and variational framing of multigrid---nested spaces, Galerkin coarsening, the
+approximation-and-smoothing convergence theory sketched in \cref{sec:optimal}---Brenner and
+Scott~\citep{brennerscott2008} give the rigorous account at the level of this book. A modern,
+implementation-oriented survey of multigrid and $p$-multigrid for high-order finite elements,
+close to Palace's actual algorithms, is Phillips and Fischer~\citep{phillipsfischer2022}. The
+classical introduction to the complementary-frequencies argument, with the Fourier (local-mode)
+analysis of smoothing factors only sketched here, remains the multigrid tutorial literature
+those references cite in turn.
+
+\exercisessection
+\begin{enumerate}[nosep]
+\item State the complementary-frequencies principle in one sentence, and explain why it would
+  fail if the smoother damped the \emph{low} frequencies rather than the high ones. What kind of
+  method would you need to pair with such a smoother instead of a coarse grid?
+\item For the 1-D linear-interpolation prolongation of \cref{sec:twogrid}, write out the
+  $7\times 3$ matrix $\mat{P}$ mapping a coarse grid of $3$ interior points to a fine grid of $7$
+  interior points (spacing $2h$ to $h$). Then write $\mat{R}=\mat{P}^{\mathsf T}$ and confirm it
+  is the full-weighting $\tfrac14[1,2,1]$ restriction stencil up to scaling.
+\item Using the $\mat{P}$ from the previous exercise and the fine tridiagonal Laplacian
+  $\mat{A}=h^{-2}\mathrm{tridiag}(-1,2,-1)$, compute the Galerkin coarse operator
+  $\mat{A}_c=\mat{P}^{\mathsf T}\mat{A}\mat{P}$ and verify it is (up to scaling) the $3\times 3$
+  tridiagonal Laplacian at spacing $2h$. What does this say about Galerkin coarsening for this
+  problem?
+\item Prove \cref{lem:galerkin} for yourself without looking: show that if $\mat{A}$ is SPD and
+  $\mat{P}$ has full column rank, then $\mat{A}_c=\mat{P}^{\mathsf T}\mat{A}\mat{P}$ is SPD. Which
+  hypothesis fails, and what goes wrong, if $\mat{P}$ has a nontrivial null space?
+\item A 3-D problem has $N = 10^6$ unknowns on the finest grid and $5$ levels. Using the
+  geometric-series estimate of \cref{wex:cost}, compute the total unknown count summed over all
+  levels and express it as a multiple of $N$. How much does the entire coarse hierarchy add to the
+  finest-level cost?
+\item Unpreconditioned CG on a 3-D Poisson problem needs $\approx\tfrac12\sqrt{\kappa}$ iterations
+  with $\kappa\approx (1/h)^2$. If multigrid-preconditioned CG needs a flat $\approx 10$ iterations
+  regardless of $h$, tabulate the iteration count of each method for meshes
+  $h=\tfrac1{16},\tfrac1{32},\tfrac1{64},\tfrac1{128}$. By what factor does plain CG's count grow
+  per refinement, and multigrid's?
+\item Explain, in terms of the V-cycle recursion of \cref{lst:vcycle}, the difference between a
+  V-cycle and a W-cycle. Modify the pseudocode of \cref{lst:vcycle} to perform a W-cycle (two
+  recursive calls per level). Why does the W-cycle cost more, and when is the extra cost worth it?
+\item Why does a point Jacobi smoother stall on the curl--curl operator's gradient null space, and
+  how does the Hiptmair smoother of \cref{sec:variants} fix it? Relate your answer to the
+  spurious-mode discussion of \cref{ch:functionspaces}: both are consequences of the structure of
+  $\Hcurl$.
+\end{enumerate}

@@ -1,0 +1,1051 @@
+\chapter{Maps, Folds, and the Combinator-Primary Model}
+\label{ch:combinators}
+
+\chapterorient{The previous chapter built one combinator, \texttt{iterate\_while},
+and showed that every iteration in the book is a setting of it. This chapter widens
+the lens. \texttt{iterate\_while} is the iteration primitive; it has \emph{relatives}
+that organize the rest of the simulator---\code{map} for independent work,
+\code{fold} for chained work, and a small algebra of data-combining verbs the steps
+call. We give the four solve corners of \cref{ch:situating} their combinator names,
+we meet the tensor-sum combinator \code{linear\_combination} and watch the familiar
+BLAS routines fall out of it as specializations, and we state the chapter's
+thesis---the \emph{combinator-primary model}: a few higher-order combinators are
+the load-bearing vocabulary, and the many named operators are \emph{specialization
+notes} hung beneath them. This is why a book about a hundred-thousand-line simulator
+can be short.}
+
+\section{From one combinator to a family of relatives}
+
+\Cref{ch:fold} earned a strong claim: there is \emph{one} iteration combinator,
+\code{iterate\_while}, and independent steps, sequential carries, and convergence
+loops are all that combinator at different settings. We will not retreat from it.
+But ``one combinator expresses every iteration'' is a statement about
+\emph{control flow}---about how a loop threads its carry and tests its predicate. A
+simulator is more than its loops. It also \emph{combines data}: it sums scaled
+tensors, it forms inner products, it assembles operators. And when it does run a
+family of solves, the \emph{shape} of that family---independent versus
+chained---deserves a name of its own, because the two shapes have radically
+different consequences for parallelism.
+
+So this chapter steps up one level. Where \cref{ch:fold} looked \emph{inside} a
+single loop, this chapter looks at the small set of combinators that organize the
+\emph{whole} simulator: the ones that drive families of solves, and the ones that
+combine tensors. \Cref{fig:relatives} lays out the family tree. At the root is the
+distinction the whole chapter turns on---\code{map} versus \code{fold}, independent
+versus carried---and beneath it hang the named combinators a driver actually calls.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=4mm]
+  % root
+  \node[stage, minimum width=58mm, align=center] (root) at (0,0)
+    {the combinator vocabulary};
+  % two branches: iteration-structural vs data-algebra
+  \node[stage, minimum width=44mm, align=center, fill=simBgGreen, draw=simGreen]
+    (iter) at (-3.6,-1.7) {iteration-structural\\(thread a carry / family)};
+  \node[stage, minimum width=44mm, align=center, fill=simBgGold, draw=simGold]
+    (data) at (3.6,-1.7) {data-algebra\\(combine tensors)};
+  \draw[depedge] (root) -- (iter);
+  \draw[depedge] (root) -- (data);
+  % iteration-structural leaves
+  \node[opbox, minimum width=40mm, align=left, below=10mm of iter] (il) {%
+    \code{solve\_family} \;\itshape map (independent)\\
+    \code{frequency\_sweep} \;\itshape op-varying map\\
+    \code{fold\_solve} \;\itshape fold (chained)\\
+    \code{iterate\_while} \;\itshape the loop primitive};
+  \draw[depedge] (iter) -- (il);
+  % data-algebra leaves
+  \node[opbox, minimum width=40mm, align=left, below=10mm of data] (dl) {%
+    \code{linear\_combination} \;\itshape tensor sum\\
+    \quad \code{scal}/\code{axpy}/\code{axpby}/\dots \;\itshape leaves\\
+    \code{inner\_product} \;\itshape scalar fold\\
+    \quad \code{dot}/\code{nrm2} \;\itshape leaves};
+  \draw[depedge] (data) -- (dl);
+\end{tikzpicture}
+\caption[The combinator vocabulary]{The combinator vocabulary of the simulator,
+in two branches. The \emph{iteration-structural} combinators (left) thread a carry
+or drive a family of solves; they are relatives of the \code{iterate\_while} of
+\cref{ch:fold}, distinguished by whether the family is an independent \emph{map}
+or a chained \emph{fold}. The \emph{data-algebra} combinators (right) combine
+tensors into tensors or scalars; each has a cluster of named BLAS-style leaves
+hanging beneath it. The whole of this short chapter is a tour of these two boxes
+and the one thesis they illustrate: the combinator is the entry, the leaves are
+notes.}
+\label{fig:relatives}
+\end{figure}
+
+\section{The two shapes of a family: map and fold}
+\label{sec:mapfold}
+
+Before naming the simulator's combinators, fix the one distinction everything
+rests on. We met it in \cref{ch:fold} as the contrast between \code{map} and
+\code{foldl}; here we make it the organizing axis.
+
+A \code{map} applies the \emph{same} operation to each element of a collection
+\emph{independently}:
+\begin{lstlisting}[style=l4style]
+map f [x1, x2, x3] = [f x1, f x2, f x3]
+\end{lstlisting}
+The three results do not depend on one another. \code{f x2} can be computed before,
+after, or at the same time as \code{f x1}; you could run each on a separate
+machine and collect the answers in any order. A \code{map} has \emph{no carry}.
+
+A \code{foldl} threads an accumulator---a \emph{carry}---through the collection,
+each step consuming what the last produced:
+\begin{lstlisting}[style=l4style]
+foldl step s0 [x1, x2, x3] = step (step (step s0 x1) x2) x3
+\end{lstlisting}
+Here the order is forced. The accumulator entering the third step is exactly what
+the second step produced; you cannot start step three until step two has finished.
+A \code{fold} is a \emph{chain}.
+
+This is the single most consequential distinction in the simulator's architecture,
+and \cref{fig:mapfold} draws it bare. The map fans out; the fold lines up. The map
+parallelizes; the fold serializes. Everything else in this section is a
+specialization of one or the other.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: map = independent fan-out =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simBlue] at (1.4,2.7) {a \code{map}: independent fan-out};
+    \node[data, minimum width=10mm] (src) at (1.4,1.9) {family};
+    \foreach \i/\x in {1/0,2/1.4,3/2.8}{
+      \node[opbox, minimum width=9mm] (m\i) at (\x,0.8) {\code{f}};
+      \node[product, minimum width=9mm, minimum height=5mm] (r\i) at (\x,-0.4) {$y_{\i}$};
+      \draw[flow] (src.south) -- (m\i.north);
+      \draw[flow] (m\i.south) -- (r\i.north);
+    }
+    \node[font=\scriptsize, text=simGreen, align=center] at (1.4,-1.3)
+      {no arrows \emph{between} the \code{f}'s:\\reorderable, parallelizable};
+  \end{scope}
+  \draw[simGray!50, thick] (4.2,-1.6) -- (4.2,3.0);
+  % ===== RIGHT: fold = sequential chain =====
+  \begin{scope}[xshift=5.0cm]
+    \node[font=\small\bfseries, text=simGreen] at (2.4,2.7) {a \code{fold}: sequential chain};
+    \node[data, minimum width=9mm] (s0) at (-0.3,0.8) {$s_0$};
+    \foreach \i/\x in {1/1.1,2/2.5,3/3.9}{
+      \node[opbox, minimum width=9mm] (g\i) at (\x,0.8) {\code{step}};
+    }
+    \node[data, minimum width=9mm] (s3) at (5.3,0.8) {$s_3$};
+    \draw[flow] (s0.east) -- (g1.west);
+    \draw[flow] (g1.east) -- node[above,font=\scriptsize]{$s_1$} (g2.west);
+    \draw[flow] (g2.east) -- node[above,font=\scriptsize]{$s_2$} (g3.west);
+    \draw[flow] (g3.east) -- (s3.west);
+    \foreach \i/\x in {1/1.1,2/2.5,3/3.9}{
+      \node[font=\scriptsize, text=simGold!80!black] at (\x,1.65) {$x_{\i}$};
+      \draw[refedge, simGold!80!black] (\x,1.5) -- (g\i.north);
+    }
+    \node[font=\scriptsize, text=simRust, align=center] at (2.5,-0.6)
+      {each \code{step} needs the previous $s$:\\strictly ordered, not parallelizable};
+  \end{scope}
+\end{tikzpicture}
+\caption[Map versus fold: the fundamental split]{The fundamental split. A
+\emph{map} (left) applies \code{f} to each family element independently---the
+three applications share no data, so they fan out, reorder freely, and run in
+parallel. A \emph{fold} (right) threads a carry $s_0 \to s_1 \to s_2 \to s_3$
+through the chain---each \code{step} consumes the previous carry, so the chain is
+strictly ordered and cannot be parallelized. The presence or absence of the
+horizontal carry arrows is the entire difference, and it decides whether the work
+is embarrassingly parallel or intrinsically sequential.}
+\label{fig:mapfold}
+\end{figure}
+
+\begin{keyidea}
+A \emph{map} runs a family of \emph{independent} computations: no carry, so the
+elements commute, reorder, and parallelize. A \emph{fold} runs a \emph{chain}:
+each step consumes the previous step's output, so the steps are strictly ordered
+and intrinsically sequential. This one axis---is there a carry between the
+elements?---decides the parallelism of every family of solves the simulator runs.
+A map is in fact the degenerate fold whose step \emph{ignores} the carry; the two
+are one family, split by whether the carry is used.
+\end{keyidea}
+
+The claim that a map is a degenerate fold is worth making exact, because it is the
+formal hinge on which the whole ``one combinator'' story of \cref{ch:fold} turns.
+A \code{foldl} that drops its accumulator on every step does no threading at all:
+the result of each step depends only on the element, not on the carry, so the steps
+are independent and we have a map in disguise.
+
+\begin{proposition}[Map is the carry-dropping fold]
+\label{prop:mapfold}
+For any element function \code{f}, the map \lstinline[style=l4style]|map f xs| equals
+the trajectory of a left fold whose step ignores its accumulator and emits
+\code{f} of the element:
+\begin{lstlisting}[style=l4style]
+map f xs == (foldl_collecting (\_ x -> f x) seed xs).collected
+\end{lstlisting}
+where \code{foldl\_collecting} threads a carry but \emph{also} appends each step's
+output to a collected list. Because the step's first argument (the carry) never
+appears on its right-hand side, the steps share no data, and the collected list is
+order-independent.
+\end{proposition}
+
+The proposition is not deep---it is almost a restatement of the definitions---but
+its \emph{consequence} is the architecture of the simulator. It says the map and
+the fold are not two unrelated control structures to be learned separately; they
+are one structure, the value-threading fold, observed at two settings of a single
+switch: \emph{does the step read its carry?} When the answer is no, the work fans
+out and parallelizes; when the answer is yes, the work lines up and serializes. The
+entire taxonomy of the next section is this one switch, crossed with a second
+(does the operator change?).
+
+It pays to draw out the three practical consequences of the split, because each
+recurs in every later Part.
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[Parallelism follows the carry.] A map's elements may be evaluated in any
+  order, on any number of machines, and reassembled; a fold's steps must run in
+  sequence on one timeline. When \cref{part:modalities} reports that electrostatics
+  ``scales trivially across conductors'' but the transient analysis ``cannot
+  overlap its timesteps,'' it is reporting exactly this---the first is a map, the
+  second a fold.
+  \item[Reordering is a correctness question, not a performance one.] For a map,
+  reordering the family permutes the output identically and changes nothing else;
+  for a fold, reordering the steps changes the \emph{answer}, because step $k$'s
+  input is step $k{-}1$'s output. ``Can I reorder this?'' is therefore answered by
+  ``is there a carry?''---a structural fact visible in the combinator's type, not a
+  property to be discovered by testing.
+  \item[Memory follows the carry too.] A map need keep only the inputs and the
+  collected outputs; a fold must additionally keep the live carry as it threads.
+  When the carry is a whole field state (the transient analysis) this is the
+  dominant cost, and \cref{ch:transient} returns to it. A map has no such live
+  intermediate.
+\end{description}
+
+\section{The four solve corners, as combinators}
+\label{sec:corners}
+
+We can now return to the four solve corners of \cref{ch:situating} and give each
+its combinator name. There we classified a driver's solve stage by two questions:
+is the operator \emph{fixed} or \emph{varying} as we proceed, and is the
+computation a \emph{map} or a \emph{fold}? Crossing those questions gave a
+$2\times2$ grid with three occupied cells and a fourth corner sitting outside it.
+\Cref{fig:cornercomb} redraws that grid, now labelling each cell with the
+combinator the framework uses for it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \node[cornertag, anchor=south] at (1.2,4.5) {operator \emph{fixed}};
+  \node[cornertag, anchor=south] at (5.6,4.5) {operator \emph{varying}};
+  \node[cornertag, rotate=90, anchor=south] at (-1.5,3.2) {a \textbf{map}};
+  \node[cornertag, rotate=90, anchor=south] at (-1.5,0.9) {a \textbf{fold}};
+  % top-left: solve_family
+  \node[stage, minimum width=34mm, minimum height=20mm, anchor=south west,
+    fill=simBgBlue, align=center] (c1) at (0,2.4) {};
+  \node[anchor=north, font=\scriptsize\bfseries] at (1.7,4.1) {fixed-operator map};
+  \node[anchor=center, font=\small\ttfamily, text=simBlue] at (1.7,3.3) {solve\_family};
+  \node[anchor=north, font=\scriptsize\itshape] at (1.7,2.95) {electrostatic,};
+  \node[anchor=north, font=\scriptsize\itshape] at (1.7,2.65) {magnetostatic};
+  % top-right: frequency_sweep
+  \node[stage, minimum width=34mm, minimum height=20mm, anchor=south west,
+    fill=simBgBlue, align=center] (c2) at (4.4,2.4) {};
+  \node[anchor=north, font=\scriptsize\bfseries] at (6.1,4.1) {operator-varying map};
+  \node[anchor=center, font=\small\ttfamily, text=simBlue] at (6.1,3.3) {frequency\_sweep};
+  \node[anchor=north, font=\scriptsize\itshape] at (6.1,2.85) {driven};
+  % bottom-left: fold_solve
+  \node[stage, minimum width=34mm, minimum height=20mm, anchor=south west,
+    fill=simBgGreen, align=center] (c3) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries] at (1.7,1.7) {state-threaded fold};
+  \node[anchor=center, font=\small\ttfamily, text=simGreen] at (1.7,0.95) {fold\_solve};
+  \node[anchor=north, font=\scriptsize\itshape] at (1.7,0.55) {transient, AMR loop};
+  % bottom-right: eigsolve (outside)
+  \node[extern, minimum width=34mm, minimum height=20mm, anchor=south west,
+    align=center] (c4) at (4.4,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries] at (6.1,1.7) {opaque black-box};
+  \node[anchor=center, font=\small\ttfamily, text=simViolet] at (6.1,0.95) {eigsolve};
+  \node[anchor=north, font=\scriptsize\itshape] at (6.1,0.55) {eigenmode, boundary-mode};
+  \node[font=\scriptsize\itshape, text=simViolet] at (6.1,-0.35) {(no loop we write)};
+\end{tikzpicture}
+\caption[The four solve corners as combinators]{The four solve corners of
+\cref{ch:situating}, now named as combinators (compare \cref{fig:corners}). A
+fixed-operator map is \code{solve\_family}: assemble once, map independent solves.
+An operator-varying map is \code{frequency\_sweep}: rebuild the operator inside the
+map. A state-threaded fold is \code{fold\_solve}: chain the solves, each from the
+last. The fourth corner is \code{eigsolve}, the opaque library call that sits
+outside the map/fold grid because we write no loop at all. Three of the four are
+relatives of \code{iterate\_while}; the fourth is the deliberate non-loop.}
+\label{fig:cornercomb}
+\end{figure}
+
+\subsection{\texttt{solve\_family}: the fixed-operator map}
+
+The first corner is a \code{map}. Assemble the operator $\Kop$ \emph{once}, then
+solve $\Kop\,\vx_i = \vb_i$ for a family of right-hand sides $\vb_1,\dots,\vb_n$.
+The operator never changes; only the right-hand side does. Because the solves
+share one operator and depend on nothing but their own right-hand side, they are
+independent: a \code{map}. The combinator is \code{solve\_family}, and its
+definition is a one-liner---a \code{map} of the single-solve cap over the family:
+\begin{lstlisting}[style=l4style]
+solve_family :: OpParams -> [Inputs] -> [SimState]
+solve_family op rhss = map (\inp -> ksp_solve op inp) rhss
+\end{lstlisting}
+The load-bearing fact is the \emph{hoist}: \code{op} is captured once, outside the
+\code{map}, and threaded unchanged into every per-element solve. The solver built
+from \code{op}---a factorization, a preconditioner---is invariant across the map,
+so it too is built once and reused. This is exactly the Palace pattern where the
+operator setup call sits \emph{outside} the sweep loop: electrostatics and
+magnetostatics both assemble $\Kop$ once and then loop over conductors, reusing the
+one operator. The exemplars are electrostatics (\cref{ch:electrostatics}) and
+magnetostatics, which are this corner with different operators and different
+families.
+
+Because the map carries nothing between elements, \code{solve\_family} obeys the
+\emph{concatenation law}: \lstinline[style=l4style]|solve_family op (a ++ b) = solve_family op a ++ solve_family op b|.
+Splitting the family, chunking it, reordering it, or solving its pieces on separate
+machines all give the same answer---the algebraic statement of embarrassing
+parallelism. There is a companion \emph{order law}:
+\lstinline[style=l4style]|solve_family op (permute rhss) = permute (solve_family op rhss)|,
+which says the underlying solves commute even though the collection preserves
+position. Together the two laws are the formal license for every parallel
+realization of the fixed-operator corner: the family may be partitioned arbitrarily,
+solved out of order, and stitched back together, and the answer is unchanged. Note
+what the laws rest on---a \emph{shared, unchanging} \code{op}. Strip that away and
+the next combinator forfeits both laws.
+
+\subsection{\texttt{frequency\_sweep}: the operator-varying map}
+
+Keep the map, but change one thing: the operator is no longer fixed. The driven
+analysis (\cref{ch:driven}) computes scattering parameters by solving the
+time-harmonic system at each frequency $\omega$ in a swept band, and the system
+operator \emph{depends on frequency}:
+\[
+  \mat{A}(\omega) \;=\; \Kop + i\omega\,\Cop - \omega^2\Mop.
+\]
+So before each solve, inside the sweep, the operator must be rebuilt at the current
+$\omega$. The solves are still independent---the answer at $\omega_3$ does not need
+the answer at $\omega_2$---so this is still a \code{map}, not a fold. What
+distinguishes it from \code{solve\_family} is precisely that the operator is rebuilt
+\emph{inside} the loop rather than hoisted outside it. The combinator is
+\code{frequency\_sweep}:
+\begin{lstlisting}[style=l4style]
+frequency_sweep :: OperatorFamily -> [Omega] -> [SimState]
+frequency_sweep fam omegas =
+  map (\w -> let aw = assemble_frequency_operator fam w   -- REBUILD inside the map
+             in  ksp_solve aw (rhs_at w))
+      omegas
+\end{lstlisting}
+The basis $\{\Kop,\Cop,\Mop\}$ is captured once; the per-member operator
+$\mat{A}(\omega)$ is rebuilt per member. The contrast with \code{solve\_family} is
+a single axis---is the operator captured once and hoisted, or rebuilt per
+element?---and it is the entire structural difference between electrostatics and
+the driven analysis.
+
+\begin{pitfall}
+\code{frequency\_sweep} and \code{solve\_family} differ by the \emph{position of
+one setup call} relative to the map: outside the loop (hoist) versus inside it
+(rebuild). This is not an optimization knob. An implementation that ``speeds up''
+\code{frequency\_sweep} by hoisting the operator construction out of the map does
+not run faster---it computes the \emph{wrong answer}, because it solves every
+frequency against the operator of the first one. The hoist is correct exactly when
+the operator is fixed and a bug exactly when it varies. The combinator names which
+case you are in.
+\end{pitfall}
+
+\subsection{\texttt{fold\_solve}: the state-threaded fold}
+
+Now drop the independence. In \code{solve\_family} and \code{frequency\_sweep} the
+solves were a map: independent, reorderable, parallelizable. In the third corner
+they are a \code{fold}: each step begins from the state the previous step produced.
+The transient analysis (\cref{ch:transient}) marches forward in time---the field
+state at $t_{k+1}$ is computed from the state at $t_k$ by one time step---and the
+state is \emph{threaded} through the chain. The combinator is \code{fold\_solve},
+a \code{foldl} of an opaque per-step operator over a schedule:
+\begin{lstlisting}[style=l4style]
+fold_solve :: OpParams -> TimeState -> [Time] -> TimeState
+fold_solve op s0 schedule = foldl (\s t -> time_step_op op s t) s0 schedule
+\end{lstlisting}
+The signature alone tells the story. The seed \code{s0} and the result are both a
+\code{TimeState}; the step \lstinline[style=l4style]|time_step_op op s t| reads
+\code{s}, the prior carry. That read is what makes this a fold and not a map: it
+forbids reordering at the type level. The adaptive-mesh-refinement outer loop of
+\cref{ch:situating} is also a \code{fold\_solve} of this shape---each refinement
+pass begins from the mesh the last pass produced---which is why the same combinator
+serves both transient time-stepping and the AMR loop.
+
+Two things are worth pausing on. First, the per-step operator
+\lstinline[style=l4style]|time_step_op| is, for the transient analysis,
+\emph{opaque}: it bottoms out in a library time-integrator (an implicit Runge--Kutta
+or generalized-$\alpha$ step) that the combinator only quantifies over, rather than
+rendering. \code{fold\_solve} names the fold structure and the carry-threading; what
+one step \emph{does} is a separate concern, deferred to \cref{ch:transient}. The
+combinator is honest about the boundary the way \code{eigsolve} is, but it keeps the
+loop in our hands---we own the fold, the library owns the step.
+
+Second, the laws \emph{invert} relative to the map. \code{fold\_solve} obeys
+neither the concatenation law nor the order law: splitting the schedule and folding
+the pieces independently is wrong (the second piece must start from where the first
+left off, not from \code{s0}), and permuting the schedule changes the answer
+outright. What it obeys instead is a \emph{decomposition} law---folding a
+concatenated schedule equals folding the first part and then folding the second
+\emph{from the carry the first produced}:
+\begin{lstlisting}[style=l4style]
+fold_solve op s0 (a ++ b) = fold_solve op (fold_solve op s0 a) b
+\end{lstlisting}
+This is the algebraic signature of sequentiality: the only way to combine two folds
+is to thread the carry from one into the other. Compare \code{solve\_family}, whose
+concatenation law combines two maps by simply \emph{appending} their outputs with no
+threading at all. The two laws---append versus thread-through---are the map/fold
+split written algebraically, and they are why a map distributes over a cluster while
+a fold marches on a single timeline.
+
+\subsection{\texttt{eigsolve}: the corner that is not a loop}
+
+The fourth corner is different in kind. In the first three \emph{we} write the
+loop---the map or the fold---and can see every solve it performs. In the fourth we
+write no loop at all. The eigenmode analysis (\cref{ch:eigenvalues}) assembles its
+operator pencil once and hands the whole problem to a specialized eigenvalue
+library (SLEPc, in Palace's case) with a single call. The iteration that produces
+the answer runs \emph{inside} the library, where our framework cannot see it. The
+combinator \code{eigsolve} is therefore deliberately \emph{opaque}: it names the
+library boundary and the contract across it and stops. It is not a relative of
+\code{iterate\_while}; it is the marked absence of a loop we own. (\Cref{ch:eigenvalues}
+separately reconstructs what the library does internally, in our own vocabulary,
+turning the black box into a glass box for the curious reader---but the
+\emph{combinator} that drives the eigenmode analysis is just the single opaque
+call.)
+
+\begin{keyidea}
+The four solve corners \emph{are} four combinators. \code{solve\_family} is the
+fixed-operator map (assemble once, map independent solves). \code{frequency\_sweep}
+is the operator-varying map (rebuild the operator inside the map).
+\code{fold\_solve} is the state-threaded fold (chain the solves, each from the
+last). \code{eigsolve} is the opaque black-box (no loop we write). Three are
+relatives of \code{iterate\_while}, split by the map/fold axis and the
+fixed/varying axis; the fourth is the deliberate non-loop. Every driver in
+\cref{part:modalities} is one of these four over the \texttt{assemble} $\to$
+\texttt{solve} $\to$ \texttt{reduce} skeleton.
+\end{keyidea}
+
+\section{The data-algebra combinators}
+\label{sec:dataalgebra}
+
+The solve-coordination combinators of \cref{sec:corners} say \emph{how} a family of
+solves is structured. Inside each solve, the step body \emph{combines tensors}:
+it scales a search direction and adds it to the iterate, it forms the inner product
+that computes a step length, it measures a residual norm. These combinations are
+the \emph{data-algebra} combinators, the right-hand branch of \cref{fig:relatives}.
+There are only two that matter, and each illustrates the chapter's thesis in
+miniature: one combinator, several named specializations.
+
+\subsection{\texttt{linear\_combination}: the tensor-sum combinator}
+
+The first is \code{linear\_combination}, the scalar-weighted tensor sum. Given a
+list of (coefficient, tensor) pairs, it forms $\sum_i a_i\,t_i$:
+\begin{lstlisting}[style=l4style]
+linear_combination :: [(Scalar, Tensor)] -> Tensor
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) zeros pairs
+\end{lstlisting}
+It is a \code{foldl} over the term list, accumulating $a_i\,t_i$ into a running
+tensor that starts at zero. Every term must be \emph{congruent}---the same shape---
+because the sum is element-local; the result has that shape too. This is the
+single most-used data combinator in the book: a Krylov step's update
+$\vx \gets \vx + \alpha\,\vp$ is a \code{linear\_combination}; GMRES's basis
+correction $\sum_j y_j\,\vv_j$ is a \code{linear\_combination}; the driven
+operator $\Kop + i\omega\Cop - \omega^2\Mop$ is a \code{linear\_combination} of
+\emph{operators} rather than vectors.
+
+It satisfies the laws you would hope for, and the one that earns its keep is the
+\emph{concatenation-homomorphism}:
+\[
+  \texttt{linear\_combination}\,(a \mathbin{+\!\!+} b)
+    \;=\; \texttt{linear\_combination}\,a \;+\; \texttt{linear\_combination}\,b.
+\]
+Splitting the term list and summing the pieces gives the same tensor as summing the
+whole. In the language of \cref{ch:language} this makes \code{linear\_combination} a
+\emph{monoid homomorphism}: it carries the monoid of term lists (under
+concatenation, with the empty list as unit) to the monoid of tensors (under
+addition, with the zero tensor as unit). That single structural fact organizes the
+rest of the verb's algebra. The empty list maps to the unit:
+\lstinline[style=l4style]|linear_combination [] = zeros|. A zero coefficient drops
+its term: \lstinline[style=l4style]|linear_combination ((0,t):rest) = linear_combination rest|
+(the algebraic content of the implementation's ``skip the term if its coefficient is
+zero'' branch). A scalar can move from the coefficient onto the tensor:
+$\code{linear\_combination}\,((\kappa a, t):\text{rest}) = \code{linear\_combination}\,((a, \kappa t):\text{rest})$.
+And over exact arithmetic the sum is permutation-invariant---reordering the term
+list leaves the result unchanged---because tensor addition is commutative and
+associative. (Under floating-point arithmetic that last law holds only
+approximately, since summation order perturbs the rounding; the framework treats
+the left-to-right fold order as canonical and records the reordering subtlety as a
+load-bearing numerical note rather than an exact law, in the spirit of
+\cref{ch:bigidea}'s distinction between transparent and load-bearing tricks.)
+
+The concatenation-homomorphism is also the law that makes the four named BLAS
+routines \emph{one} combinator, as we see next: it lets a longer fixed-arity sum be
+built from shorter ones, which is exactly the subsumption chain of the arity leaves.
+
+\subsection{The BLAS verbs are arity leaves}
+
+Numerical libraries ship a family of fused routines for small fixed-length sums,
+the BLAS-1 ``\code{axpy}'' family. Each is \code{linear\_combination} at one fixed
+term-list length:
+\begin{lstlisting}[style=l4style]
+scal(a, x)                 = linear_combination [(a, x)]                  -- arity 1
+axpy(a, x, y)              = linear_combination [(a, x), (1, y)]          -- arity 2, 2nd coeff = 1
+axpby(a, x, b, y)          = linear_combination [(a, x), (b, y)]          -- arity 2, general
+axpbypcz(a, x, b, y, c, z) = linear_combination [(a, x), (b, y), (c, z)]  -- arity 3
+\end{lstlisting}
+Read top to bottom: \code{scal} scales one tensor (a one-term list); \code{axpy}
+computes $a\vx + \vy$ (a two-term list whose second coefficient is fixed to $1$);
+\code{axpby} computes $a\vx + b\vy$ (the general two-term list); \code{axpbypcz}
+computes $a\vx + b\vy + c\vz$ (the three-term list). They differ \emph{only} in the
+length of the term list. The concatenation law makes the subsumption exact:
+\code{axpbypcz}'s three-term list is the concatenation of \code{axpby}'s two-term
+list with \code{scal}'s one-term list, so $\code{scal} \prec \code{axpy} \prec
+\code{axpby} \prec \code{axpbypcz}$ is the bounded-arity shadow of the one
+combinator.
+
+These fused routines exist because a hand-written kernel for ``$a\vx + b\vy$''
+touches memory once instead of twice and so runs faster on a CPU. That is a real
+performance win, but it is \emph{not} an abstraction: \code{axpby} adds no meaning
+that \code{linear\_combination} lacks. So the framework makes a deliberate choice.
+The accelerated kernels are ``stopped low''---kept as performance notes at the
+implementation level---while the \emph{combinator rises} to the top of the
+vocabulary in their place. \Cref{fig:lincomb} draws this: \code{linear\_combination}
+is the trunk; the four BLAS routines hang off it as arity leaves, labels for fixed
+list-lengths, not combinators in their own right.
+
+The same combinator generalizes past vectors. Its terms need not be column tensors;
+they may be \emph{operators}. The driven analysis's frequency-dependent operator
+$\mat{A}(\omega) = \Kop + i\omega\,\Cop - \omega^2\Mop$ is a
+\code{linear\_combination} of the three assembled operators $\Kop, \Cop, \Mop$ with
+the $\omega$-dependent coefficients $1, i\omega, -\omega^2$. This is the same fold,
+the same concatenation law, the same arity story---only the term type has changed
+from tensor to operator. When \cref{ch:driven} writes ``rebuild $\mat{A}(\omega)$''
+inside the \code{frequency\_sweep} map, the rebuild it means is one
+\code{linear\_combination} over operator terms. The two combinator branches of
+\cref{fig:relatives} meet here: the operator-varying map calls the tensor-sum
+combinator to do its per-step rebuild. Recognizing the operator assembly as ``the
+same verb, operator-valued terms'' rather than a new primitive is the
+combinator-primary model paying off inside the framework itself.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  % trunk
+  \node[stage, minimum width=64mm, align=center] (trunk) at (0,0)
+    {\code{linear\_combination} \;\itshape\quad $\sum_i a_i\,t_i$ \;\;(term list, any length)};
+  % four leaves
+  \def\ly{-1.9}
+  \node[opbox, minimum width=24mm, align=center] (l1) at (-4.8,\ly)
+    {\code{scal}\\\scriptsize arity 1\\\scriptsize $a x$};
+  \node[opbox, minimum width=24mm, align=center] (l2) at (-1.6,\ly)
+    {\code{axpy}\\\scriptsize arity 2\\\scriptsize $a x + y$};
+  \node[opbox, minimum width=24mm, align=center] (l3) at (1.6,\ly)
+    {\code{axpby}\\\scriptsize arity 2\\\scriptsize $a x + b y$};
+  \node[opbox, minimum width=24mm, align=center] (l4) at (4.8,\ly)
+    {\code{axpbypcz}\\\scriptsize arity 3\\\scriptsize $a x + b y + c z$};
+  \foreach \l in {l1,l2,l3,l4}{
+    \draw[refedge] (trunk.south) -- (\l.north);}
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-3.1)
+    {fused accelerated kernels --- ``stopped low,'' specialization \emph{notes}\\
+     the \emph{combinator} rises; the leaves are labels for fixed term-list lengths};
+\end{tikzpicture}
+\caption[\texttt{linear\_combination} and its arity leaves]{The combinator-primary
+picture of the tensor-sum vocabulary. \code{linear\_combination} (trunk) is the
+one combinator: a sum over a term list of any length. The four named BLAS routines
+(leaves) are its fixed-arity specializations---\code{scal} at one term,
+\code{axpy}/\code{axpby} at two, \code{axpbypcz} at three. They are
+performance-fused kernels with no abstraction value of their own, so they are
+``stopped low'' as specialization notes while the combinator rises to the top of
+the vocabulary. One combinator, four leaves. \Cref{wex:arity} traces the
+derivation with numbers.}
+\label{fig:lincomb}
+\end{figure}
+
+\subsection{\texttt{inner\_product}: the scalar-producing fold, and its leaves}
+
+The second data combinator is \code{inner\_product}, the scalar-producing sibling
+of \code{linear\_combination}. Where \code{linear\_combination} folds a term list
+into a \emph{tensor}, \code{inner\_product} folds two tensors (through an operator
+$M$) into a \emph{scalar}, $\langle \vx, \vy\rangle_M = \vx^{\!\top} M \vy$. It is a
+\emph{fold} in the same sense the running sum of \cref{ch:fold} was: it walks the
+two operands position by position, accumulating a running scalar
+$\sum_k (M\vy)_k\,\overline{x_k}$, and reduces the whole to a single number. The two
+data combinators are thus the two halves of the L4 algebra of folds---one folds to
+a tensor, the other folds to a scalar---and the step bodies of the iteration
+combinators consume both: a Krylov step forms an \code{inner\_product} to compute a
+step length and a \code{linear\_combination} to apply it.
+
+\code{inner\_product} too carries a cluster of named leaves, but the cluster has a
+subtlety worth drawing (\cref{fig:innerprod}).
+
+\code{dot} is a genuine \emph{specialization}: it is \code{inner\_product} at the
+special case $M = I$, the plain Euclidean (or Hermitian) inner product
+$\vx^{\!\top}\vy$ that a solver spells \lstinline[style=l4style]|dot(p, Ap)|. Like
+the BLAS arity leaves, it is the combinator at a fixed setting---here a fixed
+operator argument rather than a fixed list length---and it hangs beneath the
+combinator as a note.
+
+\code{nrm2}, the Euclidean norm $\norm{\vx}_2 = \sqrt{\vx^{\!\top}\vx}$, is
+\emph{not} a specialization of \code{inner\_product}. It is a \emph{consumer}: it
+is built \emph{on top of} \code{dot} (itself a specialization), composing a square
+root and an absolute value after the inner product, $\code{nrm2} =
+\sqrt{\,\cdot\,} \circ \code{dot}$ at the diagonal. The distinction matters for the
+combinator-primary bookkeeping: a \emph{leaf} is the combinator at a fixed setting
+and lives beneath it; a \emph{consumer} calls the combinator and lives
+\emph{above} it. Drawing \code{nrm2} as a leaf of \code{inner\_product} would
+misfile a caller as a special case.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  \node[stage, minimum width=50mm, align=center] (ip) at (0,0)
+    {\code{inner\_product} \;\itshape\quad $\langle x, y\rangle_M = x^{\!\top} M y$};
+  % dot: a specialization BELOW
+  \node[opbox, minimum width=30mm, align=center] (dot) at (-1.6,-2.0)
+    {\code{dot} \;\scriptsize (leaf)\\\scriptsize $M = I$: \;$x^{\!\top} y$};
+  \draw[refedge] (ip.south) -- node[left,font=\scriptsize,pos=0.55]{\emph{specializes}} (dot.north);
+  % nrm2: a CONSUMER above dot
+  \node[product, minimum width=30mm, align=center] (nrm) at (-1.6,-4.0)
+    {\code{nrm2} \;\scriptsize (consumer)\\\scriptsize $\sqrt{\;}\circ$ \code{dot}: \;$\|x\|_2$};
+  \draw[depedge] (nrm.north) -- node[right,font=\scriptsize,pos=0.5]{\emph{consumes}} (dot.south);
+  % annotation
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (2.6,-2.0)
+    {a \emph{leaf} is the combinator\\at a fixed setting ($M=I$):\\it lives \emph{below}};
+  \node[font=\scriptsize\itshape, text=simGray, align=left, anchor=west] at (2.6,-4.0)
+    {a \emph{consumer} \emph{calls} the\\combinator (here via \code{dot}):\\it lives \emph{above}};
+\end{tikzpicture}
+\caption[\texttt{inner\_product}: specialization versus consumer]{The
+inner-product cluster, distinguishing two relationships the combinator-primary
+model must keep separate. \code{dot} is a \emph{specialization} of
+\code{inner\_product}---the combinator at the fixed operator $M = I$---and so hangs
+\emph{below} it, exactly as the BLAS arity leaves hang below
+\code{linear\_combination}. \code{nrm2} is not a special case but a \emph{consumer}:
+it is built \emph{on} \code{dot}, composing a square root after the inner product,
+and so lives \emph{above} it. A leaf is the combinator narrowed; a consumer is the
+combinator called. Misdrawing \code{nrm2} as a leaf would file a caller as a
+special case.}
+\label{fig:innerprod}
+\end{figure}
+
+\begin{keyidea}
+The data-algebra has two combinators. \code{linear\_combination} folds a term list
+into a tensor, $\sum_i a_i t_i$; the BLAS routines \code{scal}, \code{axpy},
+\code{axpby}, \code{axpbypcz} are its fixed-\emph{arity} leaves (fused kernels
+stopped low, the combinator rising). \code{inner\_product} folds two tensors into a
+scalar, $\langle x,y\rangle_M$; \code{dot} is its $M = I$ leaf, and \code{nrm2} is
+a \emph{consumer} of \code{dot}, not a leaf. The pattern is uniform: \emph{one
+combinator, several named specializations}, with a clean line between a
+specialization (below) and a consumer (above).
+\end{keyidea}
+
+\begin{pitfall}
+It is tempting to unify the two data combinators into one ``reduce a list of
+tensors'' verb, since both are folds. Resist, for the same reason \cref{ch:situating}
+kept the Gram and the projection reductions apart: sharing a \emph{shape} (both are
+folds) is not sharing a \emph{meaning}. \code{linear\_combination} folds a list of
+scalar-weighted tensors into a \emph{tensor} of the same shape; \code{inner\_product}
+folds \emph{two} tensors through an operator into a \emph{scalar}. Their outputs
+differ in rank, their inputs differ in arity, and their laws differ in kind
+(\code{linear\_combination} is a monoid homomorphism over concatenation;
+\code{inner\_product} is bilinear in its two arguments). Forcing them together would
+either burden the tensor sum with a needless operator argument or strip the inner
+product of its bilinearity. Two combinators that happen to both be folds is the
+right design---the same judgment, applied to data verbs, that kept two reduction
+verbs apart in \cref{ch:situating}.
+\end{pitfall}
+
+\section{The combinator-primary model}
+\label{sec:primary}
+
+We can now state the thesis the chapter has been assembling. Look back over the two
+preceding sections and one shape recurs in every case. There is a \emph{combinator}
+at the top---\code{solve\_family}, \code{fold\_solve}, \code{linear\_combination},
+\code{inner\_product}---and beneath it a cluster of \emph{named operators} that are
+each the combinator at some fixed setting: a fixed operator (\code{dot} at
+$M = I$), a fixed term-list length (the BLAS arity leaves), a fixed family shape
+(electrostatics as \code{solve\_family}). The combinator is the \emph{entry}; the
+named operators are \emph{specialization notes} hung beneath it. This is the
+\textbf{combinator-primary model}, and it is how the entire vocabulary of the
+simulator is organized.
+
+\begin{definition}[Combinator-primary organization]
+\label{def:primary}
+A vocabulary is \emph{combinator-primary} when its load-bearing entries are a small
+set of higher-order \emph{combinators}---each carrying a signature, a set of
+algebraic laws, and a structural meaning---and every other named operator is
+recorded as a \emph{specialization} of some combinator: the combinator at a fixed
+argument, a fixed arity, or a fixed family shape, written as a thin note that points
+\emph{up} to its combinator and restates none of the combinator's structure. A
+\emph{consumer} of a combinator (an operator that calls it) is distinguished from a
+specialization (an operator that is the combinator narrowed) and is recorded
+\emph{above} the combinator, not beneath it.
+\end{definition}
+
+\Cref{fig:primary} draws the model against its opposite. On the left, the
+combinator-primary organization: one entry, many notes, every named operator
+reachable as a setting of the combinator above it. On the right, the organization
+the framework deliberately rejects: a flat pile of special-case kernels---
+\code{scal}, \code{axpy}, \code{axpby}, \code{axpbypcz}, \code{dot}, \code{nrm2},
+$n$ separate solver loops---each documented in full, with no unifying combinator
+and so with the shared structure repeated $n$ times. The pile is not wrong, exactly;
+it is \emph{unmanageable}. Every law must be restated per kernel; every reader must
+rediscover that \code{axpby} and \code{axpbypcz} are the same idea at different
+arities; every new special case adds a new full entry.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % ===== LEFT: combinator-primary =====
+  \begin{scope}
+    \node[font=\small\bfseries, text=simGreen] at (1.4,3.0) {combinator-primary (this book)};
+    \node[stage, minimum width=40mm, align=center] (comb) at (1.4,2.0)
+      {\textbf{combinator} \itshape (the entry)};
+    \foreach \i/\x in {1/-0.5,2/1.4,3/3.3}{
+      \node[opbox, minimum width=14mm, minimum height=6mm] (nt\i) at (\x,0.5) {};
+      \draw[refedge] (comb.south) -- (nt\i.north);}
+    \node[font=\scriptsize\itshape, text=simGray, align=center] at (1.4,-0.3)
+      {specialization \emph{notes}\\(thin: a setting of the entry)};
+  \end{scope}
+  \draw[simGray!50, thick] (4.6,-0.7) -- (4.6,3.2);
+  % ===== RIGHT: the pile =====
+  \begin{scope}[xshift=5.6cm]
+    \node[font=\small\bfseries, text=simRust] at (1.6,3.0) {the pile (rejected)};
+    \foreach \i/\x/\y in {1/0/2.0,2/1.6/2.0,3/3.2/2.0,4/0/1.0,5/1.6/1.0,6/3.2/1.0}{
+      \node[product, minimum width=13mm, minimum height=6mm] (pk\i) at (\x,\y) {};}
+    \node[font=\scriptsize\itshape, text=simRust, align=center] at (1.6,-0.1)
+      {$n$ full special-case kernels,\\no unifying combinator:\\shared structure repeated $n$ times};
+  \end{scope}
+\end{tikzpicture}
+\caption[The combinator-primary model versus the pile]{The combinator-primary
+model (left) and its rejected opposite (right). Combinator-primary: one combinator
+is the \emph{entry}, carrying the signature, the laws, and the structure; the named
+operators beneath it are thin specialization \emph{notes}, each a setting of the
+combinator. The pile (right): a flat collection of special-case kernels, each a
+full entry, with no combinator above to factor the shared structure---so the
+structure is restated once per kernel and the collection grows without bound. The
+left organization is why this book is short.}
+\label{fig:primary}
+\end{figure}
+
+\subsection{Replace-and-propagate, not mine-and-strand}
+
+The combinator-primary model is not just a way to \emph{present} the vocabulary;
+it is a discipline for \emph{building} it. When a recurring pattern is spotted
+across several operators---say, that \code{axpy} and \code{axpby} are both
+two-term sums---there are two things one might do with the observation. The wrong
+move is to \emph{mine and strand}: name the combinator, write it down in a corner,
+and leave the original special-case kernels standing untouched beside it. Now there
+are \emph{more} entries than before, not fewer: the kernels \emph{and} an unused
+combinator. The right move is to \emph{replace and propagate}: make the combinator
+the entry, rewrite each special case as a thin note that points up to it, and
+propagate the change so that every consumer now reads through the combinator. The
+count goes \emph{down}; the structure is stated \emph{once}.
+
+\begin{keyidea}
+\textbf{The combinator-primary model.} A small set of higher-order combinators are
+the load-bearing vocabulary; each named operator is a thin \emph{specialization
+note} beneath the combinator it instantiates. The combinator is the entry---it
+carries the signature, the laws, the structure---and the leaves are settings of it.
+The discipline is \emph{replace-and-propagate, not mine-and-strand}: a newly found
+combinator \emph{replaces} the special cases (which become notes pointing up to it)
+rather than standing as one more entry beside them. This is why the book can be
+short: a few combinators and many specializations, with the shared structure stated
+once rather than once per operator.
+\end{keyidea}
+
+\section{Why this matters downstream}
+\label{sec:downstream}
+
+The combinator-primary model is not an aesthetic preference; it is the load-bearing
+beam of the rest of the book. Two later Parts rest on it directly, and it is worth
+naming the dependence now so that those Parts read as payoffs rather than
+surprises.
+
+First, the \emph{drivers}. \Cref{part:modalities} studies the simulator's analyses
+one at a time---electrostatic, magnetostatic, driven, transient, eigenmode,
+boundary-mode. The combinator-primary model collapses what would be six
+independent studies into six \emph{settings}. Every driver is one of
+$\{\code{map}, \code{fold}, \code{single-call}\}$ over the
+\texttt{assemble} $\to$ \texttt{solve} $\to$ \texttt{reduce} skeleton of
+\cref{ch:situating}: electrostatics and magnetostatics are \code{solve\_family}
+maps; the driven analysis is a \code{frequency\_sweep} map; the transient analysis
+and the AMR loop are \code{fold\_solve} folds; the eigenmode and boundary-mode
+analyses are single \code{eigsolve} calls. \Cref{fig:driverskel} previews this:
+a driver is a combinator wrapped around the skeleton, with only the box contents
+and the choice of combinator changing from analysis to analysis.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=8mm]
+  % the skeleton body
+  \node[stage] (asm) at (0,0) {assemble};
+  \node[stage, right=of asm] (solve) {solve};
+  \node[stage, right=of solve] (red) {reduce};
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{$\Kop,\dots$} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{field(s)} (red);
+  % combinator wrapper
+  \node[draw=simGreen, thick, rounded corners=3pt, fit=(asm)(solve)(red),
+    inner sep=7mm, fill=simBgGreen, fill opacity=0.25] (wrap) {};
+  \node[anchor=south west, font=\scriptsize\bfseries, text=simGreen]
+    at (wrap.north west) {a combinator: \code{map} / \code{fold} / single-call};
+  % the family/carry edge
+  \draw[backflow, simGreen]
+    (red.south) ++(0,-2mm) .. controls +(0,-7mm) and +(0,-7mm) ..
+    (solve.south)
+    node[midway, below, font=\scriptsize, text=simGreen]
+      {next family member (map) \;or\; next carry (fold)};
+  % in/out
+  \node[data, left=10mm of wrap] (cfg) {config};
+  \node[product, right=10mm of wrap] (prod) {product};
+  \draw[flow] (cfg) -- (wrap.west);
+  \draw[flow] (wrap.east) -- (prod);
+\end{tikzpicture}
+\caption[A driver as a combinator over the skeleton]{Every driver, previewed as a
+combinator wrapped around the \texttt{assemble} $\to$ \texttt{solve} $\to$
+\texttt{reduce} skeleton of \cref{ch:situating}. The combinator (green wrapper)
+supplies the family structure---a \code{map} iterating over independent family
+members, a \code{fold} threading a carry, or a single opaque call---and the
+skeleton body supplies the per-member work. \Cref{part:modalities} fills in the box
+contents one analysis at a time; what changes from driver to driver is only the box
+contents and the choice of combinator. The combinator-primary model is what makes
+six analyses six settings of this one picture.}
+\label{fig:driverskel}
+\end{figure}
+
+To see how thoroughly the combinators carve up the six analyses, read down this
+mapping---it is the punchline of \cref{ch:situating}'s grid restated in combinator
+terms, and it is the skeleton of \cref{part:modalities}:
+\begin{center}
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Driver & Combinator & Family structure \\
+\midrule
+Electrostatic & \code{solve\_family} & map over conductors (fixed $\Kop$) \\
+Magnetostatic & \code{solve\_family} & map over current loops (fixed $\Kop$) \\
+Driven & \code{frequency\_sweep} & map over $\omega$ (rebuild $\mat{A}(\omega)$) \\
+Transient & \code{fold\_solve} & fold over timesteps (thread field state) \\
+Eigenmode & \code{eigsolve} & single opaque call \\
+Boundary mode & \code{eigsolve} & single opaque call (on a cross-section) \\
+\bottomrule
+\end{tabular}
+\end{center}
+Six drivers, four combinators, three structural shapes
+($\code{map}$, $\code{fold}$, single-call). The physics that distinguishes the rows
+lives in the \emph{box contents}---which operator is assembled, on which function
+space, reduced by which verb---but the \emph{control structure} of each driver is
+one of these four combinators wrapped around the skeleton. That is the entire reason
+\cref{part:modalities} can present six analyses as six short variations rather than
+six full programs.
+
+Second, the \emph{synthesized library}. \Cref{part:collection} renders the whole
+specification as though it were a real implementation library---the code the spec
+describes, written out. That library \emph{is} these combinators. Its modules are
+organized around them: an iteration module holding \code{iterate\_while} and the
+step kernels, a data-algebra module holding \code{linear\_combination} and
+\code{inner\_product} with their leaves, a coordination module holding
+\code{solve\_family}, \code{frequency\_sweep}, and \code{fold\_solve}, and a driver
+module composing them into the five analyses. The combinator-primary model is the
+table of contents of that library. Learn the combinators here and you have learned
+the spine of the synthesized code.
+
+\section{Worked examples}
+
+\begin{workedexample}{\texttt{solve\_family} as a map, \texttt{fold\_solve} as a foldl}{mapvsfold}
+We write the two family combinators side by side on a concrete three-element
+family and read off why one parallelizes and the other does not.
+
+\emph{The map.} \code{solve\_family} runs three independent solves against one
+fixed operator $\Kop$ and three right-hand sides $\vb_1, \vb_2, \vb_3$:
+\begin{lstlisting}[style=l4style]
+solve_family K [b1, b2, b3]
+  = map (\b -> ksp_solve K b) [b1, b2, b3]
+  = [ ksp_solve K b1            -- depends only on (K, b1)
+    , ksp_solve K b2            -- depends only on (K, b2)
+    , ksp_solve K b3 ]          -- depends only on (K, b3)
+\end{lstlisting}
+Each element names its own inputs $(\Kop, \vb_i)$ and \emph{nothing else}. No
+element reads another element's output. So the three solves can be evaluated in any
+order---$\vb_3$ first, $\vb_1$ last---or all at once on three machines, and the
+collected list is the same either way. Concretely, with
+$\Kop = \begin{psmallmatrix}2&0\\0&3\end{psmallmatrix}$ and
+$\vb_1=\begin{psmallmatrix}2\\0\end{psmallmatrix},
+\vb_2=\begin{psmallmatrix}0\\3\end{psmallmatrix},
+\vb_3=\begin{psmallmatrix}2\\3\end{psmallmatrix}$, the three solves of
+$\Kop\vx_i=\vb_i$ give $\vx_1=\begin{psmallmatrix}1\\0\end{psmallmatrix},
+\vx_2=\begin{psmallmatrix}0\\1\end{psmallmatrix},
+\vx_3=\begin{psmallmatrix}1\\1\end{psmallmatrix}$ independently---and indeed
+$\vx_3 = \vx_1 + \vx_2$ only because $\vb_3 = \vb_1 + \vb_2$ and the solves are
+linear, not because element three \emph{read} elements one and two. The map never
+threads a carry.
+
+\emph{The fold.} \code{fold\_solve} runs three \emph{chained} steps, threading a
+state $s$ through a schedule $[t_1, t_2, t_3]$:
+\begin{lstlisting}[style=l4style]
+fold_solve op s0 [t1, t2, t3]
+  = foldl (\s t -> time_step_op op s t) s0 [t1, t2, t3]
+  = time_step_op op
+      (time_step_op op
+         (time_step_op op s0 t1)   -- produces s1
+         t2)                       -- s2 needs s1
+      t3                           -- s3 needs s2
+\end{lstlisting}
+Now read the nesting from the inside out. The innermost call produces $s_1$ from
+$s_0$; the middle call needs $s_1$ to produce $s_2$; the outer call needs $s_2$ to
+produce $s_3$. The step at $t_2$ \emph{cannot start} until the step at $t_1$ has
+finished, because $s_1$ is literally its input. There is no order but
+$t_1, t_2, t_3$, and no machine can take the second step early. With a toy
+$\code{time\_step\_op}\ op\ s\ t = s + 1$ and $s_0 = 0$ the fold computes
+$0 \to 1 \to 2 \to 3$---each value one more than the last, and unreachable except
+by passing through its predecessor.
+
+\emph{The contrast.} The two pieces of pseudocode differ by exactly one structural
+fact: the map's element function names only its own inputs, while the fold's step
+function names the prior carry $s$. That single carry dependence is the difference
+between a fan-out and a chain (\cref{fig:mapfold}), between parallel and
+sequential. It is why electrostatics (a \code{solve\_family} map) can solve all its
+conductors at once while the transient analysis (a \code{fold\_solve} fold) must
+march its timesteps in order. The map is the degenerate fold whose step would
+ignore $s$; the fold is the one that uses it.
+\end{workedexample}
+
+\begin{workedexample}{One combinator, four leaves: deriving the BLAS family}{arity}
+We take \code{linear\_combination} and recover each named BLAS routine as a fixed-
+arity specialization, with numbers, so the ``one combinator, four leaves'' claim is
+concrete rather than slogan. Throughout, let
+$\vx = \begin{psmallmatrix}1\\2\end{psmallmatrix}$,
+$\vy = \begin{psmallmatrix}3\\4\end{psmallmatrix}$,
+$\vz = \begin{psmallmatrix}5\\6\end{psmallmatrix}$, and coefficients
+$a = 2,\ b = 10,\ c = 100$.
+
+\emph{Arity 1 ---} \code{scal}. The one-term list:
+\begin{lstlisting}[style=l4style]
+scal(a, x) = linear_combination [(a, x)] = zeros + scal a x = a*x
+\end{lstlisting}
+Numerically $\code{scal}(2, \vx) = 2\vx = \begin{psmallmatrix}2\\4\end{psmallmatrix}$.
+The fold seeds at \code{zeros} and folds one term: $0 + 2\vx$.
+
+\emph{Arity 2, second coefficient fixed ---} \code{axpy}. The two-term list whose
+second coefficient is $1$:
+\begin{lstlisting}[style=l4style]
+axpy(a, x, y) = linear_combination [(a, x), (1, y)] = a*x + 1*y = a*x + y
+\end{lstlisting}
+Numerically $\code{axpy}(2, \vx, \vy) = 2\vx + \vy =
+\begin{psmallmatrix}2\\4\end{psmallmatrix} + \begin{psmallmatrix}3\\4\end{psmallmatrix}
+= \begin{psmallmatrix}5\\8\end{psmallmatrix}$.
+
+\emph{Arity 2, general ---} \code{axpby}. The two-term list with both coefficients
+free:
+\begin{lstlisting}[style=l4style]
+axpby(a, x, b, y) = linear_combination [(a, x), (b, y)] = a*x + b*y
+\end{lstlisting}
+Numerically $\code{axpby}(2, \vx, 10, \vy) = 2\vx + 10\vy =
+\begin{psmallmatrix}2\\4\end{psmallmatrix} + \begin{psmallmatrix}30\\40\end{psmallmatrix}
+= \begin{psmallmatrix}32\\44\end{psmallmatrix}$. Note \code{axpy} is the special
+case $b = 1$: $\code{axpby}(a, \vx, 1, \vy) = \code{axpy}(a, \vx, \vy)$.
+
+\emph{Arity 3 ---} \code{axpbypcz}. The three-term list:
+\begin{lstlisting}[style=l4style]
+axpbypcz(a, x, b, y, c, z) = linear_combination [(a, x), (b, y), (c, z)]
+                           = a*x + b*y + c*z
+\end{lstlisting}
+Numerically $\code{axpbypcz}(2,\vx,10,\vy,100,\vz) = 2\vx + 10\vy + 100\vz =
+\begin{psmallmatrix}2\\4\end{psmallmatrix}+\begin{psmallmatrix}30\\40\end{psmallmatrix}
++\begin{psmallmatrix}500\\600\end{psmallmatrix}=\begin{psmallmatrix}532\\644\end{psmallmatrix}$.
+
+\emph{The concatenation law makes the subsumption exact.} Watch the three-term sum
+split into a two-term and a one-term list:
+\[
+  \underbrace{\code{linear\_combination}\,[(a,\vx),(b,\vy),(c,\vz)]}_{\code{axpbypcz}}
+  \;=\;
+  \underbrace{\code{linear\_combination}\,[(a,\vx),(b,\vy)]}_{\code{axpby}}
+  \;+\;
+  \underbrace{\code{linear\_combination}\,[(c,\vz)]}_{\code{scal}}.
+\]
+Numerically $\begin{psmallmatrix}532\\644\end{psmallmatrix} =
+\begin{psmallmatrix}32\\44\end{psmallmatrix} + \begin{psmallmatrix}500\\600\end{psmallmatrix}$:
+the \code{axpbypcz} result is the \code{axpby} result plus the \code{scal} result.
+The four named routines are not four ideas; they are one combinator read off at
+list-lengths one, two, and three, and the concatenation-homomorphism is the law
+that stitches them together. This is the combinator-primary model in a single
+trace: the combinator carries the structure (the law), and the leaves are settings
+of it.
+\end{workedexample}
+
+\summarysection
+\Cref{ch:fold} built \code{iterate\_while}, the one iteration primitive; this
+chapter widened the lens to the combinators that organize the whole simulator. The
+governing axis is \emph{map versus fold}: a map runs a family of \emph{independent}
+computations (no carry, so they parallelize), while a fold threads a \emph{carry}
+through a chain (each step needs the last, so it serializes); a map is the
+degenerate fold whose step ignores the carry. The four solve corners of
+\cref{ch:situating} are exactly four combinators: \code{solve\_family} (the
+fixed-operator map; electrostatic, magnetostatic), \code{frequency\_sweep} (the
+operator-varying map, rebuilding the operator inside the loop; driven),
+\code{fold\_solve} (the state-threaded fold; transient and AMR), and \code{eigsolve}
+(the opaque black-box, no loop we write; eigenmode, boundary-mode). The
+data-algebra adds two combinators: \code{linear\_combination}, the tensor-sum
+$\sum_i a_i t_i$, whose fixed-arity leaves are the BLAS routines
+\code{scal}/\code{axpy}/\code{axpby}/\code{axpbypcz} (fused kernels stopped low,
+the combinator rising); and \code{inner\_product}, the scalar-producing fold, with
+\code{dot} as its $M = I$ leaf and \code{nrm2} as a \emph{consumer} of \code{dot},
+not a leaf. The thesis is the \emph{combinator-primary model}: the combinator is
+the entry, carrying the signature and laws; the named operators are thin
+specialization notes beneath it; the discipline is \emph{replace-and-propagate, not
+mine-and-strand}. This is why a book about a vast simulator can be short---a few
+combinators, many specializations---and it is the spine of both the drivers
+(\cref{part:modalities}, each a combinator over assemble--solve--reduce) and the
+synthesized library (\cref{part:collection}, which \emph{is} these combinators).
+
+\furtherreading
+The \code{map}/\code{fold} vocabulary, and the laws that make a fold-of-fixed-length
+the same as its general fold, are foundational functional programming; Peyton
+Jones's account of Haskell~\citep{peytonjones2003} develops \code{map}, \code{foldl},
+and the homomorphism laws this chapter leans on for the arity leaves. The BLAS
+routines whose fused special cases sit beneath \code{linear\_combination} and
+\code{inner\_product}---the \code{axpy} family, \code{dot}, \code{nrm2}---and the
+reason they are written as fused kernels rather than general sums are documented in
+the numerical-linear-algebra literature; Golub and Van Loan~\citep{golubvanloan2013}
+is the standard reference for the BLAS-1 level and its performance model, and
+Saad~\citep{saad2003} shows how Krylov solvers are spelled in exactly these verbs,
+which is the form \cref{ch:cg} and \cref{ch:gmres} build on.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of the four solve corners, name its combinator and state the two
+  binary classifications that place it (operator fixed/varying; map/fold or
+  neither). Which corner answers ``neither row'' of the map/fold axis, and why?
+  \item Electrostatics is \code{solve\_family} and the driven analysis is
+  \code{frequency\_sweep}. Both are maps. Pinpoint the single line of pseudocode
+  whose position---inside the map versus hoisted outside it---is the entire
+  difference between them, and explain why moving it changes the \emph{answer}, not
+  merely the speed.
+  \item Write \code{axpby} and \code{axpy} as instances of \code{linear\_combination},
+  then show that \code{axpy} is the special case of \code{axpby} with one
+  coefficient fixed. Using the concatenation-homomorphism, express \code{axpbypcz}
+  as a sum of an \code{axpby} and a \code{scal}, and verify it numerically with
+  $\vx=\begin{psmallmatrix}1\\0\end{psmallmatrix},
+  \vy=\begin{psmallmatrix}0\\1\end{psmallmatrix},
+  \vz=\begin{psmallmatrix}1\\1\end{psmallmatrix}$ and coefficients $1, 2, 3$.
+  \item Explain why \code{dot} is a \emph{specialization} of \code{inner\_product}
+  but \code{nrm2} is a \emph{consumer} of \code{dot}, not a specialization of
+  \code{inner\_product}. In the combinator-primary picture, which one hangs
+  \emph{below} its combinator and which sits \emph{above}? What would go wrong if
+  you drew \code{nrm2} as a leaf of \code{inner\_product}?
+  \item Contrast \emph{replace-and-propagate} with \emph{mine-and-strand}. A
+  colleague notices that \code{axpy} and \code{axpby} are both two-term sums, writes
+  down a general \code{two\_term} combinator in a corner, and leaves the original
+  \code{axpy} and \code{axpby} entries untouched. Has the entry count gone up or
+  down? Which discipline did they follow, and what should they have done instead?
+  \item A \code{map} is ``the degenerate fold whose step ignores the carry.'' Write
+  \code{map f xs} as a \code{fold\_solve}-style \code{foldl} whose step discards its
+  accumulator. Then argue from your rewrite why a map parallelizes and a fold does
+  not---i.e., which data dependence the discarded carry would have introduced.
+  \item Using \cref{fig:driverskel}, describe the transient analysis and the
+  electrostatic analysis as ``a combinator wrapped around assemble--solve--reduce.''
+  Which combinator does each use, what flows along the back-edge in each case (a
+  family member or a threaded carry?), and which of the two could you run on a
+  cluster of independent machines?
+  \item \emph{(Synthesis.)} The chapter claims the book is short \emph{because} of
+  the combinator-primary model. Suppose instead the simulator's vocabulary were
+  written as ``the pile'' of \cref{fig:primary}: six independent driver studies,
+  six special-case family loops, four BLAS kernels, two inner-product kernels, each
+  a full entry. Estimate, in rough terms, how the page count would grow, and name
+  two specific facts (one law, one structural relationship) that would have to be
+  restated multiple times rather than once.
+\end{enumerate}

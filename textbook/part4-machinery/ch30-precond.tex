@@ -1,0 +1,955 @@
+\chapter{Preconditioning}
+\label{ch:precond}
+
+\chapterorient{The last two chapters built solvers and then bounded their speed by a
+single number: the condition number of the operator. Conjugate gradients
+(\cref{ch:cg}) crawls on a stretched bowl; GMRES (\cref{ch:gmres}) needs more steps
+the more the spectrum spreads. This chapter is the cure. We do not build a faster
+solver---we change the \emph{problem} the solver sees, multiplying it by an
+approximate inverse $\mat{M}^{-1}\approx\mat{A}^{-1}$ that pulls the spectrum into a
+tight cluster near $1$, so the very same iteration finishes in a fraction of the
+steps. The spine of the chapter is the abstraction of \cref{ch:operators}: a
+preconditioner is never a matrix you form, it is an \emph{operator you apply}---a
+black-box function the solver calls and never looks inside. That one idea makes
+preconditioning modular: the same GMRES drives a diagonal scaling, an incomplete
+factorization, or a multigrid V-cycle without changing a line. We make the spectral
+claim precise, sort out left/right/split placement, build the preconditioner once and
+apply it each step (the constructed operator of \cref{ch:operators}), tour the
+families, and end at the real goal: convergence that does not slow down as the mesh is
+refined.}
+
+\section{The motivation, made precise}
+\label{sec:motivation}
+
+We ended \cref{ch:cg} with a stark plot (\cref{fig:convplot}): the conjugate-gradient
+error after $k$ steps is bounded by
+\[
+  \norm{\vx^\star-\vx_k}_{\mat{A}}
+  \;\le\; 2\!\left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^{\!k}
+  \norm{\vx^\star-\vx_0}_{\mat{A}},
+  \qquad \kappa=\frac{\lambda_{\max}}{\lambda_{\min}},
+\]
+and GMRES carries an analogous spectral dependence. The number of iterations to reach
+a fixed tolerance grows like $\sqrt{\kappa}$ for CG. The operators Palace assembles are
+routinely ill-conditioned: refining the mesh, or putting a high-permittivity dielectric
+next to a low one, drives $\kappa$ into the thousands and beyond. Raw CG and raw GMRES
+are simply too slow on these systems. The fix is not a cleverer iteration---it is to
+\emph{change the spectrum}.
+
+\subsection{The idea in one line}
+
+Suppose we have a second operator $\mat{M}$, close to $\mat{A}$ but \emph{cheap to
+invert}, and consider solving the algebraically equivalent system
+\begin{equation}
+\label{eq:precond-system}
+  \mat{M}^{-1}\mat{A}\,\vx \;=\; \mat{M}^{-1}\vb .
+\end{equation}
+It has the \emph{same solution} $\vx^\star$ as $\mat{A}\vx=\vb$---multiplying both sides
+by the invertible $\mat{M}^{-1}$ changes nothing about the answer. But it can have a
+completely different \emph{operator}: where $\mat{A}$ might have a spectrum spread across
+$[\lambda_{\min},\lambda_{\max}]$ with $\kappa$ in the thousands, the new operator
+$\mat{M}^{-1}\mat{A}$ has a spectrum we can hope to squeeze near $1$. In the ideal limit
+$\mat{M}=\mat{A}$, the new operator is $\mat{M}^{-1}\mat{A}=\mat{I}$, whose condition
+number is exactly $1$: a Krylov method solves $\mat{I}\vx=\mat{M}^{-1}\vb$ in a single
+step. We will never reach that ideal cheaply (inverting $\mat{A}$ exactly is the problem
+we are trying to avoid), but the closer $\mat{M}^{-1}$ approximates $\mat{A}^{-1}$, the
+closer $\mat{M}^{-1}\mat{A}$ is to the identity, and the faster the iteration runs.
+
+\begin{definition}[Preconditioner]
+\label{def:precond}
+A \emph{preconditioner} for the system $\mat{A}\vx=\vb$ is an operator $\mat{M}$,
+nonsingular and \emph{cheap to apply the inverse of}, chosen so that
+$\mat{M}^{-1}\mat{A}$ is better conditioned (its spectrum more clustered) than
+$\mat{A}$. The action $\vr\mapsto\mat{M}^{-1}\vr$ is the \emph{preconditioner apply}.
+\end{definition}
+
+Two demands pull against each other in that definition, and a good preconditioner is a
+truce between them. It must \emph{cluster the spectrum}---otherwise it does not reduce
+the iteration count---and it must be \emph{cheap to apply}---otherwise the saved
+iterations cost more than they were worth. The extremes are both useless:
+$\mat{M}=\mat{I}$ is free to apply but clusters nothing (it does not precondition at
+all); $\mat{M}=\mat{A}$ clusters perfectly but is as expensive to invert as the original
+problem. Every practical preconditioner lives in between.
+
+\subsection{The fundamental trade}
+\label{sec:trade}
+
+Make the bargain quantitative. Without preconditioning, a solve costs
+\[
+  (\text{iterations}) \times (\text{cost per iteration}),
+\]
+and the cost per iteration is dominated by one operator apply $\mat{A}\vp$. Preconditioning
+changes \emph{both} factors, in opposite directions:
+
+\begin{itemize}[nosep]
+  \item \textbf{Iterations go down}---often dramatically---because the spectrum of
+  $\mat{M}^{-1}\mat{A}$ is clustered and the Krylov bound improves.
+  \item \textbf{Cost per iteration goes up}, because each step now performs one
+  \emph{extra} apply: the preconditioner apply $\vz=\mat{M}^{-1}\vr$ on top of the
+  operator apply $\mat{A}\vp$.
+\end{itemize}
+
+\begin{keyidea}
+Preconditioning wins exactly when the product wins: the iteration count must fall by
+more than the per-step cost rises. This happens when $\mat{M}^{-1}$ is
+\emph{simultaneously} (i) a good approximation of $\mat{A}^{-1}$---so it genuinely
+clusters the spectrum and slashes the iteration count---and (ii) cheap to apply---so the
+extra per-step apply is a small surcharge, not a second full solve. A preconditioner
+that clusters but is expensive, or one that is cheap but clusters nothing, loses the
+trade. The art is finding an $\mat{M}^{-1}$ that is both.
+\end{keyidea}
+
+\Cref{fig:cost-trade} draws the bargain. As the preconditioner grows stronger (left to
+right), the iteration count plunges, but the work spent \emph{inside} each preconditioner
+apply climbs. Total time is the product, and it has a minimum somewhere in the middle: a
+``sweet spot'' preconditioner strong enough to cut iterations sharply yet cheap enough
+that each apply stays light. Too weak and the iterations dominate; too strong and the
+per-step preconditioner apply dominates.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=12.4cm, height=6.6cm,
+      xlabel={preconditioner strength (cheap/weak $\to$ strong/expensive)},
+      ylabel={cost (arbitrary units)},
+      xmin=0, xmax=10, ymin=0, ymax=11,
+      xtick=\empty,
+      tick label style={font=\scriptsize}, label style={font=\footnotesize},
+      legend pos=north west, legend cell align=left,
+      legend style={font=\footnotesize, draw=simGray!40},
+      grid=both, grid style={simGray!15},
+      every axis plot/.append style={very thick}]
+    % iterations: falling
+    \addplot[simBlue, domain=0.3:10, samples=80]
+      {1.0 + 9.0*exp(-0.55*x)};
+    \addlegendentry{iterations (fall)}
+    % per-iteration cost: rising
+    \addplot[simRust, domain=0.3:10, samples=80]
+      {0.6 + 0.34*x};
+    \addlegendentry{cost per iteration (rise)}
+    % total time = product, normalized down to fit
+    \addplot[simGreen, domain=0.3:10, samples=120]
+      {0.42*(1.0 + 9.0*exp(-0.55*x))*(0.6 + 0.34*x)};
+    \addlegendentry{total time (product)}
+    % mark the minimum of the green curve, near x ~ 3.4
+    \node[circle, fill=simGreen, inner sep=1.6pt] at (axis cs:3.4,2.55) {};
+    \node[font=\scriptsize, simGreen, anchor=south west] at (axis cs:3.55,2.7)
+      {sweet spot};
+    \draw[simGreen, densely dashed] (axis cs:3.4,0)--(axis cs:3.4,2.55);
+  \end{axis}
+\end{tikzpicture}
+\caption[The fundamental preconditioning trade]{The trade at the heart of
+preconditioning. A stronger preconditioner (rightward) clusters the spectrum more, so
+the iteration count (blue) falls steeply---but each step now spends more work inside the
+preconditioner apply, so the cost per iteration (rust) rises. Total solve time (green) is
+the \emph{product} of the two, and it has a minimum in the middle: the sweet spot is a
+preconditioner strong enough to cut iterations sharply yet cheap enough that each apply
+stays light. At the left edge the iterations dominate (too weak); at the right edge the
+per-step apply dominates (too strong, approaching a full inner solve). A good
+preconditioner sits near the minimum.}
+\label{fig:cost-trade}
+\end{figure}
+
+\section{What clustering buys: the spectrum picture}
+\label{sec:spectrum}
+
+The phrase ``better conditioned'' in \cref{def:precond} deserves a picture, because it
+is the whole mechanism. \Cref{ch:cg} taught (\cref{sec:cluster}) that a Krylov method's
+true convergence is governed not just by the extreme eigenvalues but by how the
+\emph{whole} spectrum is laid out: a polynomial can be made small on a few tight clusters
+with far fewer degrees than it needs to be small across a wide interval. A preconditioner
+is, at bottom, a spectrum-reshaping device.
+
+\Cref{fig:spectrum} shows the effect on a model problem. The eigenvalues of $\mat{A}$
+(top) sprawl across two decades---this is the long, narrow bowl of \cref{ch:cg}, the
+$\kappa$ in the thousands. The eigenvalues of $\mat{M}^{-1}\mat{A}$ (bottom), for a
+decent preconditioner, huddle in a tight band around $1$. Same solution, same iteration,
+utterly different convergence: the bottom spectrum is one a degree-handful polynomial
+annihilates, so the Krylov method converges in a handful of steps.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=13.2cm, height=4.8cm,
+      xmode=log, log basis x=10,
+      xmin=0.05, xmax=300,
+      ymin=-0.6, ymax=2.2,
+      ytick={0,1.5}, yticklabels={$\mat{M}^{-1}\mat{A}$, $\mat{A}$},
+      y tick label style={font=\footnotesize},
+      xlabel={eigenvalue (log scale)},
+      label style={font=\footnotesize}, tick label style={font=\scriptsize},
+      axis y line=left, axis x line=bottom,
+      clip=false]
+    % --- spectrum of A: spread across two decades ---
+    \addplot[only marks, mark=*, mark size=2.0pt, simBlue]
+      coordinates {(0.08,1.5)(0.15,1.5)(0.3,1.5)(0.7,1.5)(1.6,1.5)
+                   (4,1.5)(9,1.5)(22,1.5)(55,1.5)(130,1.5)(240,1.5)};
+    \node[font=\scriptsize, simBlue, anchor=west] at (axis cs:0.055,2.0)
+      {spread: $\kappa\approx 3000$};
+    % --- spectrum of M^{-1}A: clustered near 1 ---
+    \addplot[only marks, mark=*, mark size=2.0pt, simGreen]
+      coordinates {(0.62,0)(0.74,0)(0.83,0)(0.9,0)(0.97,0)(1.0,0)
+                   (1.04,0)(1.1,0)(1.18,0)(1.3,0)(1.45,0)};
+    \node[font=\scriptsize, simGreen, anchor=west] at (axis cs:1.6,0)
+      {clustered: $\kappa\approx 2.3$};
+    % a marker line at lambda = 1
+    \draw[simGray, densely dashed] (axis cs:1,-0.55)--(axis cs:1,1.0)
+      node[pos=0.0, below, font=\scriptsize, simGray] {$\lambda=1$};
+  \end{axis}
+\end{tikzpicture}
+\caption[Preconditioning clusters the spectrum]{The spectral effect of preconditioning,
+on a log scale. \emph{Top (blue):} the eigenvalues of the bare operator $\mat{A}$ sprawl
+across two decades---a condition number in the thousands, the long narrow bowl that makes
+CG crawl (\cref{ch:cg}). \emph{Bottom (green):} the eigenvalues of the preconditioned
+operator $\mat{M}^{-1}\mat{A}$ collapse into a tight cluster around $\lambda=1$, with a
+condition number near $2$. The system has the \emph{same solution}---only the operator
+the Krylov method iterates against has changed. A polynomial that must be tiny across the
+blue spread needs a high degree (many iterations); one that need only be tiny on the
+green cluster needs a low degree (few iterations). Clustering near $1$ is exactly what a
+good preconditioner buys.}
+\label{fig:spectrum}
+\end{figure}
+
+\begin{notationbox}
+``Clustered near $1$'' is the goal, and the $1$ is not arbitrary. If $\mat{M}^{-1}\mat{A}$
+were clustered near any constant $c\neq0$, a rescaling would move the cluster to $1$, so
+what matters is the \emph{spread} of the cluster, not its location. We say
+$\mat{M}^{-1}\mat{A}\approx\mat{I}$ to mean its spectrum is a tight cluster; equivalently
+$\mat{M}^{-1}\approx\mat{A}^{-1}$. The closer the approximation, the tighter the cluster,
+the fewer the iterations---and the limit $\mat{M}^{-1}=\mat{A}^{-1}$ gives the single-step
+solve.
+\end{notationbox}
+
+\section{Left, right, and split preconditioning}
+\label{sec:lrs}
+
+Equation~\eqref{eq:precond-system} put $\mat{M}^{-1}$ on the \emph{left} of $\mat{A}$.
+That was one choice of three. The preconditioner can be applied on the left, on the
+right, or split across both sides, and the three placements---algebraically equivalent in
+their solution, but different in what the iteration actually minimizes---are a variant
+axis (\cref{ch:operators}) every Krylov solver exposes.
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[Left preconditioning.] Multiply the system on the left:
+  \[
+    \mat{M}^{-1}\mat{A}\,\vx \;=\; \mat{M}^{-1}\vb .
+  \]
+  The iteration runs on the operator $\mat{M}^{-1}\mat{A}$, and the residual it sees and
+  drives to zero is the \emph{preconditioned residual}
+  $\mat{M}^{-1}(\vb-\mat{A}\vx)=\mat{M}^{-1}\vr$, not the true residual $\vr$.
+  \item[Right preconditioning.] Insert $\mat{M}^{-1}\mat{M}=\mat{I}$ between $\mat{A}$ and
+  $\vx$, and solve for a transformed unknown $\vu=\mat{M}\vx$:
+  \[
+    \mat{A}\mat{M}^{-1}\,\vu \;=\; \vb, \qquad \vx=\mat{M}^{-1}\vu .
+  \]
+  The iteration runs on $\mat{A}\mat{M}^{-1}$, but---crucially---the residual it sees is
+  $\vb-\mat{A}\mat{M}^{-1}\vu=\vb-\mat{A}\vx=\vr$, the \emph{true} residual. Right
+  preconditioning leaves the quantity being minimized untouched.
+  \item[Split preconditioning.] Factor the preconditioner $\mat{M}=\mat{M}_1\mat{M}_2$
+  and place one factor on each side:
+  \[
+    \mat{M}_1^{-1}\mat{A}\mat{M}_2^{-1}\,\vu \;=\; \mat{M}_1^{-1}\vb,
+    \qquad \vx=\mat{M}_2^{-1}\vu .
+  \]
+  When $\mat{A}$ is SPD and $\mat{M}=\mat{L}\mat{L}^{\top}$ is a (incomplete) Cholesky
+  factorization, the split choice $\mat{M}_1=\mat{L}$, $\mat{M}_2=\mat{L}^{\top}$ keeps the
+  preconditioned operator $\mat{L}^{-1}\mat{A}\mat{L}^{-\top}$ \emph{symmetric positive
+  definite}---which is exactly what preconditioned CG needs (\cref{sec:pcg-tie}).
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  % --- LEFT ---
+  \begin{scope}
+    \node[font=\bfseries\small, simBlue] at (0,1.5) {left};
+    \node[extern, minimum width=10mm] (lM) at (0,0.5) {$\mat{M}^{-1}$};
+    \node[stage, minimum width=9mm, below=4mm of lM] (lA) {$\mat{A}$};
+    \node[data, below=4mm of lA] (lx) {$\vx$};
+    \draw[flow] (lx)--(lA); \draw[flow] (lA)--(lM);
+    \node[font=\scriptsize, simGray, anchor=north, align=center] at (0,-1.55)
+      {$\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$\\[1pt]sees $\mat{M}^{-1}\vr$};
+  \end{scope}
+  % --- RIGHT ---
+  \begin{scope}[xshift=4.7cm]
+    \node[font=\bfseries\small, simGreen] at (0,1.5) {right};
+    \node[stage, minimum width=9mm] (rA) at (0,0.5) {$\mat{A}$};
+    \node[extern, minimum width=10mm, below=4mm of rA] (rM) {$\mat{M}^{-1}$};
+    \node[data, below=4mm of rM] (ru) {$\vu$};
+    \draw[flow] (ru)--(rM); \draw[flow] (rM)--(rA);
+    \node[font=\scriptsize, simGray, anchor=north, align=center] at (0,-1.55)
+      {$\mat{A}\mat{M}^{-1}\vu=\vb$\\[1pt]sees \emph{true} $\vr$};
+  \end{scope}
+  % --- SPLIT ---
+  \begin{scope}[xshift=9.4cm]
+    \node[font=\bfseries\small, simRust] at (0,1.5) {split};
+    \node[extern, minimum width=10mm] (sM1) at (0,0.9) {$\mat{M}_1^{-1}$};
+    \node[stage, minimum width=9mm, below=3mm of sM1] (sA) {$\mat{A}$};
+    \node[extern, minimum width=10mm, below=3mm of sA] (sM2) {$\mat{M}_2^{-1}$};
+    \node[data, below=3mm of sM2] (su) {$\vu$};
+    \draw[flow] (su)--(sM2); \draw[flow] (sM2)--(sA); \draw[flow] (sA)--(sM1);
+    \node[font=\scriptsize, simGray, anchor=north, align=center] at (0,-1.95)
+      {$\mat{M}_1^{-1}\mat{A}\mat{M}_2^{-1}\vu=\mat{M}_1^{-1}\vb$\\[1pt]preserves symmetry};
+  \end{scope}
+\end{tikzpicture}
+\caption[Three placements of the preconditioner]{The three placements of $\mat{M}^{-1}$,
+read bottom-to-top as the operand flows through. \emph{Left:} $\mat{M}^{-1}$ multiplies
+the whole system from the left; the iteration runs on $\mat{M}^{-1}\mat{A}$ and drives the
+\emph{preconditioned} residual $\mat{M}^{-1}\vr$ to zero. \emph{Right:} $\mat{M}^{-1}$ sits
+between $\mat{A}$ and the transformed unknown $\vu=\mat{M}\vx$; the iteration runs on
+$\mat{A}\mat{M}^{-1}$ but sees the \emph{true} residual $\vr$---the reason right
+preconditioning is the default for GMRES. \emph{Split:} one factor of
+$\mat{M}=\mat{M}_1\mat{M}_2$ on each side preserves SPD-ness of the preconditioned
+operator, which preconditioned CG requires. All three have the same solution $\vx^\star$;
+they differ in what residual the convergence test reads.}
+\label{fig:lrs}
+\end{figure}
+
+\subsection{Why the choice matters: the residual GMRES minimizes}
+
+The three placements yield the same solution, so why prefer one? The answer is the
+\emph{stopping test}. A Krylov method measures convergence by a residual norm, and the
+three placements present it with different residuals.
+
+\begin{keyidea}
+\textbf{Right preconditioning preserves the true residual.} Left preconditioning makes
+the iteration minimize $\norm{\mat{M}^{-1}\vr}$---the residual seen through the
+preconditioner---so the stopping test is distorted by $\mat{M}$: a small
+$\norm{\mat{M}^{-1}\vr}$ need not mean a small true $\norm{\vr}$ if $\mat{M}$ is
+ill-scaled. Right preconditioning leaves the residual as the true $\vr=\vb-\mat{A}\vx$, so
+GMRES's free residual readout (\cref{ch:gmres}) measures the quantity the engineer
+actually cares about. This is why right preconditioning is the conventional default for
+preconditioned GMRES; left is common for CG, where the preconditioned inner product
+restores symmetry anyway (\cref{sec:pcg-tie}).
+\end{keyidea}
+
+There is one more reason the distinction is load-bearing, and it ties back to
+\cref{ch:gmres}: for \emph{right}-preconditioned GMRES the iterate is recovered as
+$\vx=\vx_0+\mat{M}^{-1}\mat{V}_m\vy$, applying $\mat{M}^{-1}$ once to the whole
+correction---which assumes a \emph{single fixed} $\mat{M}$. The moment the preconditioner
+varies per step, that reconstruction breaks, and FGMRES is the repair. We return to this
+in \cref{sec:flexible}; for now, file the placement as a variant axis the construction
+absorbs.
+
+\section{The preconditioner is an operator you apply}
+\label{sec:operator}
+
+We have written $\mat{M}^{-1}$ throughout as if it were a matrix. It is not---and the gap
+between ``$\mat{M}^{-1}$ the matrix'' and ``$\mat{M}^{-1}$ the operation'' is the single
+most important idea in the chapter. \emph{The inverse is never formed.} What the solver
+holds is a function: hand it a residual $\vr$, it returns a vector $\vz\approx\mat{M}^{-1}\vr$.
+How it computes that vector---a diagonal divide, a triangular sweep, a full multigrid
+cycle---is its own business, hidden behind the apply.
+
+This is precisely the \emph{solver-as-operator} move of \cref{ch:operators}. There we saw
+that a solver computes the action $\vv\mapsto\mat{M}^{-1}\vv$, which has the same shape as
+the action $\vv\mapsto\mat{M}\vv$ of the operator it inverts---vector in, vector out---so
+a solver can wear the very same \code{apply} interface as a plain operator. A
+preconditioner \emph{is} a solver in this sense, and that is why a Krylov method needs
+nothing from it but the apply.
+
+\begin{keyidea}
+\textbf{A preconditioner is an approximate inverse you apply; the solver never looks
+inside.} The Krylov iteration is written against one interface---\code{apply(pc, r)}---and
+asks exactly one thing of the preconditioner: turn this residual into an approximate
+error, $\vz\approx\mat{M}^{-1}\vr$. It does not know, and cannot ask, \emph{how}. The same
+GMRES drives a Jacobi diagonal-scale, an incomplete factorization, a multigrid V-cycle
+(\cref{ch:multigrid}), or even an inner Krylov solve---because all of them are just
+functions of the shape $\vr\mapsto\vz$. Preconditioning is modular for exactly this
+reason: choosing a preconditioner is choosing a function, and the iteration is blind to
+the choice.
+\end{keyidea}
+
+\Cref{fig:blackbox-pc} draws the blindness. GMRES issues an \code{apply} and receives a
+vector; whatever algorithm produced that vector is sealed inside the box. Swap the box's
+contents---Jacobi for ILU, ILU for multigrid---and not one line of the iteration changes.
+The arrow into the box and the vector out of it are the entire contract.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=9mm]
+  % the GMRES driver
+  \node[stage, minimum width=24mm, minimum height=20mm] (gm) at (0,0)
+    {\textbf{GMRES}\\[2pt]\footnotesize the iteration\\asks only\\\code{apply(pc, r)}};
+  % the opaque preconditioner box
+  \node[draw=simViolet, fill=simBgViolet, very thick, densely dashed, rounded corners=3pt,
+        minimum width=30mm, minimum height=30mm, right=20mm of gm] (box) {};
+  \node[font=\scriptsize\bfseries, simViolet] at (box.north) [yshift=-3mm] {preconditioner};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (box.center) [yshift=2mm]
+    {Jacobi?\\ILU?\\multigrid V-cycle?\\inner Krylov solve?\\[2pt]\textbf{GMRES cannot tell.}};
+  % apply arrow in
+  \draw[flow] (gm.east) -- node[above, font=\scriptsize]{$\vr$}
+    node[below, font=\scriptsize]{\code{apply}} (box.west);
+  % vector out
+  \draw[flow] (box.south) .. controls +(0,-0.9) and +(0,-0.9) ..
+    node[below, font=\scriptsize]{$\vz\approx\mat{M}^{-1}\vr$} (gm.south);
+  % the seal
+  \node[font=\scriptsize\bfseries, simRust, align=center, right=2mm of box]
+    {one interface,\\any algorithm};
+\end{tikzpicture}
+\caption[The preconditioner as a black box GMRES cannot see inside]{Modularity made
+visual. The GMRES iteration hands the preconditioner a residual $\vr$ through the single
+\code{apply} interface and receives back a vector $\vz\approx\mat{M}^{-1}\vr$. The
+algorithm \emph{inside} the box---a diagonal divide, an incomplete factorization, a
+multigrid V-cycle, an inner Krylov solve---is completely sealed off: GMRES never inspects
+it and never needs to. Replacing the box's contents changes the convergence \emph{rate}
+but not a single line of the iteration. This is the solver-as-operator rotation of
+\cref{ch:operators}: because an approximate inverse wears the same vector-in, vector-out
+shape as an operator, the iteration treats it as one. Choosing a preconditioner is
+choosing the function inside the box.}
+\label{fig:blackbox-pc}
+\end{figure}
+
+\subsection{The same iteration, four preconditioners}
+
+To feel the modularity concretely, here is the preconditioned-residual line of a Krylov
+step, written once, with four different bindings of \code{pc}. The iteration code is
+identical in all four; only the function handed to it differs.
+
+\begin{lstlisting}[style=l4style]
+-- the iteration body is written ONCE against the apply interface:
+let z = apply pc r in           -- z ~ M^{-1} r ; pc is opaque here
+... use z in the Krylov update ...
+
+-- ...and pc is any of these, chosen at construction, never re-inspected:
+let pc = make_jacobi   A         in ...   -- z = d .* r          (one divide)
+let pc = make_ilu      A         in ...   -- z = U \ (L \ r)     (two triangular solves)
+let pc = make_multigrid hierarchy in ...  -- z = v_cycle r       (a recursive sweep)
+let pc = \r -> gmres_inner A r 3  in ...   -- z = 3 steps of inner GMRES (flexible!)
+\end{lstlisting}
+
+The first three are constructed operators (\cref{sec:constructed}): build once, apply many
+times, the \emph{same} \code{pc} every step. The fourth---an inner solve---produces a
+\emph{different} effective operator each step, and that difference, as we will see in
+\cref{sec:flexible}, is precisely what forces FGMRES.
+
+\section{The constructed-operator view: build once, apply each step}
+\label{sec:constructed}
+
+The preconditioner apply is cheap per call, but most preconditioners are \emph{not} cheap
+to set up: extracting and inverting a diagonal, computing an incomplete factorization, or
+assembling a multigrid hierarchy is real work. The saving grace is that this work is done
+\emph{once}, before the iteration begins, and then amortized over every step. This is
+exactly the build-time / run-time phase split of \cref{ch:strata} and the constructed
+operator of \cref{ch:operators}.
+
+\begin{keyidea}
+A preconditioner is a \emph{constructed operator} (\cref{ch:operators}). Its life has two
+phases in two strata. \textbf{Construction} (build-time, once): consume $\mat{A}$ and a
+configuration, do the expensive setup---extract a diagonal, compute an incomplete
+factorization, build a multigrid hierarchy---and freeze the result into immutable internal
+state. \textbf{Application} (run-time, many times): consume a residual $\vr$, read the
+frozen state, return $\vz\approx\mat{M}^{-1}\vr$, change nothing. The expensive part runs
+once; the cheap part runs every step. This is why the per-iteration surcharge of
+\cref{sec:trade} is just \emph{one apply}, not a fresh setup.
+\end{keyidea}
+
+\Cref{fig:build-apply} draws the split for a generic preconditioner, deliberately echoing
+the construct-then-apply figure of \cref{ch:operators}. The matrix and config flow in on
+the left and are consumed once by the build; the opaque preconditioner value sits in the
+middle holding its frozen internals; a stream of cheap \code{apply(r)} calls flows out on
+the right, one per Krylov step, each reading the same internals.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % construction inputs
+  \node[data, align=left, text width=24mm] (cfg)
+    {operator $\mat{A}$\\pc-type enum\\config};
+  % build step
+  \node[stage, minimum width=26mm, minimum height=14mm, right=12mm of cfg] (build)
+    {\textbf{build}\\[1pt]\footnotesize extract diag /\\factorize /\\set up hierarchy};
+  \draw[flow] (cfg) -- node[above,font=\scriptsize]{once} (build);
+  % opaque pc value
+  \node[draw=simViolet, fill=simBgViolet, very thick, densely dashed, rounded corners=3pt,
+        minimum width=24mm, minimum height=20mm, right=12mm of build] (pc) {};
+  \node[font=\ttfamily\scriptsize, simInk] at (pc.north) [yshift=-3.2mm] {pc};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (pc.center)
+    {frozen $\mat{M}^{-1}$\\internals\\(diag, factors,\\hierarchy)};
+  \draw[flow] (build) -- (pc);
+  % many cheap applies
+  \foreach \y/\lbl in {1.1/a, 0.0/b, -1.1/c}{
+    \node[draw=simTeal, fill=simBgGreen, semithick, rounded corners=2pt,
+          minimum width=20mm, minimum height=6mm] (ap\lbl) at ($(pc.east)+(2.7,\y)$)
+          {\footnotesize\ttfamily apply r};
+    \draw[flow] (pc.east) -- (ap\lbl.west);
+  }
+  \node[font=\scriptsize\itshape, simGray] at ($(pc.east)+(2.7,-1.9)$)
+    {one per Krylov step};
+  % stratum band labels
+  \node[font=\scriptsize\bfseries, simRust] at ($(build)+(0,-1.7)$) {build-time};
+  \node[font=\scriptsize\bfseries, simGreen] at ($(pc.east)+(2.7,1.9)$) {run-time};
+\end{tikzpicture}
+\caption[Build once, apply each step]{A preconditioner is the constructed operator of
+\cref{ch:operators}, with the two phases in the two strata of \cref{ch:strata}.
+\emph{Construction} (left) consumes the operator $\mat{A}$, a preconditioner-type enum,
+and configuration, runs the expensive setup \emph{once}---extract and invert a diagonal,
+compute an incomplete factorization, assemble a multigrid hierarchy---and freezes the
+result into the preconditioner's immutable internals. \emph{Application} (right) consumes
+only a residual and runs \emph{many} times, once per Krylov step, each call cheap and pure
+on the frozen internals. The build-time arrow fires once; the run-time arrows fire
+hundreds of times. This phase split is why the per-step cost of preconditioning is a
+single apply, never a fresh setup.}
+\label{fig:build-apply}
+\end{figure}
+
+\subsection{The factory that returns a uniform apply}
+
+A real solver must choose \emph{which} preconditioner to build, and that choice arrives as
+a configuration enum. \Cref{ch:operators} named the place the enum is consumed: the
+\emph{constructed-operator factory}. A single function reads the
+preconditioner-type$\,\times\,$side$\,\times\,$multigrid axes, dispatches once, and returns
+a \emph{uniformly typed} apply---past which no enum survives. Palace's
+\code{ConfigurePreconditionerSolver} is exactly this factory: it reads the pc-type enum
+(\code{JACOBI}, \code{AMS}, \code{BoomerAMG}, a direct factorization, \dots), wraps the
+result in a multigrid solver when the FE-space hierarchy has more than one level, and hands
+back one \code{Solver} value the iteration applies without ever re-reading the enum.
+
+\begin{lstlisting}[style=l4style]
+-- the factory: ONE site reads the pc-type enum, returns a uniform apply
+configure_pc :: PcType -> Config -> Op[Tensor[N] -> Tensor[N]]
+-- downstream the enum is GONE; only the uniform constructed operator remains:
+let pc = configure_pc pc_type cfg in   -- dispatch happens HERE, once
+... each Krylov step ...
+let z = apply pc r in                  -- ...and never again; pc is opaque
+\end{lstlisting}
+
+\begin{workedexample}{Jacobi-preconditioned CG versus plain CG}{jacobi-cg}
+We make the whole chapter concrete on the cleanest possible preconditioner---Jacobi
+(diagonal) scaling---and a model ill-conditioned operator, and watch the iteration count
+collapse.
+
+\textbf{The model problem.} Take a diagonally-dominant SPD operator whose diagonal entries
+span a wide range, so that the diagonal carries most of the ill-conditioning. A concrete
+small instance: let $\mat{A}$ have diagonal $\operatorname{diag}(\mat{A})=[1,10,100,1000]$
+with modest off-diagonal coupling, so $\kappa(\mat{A})\approx 10^{3}$. The spread is
+\emph{in the diagonal}---exactly the case Jacobi is built for.
+
+\textbf{Construction (once).} The Jacobi preconditioner is $\mat{M}=\operatorname{diag}(\mat{A})$,
+and its apply is ``divide each component by the diagonal entry.'' Construction extracts the
+diagonal and inverts it componentwise, producing one vector $\mathbf{d}$ of reciprocals
+(\cref{wex:jacobi} of \cref{ch:operators} traced this end to end):
+\begin{lstlisting}[style=l4style]
+make_jacobi A =
+  let d = reciprocal (extract_diagonal A) in   -- O(N), once
+  \r -> d .* r                                  -- the apply: O(N) per call
+\end{lstlisting}
+For our $\mat{A}$, $\mathbf{d}=[1,\tfrac1{10},\tfrac1{100},\tfrac1{1000}]$.
+
+\textbf{The spectral effect.} Scaling each row by its diagonal pulls the four widely-spread
+diagonal entries to the \emph{same} value $1$, leaving only the off-diagonal coupling to
+perturb the spectrum. The eigenvalues of $\mat{M}^{-1}\mat{A}=\operatorname{diag}(\mat{A})^{-1}\mat{A}$
+cluster tightly near $1$: the operator now has unit diagonal, and for our modest coupling
+$\kappa(\mat{M}^{-1}\mat{A})\approx 2$ to $3$ instead of $10^3$. This is exactly the
+top-to-bottom collapse of \cref{fig:spectrum}.
+
+\textbf{The iteration count.} Feed both condition numbers into the CG bound
+$2\big((\sqrt\kappa-1)/(\sqrt\kappa+1)\big)^k$ of \cref{thm:converge}. To reach a relative
+energy-norm error of $10^{-6}$:
+\begin{itemize}[nosep]
+  \item plain CG, $\kappa=10^{3}$: the rate factor is $(\sqrt{1000}-1)/(\sqrt{1000}+1)\approx
+  0.939$, so $0.939^k\le 10^{-6}/2$ needs $k\approx 240$ iterations;
+  \item Jacobi-CG, $\kappa=2.5$: the rate factor is $(\sqrt{2.5}-1)/(\sqrt{2.5}+1)\approx
+  0.226$, so $0.226^k\le 10^{-6}/2$ needs $k\approx 11$ iterations.
+\end{itemize}
+A factor of roughly $20$ fewer iterations, bought by one $O(N)$ construction and one extra
+$O(N)$ multiply per step---a per-step surcharge dwarfed by the operator apply on any real
+sparse $\mat{A}$. \Cref{fig:jacobi-conv} plots the two convergence curves; the gap is the
+entire point of preconditioning.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{semilogyaxis}[
+      width=12.4cm, height=6.6cm,
+      xlabel={iteration $k$}, ylabel={relative energy-norm error (bound)},
+      xmin=0, xmax=260, ymin=1e-8, ymax=3,
+      grid=both, grid style={simGray!18},
+      legend pos=north east, legend cell align=left,
+      legend style={font=\footnotesize, draw=simGray!40},
+      label style={font=\footnotesize}, tick label style={font=\scriptsize},
+      every axis plot/.append style={very thick}]
+    % plain CG: kappa = 1000
+    \addplot[simRust, domain=0:260, samples=80]
+      {2*exp(x*ln((sqrt(1000)-1)/(sqrt(1000)+1)))};
+    \addlegendentry{plain CG, $\kappa=10^3$ ($\approx240$ its)}
+    % Jacobi-CG: kappa = 2.5
+    \addplot[simGreen, domain=0:30, samples=40]
+      {2*exp(x*ln((sqrt(2.5)-1)/(sqrt(2.5)+1)))};
+    \addlegendentry{Jacobi-CG, $\kappa=2.5$ ($\approx11$ its)}
+    \draw[simGray, densely dashed] (axis cs:0,1e-6)--(axis cs:260,1e-6)
+      node[pos=0.5, above, font=\scriptsize, text=simGray] {tol $=10^{-6}$};
+  \end{semilogyaxis}
+\end{tikzpicture}
+\caption[Jacobi-preconditioned CG versus plain CG]{The convergence bound of
+\cref{thm:converge} for the model problem of \cref{wex:jacobi-cg}. \emph{Plain CG} (rust)
+on the bare operator $\kappa=10^3$ crawls, needing about $240$ iterations to reach a
+$10^{-6}$ tolerance. \emph{Jacobi-preconditioned CG} (green), running on
+$\mat{M}^{-1}\mat{A}$ with its spectrum pulled to $\kappa\approx2.5$, reaches the same
+tolerance in about $11$ iterations. The two curves run the \emph{same} CG iteration; the
+only difference is that the green one applies the diagonal preconditioner once per step.
+The $\approx20\times$ reduction in iterations is bought by one $O(N)$ construction and one
+$O(N)$ apply per step---a trade that pays handsomely whenever the diagonal carries the
+ill-conditioning.}
+\label{fig:jacobi-conv}
+\end{figure}
+
+\subsection{When the preconditioner varies: the decision rule and FGMRES}
+\label{sec:flexible}
+
+The constructed-operator picture has one precondition: there must be a \emph{single}
+$\mat{M}$ to freeze at construction. \Cref{ch:operators} gave the rule that decides when
+this holds.
+
+\begin{keyidea}
+\textbf{The decision rule (\cref{ch:operators}), applied to preconditioners.} A
+preconditioner \emph{fixed} for the whole solve---chosen at solve start, the same operator
+every step---is build-time configuration: freeze it into a constructed operator, apply the
+same \code{pc} uniformly. A preconditioner that \emph{varies per step}---a different
+effective operator $\mat{M}_k$ on each iteration---cannot be frozen, because at construction
+time the later $\mat{M}_k$ do not yet exist. It must instead be threaded through the run-time
+state. This single rule is exactly why a flexible preconditioner forces FGMRES rather than
+GMRES (\cref{ch:gmres}).
+\end{keyidea}
+
+When does a preconditioner vary per step? Whenever the apply is \emph{itself an inner
+iterative solve} run to a loose, varying tolerance: a few steps of an inner GMRES, a
+multigrid cycle whose accuracy drifts, a smoother that adapts to the residual. Each inner
+solve produces a slightly different linear operator, so $\vz_k=\mat{M}_k^{-1}\vr_k$ uses a
+different $\mat{M}_k$ every step. There is no single $\mat{M}$ to construct---the fourth
+binding in the listing of \cref{sec:operator}, \lstinline[style=l4style]|\r -> gmres_inner A r 3|,
+is exactly this case.
+
+\Cref{wex:fixed-vs-flexible} contrasts the two apply signatures and shows the variant
+moving out of the constructed operator and into the threaded state, exactly as the decision
+rule predicts.
+
+\begin{workedexample}{The decision rule in action: a fixed apply versus a per-step apply}{fixed-vs-flexible}
+We put two preconditioner applies side by side and read their signatures.
+
+\textbf{Case A: a fixed preconditioner (constructed once).} The preconditioner is built
+before the loop and applied---the \emph{same} operator---every step. Its apply signature
+takes only the residual; everything else is frozen inside:
+\begin{lstlisting}[style=l4style]
+let pc = configure_pc JACOBI cfg in    -- built ONCE; pc :: Op[Tensor[N] -> Tensor[N]]
+... each step ...
+let z = apply pc r in ...               -- apply :: Op[N->N] -> Tensor[N] -> Tensor[N]
+                                        -- SAME pc every step; nothing threaded
+\end{lstlisting}
+The state the loop threads is the Krylov basis and bookkeeping; the preconditioner is
+\emph{not} part of it, because it never changes. The constructed operator absorbs the entire
+``which preconditioner'' question. This is the left branch of the decision rule
+(\cref{fig:decisionrule} of \cref{ch:operators}), and plain GMRES or CG handles it.
+
+\textbf{Case B: a per-step preconditioner (an inner solve).} Now each step runs a fresh
+inner solve of varying accuracy. There is no \code{pc} to construct; the apply takes the
+\emph{step index} (or the residual that determines the inner tolerance) and produces a
+different effective operator each time:
+\begin{lstlisting}[style=l4style]
+-- NO single pc; M_j is produced per step by an inner solve:
+let z_j = apply_M_step j v_j in   -- z_j = M_j^{-1} v_j, a DIFFERENT M_j each j
+\end{lstlisting}
+and---the crucial consequence---the per-step preconditioned vectors $\vz_j$ can no longer be
+recomputed on demand, because the inner solve that made each one is gone by the next step.
+They must be \emph{remembered}. The solver threads a \emph{second} basis $\mat{Z}_m=[\vz_1\
+\cdots\ \vz_m]$ alongside the Arnoldi basis $\mat{V}_m$, and recovers its iterate from the
+remembered preconditioned basis:
+\begin{lstlisting}[style=l4style]
+-- GMRES  (fixed pc):    x = x_0 + V_m y_m   -- pc is a constructed operator, NOT in state
+-- FGMRES (per-step pc): x = x_0 + Z_m y_m   -- the per-step Z basis IS threaded state
+\end{lstlisting}
+
+\textbf{The reading.} Nothing went wrong; a real distinction surfaced. The fixed
+preconditioner of Case A is build-time configuration---freeze it, apply uniformly. The
+per-step preconditioner of Case B is run-time state---thread it, and the carry grows by one
+extra basis $\mat{Z}$. The decision rule read the variant's lifetime and routed it to the
+matching stratum. ``FGMRES exists because the preconditioner became per-step state'' is the
+whole story, told in full in \cref{ch:gmres}.
+\end{workedexample}
+
+\begin{pitfall}
+\textbf{Do not feed a per-step preconditioner to plain GMRES.} Plain GMRES recovers its
+iterate as $\vx_0+\mat{M}^{-1}\mat{V}_m\vy$, applying one $\mat{M}^{-1}$ to the whole
+correction under the assumption of a \emph{single fixed} $\mat{M}$. Hand it a varying
+$\mat{M}_k$ and the code still runs---no crash---and even reports a small residual from its
+running QR; but that residual belongs to a least-squares problem the reconstructed iterate
+no longer matches, because the reconstruction used the wrong inverse. The solve converges to
+the \emph{wrong answer}, silently. The fix is not a patch to GMRES; it is FGMRES, which
+remembers the preconditioned vectors in the $\mat{Z}$ basis (\cref{ch:gmres}). The tell that
+you need it: your preconditioner apply is itself an iterative solve.
+\end{pitfall}
+
+\section{A tour of preconditioner families}
+\label{sec:families}
+
+Every preconditioner is a function $\vr\mapsto\vz\approx\mat{M}^{-1}\vr$; the families
+differ only in \emph{which} function, i.e. in what their construction freezes and what their
+apply computes. We survey the main families here as apply-functions, light on internals---each
+gets its own chapter later. The point is the unity: they all wear the same interface, so
+choosing one is choosing a function, and the iteration is unchanged.
+
+\begin{description}[style=nextline,leftmargin=1.5em]
+  \item[Diagonal / Jacobi.] $\mat{M}=\operatorname{diag}(\mat{A})$; the apply is a single
+  componentwise divide $\vz=\mathbf{d}\odot\vr$. The cheapest possible preconditioner, and
+  the constructed-operator archetype (\cref{wex:jacobi-cg}). It clusters well only when the
+  diagonal carries the ill-conditioning; it is also the simplest \emph{smoother}
+  (\cref{ch:smoothers}).
+  \item[Incomplete factorizations (ILU / IC).] Compute an approximate $\mat{L}\mat{U}$ (or,
+  for SPD $\mat{A}$, Cholesky $\mat{L}\mat{L}^{\top}$) factorization that keeps only a
+  sparsity pattern, discarding fill-in. Construction is the incomplete factorization; the
+  apply is two triangular solves $\vz=\mat{U}^{-1}(\mat{L}^{-1}\vr)$. Stronger than Jacobi,
+  more expensive to build and apply, and---being inherently sequential---a poor fit for the
+  GPU target (\cref{ch:strata} discusses the recurrence obstruction).
+  \item[Domain decomposition.] Partition the mesh into subdomains, solve a smaller problem on
+  each, and stitch the pieces together. The apply is a collection of independent subdomain
+  solves plus a coarse correction. Naturally parallel across subdomains; the family of choice
+  when the problem is already distributed.
+  \item[Multigrid.] The big one for elliptic PDEs (\cref{ch:multigrid}). Construction builds a
+  \emph{hierarchy} of coarser and coarser meshes; the apply is a V-cycle that smooths the
+  high-frequency error on fine levels (with a cheap smoother like Jacobi) and solves the
+  low-frequency error on coarse levels (cheaply, because they are small). Done right, multigrid
+  is \emph{optimal}: its cluster, and hence its iteration count, is independent of mesh size
+  (\cref{sec:meshindep}).
+  \item[Auxiliary-space / AMS.] For $\Hcurl$ curl--curl problems (the magnetostatic and
+  eigenmode operators), the natural multigrid smoothers fail on the large near-kernel of the
+  curl operator. The \emph{auxiliary-space Maxwell solver} (AMS) preconditions by mapping the
+  problem into auxiliary $\Hone$ scalar and vector spaces---where ordinary multigrid works---and
+  mapping back. Its apply is a fixed composition of grid-transfer and smoothing operations
+  (\cref{ch:smoothers}).
+\end{description}
+
+\Cref{fig:family-tree} arranges the families as a tree, all sharing one root: the
+\code{apply} interface. The branches are different functions; the root is the single shape
+$\vr\mapsto\vz$ that lets the same Krylov method drive any of them.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize,
+    famnode/.style={draw=simViolet, fill=simBgViolet, rounded corners=2pt, semithick,
+      align=center, inner sep=3pt, minimum height=8mm, text width=22mm},
+    node distance=4mm]
+  % root: the apply interface
+  \node[draw=simRust, fill=simBgRust, very thick, rounded corners=3pt, align=center,
+        inner sep=4pt, minimum width=46mm]
+    (root) at (0,3.2)
+    {\textbf{the \code{apply} interface}\\[1pt]\footnotesize $\vr\mapsto\vz\approx\mat{M}^{-1}\vr$};
+  % the five families
+  \node[famnode] (jac) at (-5.4,0.8) {Jacobi /\\diagonal\\\scriptsize one divide};
+  \node[famnode] (ilu) at (-2.7,0.8) {ILU / IC\\\scriptsize triangular\\\scriptsize solves};
+  \node[famnode] (dd)  at (0,0.8)    {domain\\decomposition\\\scriptsize subdomain solves};
+  \node[famnode] (mg)  at (2.7,0.8)  {multigrid\\\scriptsize V-cycle\\\scriptsize (optimal)};
+  \node[famnode] (ams) at (5.4,0.8)  {AMS\\\scriptsize aux-space\\\scriptsize ($\Hcurl$)};
+  % connect root to each
+  \foreach \n in {jac,ilu,dd,mg,ams}{
+    \draw[depedge] (root.south) -- (\n.north);}
+  % chapter pointers
+  \node[font=\scriptsize\itshape, simGray, below=1mm of jac] {\cref{ch:smoothers}};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of mg]  {\cref{ch:multigrid}};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of ams] {\cref{ch:smoothers}};
+\end{tikzpicture}
+\caption[A family tree of preconditioners sharing one interface]{The preconditioner
+families, arranged as a tree rooted in the single \code{apply} interface
+$\vr\mapsto\vz\approx\mat{M}^{-1}\vr$. Jacobi/diagonal scaling, incomplete factorizations
+(ILU/IC), domain decomposition, multigrid, and the auxiliary-space AMS solver differ
+entirely in \emph{what} their apply computes and \emph{what} their construction freezes---a
+divide, a pair of triangular solves, a set of subdomain solves, a V-cycle, a mapping into
+auxiliary spaces---but every one of them is a function of the same shape. Because they share
+the interface, the same Krylov method drives any of them, and choosing a preconditioner is
+choosing which branch of the tree to hang in the black box of \cref{fig:blackbox-pc}. The
+chapters named below the leaves develop the internals.}
+\label{fig:family-tree}
+\end{figure}
+
+\section{Spectral equivalence and mesh-independent convergence}
+\label{sec:meshindep}
+
+We close with the property that separates a merely good preconditioner from an
+\emph{optimal} one, and that is the real goal for the elliptic operators Palace solves.
+
+The condition-number improvement of \cref{wex:jacobi-cg} was a fixed factor: $\kappa$ from
+$10^3$ to $2.5$ on \emph{that} mesh. But Palace refines meshes, and the question that
+matters is what happens as the mesh shrinks. For the bare elliptic operators, the condition
+number \emph{grows} as the mesh is refined: discretizing $-\Div(\varepsilon\Grad\,\cdot\,)$
+on a mesh of element size $h$ gives $\kappa(\mat{A})=O(h^{-2})$, so halving $h$ quadruples
+$\kappa$ and---since CG iterations scale like $\sqrt\kappa$---roughly \emph{doubles} the
+iteration count. A solver whose iteration count climbs every time you refine is a solver
+that does not scale.
+
+\begin{definition}[Spectral equivalence and optimality]
+\label{def:specequiv}
+A preconditioner $\mat{M}$ is \emph{spectrally equivalent} to $\mat{A}$ if there are
+constants $0<c_1\le c_2$, \emph{independent of the mesh size $h$}, such that
+\[
+  c_1\,\vx^{\top}\mat{M}\vx \;\le\; \vx^{\top}\mat{A}\vx \;\le\; c_2\,\vx^{\top}\mat{M}\vx
+  \qquad\text{for all }\vx.
+\]
+Then the preconditioned operator satisfies $\kappa(\mat{M}^{-1}\mat{A})\le c_2/c_1$,
+\emph{bounded independently of $h$}. A preconditioner achieving this is called
+\emph{optimal}: the iteration count to a fixed tolerance does not grow as the mesh is
+refined.
+\end{definition}
+
+\begin{keyidea}
+The real goal of preconditioning an elliptic PDE is not a one-off condition-number
+improvement---it is \emph{mesh independence}. A spectrally-equivalent (optimal)
+preconditioner makes $\mat{M}^{-1}\mat{A}$ as well-conditioned on a fine mesh as on a coarse
+one: the cluster of \cref{fig:spectrum} stays the same width no matter how many unknowns
+$N$. The iteration count then stays \emph{flat} as $N$ grows, so the total solve cost scales
+like $O(N)$---linearly---rather than $O(N^{1.5})$ or worse. Multigrid (\cref{ch:multigrid})
+is the canonical optimal preconditioner for these operators, and mesh-independent
+convergence is exactly the property that makes it indispensable at scale.
+\end{keyidea}
+
+\Cref{fig:meshindep} contrasts the two regimes: a fixed-strength preconditioner (Jacobi),
+whose iteration count climbs as $h\to0$ because $\kappa$ still grows like $h^{-2}$ underneath
+it, against an optimal preconditioner (multigrid), whose iteration count is a flat line
+because the cluster width is bounded. The flat line is the prize.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+      width=12.4cm, height=6.6cm,
+      xlabel={mesh refinement $1/h$ (finer mesh $\to$)},
+      ylabel={iterations to tolerance},
+      xmin=0, xmax=34, ymin=0, ymax=130,
+      tick label style={font=\scriptsize}, label style={font=\footnotesize},
+      legend pos=north west, legend cell align=left,
+      legend style={font=\footnotesize, draw=simGray!40},
+      grid=both, grid style={simGray!15},
+      every axis plot/.append style={very thick, mark=*, mark size=1.4pt}]
+    % Jacobi / fixed preconditioner: iterations ~ sqrt(kappa) ~ sqrt(h^-2) = 1/h, linear climb
+    \addplot[simRust] coordinates
+      {(2,8)(4,16)(8,32)(12,48)(16,64)(20,80)(24,96)(28,112)(32,124)};
+    \addlegendentry{Jacobi (mesh-dependent): iters $\sim 1/h$}
+    % multigrid / optimal: flat
+    \addplot[simGreen] coordinates
+      {(2,9)(4,9)(8,10)(12,10)(16,10)(20,11)(24,11)(28,11)(32,11)};
+    \addlegendentry{multigrid (optimal): iters bounded}
+  \end{axis}
+\end{tikzpicture}
+\caption[Mesh-dependent versus mesh-independent convergence]{Iteration count as the mesh is
+refined ($1/h$ growing rightward). With a \emph{fixed-strength} preconditioner like Jacobi
+(rust), the underlying condition number still grows like $h^{-2}$, so the iteration count
+climbs roughly like $1/h$---refine the mesh and every solve gets slower, the hallmark of a
+non-scalable method. With an \emph{optimal}, spectrally-equivalent preconditioner like
+multigrid (green, \cref{def:specequiv}), the condition number of $\mat{M}^{-1}\mat{A}$ is
+bounded independently of $h$, so the iteration count is essentially \emph{flat} no matter how
+fine the mesh. The flat green line is the goal of preconditioning at scale: total cost
+$O(N)$, not $O(N^{1.5})$. Mesh independence is what makes multigrid (\cref{ch:multigrid})
+indispensable for the elliptic operators Palace assembles.}
+\label{fig:meshindep}
+\end{figure}
+
+\subsection{Tie-off: preconditioned CG and the SPD requirement}
+\label{sec:pcg-tie}
+
+\Cref{ch:cg} already showed (\cref{sec:pcg}) how the CG \emph{loop} changes under
+preconditioning: form the preconditioned residual $\vz=\mat{M}^{-1}\vr$ once per step, and
+replace the residual inner products $\inner{\vr}{\vr}$ in $\alpha$ and $\beta$ by the
+$\mat{M}$-weighted products $\inner{\vz}{\vr}$. We can now name \emph{why} the loop takes that
+particular shape. Running CG naively on $\mat{M}^{-1}\mat{A}$ would break SPD-ness, because
+$\mat{M}^{-1}\mat{A}$ is generally not symmetric (\cref{sec:lrs}); preconditioned CG instead
+runs CG in the inner product defined by $\mat{M}$, which is precisely the split-preconditioning
+view $\mat{L}^{-1}\mat{A}\mat{L}^{-\top}$ for $\mat{M}=\mat{L}\mat{L}^{\top}$. That operator
+\emph{is} SPD, so every guarantee of \cref{ch:cg} survives. The discipline this forces---the
+preconditioner $\mat{M}$ must itself be SPD for preconditioned CG to stay honest---is the
+pitfall \cref{ch:cg} flagged, now explained: it is the price of keeping the energy inner
+product an inner product.
+
+\summarysection
+A \emph{preconditioner} $\mat{M}\approx\mat{A}$, cheap to invert, transforms
+$\mat{A}\vx=\vb$ into an equivalent system whose operator $\mat{M}^{-1}\mat{A}$ has a
+spectrum clustered near $1$, so the \emph{same} Krylov iteration (\cref{ch:cg,ch:gmres})
+converges in far fewer steps. The fundamental trade is a product: each step costs one extra
+preconditioner apply, but the iteration count falls, and the win comes when $\mat{M}^{-1}$ is
+\emph{both} a good approximation of $\mat{A}^{-1}$ (clusters the spectrum) and cheap to apply.
+The preconditioner can be placed on the \emph{left} ($\mat{M}^{-1}\mat{A}\vx=\mat{M}^{-1}\vb$,
+distorts the residual), the \emph{right} ($\mat{A}\mat{M}^{-1}\vu=\vb$, preserves the true
+residual---the GMRES default), or \emph{split} ($\mat{M}_1^{-1}\mat{A}\mat{M}_2^{-1}$,
+preserves SPD-ness for CG)---a variant axis the construction absorbs. The chapter's spine is
+that \emph{a preconditioner is an operator you apply}: $\mat{M}^{-1}$ is never formed, only
+applied as a black-box function $\vr\mapsto\vz\approx\mat{M}^{-1}\vr$, and the Krylov method
+needs nothing else---so the same GMRES drives Jacobi, ILU, multigrid, or an inner solve
+without changing a line (\cref{ch:operators}'s solver-as-operator move). The preconditioner is
+a \emph{constructed operator}: build once (extract a diagonal, factorize, set up a hierarchy)
+at build-time, apply cheaply each step at run-time. When the preconditioner is \emph{fixed},
+the constructed-operator factory absorbs it; when it \emph{varies per step} (an inner solve),
+the decision rule routes it into the threaded state and forces FGMRES. The families---Jacobi,
+ILU/IC, domain decomposition, multigrid, auxiliary-space AMS---all share the apply interface;
+choosing one is choosing a function. The real goal for elliptic operators is \emph{spectral
+equivalence}: an optimal preconditioner bounds $\kappa(\mat{M}^{-1}\mat{A})$ independently of
+the mesh size $h$, so the iteration count stays flat as the mesh is refined and the solve
+scales linearly---the property that makes multigrid (\cref{ch:multigrid}) indispensable.
+
+\furtherreading
+The definitive treatment of preconditioned Krylov methods---left/right/split placement, the
+flexible-preconditioner distinction that drives FGMRES, and the spectral-equivalence theory of
+optimal preconditioners---is \citet{saad2003} (Chapters~9 and~10), which also motivates the
+black-box ``a Krylov method needs only the action $\vv\mapsto\mat{M}^{-1}\vv$'' abstraction
+that makes preconditioning modular. \citet{trefethenbau1997} gives the cleanest short account
+of how clustering the spectrum---rather than merely shrinking $\kappa$---governs Krylov
+convergence (Lectures~35 and~40). For the matrix-computation mechanics of incomplete
+factorizations and the diagonal/Jacobi family, \citet{golubvanloan2013} is the standard
+reference. The optimal multigrid preconditioner and the auxiliary-space AMS solver for
+$\Hcurl$ are developed in \cref{ch:multigrid} and \cref{ch:smoothers}; the constructed-operator
+and solver-as-operator abstractions the chapter rests on are \cref{ch:operators}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{The two demands.} \Cref{def:precond} asks a preconditioner to be both a good
+  approximation of $\mat{A}^{-1}$ and cheap to apply. Explain why the two extremes
+  $\mat{M}=\mat{I}$ and $\mat{M}=\mat{A}$ each satisfy exactly one demand and fail the other,
+  and what each does to (i) the iteration count and (ii) the per-step cost. Where on the trade
+  curve of \cref{fig:cost-trade} does each extreme sit?
+  \item \textbf{The trade, quantified.} A solve takes $200$ iterations unpreconditioned, each
+  costing one operator apply of $C$ units. A preconditioner cuts the iteration count to $25$ but
+  adds a preconditioner apply costing $0.8C$ per step. (i) Compute the total cost with and
+  without preconditioning (ignore the one-time build). (ii) Now suppose a \emph{stronger}
+  preconditioner cuts iterations to $8$ but its apply costs $5C$ per step; compute its total
+  cost. (iii) Which of the three wins, and what does this illustrate about \cref{fig:cost-trade}?
+  \item \textbf{Clustering versus $\kappa$.} \Cref{ch:cg} noted that CG's true convergence depends
+  on the spectrum's \emph{layout}, not just $\kappa$. Two preconditioned operators both have
+  $\kappa=50$: operator $P$ has its eigenvalues spread uniformly across $[1,50]$, operator $Q$ has
+  $48$ eigenvalues tightly clustered near $1$ and two outliers near $50$. Which converges faster
+  under CG, and why? Relate your answer to the polynomial picture of \cref{sec:cluster} and to
+  \cref{fig:spectrum}.
+  \item \textbf{Left versus right.} (i) Write the system, the operator the iteration runs on, and
+  the residual the iteration sees, for left and for right preconditioning. (ii) Explain precisely
+  why right preconditioning is preferred for GMRES, referring to the free residual readout of
+  \cref{ch:gmres}. (iii) For an SPD $\mat{A}$ with $\mat{M}=\mat{L}\mat{L}^{\top}$, show that the
+  split-preconditioned operator $\mat{L}^{-1}\mat{A}\mat{L}^{-\top}$ is symmetric, and explain why
+  CG needs this where GMRES does not.
+  \item \textbf{The black box.} The same GMRES drives a Jacobi preconditioner, an ILU, and a
+  multigrid V-cycle without changing a line (\cref{fig:blackbox-pc}). (i) State the single
+  interface that makes this possible and exactly what GMRES asks of the preconditioner through it.
+  (ii) Name one thing GMRES is \emph{prevented} from seeing about the preconditioner, and explain
+  why that prevention is a feature. (iii) Which chapter's abstraction (\cref{ch:operators}) is this
+  an instance of, and what is the shared shape that lets a solver wear an operator's interface?
+  \item \textbf{Build once, apply many.} For the Jacobi preconditioner of \cref{wex:jacobi-cg},
+  state the cost of construction and of a single apply, each in terms of $N$. If a solve runs $k$
+  preconditioned steps, write the total preconditioner work as a function of $N$ and $k$ and
+  identify the amortized construction term. For what range of $k$ is constructing the operator
+  clearly worthwhile?
+  \item \textbf{Apply the decision rule.} For each preconditioner below, decide whether it is a
+  constructed operator (fixed, build-time) or per-step threaded state (forcing FGMRES), and
+  justify with the decision rule of \cref{sec:flexible}: (a) a diagonal Jacobi scaling built from
+  $\mat{A}$ at solve start; (b) an incomplete Cholesky factorization computed once; (c) ``three
+  steps of an inner GMRES'' run afresh each outer step; (d) a multigrid V-cycle with fixed smoother
+  counts; (e) a multigrid cycle whose inner tolerance adapts to the current residual.
+  \item \textbf{Mesh independence.} The bare elliptic operator has $\kappa(\mat{A})=O(h^{-2})$.
+  (i) Using the CG iteration estimate iterations $\sim\sqrt{\kappa}$, show that halving $h$ roughly
+  doubles the unpreconditioned iteration count. (ii) Define spectral equivalence
+  (\cref{def:specequiv}) and explain why it makes the preconditioned iteration count independent of
+  $h$. (iii) Sketch, from \cref{fig:meshindep}, the iteration-count-versus-$1/h$ curve for a
+  mesh-dependent and an optimal preconditioner, and state the total-cost scaling ($O(N)$ versus
+  worse) each implies.
+  \item \textbf{The SPD trap.} Preconditioned CG requires the preconditioner $\mat{M}$ to be SPD.
+  (i) Explain, using \cref{sec:pcg-tie}, why running plain CG on $\mat{M}^{-1}\mat{A}$ with a
+  general $\mat{M}$ breaks the method even when $\mat{A}$ is SPD. (ii) Show how the split view
+  $\mat{L}^{-1}\mat{A}\mat{L}^{-\top}$ restores symmetry. (iii) What goes wrong, observably, if a
+  non-SPD preconditioner is used inside preconditioned CG?
+\end{enumerate}

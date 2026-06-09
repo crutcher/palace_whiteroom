@@ -1,0 +1,896 @@
+\chapter{Magnetostatics and Inductance}
+\label{ch:magnetostatics}
+
+\chapterorient{The previous chapter took apart the electrostatic driver and found
+a machine of disarmingly few parts: assemble one operator, solve it once per
+conductor, and pair the solved family with itself through an energy operator to
+read off a capacitance matrix. This chapter builds the magnetostatic driver---the
+one that computes \emph{inductance}---and the surprise is how little there is to
+build. It is the \emph{same machine}. The skeleton is identical, the solver is the
+same conjugate-gradient solver, the reduction is the same Gram verb. Exactly three
+things change, and we will name them at the outset and then spend the chapter
+earning the right to say they are the \emph{only} three: the partial differential
+equation and its field (a vector potential obeying the curl--curl equation, not a
+scalar obeying Poisson), the finite-element space that field lives in
+($\Hcurl$ edge elements, not $\Hone$ nodal elements), and one scalar weight in the
+final reduction (a current normalization, not unity). Everything else---the
+once-only assembly, the solve-per-source, the symmetric Gram, even the
+positive-definiteness that lets conjugate gradients run---is shared verbatim with
+\cref{ch:electrostatics}. By the end you will be able to point at the magnetostatic
+pipeline, lay it beside the electrostatic one, and circle precisely the three boxes
+that differ.}
+
+\section{The physical question, and the machine we already have}
+\label{sec:mag-question}
+
+A handful of current-carrying loops sit in space---traces on a circuit board, turns
+of a coil, the signal lines of a connector. Drive loop $i$ with a current $I_i$ and
+it produces a magnetic field; that field threads the other loops, and a changing
+current in loop $i$ induces a voltage in loop $j$. The bookkeeping of ``how much
+flux loop $i$'s current links through loop $j$'' is the \emph{inductance matrix}
+$\mat{L}$. Its diagonal $L_{ii}$ is the \emph{self}-inductance of loop $i$; its
+off-diagonal $L_{ij}$ is the \emph{mutual} inductance between loops $i$ and $j$.
+These are the magnetostatic analogue of the capacitances of
+\cref{ch:electrostatics}, and an engineer wants them for the same reason: they are
+the lumped circuit parameters that summarize a piece of geometry.
+
+The temptation is to reach for the Biot--Savart law and integrate. We do not. The
+whole point of \cref{ch:electrostatics} was that the simulator does not compute a
+capacitance by a special-purpose formula; it runs a \emph{generic pipeline} and the
+capacitance falls out of a generic reduction. Magnetostatics runs the \emph{same}
+pipeline. Before we change anything, let us write down the skeleton we are
+inheriting.
+
+\begin{physicsbox}
+\textbf{Setup.} $n$ current sources (loops, ports, coil terminals). Drive source
+$i$ with unit current $I_i=1$; everything else carries zero current. Solve for the
+resulting magnetic vector potential $\vA_i$, from which the magnetic field is
+$\vB_i=\Curl\vA_i$. The stored magnetic energy when source $i$ alone is driven is
+$U_m^{(i)}=\tfrac{1}{2}L_{ii}I_i^2$, and pairing the field of source $i$ against the
+field of source $j$ gives the mutual inductance $L_{ij}$. \emph{We never integrate
+Biot--Savart.} We solve a boundary-value problem for $\vA$ and read the inductances
+off the solved family---exactly as electrostatics read capacitances off the solved
+potential family.
+\end{physicsbox}
+
+\Cref{ch:electrostatics} distilled the electrostatic driver to a three-stage
+skeleton---the \texttt{assemble}, \texttt{solve}, \texttt{reduce} stages of
+\cref{ch:reductions}. Written as a composition, with the fixed-operator solver
+corner that \cref{ch:electrostatics} identified:
+\begin{lstlisting}[style=l4style]
+-- the ELECTROSTATIC driver (Chapter 39), for reference
+electrostatic = gram_reduce (w = 1) . solve_family . fe_assemble
+  --             ^ reduce: symmetric    ^ one CG solve   ^ assemble
+  --               Gram, unit weight       per terminal     ONCE
+\end{lstlisting}
+Read it right to left, the direction the data flows. \code{fe\_assemble} builds the
+operator \emph{once}---the geometry does not change between excitations, so the
+matrix is assembled a single time and reused. \code{solve\_family} solves that one
+fixed operator against a family of right-hand sides, one per terminal; because the
+operator is symmetric positive-definite and never changes, this is the
+\emph{fixed-operator} corner of the solve taxonomy (\cref{ch:reductions}), and the
+solver is plain conjugate gradients with the operator's preconditioner reused
+across the family. \code{gram\_reduce} pairs the solved family with itself through
+the energy operator and, with unit weight, returns the capacitance matrix
+(\cref{ch:reductions}, eq.~\eqref{eq:cap-gram}).
+
+\begin{keyidea}
+The magnetostatic driver is the electrostatic driver with three substitutions and
+\emph{nothing else}. The skeleton
+\code{reduce} $\circ$ \code{solve\_family} $\circ$ \code{fe\_assemble} is identical;
+the assemble-once / solve-per-source / Gram-reduce structure is identical; the
+conjugate-gradient solver in the fixed-operator corner is identical. The three
+swaps are: \textbf{(1)} the PDE and field---the curl--curl equation
+$\Curl(\nu\Curl\vA)=\vJ$ for a vector potential $\vA$, not Poisson for a scalar
+$V$; \textbf{(2)} the finite-element space---$\Hcurl$ edge elements, not $\Hone$
+nodal elements; \textbf{(3)} the Gram weight---$w=1/(I_iI_j)$, not $w=1$. We spend
+the chapter on those three, because they are all there is.
+\end{keyidea}
+
+\Cref{fig:mag-pipeline} draws the magnetostatic pipeline laid directly over the
+electrostatic one, with the three swapped boxes called out in rust and everything
+shared drawn in the muted shared palette. It is the hero figure of the chapter:
+keep it in view as we take the swaps one at a time.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm and 13mm, font=\footnotesize]
+  % --- shared config input ---
+  \node[data, align=center, text width=20mm] (cfg) {config\\\footnotesize geometry,
+    sources};
+  % --- assemble (SWAPPED: operator) ---
+  \node[stage, fill=simBgRust, draw=simRust, right=of cfg, align=center,
+    text width=24mm] (asm) {\textbf{fe\_assemble}\\\footnotesize \textsc{swap 1+2}};
+  % --- solve (SHARED) ---
+  \node[stage, fill=simBgGray, draw=simGray, right=of asm, align=center,
+    text width=24mm] (slv) {\textbf{solve\_family}\\\footnotesize CG, fixed op
+    \emph{(shared)}};
+  % --- reduce (SWAPPED: weight) ---
+  \node[stage, fill=simBgRust, draw=simRust, right=of slv, align=center,
+    text width=24mm] (red) {\textbf{gram\_reduce}\\\footnotesize \textsc{swap 3}};
+  % --- product ---
+  \node[product, right=of red, align=center, text width=18mm] (prod)
+    {$\mat{L}$\\\footnotesize inductance};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- (slv);
+  \draw[flow] (slv) -- (red);
+  \draw[flow] (red) -- (prod);
+  % --- swap annotations underneath ---
+  \node[font=\scriptsize, simRust, align=center, below=8mm of asm]
+    (s12) {\textsc{swap 1}: curl--curl PDE\\\textsc{swap 2}: $\Hcurl$ space\\
+      $\Curl(\nu\Curl\vA)=\vJ$};
+  \node[font=\scriptsize, simGray, align=center, below=8mm of slv]
+    (ss) {identical to\\\cref{ch:electrostatics}:\\SPD operator, CG};
+  \node[font=\scriptsize, simRust, align=center, below=8mm of red]
+    (s3) {\textsc{swap 3}: weight\\$w=\dfrac{1}{I_iI_j}$\\(was $w=1$)};
+  \draw[refedge] (asm) -- (s12);
+  \draw[refedge] (slv) -- (ss);
+  \draw[refedge] (red) -- (s3);
+\end{tikzpicture}
+\caption[The magnetostatic pipeline, three swaps from electrostatics]{The
+magnetostatic driver drawn over the electrostatic skeleton of
+\cref{ch:electrostatics}. The three rust boxes are the \emph{only} things that
+change. \textsc{Swap 1+2} live in \code{fe\_assemble}: the partial differential
+equation becomes the curl--curl equation $\Curl(\nu\Curl\vA)=\vJ$ (\textsc{swap 1})
+and the finite-element space becomes $\Hcurl$ edge elements (\textsc{swap 2}), so a
+different stiffness operator is assembled. \textsc{Swap 3} lives in
+\code{gram\_reduce}: the Gram weight becomes the current normalization
+$w=1/(I_iI_j)$. The grey \code{solve\_family} box is byte-for-byte the electrostatic
+solve---the same conjugate-gradient solver on a symmetric positive-definite,
+fixed-across-the-family operator. Assemble once, solve per source, reduce by
+pairing: the machine is shared; only the three rust boxes are magnetostatic.}
+\label{fig:mag-pipeline}
+\end{figure}
+
+\section{Swap 1: the curl--curl equation and its field}
+\label{sec:swap1}
+
+Electrostatics solves Poisson's equation for a scalar potential. Magnetostatics
+solves the \emph{curl--curl equation} for a vector potential. This is the first
+swap, and it is forced by the physics: a magnetic field is a fundamentally
+different kind of object from an electric one, and the de Rham complex
+(\cref{ch:derham}) told us exactly which potential each admits.
+
+\subsection{From Maxwell to curl--curl}
+
+Two of Maxwell's laws govern magnetostatics. Amp\`ere's law (in the static,
+source-driven regime) relates the magnetic field $\vH$ to the current density
+$\vJ$, and the constitutive law relates $\vH$ to $\vB$ through the permeability:
+\[
+  \Curl\vH = \vJ, \qquad \vB = \mu\,\vH, \qquad \Div\vB = 0 .
+\]
+The last equation, $\Div\vB=0$---no magnetic monopoles---is the structural fact.
+By exactness of the de Rham complex at the $\Hdiv$ rung (\cref{ch:derham},
+\cref{thm:exact}), a divergence-free field is a curl: there exists a
+\emph{magnetic vector potential} $\vA$ with
+\[
+  \boxed{\;\vB = \Curl\vA\;}
+\]
+Substitute this into Amp\`ere's law. Writing $\nu=1/\mu$ for the
+\emph{reluctivity} (the magnetic analogue of conductivity---``how much a material
+resists magnetic flux''), we have $\vH=\nu\vB=\nu\Curl\vA$, and Amp\`ere's law
+becomes
+\begin{equation}
+  \boxed{\;\Curl\!\left(\nu\,\Curl\vA\right) = \vJ\;}
+  \label{eq:curlcurl}
+\end{equation}
+the \emph{curl--curl equation} for the vector potential $\vA$, driven by the
+prescribed source current $\vJ$. This is the magnetostatic governing equation
+(\cref{ch:reductions-pde}). \Cref{fig:loop-field} shows the physical picture: a
+current loop, the vector potential $\vA$ that circulates with the current, and the
+field $\vB=\Curl\vA$ that loops through.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, font=\footnotesize]
+  % --- the current loop (an ellipse seen at an angle) ---
+  \draw[simRust, very thick] (0,0) ellipse (1.5 and 0.55);
+  % current direction arrows ON the loop
+  \draw[-{Stealth[length=2mm]}, simRust, very thick] (1.5,0.05)--(1.5,-0.05);
+  \draw[-{Stealth[length=2mm]}, simRust, very thick] (-1.5,-0.05)--(-1.5,0.05);
+  \node[simRust] at (0,-0.85) {current loop, $I$};
+  \node[simRust, font=\scriptsize] at (1.95,0.0) {$\vJ$};
+  % --- B field lines threading the loop (vertical-ish loops) ---
+  \draw[simBlue, opacity=0.4,  thick] (0,0) ellipse [x radius=0.45, y radius=0.675];
+  \draw[simBlue, opacity=0.55, thick] (0,0) ellipse [x radius=0.85, y radius=1.275];
+  \draw[simBlue, opacity=0.4,  thick] (0,0) ellipse [x radius=1.25, y radius=1.875];
+  % B arrow up through the center
+  \draw[-{Stealth[length=2.4mm]}, simBlue, thick] (0,-1.7)--(0,1.7);
+  \node[simBlue] at (0.35,1.55) {$\vB$};
+  \node[simBlue, font=\scriptsize, align=center] at (2.4,1.3)
+    {$\vB=\Curl\vA$\\(field lines\\thread the loop)};
+  % --- A field circulating WITH the current (faint, around the wire) ---
+  \node[simGreen, font=\scriptsize, align=center] at (-2.5,0.9)
+    {$\vA$ circulates\\\emph{with} the current\\(same direction as $\vJ$)};
+  \draw[-{Stealth[length=1.8mm]}, simGreen, thick] (-1.95,0.35) arc (160:380:0.32 and 0.20);
+\end{tikzpicture}
+\caption[A current loop and its potential]{The physical picture behind the
+curl--curl equation. A current $I$ runs around the loop (rust). The magnetic vector
+potential $\vA$ (green) circulates \emph{with} the current---it lives one rung up
+the de Rham complex from $\vB$, in $\Hcurl$, the space of circulations
+(\cref{ch:derham}). Its curl is the magnetic field $\vB=\Curl\vA$ (blue), whose
+field lines thread \emph{through} the loop. The simulator solves
+$\Curl(\nu\Curl\vA)=\vJ$ for $\vA$ on the whole domain, then post-processes
+$\vB=\Curl\vA$. Compare the electrostatic picture, where the scalar potential $V$
+sits at \emph{vertices} and $\vE=-\Grad V$.}
+\label{fig:loop-field}
+\end{figure}
+
+\subsection{The contrast with Poisson, term by term}
+
+Lay \cref{eq:curlcurl} beside the electrostatic Poisson equation
+$-\Div(\varepsilon\,\Grad V)=\rho$ of \cref{ch:electrostatics}. The two are the
+\emph{same shape}---a second-order, self-adjoint, source-driven elliptic
+equation---built from a different rung of the de Rham complex:
+\[
+  \underbrace{-\Div(\varepsilon\,\Grad V)=\rho}_{\text{electrostatics}}
+  \qquad\longleftrightarrow\qquad
+  \underbrace{\Curl(\nu\,\Curl\vA)=\vJ}_{\text{magnetostatics}} .
+\]
+The gradient is replaced by the curl, the divergence (its adjoint) by the curl
+again (the curl is its own adjoint up to boundary terms), the scalar coefficient
+$\varepsilon$ by the scalar coefficient $\nu$, the scalar unknown $V$ by the vector
+unknown $\vA$, and the scalar source $\rho$ by the vector source $\vJ$. The weak
+form (\cref{ch:weak}) follows the identical recipe: multiply by a test field,
+integrate by parts once, and move one curl onto the test field. The bilinear form
+is
+\begin{equation}
+  a(\vA,\vF) = \int_\dom \nu\,(\Curl\vA)\cdot(\Curl\vF)\dV,
+  \qquad
+  \ell(\vF) = \int_\dom \vJ\cdot\vF \dV,
+  \label{eq:weak-curlcurl}
+\end{equation}
+to be compared with the electrostatic
+$a(V,W)=\int\varepsilon\,\Grad V\cdot\Grad W$. Discretizing
+\cref{eq:weak-curlcurl} by Galerkin projection (\cref{ch:galerkin}) produces the
+\emph{curl--curl stiffness matrix} $\mat{K}$, the magnetostatic energy operator:
+\begin{equation}
+  \mat{K}_{ab} = \int_\dom \nu\,(\Curl\boldsymbol\phi_a)\cdot(\Curl\boldsymbol\phi_b)\dV,
+  \label{eq:stiff-curlcurl}
+\end{equation}
+where $\boldsymbol\phi_a$ are the basis functions of the finite-element space---and
+\emph{which} space those are is the second swap.
+
+\begin{notationbox}
+The same letter $\mat{K}$ denotes the energy/stiffness operator in both drivers,
+because it plays the identical structural role: it is the symmetric
+positive-(semi)definite operator that \code{solve\_family} inverts and that
+\code{gram\_reduce} pairs the family through. In electrostatics
+$\mat{K}_{ab}=\int\varepsilon\,\Grad\phi_a\cdot\Grad\phi_b$; in magnetostatics
+$\mat{K}_{ab}=\int\nu\,\Curl\boldsymbol\phi_a\cdot\Curl\boldsymbol\phi_b$. One
+symbol, one role, two integrands---the swap is entirely inside the integrand.
+\end{notationbox}
+
+\section{Swap 2: the field lives in \texorpdfstring{$\Hcurl$}{H(curl)}, on edge elements}
+\label{sec:swap2}
+
+The unknown is now a vector field $\vA$, and the single most consequential decision
+in the whole chapter is which finite-element space to put it in. The naive choice
+is to take three copies of the nodal $\Hone$ space---one per Cartesian component---
+and store $\vA$'s components at vertices, as we stored $V$. \emph{This is wrong},
+and the way it is wrong is the deepest lesson of \cref{ch:functionspaces} and
+\cref{ch:derham}. The correct space is $\Hcurl$, realized by \emph{edge elements}
+(N\'ed\'elec elements). This is the second swap.
+
+\subsection{Why a vector potential wants edge elements}
+
+The de Rham complex (\cref{ch:derham}) names the home of every electromagnetic
+field, and it is unambiguous: $\vA$ generates $\vB$ by $\vB=\Curl\vA$, so $\vA$ sits
+at the $\Hcurl$ rung---the space whose degrees of freedom are \emph{edge
+circulations} $\int_e\vA\cdot d\vec\ell$, and whose defining continuity is that the
+\emph{tangential component} of $\vA$ is continuous across element faces while the
+normal component may jump. That tangential continuity is exactly what a vector
+potential physically demands. The tangential component of $\vA$ carries its
+circulation, hence its curl, hence the magnetic field $\vB$; the normal component
+carries the gauge (\cref{ch:derham}, \cref{sec:potentials}) and is physically
+free to jump. \Cref{fig:nodal-vs-edge} draws the two choices side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, font=\scriptsize]
+% ===== LEFT: nodal vector (WRONG) =====
+\begin{scope}
+  \node[font=\footnotesize\bfseries, simRust] at (1.2,2.35) {nodal vector (wrong)};
+  \coordinate (a) at (0,0); \coordinate (b) at (2.4,0); \coordinate (c) at (1.2,1.9);
+  \fill[simBgRust] (a)--(b)--(c)--cycle;
+  \draw[simInk, thick] (a)--(b)--(c)--cycle;
+  % full vector at each vertex (all 3 components stored)
+  \foreach \p in {a,b,c}{
+    \fill[simRust] (\p) circle (2.6pt);
+    \draw[-{Stealth[length=1.6mm]}, simRust, thick] (\p)++(0,0)--++(0.45,0.28);
+    \draw[-{Stealth[length=1.6mm]}, simRust, thick] (\p)++(0,0)--++(-0.10,0.50);
+  }
+  \node[simRust, align=center] at (1.2,-0.55) {\emph{both} components\\at each vertex};
+  \node[align=center, text=simInk] at (1.2,-1.35)
+    {forces \textbf{full} continuity\\$\Rightarrow$ spurious gradient modes};
+\end{scope}
+% ===== RIGHT: edge (RIGHT) =====
+\begin{scope}[shift={(5.6,0)}]
+  \node[font=\footnotesize\bfseries, simGreen] at (1.2,2.35) {edge / N\'ed\'elec (right)};
+  \coordinate (a) at (0,0); \coordinate (b) at (2.4,0); \coordinate (c) at (1.2,1.9);
+  \fill[simBgGreen] (a)--(b)--(c)--cycle;
+  \draw[simInk, thick] (a)--(b)--(c)--cycle;
+  % one tangential circulation per edge
+  \draw[-{Stealth[length=1.8mm]}, simGreen, very thick] ($(a)!0.32!(b)$)--($(a)!0.68!(b)$);
+  \draw[-{Stealth[length=1.8mm]}, simGreen, very thick] ($(b)!0.32!(c)$)--($(b)!0.68!(c)$);
+  \draw[-{Stealth[length=1.8mm]}, simGreen, very thick] ($(c)!0.32!(a)$)--($(c)!0.68!(a)$);
+  \node[simGreen, align=center] at (1.2,-0.55) {\emph{one tangential}\\DoF per edge};
+  \node[align=center, text=simInk] at (1.2,-1.35)
+    {tangential continuity only\\$\Rightarrow$ exact discrete complex};
+\end{scope}
+\end{tikzpicture}
+\caption[Nodal vector versus edge elements]{Two ways to discretize a vector field,
+and why only one works. \emph{Left:} the naive nodal-vector element stores the full
+vector (all components) at each \emph{vertex}, forcing \emph{full} continuity of
+$\vA$ across faces---more continuity than the physics allows. The excess continuity
+admits non-physical fields and (as the next section shows) pollutes the curl--curl
+operator's null space with spurious modes. \emph{Right:} the edge (N\'ed\'elec)
+element of $\Hcurl$ stores one \emph{tangential circulation} per \emph{edge},
+imposing only tangential continuity---exactly what a vector potential requires. The
+edge space sits in an \emph{exact} discrete de Rham complex (\cref{ch:derham},
+\cref{thm:discrete-exact}), so its discrete curl has precisely the kernel the
+physics demands, with no spurious extras. This is \emph{the} reason edge elements
+exist (\cref{ch:bc}).}
+\label{fig:nodal-vs-edge}
+\end{figure}
+
+The nodal-vector choice imposes \emph{full} continuity of $\vA$---both tangential
+and normal components glued across every face. That is strictly more continuity
+than $\vB=\Curl\vA$ requires, and the excess is not harmless. A field
+discretization that is ``too continuous'' for its operator admits non-physical
+solutions; in the curl--curl setting these surface as \emph{spurious modes}
+(\cref{ch:functionspaces}, \cref{ch:bc})---finite-element fields with no physical
+counterpart that nonetheless satisfy the discrete equations and contaminate the
+spectrum. \Cref{ch:derham} diagnosed the cause precisely: nodal-vector elements do
+not sit in an exact discrete de Rham complex, so their discrete curl has the
+\emph{wrong} kernel, and the wrong kernel is the breeding ground of spurious modes.
+Edge elements sit in an exact discrete complex (\cref{ch:derham},
+\cref{thm:discrete-exact}); their discrete curl's kernel is \emph{exactly} the range
+of the discrete gradient---the gauge fields, and nothing else.
+
+\begin{pitfall}
+Do \emph{not} discretize the magnetic vector potential with three copies of nodal
+$\Hone$ elements ``one per component.'' It looks natural---it is how you would store
+a vector in a general-purpose array---but it imposes more continuity than $\vA$
+admits and breaks the exact discrete de Rham complex. The cost is spurious modes
+(\cref{ch:bc}): non-physical fields polluting the curl--curl operator's null space,
+which corrupt eigenvalue computations and stall iterative solvers. The vector
+potential lives in $\Hcurl$, full stop, and $\Hcurl$ is realized by edge elements.
+This is not an efficiency preference; it is a correctness requirement.
+\end{pitfall}
+
+\subsection{The curl--curl operator has a large null space}
+\label{sec:nullspace}
+
+Choosing edge elements fixes \emph{which} kernel the operator has, but it does not
+make the kernel small. The curl--curl operator carries an enormous null space, and
+acknowledging it is the price of working with vector potentials. The reason is the
+gauge freedom of \cref{ch:derham}: for any scalar field $\psi$,
+\[
+  \Curl\!\left(\nu\,\Curl(\Grad\psi)\right) = \Curl\!\left(\nu\cdot\mathbf 0\right)
+  = \mathbf 0,
+  \qquad\text{since } \Curl\Grad\psi = \mathbf 0 .
+\]
+Every gradient field is annihilated by the curl--curl operator. Discretely, every
+discrete-gradient vector $\mat{G}\psi_h$ lies in the null space of the curl--curl
+stiffness $\mat{K}$ (\cref{eq:stiff-curlcurl}). So $\mat{K}$ is only \emph{positive
+semi-definite}: it is singular, with a null space that is the entire range of the
+discrete gradient $\mat{G}$ (\cref{ch:derham}, \cref{def:discrete-grad}). This is
+the same gradient null space the eigenmode solver must project out
+(\cref{ch:bc}) and the same null space a plain smoother cannot damp
+(\cref{ch:smoothers}). \Cref{fig:curlcurl-null} draws it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the edge-dof space as a big rounded box
+  \node[draw=simInk, thick, rounded corners=3pt, minimum width=66mm,
+    minimum height=30mm, fill=simBgGray] (box) at (0,0) {};
+  \node[font=\scriptsize\itshape, simInk, anchor=north west] at (box.north west)
+    {\;edge-DoF space $\Hcurl_h$};
+  % the gradient null space as an inner blob
+  \node[draw=simBlue, thick, rounded corners=3pt, fill=simBgBlue,
+    minimum width=30mm, minimum height=20mm, align=center] (null) at (-1.4,-0.3)
+    {$\ker(\mat{K})$\\$=\operatorname{range}(\mat{G})$\\[1pt]
+     \scriptsize gradient fields $\Grad\psi$\\\scriptsize ($\mat{K}\,\Grad\psi=0$)};
+  % the physical / div-free complement
+  \node[font=\scriptsize, simGreen, align=center, anchor=west] at (0.7,0.55)
+    {physical part\\(divergence-free)\\$\mat{K}$ is SPD \emph{here}};
+  \node[font=\scriptsize, simRust, align=center, below=1mm of box.south]
+    {curl--curl $\mat{K}$ is only \emph{positive semi-definite}: singular on
+     $\operatorname{range}(\mat{G})$};
+\end{tikzpicture}
+\caption[The curl--curl gradient null space]{The curl--curl stiffness operator
+$\mat{K}$ on the edge-DoF space. Its null space (blue) is the \emph{entire} range of
+the discrete gradient $\mat{G}$---every gradient field $\Grad\psi$ has zero curl, so
+$\mat{K}\,\Grad\psi=0$ (the gauge freedom of \cref{ch:derham}). The operator is
+therefore only positive \emph{semi}-definite, singular on a large subspace, and a
+plain conjugate-gradient solve does not automatically converge. Two cures
+(\cref{sec:solvecare}): make the right-hand side $\vJ$ \emph{consistent}
+(divergence-free, so it has no component along the null space, and CG runs in the
+SPD complement), or precondition with an auxiliary-space method (AMS,
+\cref{ch:smoothers}) that handles the gradient block explicitly. Either way the
+\emph{solver itself} is the shared CG of \cref{ch:electrostatics}; only its setup
+accounts for the null space.}
+\label{fig:curlcurl-null}
+\end{figure}
+
+\subsection{What this costs the solve---and what it does not}
+\label{sec:solvecare}
+
+A singular operator threatens \cref{fig:mag-pipeline}'s claim that the solve is
+``identical to electrostatics.'' It is worth being precise about what changes. The
+electrostatic $\mat{K}$ is positive \emph{definite} (after grounding a reference
+node), so conjugate gradients converges with no further thought. The magnetostatic
+$\mat{K}$ is positive \emph{semi}-definite, so a naive CG could wander in the null
+space. Two standard cures restore convergence, and crucially \emph{neither changes
+the solver}:
+
+\begin{itemize}[nosep]
+\item \textbf{Consistent source.} If the driving current $\vJ$ is
+  divergence-free---$\Div\vJ=0$, the physical condition for a steady current that
+  neither accumulates nor depletes charge---then $\vJ$ has \emph{no component along
+  the null space} (the null space is gradients, and a divergence-free field is
+  orthogonal to gradients). Conjugate gradients then runs entirely in the
+  positive-definite complement, never excited along the singular directions, and
+  converges to the (gauge-fixed) solution exactly as in electrostatics. This is the
+  cheapest cure and the one Palace prefers: enforce a discretely-consistent source
+  and the existing CG just works.
+\item \textbf{Auxiliary-space preconditioning (AMS).} When robustness across mesh
+  and coefficient is needed, the curl--curl solve is preconditioned by the
+  \emph{auxiliary-space Maxwell} (AMS) preconditioner~\citep{hiptmair1998}, which
+  splits the error into its divergence-free part and its gradient part and
+  preconditions each on the appropriate auxiliary space (the nodal $\Hone$ space for
+  the gradient block, via the discrete gradient $\mat{G}$). AMS is exactly the
+  multigrid-for-edge-elements machinery of \cref{ch:smoothers}: it exists
+  \emph{because} a plain smoother cannot see the gradient null space.
+\end{itemize}
+
+\begin{keyidea}
+The curl--curl operator's gradient null space changes the solve's \emph{setup}, not
+its \emph{solver}. Make the source consistent ($\Div\vJ=0$) so the null space is
+never excited, or precondition with AMS (\cref{ch:smoothers}) so the gradient block
+is handled explicitly---but in either case the iteration is the same
+conjugate-gradient method on a symmetric, fixed-across-the-family operator that
+electrostatics used. \code{solve\_family} in \cref{fig:mag-pipeline} is genuinely
+shared; the null space is accounted for in how $\mat{K}$ and $\vJ$ are prepared, not
+in a new algorithm.
+\end{keyidea}
+
+\section{Swap 3: the Gram weight is a current normalization}
+\label{sec:swap3}
+
+The solved family $\{\vA_0,\dots,\vA_{n-1}\}$ in hand, the reduce stage runs the
+\emph{same} verb electrostatics ran---\code{gram\_reduce} of \cref{ch:reductions}---
+and the third and final swap is a single scalar. This is the punchline of the
+chapter, and it is the cleanest instance in the book of ``one verb, two physical
+quantities.''
+
+\subsection{One verb, both quantities}
+
+Recall the Gram reduction (\cref{ch:reductions}, eq.~\eqref{eq:gram-entry}). Given a
+solution family, the energy operator $\mat{K}$, and a scalar weight $w(i,j)$, it
+computes the symmetric matrix $G_{ij}=w(i,j)\,\vx_j^{\!\top}\mat{K}\,\vx_i$:
+\begin{lstlisting}[style=l4style]
+gram_reduce :: LinOp -> [Tensor] -> (Int -> Int -> Scalar) -> Matrix
+gram_reduce k xs w =
+  symmetric_from_upper                              -- mirror lower triangle
+    [ [ w i j * (xs!!j `bilinear` k $ xs!!i) | j <- [i .. m-1] ]
+      | i <- [0 .. m-1] ]                           -- map over upper-triangle pairs
+  where m = length xs
+\end{lstlisting}
+This is verbatim the reduction electrostatics used. The energy operator $\mat{K}$,
+the symmetric pairing $\vx_j^{\!\top}\mat{K}\vx_i$, the upper-triangle map, the
+mirror---all shared. Capacitance plugged in $w(i,j)=1$ and the per-terminal
+potential family, getting $C_{ij}=V_j^{\!\top}\mat{K}\,V_i$
+(\cref{ch:reductions}, eq.~\eqref{eq:cap-gram}). Inductance plugs in the
+\emph{current-normalized} weight and the per-source vector-potential family:
+\begin{equation}
+  \boxed{\;w(i,j) = \frac{1}{I_i\,I_j},
+  \qquad
+  L_{ij} = \frac{1}{I_i I_j}\,\vA_j^{\!\top}\,\mat{K}\,\vA_i\;}
+  \label{eq:ind-gram-local}
+\end{equation}
+with $\mat{K}$ the $\nu$-weighted curl--curl energy operator of
+\cref{eq:stiff-curlcurl}. \Cref{fig:one-verb} sets the two side by side.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+% --- shared verb in the center ---
+\node[stage, fill=simBgGold, draw=simGold, align=center, text width=34mm]
+  (verb) at (0,0) {\textbf{gram\_reduce}\\[1pt]
+  $G_{ij}=w(i,j)\,\vx_j^{\!\top}\mat{K}\,\vx_i$\\[1pt]\footnotesize
+  symmetric, upper-triangle map};
+% --- left branch: capacitance ---
+\node[product, align=center, text width=30mm, above left=11mm and 14mm of verb]
+  (cap) {\textbf{capacitance} $\mat{C}$\\[1pt]\footnotesize
+  $w=1$\\family: potentials $V_i\in\Hone$};
+% --- right branch: inductance ---
+\node[product, fill=simBgBlue, draw=simBlue, align=center, text width=30mm,
+  above right=11mm and 14mm of verb]
+  (ind) {\textbf{inductance} $\mat{L}$\\[1pt]\footnotesize
+  $w=\dfrac{1}{I_iI_j}$\\family: potentials $\vA_i\in\Hcurl$};
+\draw[flow] (verb) -- node[left, font=\scriptsize, simGray]{$w\!=\!1$} (cap);
+\draw[flow] (verb) -- node[right, font=\scriptsize, simBlue]
+  {$w\!=\!\tfrac{1}{I_iI_j}$} (ind);
+% --- the "everything else identical" band below ---
+\node[font=\scriptsize\itshape, simGray, align=center, below=7mm of verb,
+  text width=72mm]
+  {identical: the operator-weighted bilinear form $\vx_j^{\!\top}\mat{K}\vx_i$, the
+   structural symmetry $G_{ij}=G_{ji}$, the embarrassingly parallel map. \emph{The
+   only differences are the scalar weight $w$ and which family is fed in.}};
+\end{tikzpicture}
+\caption[One verb, two physical quantities]{The single Gram verb
+\code{gram\_reduce} (\cref{ch:reductions}) produces \emph{both} capacitance and
+inductance. Feed it the per-terminal potential family with unit weight $w=1$ and it
+returns the capacitance matrix $\mat{C}$ (left); feed it the per-source
+vector-potential family with the current-normalized weight $w=1/(I_iI_j)$ and it
+returns the inductance matrix $\mat{L}$ (right). The operator-weighted bilinear
+form, the structural symmetry, and the parallel map are byte-for-byte identical---
+the two physical quantities differ \emph{only} in the scalar weight and in which
+solved family is supplied. This is \textsc{swap 3}, and it is the entire difference
+in the reduce stage.}
+\label{fig:one-verb}
+\end{figure}
+
+\subsection{Why inductance needs the normalization and capacitance does not}
+
+The asymmetry is real but shallow, and it is worth saying plainly. In
+electrostatics the excitation is a \emph{voltage}, and we choose it to be unity
+($V_i=1$); the energy bilinear form $V_j^{\!\top}\mat{K}V_i$ is already
+per-unit-voltage, so dividing by $V_iV_j=1$ does nothing and the weight is $1$. In
+magnetostatics the natural excitation is a \emph{current} $I_i$, and the magnetic
+energy bilinear form $\vA_j^{\!\top}\mat{K}\vA_i$ scales with the \emph{product of
+the driving currents} (double the current, double $\vA$, quadruple the energy). To
+recover the geometry-only inductance $L=2U_m/I^2$ (\cref{ch:maxwell}), we must
+divide out that current scaling: $w=1/(I_iI_j)$. The weight is precisely the
+``per-unit-excitation'' rescaling---invisible when the excitation is chosen to be
+unity, explicit when it is a physical current we do not get to set to $1$. Same
+energy form, same machine; one quantity happens to normalize trivially and the other
+does not.
+
+\begin{keyidea}
+Capacitance and inductance are the \emph{same Gram reduction} differing in one
+scalar weight: $w=1$ for capacitance, $w=1/(I_iI_j)$ for inductance. The diagonal
+$L_{ii}=\vA_i^{\!\top}\mat{K}\vA_i/I_i^2$ is twice the stored magnetic energy per
+unit current squared---the self-inductance $L=2U_m/I^2$. The off-diagonal $L_{ij}$
+is the mutual inductance, the flux of source $j$'s field linked by loop $i$,
+normalized by both currents. The current normalization is the \emph{only} thing the
+reduce stage does differently from capacitance.
+\end{keyidea}
+
+\section{The composition, and reading the result}
+\label{sec:compose}
+
+We can now write the magnetostatic driver as a single composition and put it beside
+the electrostatic one. They are the same expression with three substitutions:
+
+\begin{lstlisting}[style=l4style]
+-- ELECTROSTATIC (Chapter 39):
+electrostatic = gram_reduce (w = 1)          . solve_family . fe_assemble{- Poisson, H^1 -}
+
+-- MAGNETOSTATIC (this chapter), three swaps marked:
+magnetostatic = gram_reduce (w = \i j -> 1/(I i * I j))   -- SWAP 3: current weight
+              . solve_family                              --   (shared CG, fixed op)
+              . fe_assemble{- curl-curl, H(curl) -}       -- SWAP 1+2: PDE + space
+
+-- read B from the solved A:
+postprocess A_i = curl A_i      -- B_i = Curl A_i  (one rung down the complex)
+\end{lstlisting}
+The structure is identical; the differences are exactly the curl--curl-on-$\Hcurl$
+assembly (swaps 1 and 2, both inside \code{fe\_assemble}) and the current-normalized
+Gram weight (swap 3, inside \code{gram\_reduce}). The forward reference to the
+eigenmode driver (\cref{ch:eigenmodes}) is worth flagging now: it reuses this very
+same curl--curl $\mat{K}$ on this same $\Hcurl$ space---the magnetostatic assembly
+is the eigenmode assembly---and the gradient null space we met in
+\cref{sec:nullspace} is precisely what the eigenmode solver must project out.
+
+\subsection{The inductance matrix: self and mutual}
+
+The product is the symmetric $n\times n$ inductance matrix $\mat{L}$. Reading it:
+
+\begin{itemize}[nosep]
+\item \textbf{Diagonal $L_{ii}$ (self-inductance).} The energy stored when source
+  $i$ alone carries unit current, doubled: $L_{ii}=\vA_i^{\!\top}\mat{K}\vA_i/I_i^2
+  =2U_m^{(i)}/I_i^2$. Always positive (the energy operator is positive
+  semi-definite and $\vA_i$ is in its definite complement)---self-inductance is
+  never negative.
+\item \textbf{Off-diagonal $L_{ij}$ (mutual inductance).} The flux of source $j$'s
+  field linked by loop $i$, per unit of each current:
+  $L_{ij}=\vA_j^{\!\top}\mat{K}\vA_i/(I_iI_j)$. Its \emph{sign} encodes the relative
+  orientation of the two loops---positive when their fields reinforce, negative when
+  they oppose. Symmetric: $L_{ij}=L_{ji}$, the reciprocity that the Gram's structural
+  symmetry guarantees for free.
+\end{itemize}
+
+\Cref{fig:Lmatrix} shows the matrix and its physical reading.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- the 3x3 inductance matrix with labeled cells ---
+  \foreach \i in {0,1,2}{
+    \foreach \j in {0,1,2}{
+      \node[draw=simGray, semithick,
+        fill={\ifnum\i=\j simBgBlue\else simBgGold\fi},
+        minimum size=10mm, inner sep=0pt] (L\i\j) at (\j*1.0, -\i*1.0) {};}}
+  \node at (0,0)    {$L_{11}$};
+  \node at (1,-1)   {$L_{22}$};
+  \node at (2,-2)   {$L_{33}$};
+  \node at (1,0)    {$L_{12}$};
+  \node at (2,0)    {$L_{13}$};
+  \node at (0,-1)   {$L_{21}$};
+  \node at (2,-1)   {$L_{23}$};
+  \node at (0,-2)   {$L_{31}$};
+  \node at (1,-2)   {$L_{32}$};
+  % symmetry mirror
+  \draw[densely dashed, simRust, semithick] (-0.55,0.55)--(2.55,-2.55);
+  % annotations
+  \node[simBlue, align=left, anchor=west, font=\scriptsize] at (3.0,-0.1)
+    {\textbf{diagonal}: self-inductance\\$L_{ii}=2U_m^{(i)}/I_i^2>0$};
+  \node[simGold, align=left, anchor=west, font=\scriptsize] at (3.0,-1.4)
+    {\textbf{off-diagonal}: mutual\\$L_{ij}=\vA_j^{\!\top}\mat{K}\vA_i/(I_iI_j)$\\
+     sign $=$ relative orientation};
+  \node[simRust, align=left, anchor=west, font=\scriptsize] at (3.0,-2.4)
+    {\textbf{symmetric}: $L_{ij}=L_{ji}$\\(reciprocity, free from the Gram)};
+\end{tikzpicture}
+\caption[The inductance matrix]{The inductance matrix $\mat{L}$, the magnetostatic
+product. The diagonal entries (blue) are the self-inductances $L_{ii}=2U_m^{(i)}/
+I_i^2$, always positive. The off-diagonal entries (gold) are the mutual inductances
+$L_{ij}$, whose sign records whether loops $i$ and $j$'s fields reinforce
+($+$) or oppose ($-$). The matrix is symmetric (dashed mirror): $L_{ij}=L_{ji}$, a
+reciprocity that the Gram reduction's structural symmetry supplies at no cost---only
+the upper triangle is computed (\cref{ch:reductions}). This is the same matrix
+\emph{shape} as the capacitance matrix of \cref{ch:electrostatics}; the entries are
+inductances because the family is vector potentials and the weight is
+current-normalized.}
+\label{fig:Lmatrix}
+\end{figure}
+
+\begin{remark}[Loop inductance, partial inductance, and what we measured]
+We have computed the \emph{loop} inductance of a set of complete current loops: each
+$\vA_i$ is the field of a full, closed, divergence-free current path, so $L_{ij}$ is
+a well-defined, gauge-independent number. A related notion, \emph{partial}
+inductance, ascribes inductance to a single open segment of wire (useful for
+circuit extraction from layout); it is not gauge-independent in isolation and only
+the loop sums it builds are physical. The magnetostatic driver as composed here
+returns loop inductances directly. The partial-inductance bookkeeping is a
+reduce-stage variation---a different weighting and pairing of the same solved
+family---and we note it only to flag that ``inductance matrix'' can mean slightly
+different things downstream; the field solve underneath is the one in this chapter.
+\end{remark}
+
+\section{Worked examples}
+
+\subsection{A two-loop inductance, end to end}
+
+We trace the magnetostatic pipeline through a two-loop problem, in deliberate
+parallel with the two-terminal \emph{capacitance} computed in \cref{ch:reductions}
+(\cref{wex:cap2x2}). Same machine, same numbers shape---inductances out instead of
+capacitances, because of the three swaps.
+
+\begin{workedexample}{A $2\times2$ inductance from a current-normalized Gram}{ind2x2}
+\textbf{Setup.} Two current loops, driven one at a time at unit current
+$I_1=I_2=1\,\si{\ampere}$. The magnetostatic driver assembles the curl--curl energy
+operator $\mat{K}$ \emph{once} (swaps 1+2: curl--curl on $\Hcurl$), then solves it
+twice (\code{solve\_family}), once per loop, for the vector-potential fields $\vA_1$
+and $\vA_2$. We are handed the three operator-weighted pairings that the solve
+produced:
+\[
+  \vA_1^{\!\top}\mat{K}\,\vA_1 = 8,\qquad
+  \vA_2^{\!\top}\mat{K}\,\vA_2 = 6,\qquad
+  \vA_2^{\!\top}\mat{K}\,\vA_1 = 2
+\]
+(in nanohenry-equivalent units; these are the magnetic-energy bilinear forms, twice
+the stored energy in each configuration).
+
+\textbf{The Gram reduction (swap 3).} The inductance is \code{gram\_reduce} with the
+current-normalized weight $w(i,j)=1/(I_iI_j)$ (\cref{eq:ind-gram-local}). With unit
+currents, $w\equiv 1$ \emph{numerically}---but the normalization is structurally
+present, and would rescale every entry if the currents were not $1$. The verb
+computes the upper triangle and mirrors:
+\[
+  L_{11} = \frac{\vA_1^{\!\top}\mat{K}\vA_1}{I_1^2} = \frac{8}{1} = 8,\qquad
+  L_{22} = \frac{\vA_2^{\!\top}\mat{K}\vA_2}{I_2^2} = \frac{6}{1} = 6,
+\]
+\[
+  L_{12} = \frac{\vA_2^{\!\top}\mat{K}\vA_1}{I_1 I_2} = \frac{2}{1} = 2,
+  \qquad L_{21}=L_{12}=2 \ \text{(mirrored, not recomputed).}
+\]
+The inductance matrix is therefore
+\[
+  \mat{L} =
+  \begin{pmatrix} L_{11} & L_{12}\\ L_{21} & L_{22} \end{pmatrix}
+  = \begin{pmatrix} 8 & 2\\ 2 & 6 \end{pmatrix}\si{\nano\henry}.
+\]
+
+\textbf{Interpretation.} The diagonal entries are the \emph{self}-inductances:
+$L_{11}=\SI{8}{\nano\henry}$ is twice the magnetic energy stored when loop $1$ alone
+carries unit current; $L_{22}=\SI{6}{\nano\henry}$ likewise for loop $2$. Both are
+positive, as self-inductance must be. The off-diagonal $L_{12}=\SI{2}{\nano\henry}$
+is the \emph{mutual} inductance: the flux of loop $1$'s field linked by loop $2$ per
+unit current. Here it is positive---the two loops' fields reinforce. Its
+\emph{symmetry} $L_{12}=L_{21}$ is reciprocity, and we got it for free: the Gram
+computes only the upper triangle and mirrors (\cref{ch:reductions}).
+
+\textbf{The capacitance contrast.} Run \emph{exactly this arithmetic} for the
+two-terminal capacitance of \cref{wex:cap2x2} and one thing changes: the weight is
+$w=1$ outright (no currents to normalize), the family is potentials $V_i\in\Hone$
+not vector potentials $\vA_i\in\Hcurl$, and the operator is the
+$\varepsilon$-weighted Poisson stiffness not the $\nu$-weighted curl--curl
+stiffness. The off-diagonal also flips \emph{sign} in the capacitance case (the
+Maxwell capacitance matrix has negative off-diagonals; mutual inductance need not).
+But the reduction \emph{verb} is the same, the symmetry is the same, the
+upper-triangle map is the same. Two physical matrices, one Gram.
+\end{workedexample}
+
+\subsection{One change at a time: the electrostatic--magnetostatic ledger}
+
+The second worked example is not a computation but an accounting: we lay the two
+drivers side by side, line by line, and verify that exactly three lines differ. This
+is the chapter's thesis stated as a table.
+
+\begin{workedexample}{Capacitance versus inductance, one change at a time}{ledger}
+We tabulate every stage of the two drivers and mark each line ``same'' or
+``swap''. Reading down the table, the three swaps stand alone; every other line is
+shared verbatim.
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.30\linewidth}c@{}}
+\toprule
+\textbf{stage} & \textbf{electrostatic} & \textbf{magnetostatic} & \\
+\midrule
+governing PDE & $-\Div(\varepsilon\Grad V)=\rho$ & $\Curl(\nu\Curl\vA)=\vJ$
+  & \textcolor{simRust}{\textbf{swap 1}} \\
+field unknown & scalar potential $V$ & vector potential $\vA$
+  & \textcolor{simRust}{\textbf{swap 1}} \\
+post-process & $\vE=-\Grad V$ & $\vB=\Curl\vA$
+  & \textcolor{simRust}{\textbf{swap 1}} \\
+FE space & $\Hone$ nodal & $\Hcurl$ edge (N\'ed\'elec)
+  & \textcolor{simRust}{\textbf{swap 2}} \\
+energy operator $\mat{K}$ & $\int\varepsilon\,\Grad\phi_a\!\cdot\!\Grad\phi_b$
+  & $\int\nu\,\Curl\boldsymbol\phi_a\!\cdot\!\Curl\boldsymbol\phi_b$
+  & \textcolor{simRust}{(swap 2)} \\
+\addlinespace
+$\mat{K}$ definiteness & SPD (grounded) & SP\emph{S}D (gradient null space)
+  & \textcolor{simGray}{setup} \\
+solver & CG, fixed op, reused precond. & CG, fixed op, reused precond.
+  & \textcolor{simGreen}{\textbf{same}} \\
+assemble cadence & once, reused per excitation & once, reused per excitation
+  & \textcolor{simGreen}{\textbf{same}} \\
+solve cadence & one per terminal & one per source
+  & \textcolor{simGreen}{\textbf{same}} \\
+reduce verb & \code{gram\_reduce} & \code{gram\_reduce}
+  & \textcolor{simGreen}{\textbf{same}} \\
+Gram symmetry & $G_{ij}=G_{ji}$, upper triangle & $G_{ij}=G_{ji}$, upper triangle
+  & \textcolor{simGreen}{\textbf{same}} \\
+\addlinespace
+Gram weight $w(i,j)$ & $1$ & $1/(I_iI_j)$
+  & \textcolor{simRust}{\textbf{swap 3}} \\
+product & capacitance $\mat{C}$ & inductance $\mat{L}$ & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The reading.} Three rust ``swap'' regions: the PDE-and-field block (swap 1,
+which drags post-processing $\vE\to\vB$ along with it), the FE-space line (swap 2,
+which determines the energy operator's integrand), and the Gram-weight line (swap
+3). The definiteness line is marked grey ``setup'': it is a consequence of swap 2,
+but it changes how $\mat{K}$ and $\vJ$ are \emph{prepared} (consistent source or AMS,
+\cref{sec:solvecare}), not the solver itself---so the solver line is green
+``same.'' Everything in green---the solver, both cadences, the reduce verb, the Gram
+symmetry---is shared without modification. The magnetostatic driver is the
+electrostatic driver, three swaps over.
+\end{workedexample}
+
+\summarysection
+
+Magnetostatics computes an inductance matrix the way electrostatics computes a
+capacitance matrix: \emph{the same way}. The driver is the composition
+\code{gram\_reduce} $\circ$ \code{solve\_family} $\circ$ \code{fe\_assemble}, and it
+differs from the electrostatic driver in exactly three places.
+
+\begin{itemize}[nosep]
+\item \textbf{Swap 1---the PDE and field.} Magnetostatics solves the curl--curl
+  equation $\Curl(\nu\Curl\vA)=\vJ$ for a magnetic \emph{vector} potential $\vA$,
+  not Poisson for a scalar $V$; it post-processes $\vB=\Curl\vA$. Both are
+  second-order self-adjoint elliptic equations from adjacent rungs of the de Rham
+  complex (\cref{ch:derham}).
+\item \textbf{Swap 2---the FE space.} The vector potential lives in $\Hcurl$,
+  realized by edge (N\'ed\'elec) elements, because $\vA$'s tangential component is
+  continuous while its normal component is free. Nodal-vector elements would impose
+  too much continuity and breed spurious modes (\cref{ch:bc}); edge elements sit in
+  the exact discrete de Rham complex and avoid them. The curl--curl operator
+  inherits a large gradient null space (the gauge fields), making it only positive
+  semi-definite; the solve handles this through a consistent ($\Div\vJ=0$) source or
+  AMS preconditioning (\cref{ch:smoothers})---a change of \emph{setup}, not of
+  solver.
+\item \textbf{Swap 3---the Gram weight.} Inductance is the same \code{gram\_reduce}
+  as capacitance with the current-normalized weight $w=1/(I_iI_j)$ in place of
+  $w=1$ (\cref{ch:reductions}). One verb, two physical quantities; the diagonal is
+  twice the magnetic energy per unit current ($L_{ii}=2U_m/I^2$), the off-diagonal
+  is the (signed, symmetric) mutual inductance.
+\end{itemize}
+
+The shared remainder---assemble once, solve per source with the same CG, reduce by a
+symmetric Gram---is the deeper lesson: a simulator earns its generality by making
+distinct physical analyses \emph{the same machine over different vocabulary}. The
+next chapter (\cref{ch:eigenmodes}) reuses the very same curl--curl operator on the
+very same $\Hcurl$ space, now as an eigenvalue problem, and the gradient null space
+of \cref{sec:nullspace} returns as the subspace the eigensolver must project out.
+
+\furtherreading
+
+The curl--curl equation, the magnetic vector potential, and edge-element
+discretization of magnetostatics are developed in Jin's computational
+electromagnetics text~\citep{jin2014} and, with full finite-element-theoretic rigor
+(N\'ed\'elec spaces, the discrete de Rham complex, and convergence), in
+Monk~\citep{monk2003}. The physical content---vector potential, magnetic energy,
+self- and mutual inductance---is the magnetostatics of any intermediate
+electromagnetism course; Griffiths~\citep{griffiths2017} is the standard reference,
+and connects the inductance matrix to the circuit parameters an engineer expects.
+The auxiliary-space Maxwell (AMS) preconditioner for the curl--curl gradient null
+space is due to Hiptmair~\citep{hiptmair1998}; \cref{ch:smoothers} treats it in the
+multigrid context.
+
+\exercisessection
+
+\begin{enumerate}[label=\textbf{40.\arabic*}]
+
+\item \textbf{The three swaps from memory.} Without looking back, write the
+electrostatic driver as a composition \code{reduce} $\circ$ \code{solve\_family}
+$\circ$ \code{fe\_assemble} and then derive the magnetostatic driver from it by
+applying the three swaps. For each swap, name (i) the box it lives in and (ii) one
+sentence of why the physics forces it.
+
+\item \textbf{Curl--curl is self-adjoint.} Show that the bilinear form
+$a(\vA,\vF)=\int_\dom\nu\,(\Curl\vA)\cdot(\Curl\vF)\dV$ is symmetric,
+$a(\vA,\vF)=a(\vF,\vA)$, and hence that the assembled stiffness $\mat{K}$ of
+\cref{eq:stiff-curlcurl} is a symmetric matrix. Why does this symmetry matter for
+(a) the conjugate-gradient solver and (b) the Gram reduction's reciprocity
+$L_{ij}=L_{ji}$?
+
+\item \textbf{The null space is gradients.} Let $\psi_h$ be any discrete nodal field
+and $\mat{G}$ the discrete gradient (\cref{ch:derham}, \cref{def:discrete-grad}).
+Show $\mat{K}\,(\mat{G}\psi_h)=\mathbf 0$ directly from
+\cref{eq:stiff-curlcurl}, using $\Curl\Grad=0$. Conclude that $\mat{K}$ is only
+positive semi-definite, with null space $\supseteq\operatorname{range}(\mat{G})$.
+
+\item \textbf{Why a consistent source rescues CG.} The curl--curl null space is the
+range of the discrete gradient. Argue that a divergence-free source $\vJ$
+($\Div\vJ=0$) is orthogonal to every gradient field, hence has no component along
+the null space, hence conjugate gradients applied to $\mat{K}\vA=\vJ$ stays in the
+positive-definite complement and converges. (Hint: integrate $\int\vJ\cdot\Grad\psi$
+by parts.)
+
+\item \textbf{The current normalization.} Suppose loop $1$ is driven at
+$I_1=\SI{2}{\ampere}$ and loop $2$ at $I_2=\SI{3}{\ampere}$ (not unit currents), and
+the solve returns $\vA_1^{\!\top}\mat{K}\vA_1=48$,
+$\vA_2^{\!\top}\mat{K}\vA_2=54$, $\vA_2^{\!\top}\mat{K}\vA_1=18$ (energy-form units).
+Compute the inductance matrix $\mat{L}$ using the weight $w(i,j)=1/(I_iI_j)$. Verify
+$L_{12}=L_{21}$ and that the values are the same as if you had first rescaled each
+field to unit current.
+
+\item \textbf{Self-inductance is positive; mutual need not be.} Explain, from
+$L_{ii}=\vA_i^{\!\top}\mat{K}\vA_i/I_i^2$ and the positive-semidefiniteness of
+$\mat{K}$, why $L_{ii}\ge 0$ always. Then construct a physical scenario (two loops,
+relative orientation) in which $L_{12}<0$, and contrast with the capacitance matrix,
+whose off-diagonals are always negative (\cref{ch:reductions}, \cref{wex:cap2x2}).
+
+\item \textbf{Nodal vector would break it.} Describe, in two or three sentences, what
+goes wrong if one discretizes $\vA$ with three copies of nodal $\Hone$ elements
+instead of $\Hcurl$ edge elements. Identify the property of the discrete de Rham
+complex (\cref{ch:derham}) that fails and the symptom it produces in the spectrum
+(\cref{ch:bc}).
+
+\item \textbf{The eigenmode connection (forward to \cref{ch:eigenmodes}).} The
+eigenmode driver assembles the \emph{same} curl--curl $\mat{K}$ on the \emph{same}
+$\Hcurl$ space, but solves $\mat{K}\vx=\lambda\mat{M}\vx$ instead of
+$\mat{K}\vA=\vJ$. Predict: which eigenvalues does the gradient null space of
+\cref{sec:nullspace} produce, and why must the eigensolver project them out? (You
+are reconstructing the spurious-zero-mode discussion of \cref{ch:bc} from the
+null-space structure alone.)
+
+\end{enumerate}

@@ -1,0 +1,1077 @@
+\chapter{Eigenvalue Problems and Spectral Transforms}
+\label{ch:eigenvalues}
+
+\chapterorient{The eigenmode analysis asks a question none of the linear
+solvers of this part can answer: not ``what field does this drive produce?''
+but ``what fields can ring with no drive at all?'' Mathematically it asks for a
+few eigenpairs of the generalized eigenproblem $\Kop\vx=\lambda\Mop\vx$---and,
+maddeningly, it wants the \emph{smallest} few, the lowest resonances buried at
+the bottom of an enormous spectrum. Plain iteration finds the \emph{largest}
+eigenvalues, the exact opposite of what we need. This chapter develops the one
+idea that turns the hard interior problem into an easy dominant one: the
+\emph{spectral transform}. We watch power iteration climb toward the dominant
+eigenvector, see why it climbs the wrong direction, and then bend the spectrum
+with shift-and-invert so the eigenvalues we want become the ones iteration
+naturally finds---paying for it with an inner linear solve. By the end you will
+know why the eigenmode driver assembles its operators, hands them to a library,
+and reads back converged modes, with no Palace-authored loop in sight.}
+
+\section{The problem: a few low resonances of a huge pencil}
+\label{sec:evp-problem}
+
+The eigenmode analysis of \cref{ch:targets} seals a region of space with
+conducting walls and asks what fields it can sustain on its own. We derived its
+governing equation in \cref{ch:reductions-pde}: the source-free time-harmonic
+curl--curl equation, discretized, is the \emph{generalized eigenvalue problem}
+\begin{equation}
+  \boxed{\;\Kop\,\vx \;=\; \lambda\,\Mop\,\vx,\qquad \lambda=\omega^2\;}
+  \label{eq:evp-gevp}
+\end{equation}
+where $\Kop$ is the $\nu$-weighted curl--curl \emph{stiffness} and $\Mop$ the
+$\varepsilon$-weighted \emph{mass} (\cref{ch:reductions-pde}). The pair
+$(\Kop,\Mop)$ is called a \emph{matrix pencil}: not one matrix but two, and the
+eigenproblem lives in the family $\Kop-\lambda\Mop$ of their combinations. Each
+eigenvalue $\lambda$ gives a resonant frequency $\omega=\sqrt\lambda$; each
+eigenvector $\vx$ gives the mode field. The word ``generalized'' refers to the
+$\Mop$ on the right: an \emph{ordinary} eigenproblem reads $\mat{A}\vx=\lambda\vx$
+with the identity in $\Mop$'s place, but here the $\varepsilon$-weighting puts a
+genuine mass matrix there.
+
+\begin{notationbox}
+A \emph{pencil} is an ordered pair of matrices $(\Kop,\Mop)$ of the same size; we
+write the generalized eigenproblem as $\Kop\vx=\lambda\Mop\vx$ or, equivalently,
+$(\Kop-\lambda\Mop)\vx=\mathbf 0$. A scalar $\lambda$ for which $\Kop-\lambda\Mop$
+is singular is an \emph{eigenvalue}; a nonzero $\vx$ in its null space is the
+corresponding \emph{eigenvector}; together they form an \emph{eigenpair}
+$(\lambda,\vx)$. When $\Kop$ and $\Mop$ are symmetric and $\Mop$ is positive
+definite---as they are for a lossless cavity---all eigenvalues are real and the
+eigenvectors can be chosen $\Mop$-orthogonal, $\inner{\Mop\vx_i}{\vx_j}=0$ for
+$i\neq j$.
+\end{notationbox}
+
+So far this is bookkeeping. The difficulty---the one that shapes the entire
+chapter---is \emph{which} eigenpairs we want, and \emph{how many}.
+
+\paragraph{We want a few, not all.} A finely meshed three-dimensional cavity has
+$N$ degrees of freedom running into the millions (\cref{ch:krylov}), so the
+pencil has millions of eigenvalues. The engineer does not want them all. A
+filter designer wants the lowest handful of resonances---the fundamental mode and
+a few overtones, perhaps ten eigenpairs out of ten million. Computing the entire
+spectrum would be absurd: it would cost more than a million linear solves and
+produce a flood of numbers no one will read. The eigenmode analysis is, by
+construction, a request for a \emph{small slice} of an enormous spectrum.
+
+\paragraph{We want the smallest, which is the hard end.} Worse, the slice we want
+sits at the \emph{bottom}. The lowest resonant frequencies are the smallest
+$\lambda$, and the smallest nonzero eigenvalues of a matrix are, as we are about
+to see, exactly the ones simple iteration is worst at finding. Iteration
+naturally amplifies the \emph{largest} eigenvalues; the smallest are buried,
+their signal swamped. Finding the interior or lower end of a spectrum is a
+genuinely harder problem than finding the dominant end, and the rest of this
+chapter is the story of how we cheat our way around that difficulty.
+
+\Cref{fig:evp-setup} draws the situation: the pencil on the left, the vast
+spectrum on the right, and the small wanted band marked at its low end.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % the pencil, left
+  \node[stage, minimum width=20mm, minimum height=10mm] (K) at (0,0.9) {$\Kop$};
+  \node[stage, minimum width=20mm, minimum height=10mm] (M) at (0,-0.5) {$\Mop$};
+  \node[font=\scriptsize\itshape, simGray, above=1mm of K] {stiffness};
+  \node[font=\scriptsize\itshape, simGray, below=1mm of M] {mass};
+  \node[draw=simGray, densely dashed, rounded corners=3pt, fit=(K)(M),
+        inner sep=4pt, label={[font=\scriptsize\itshape,simGray]left:pencil}] (pen) {};
+  % the eigenproblem arrow
+  \node[font=\small] (eq) at (3.0,0.2) {$\Kop\vx=\lambda\Mop\vx$};
+  \draw[flow] (pen.east) -- (eq.west);
+  % the spectrum axis, right
+  \draw[flow, simGray] (4.7,-1.2) -- (12.6,-1.2)
+    node[right, font=\scriptsize\itshape, text=simGray] {$\lambda$};
+  % many eigenvalue ticks, dense toward the right (large)
+  \foreach \x in {5.1,5.45,5.95,6.6,7.4,8.3,9.2,10.0,10.6,11.0,11.3,11.55,11.75,11.9,12.05,12.18,12.3}{
+    \draw[simBlue, thick] (\x,-1.32) -- (\x,-1.08);}
+  % the wanted low band
+  \fill[simRust!18] (4.95,-1.55) rectangle (6.05,-0.85);
+  \draw[simRust, thick] (4.95,-1.55) rectangle (6.05,-0.85);
+  \node[font=\scriptsize\bfseries, simRust, align=center] at (5.5,-0.55)
+    {wanted:\\lowest few};
+  % the "dominant" end iteration finds
+  \node[font=\scriptsize\itshape, simGray, align=center] at (12.0,-0.55)
+    {what iteration\\finds (dominant)};
+  \draw[refedge, simGray] (12.0,-0.85) -- (12.2,-1.06);
+\end{tikzpicture}
+\caption[The generalized eigenproblem and its wanted low end]{The eigenmode
+problem in one picture. The assembled pencil $(\Kop,\Mop)$ (left) defines the
+generalized eigenproblem $\Kop\vx=\lambda\Mop\vx$, whose spectrum (right) holds
+millions of eigenvalues. The engineer wants only the \emph{lowest few} (rust
+band)---the fundamental resonance and a small number of overtones. But simple
+iteration naturally surfaces the \emph{dominant} (largest) eigenvalues at the far
+right, the exact opposite end. Bridging that mismatch is the business of the
+chapter.}
+\label{fig:evp-setup}
+\end{figure}
+
+\section{Power iteration: climbing toward the dominant direction}
+\label{sec:power}
+
+Before we can bend the spectrum we must understand the one iteration that all of
+eigenvalue computation is built on. It is almost embarrassingly simple, and
+understanding exactly what it does---and what it cannot do---is the whole key.
+
+Take an ordinary eigenproblem $\mat{A}\vx=\mu\vx$ for the moment (we restore the
+pencil shortly). \emph{Power iteration} does just one thing: it multiplies a
+vector by $\mat{A}$ over and over, renormalizing to keep it bounded.
+\begin{equation}
+  \vx_{k+1} \;=\; \frac{\mat{A}\,\vx_k}{\norm{\mat{A}\,\vx_k}}.
+  \label{eq:power-step}
+\end{equation}
+Why this converges to anything is the eigenvalue story in miniature. Expand the
+starting vector in the eigenbasis $\{\vu_1,\dots,\vu_N\}$ of $\mat{A}$, ordered so
+that $\abs{\mu_1}>\abs{\mu_2}\ge\dots\ge\abs{\mu_N}$:
+\begin{equation}
+  \vx_0 = c_1\vu_1 + c_2\vu_2 + \dots + c_N\vu_N .
+\end{equation}
+Applying $\mat{A}$ once multiplies each component $\vu_i$ by its eigenvalue
+$\mu_i$; applying it $k$ times multiplies by $\mu_i^k$:
+\begin{equation}
+  \mat{A}^k\vx_0
+    = c_1\mu_1^k\vu_1 + c_2\mu_2^k\vu_2 + \dots
+    = \mu_1^k\Bigl(c_1\vu_1
+        + c_2\Bigl(\tfrac{\mu_2}{\mu_1}\Bigr)^{\!k}\vu_2 + \dots\Bigr).
+  \label{eq:power-expand}
+\end{equation}
+Because $\abs{\mu_2/\mu_1}<1$, every ratio $(\mu_i/\mu_1)^k$ decays to zero as
+$k$ grows. The $\vu_1$ term, scaled by the largest eigenvalue, swamps all the
+others. After enough steps the iterate points (up to sign and scale) in the
+direction of $\vu_1$, the \emph{dominant eigenvector}---the eigenvector belonging
+to the eigenvalue of largest magnitude. \Cref{fig:power-rotate} shows the
+geometry: a generic starting vector swings, step by step, toward the dominant
+axis as the subdominant component shrinks.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % axes: dominant eigenvector u1 (horizontal-ish), subdominant u2 (vertical-ish)
+  \draw[->, simGray] (0,0) -- (5.0,0) node[right,font=\scriptsize]{$\vu_1$ (dominant)};
+  \draw[->, simGray] (0,0) -- (0,3.4) node[above,font=\scriptsize]{$\vu_2$};
+  % a sequence of normalized vectors rotating toward u1
+  \foreach \ang/\op in {65/0.30, 46/0.42, 30/0.54, 18/0.66, 10/0.80, 5/1.0}{
+    \draw[-{Stealth[length=2.2mm]}, very thick, simBlue, opacity=\op]
+      (0,0) -- (\ang:3.0);
+  }
+  % final converged vector emphasized
+  \draw[-{Stealth[length=2.6mm]}, very thick, simRust] (0,0) -- (5:3.0);
+  \node[font=\scriptsize, simRust] at (5:3.4) {$\vx_k$};
+  \node[font=\scriptsize, simBlue] at (66:3.3) {$\vx_0$};
+  % arc showing the swing
+  \draw[->, simGray, densely dotted] (62:2.0) arc (62:9:2.0);
+  \node[font=\scriptsize\itshape, simGray] at (35:2.35) {each step};
+  \node[font=\scriptsize\itshape, simGray] at (33:1.85) {$\times\,\mu_2/\mu_1$};
+\end{tikzpicture}
+\caption[Power iteration rotates toward the dominant eigenvector]{Power
+iteration as a rotation. The starting vector $\vx_0$ (faint blue) has a component
+along every eigenvector; each multiplication by $\mat{A}$ multiplies the
+$\vu_2$ component by $\mu_2/\mu_1<1$ relative to the $\vu_1$ component, so the
+iterate swings, step by step, toward the dominant axis $\vu_1$. The converged
+$\vx_k$ (rust) points along $\vu_1$. The speed of the swing is set by the ratio
+$\abs{\mu_2/\mu_1}$: the closer to $1$, the slower the rotation.}
+\label{fig:power-rotate}
+\end{figure}
+
+\subsection{The Rayleigh quotient: reading off the eigenvalue}
+
+Power iteration delivers a \emph{direction}---the eigenvector. To get the
+\emph{eigenvalue} we evaluate the \emph{Rayleigh quotient}, the single most
+useful scalar in eigenvalue computation:
+\begin{equation}
+  \rho(\vx) \;=\; \frac{\inner{\mat{A}\vx}{\vx}}{\inner{\vx}{\vx}}.
+  \label{eq:rayleigh}
+\end{equation}
+If $\vx$ is exactly an eigenvector, $\mat{A}\vx=\mu\vx$, then
+$\rho(\vx)=\inner{\mu\vx}{\vx}/\inner{\vx}{\vx}=\mu$: the quotient returns the
+eigenvalue exactly. If $\vx$ is only \emph{near} an eigenvector, $\rho(\vx)$ is a
+remarkably good estimate---for a symmetric $\mat{A}$ it is accurate to
+\emph{second} order in the eigenvector error, so a direction good to three digits
+yields an eigenvalue good to six. As power iteration rotates the iterate toward
+$\vu_1$, the Rayleigh quotient $\rho(\vx_k)$ closes in on $\mu_1$, and the two
+together---direction from \cref{eq:power-step}, value from
+\cref{eq:rayleigh}---form a complete eigenpair estimate.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm]
+  \node[opbox, minimum width=20mm] (x) {$\vx$};
+  \node[opbox, minimum width=22mm, right=12mm of x] (Ax) {$\mat{A}\vx$};
+  \node[opbox, fill=simBgGold, draw=simGold, minimum width=30mm, right=12mm of Ax] (num)
+    {$\inner{\mat{A}\vx}{\vx}$};
+  \node[opbox, fill=simBgGold, draw=simGold, minimum width=26mm, below=6mm of num] (den)
+    {$\inner{\vx}{\vx}$};
+  \node[product, minimum width=20mm, right=14mm of num, yshift=-7mm] (rho)
+    {$\rho(\vx)$};
+  \draw[flow] (x) -- node[above,font=\scriptsize]{apply} (Ax);
+  \draw[flow] (Ax) -- node[above,font=\scriptsize]{dot} (num);
+  \draw[flow] (x.south) to[out=-90,in=180] (den.west);
+  \draw[flow] (num.east) -- node[above,font=\scriptsize]{$\div$} (rho.north west);
+  \draw[flow] (den.east) -- (rho.south west);
+  \node[font=\scriptsize\itshape, simGray, below=1mm of den]
+    {if $\mat{A}\vx=\mu\vx$ then $\rho=\mu$ exactly};
+\end{tikzpicture}
+\caption[The Rayleigh quotient]{The Rayleigh quotient $\rho(\vx)=\inner{\mat{A}
+\vx}{\vx}/\inner{\vx}{\vx}$ turns a vector into an eigenvalue estimate with one
+operator apply and two inner products. On an exact eigenvector it returns the
+eigenvalue exactly; near an eigenvector it is accurate to second order in the
+direction error. Paired with power iteration's direction estimate, it completes
+the eigenpair.}
+\label{fig:rayleigh}
+\end{figure}
+
+\subsection{Several at once: subspace iteration}
+
+We want a \emph{handful} of eigenpairs, not one. The natural generalization
+iterates a whole \emph{block} of vectors rather than a single one.
+\emph{Subspace} (or \emph{orthogonal}) iteration carries an $N\times p$ matrix
+$\mat{X}_k$ of $p$ columns, applies $\mat{A}$ to all of them, and then
+\emph{re-orthonormalizes} the columns:
+\begin{equation}
+  \mat{Y} = \mat{A}\,\mat{X}_k,\qquad
+  \mat{X}_{k+1} = \operatorname{orth}(\mat{Y}),
+\end{equation}
+where $\operatorname{orth}$ is a QR-style orthonormalization
+(\cref{ch:krylovschur}). Without the re-orthonormalization every column would
+collapse onto the same dominant eigenvector; the orthogonalization forces the
+columns apart, so they converge to the $p$ \emph{dominant} eigenvectors
+$\vu_1,\dots,\vu_p$ simultaneously. The Rayleigh quotient generalizes too: the
+small $p\times p$ matrix $\mat{X}_k^{\!\top}\mat{A}\,\mat{X}_k$ has eigenvalues
+that approximate the $p$ dominant eigenvalues---the \emph{Rayleigh--Ritz}
+projection that the Krylov methods of \cref{ch:krylovschur} sharpen into their
+final form.
+
+\begin{keyidea}
+Power iteration, and its block form subspace iteration, converge to the
+\emph{dominant} eigenpairs---those of \emph{largest} magnitude. The Rayleigh
+quotient $\rho(\vx)=\inner{\mat{A}\vx}{\vx}/\inner{\vx}{\vx}$ reads the eigenvalue
+off the converged direction. The convergence rate is governed by the
+\emph{ratio} of consecutive eigenvalues $\abs{\mu_2/\mu_1}$: well-separated
+eigenvalues converge fast, clustered ones agonizingly slowly. This is the engine
+under every eigensolver---but on its own it finds exactly the wrong end of the
+spectrum for the eigenmode problem.
+\end{keyidea}
+
+\subsection{Why this is not enough}
+
+Two facts about power iteration doom it as a direct attack on the eigenmode
+problem, and naming them sharply is what motivates the spectral transform.
+
+\emph{First, it finds the largest, and we want the smallest.} The eigenmode
+analysis wants the lowest resonances, the smallest nonzero $\lambda$. Power
+iteration delivers the dominant eigenvalue, $\lambda_{\max}$---the
+\emph{highest} resonance, of no interest, and in fact a meaningless mesh-resolution
+artifact at the top of the discrete spectrum.
+
+\emph{Second, it is slow exactly where we need it.} The convergence rate is
+$\abs{\mu_2/\mu_1}$. The low resonances of a cavity are typically
+\emph{clustered}---a fundamental and its near-degenerate overtones sit close
+together---so consecutive eigenvalues have ratios near $1$, and power iteration
+crawls. The very structure of the problem we care about is the structure power
+iteration handles worst.
+
+We could try to fix the first problem by iterating with $\mat{A}^{-1}$ instead of
+$\mat{A}$: the eigenvalues of $\mat{A}^{-1}$ are $1/\mu_i$, so the smallest $\mu_i$
+becomes the largest $1/\mu_i$, and power iteration on $\mat{A}^{-1}$ converges to
+the \emph{smallest} eigenvector. This is \emph{inverse iteration}, and it is the
+right instinct---but it points only at the very smallest eigenvalue, does nothing
+for the clustering, and gives us no control over \emph{where} in the spectrum to
+look. The spectral transform is inverse iteration grown up: it lets us aim.
+
+\section{The spectral transform: shift-and-invert}
+\label{sec:shift-invert}
+
+Here is the central idea of the chapter. We cannot easily find interior or low
+eigenvalues directly. So we \emph{transform} the operator into a new one whose
+\emph{dominant} eigenvalues are precisely the original eigenvalues we want---and
+then we run the power/subspace iteration we already understand on the transformed
+operator, where it works beautifully.
+
+\subsection{Deriving the eigenvalue map}
+
+Start from the generalized eigenproblem \cref{eq:evp-gevp},
+$\Kop\vx=\lambda\Mop\vx$. Choose a \emph{shift} $\sigma$---a number near the
+eigenvalues we are hunting---and rearrange. Subtract $\sigma\Mop\vx$ from both
+sides:
+\begin{equation}
+  \Kop\vx - \sigma\Mop\vx = \lambda\Mop\vx - \sigma\Mop\vx
+  \quad\Longrightarrow\quad
+  (\Kop-\sigma\Mop)\,\vx = (\lambda-\sigma)\,\Mop\,\vx .
+\end{equation}
+Now suppose $\lambda\neq\sigma$, so $\Kop-\sigma\Mop$ is invertible on $\vx$.
+Multiply both sides by $(\Kop-\sigma\Mop)^{-1}$ and divide by the scalar
+$(\lambda-\sigma)$:
+\begin{equation}
+  \frac{1}{\lambda-\sigma}\,\vx
+    \;=\; (\Kop-\sigma\Mop)^{-1}\,\Mop\,\vx .
+\end{equation}
+Read this as an \emph{ordinary} eigenproblem for the transformed operator
+\begin{equation}
+  \boxed{\;\mat{T}_\sigma \;=\; (\Kop-\sigma\Mop)^{-1}\,\Mop,
+    \qquad \mat{T}_\sigma\,\vx \;=\; \theta\,\vx,
+    \quad \theta=\frac{1}{\lambda-\sigma}\;}
+  \label{eq:shift-invert}
+\end{equation}
+The eigenvectors are \emph{unchanged}---$\vx$ is an eigenvector of $\mat{T}_\sigma$
+exactly when it is an eigenvector of the pencil---but the eigenvalues are mapped
+by
+\begin{equation}
+  \lambda \;\longmapsto\; \theta = \frac{1}{\lambda-\sigma}.
+  \label{eq:eigmap}
+\end{equation}
+
+Now examine what this map does. The transformed eigenvalue $\theta=1/(\lambda
+-\sigma)$ is \emph{large in magnitude exactly when $\lambda$ is close to
+$\sigma$}, and small when $\lambda$ is far from $\sigma$. An eigenvalue sitting
+right at the shift is sent to infinity; one far away is sent near zero. So the
+eigenvalues of the original problem \emph{nearest the shift $\sigma$} become the
+\emph{dominant} eigenvalues of $\mat{T}_\sigma$---and those are exactly the ones
+power and subspace iteration find first and fastest.
+
+\begin{keyidea}
+\textbf{Shift-and-invert turns a hard interior eigenvalue problem into an easy
+dominant one.} Iterating against $\mat{T}_\sigma=(\Kop-\sigma\Mop)^{-1}\Mop$
+instead of the pencil maps each eigenvalue $\lambda\mapsto\theta=1/(\lambda
+-\sigma)$, so the eigenvalues \emph{nearest the shift} $\sigma$ become the
+\emph{largest} (dominant) eigenvalues of $\mat{T}_\sigma$. ``Find the eigenvalues
+near $\sigma$''---hard, interior, what the eigenmode problem actually
+needs---becomes ``find the dominant eigenvalues of $\mat{T}_\sigma$''---easy,
+exactly what iteration does. The price is that every application of
+$\mat{T}_\sigma$ requires an \emph{inner linear solve} of $(\Kop-\sigma\Mop)$,
+turning each iteration step into a \code{ksp\_solve} (\cref{ch:krylov}).
+\end{keyidea}
+
+\subsection{The spectrum reordering, made vivid}
+
+The map \cref{eq:eigmap} does more than enlarge the wanted eigenvalues: it
+\emph{reorders} the entire spectrum. The next worked example makes the reordering
+concrete with a four-eigenvalue spectrum, and \cref{fig:spectrum-reorder}---the
+hero figure of the chapter---draws the before and after.
+
+\begin{workedexample}{Shift-and-invert reorders a small spectrum}{reorder}
+A pencil $(\Kop,\Mop)$ has four eigenvalues
+\[
+  \lambda_1 = 1,\quad \lambda_2 = 4,\quad \lambda_3 = 9,\quad \lambda_4 = 16,
+\]
+and we want the two nearest $\lambda=4$. Plain subspace iteration on the pencil
+would converge to $\lambda_4=16$ and $\lambda_3=9$ first---the dominant pair, the
+\emph{wrong} ones. Choose the shift $\sigma=4.5$, just above the target, and form
+the transformed eigenvalues $\theta_i=1/(\lambda_i-\sigma)$:
+\[
+  \theta_1 = \frac{1}{1-4.5} = -0.286,\quad
+  \theta_2 = \frac{1}{4-4.5} = -2.0,\quad
+  \theta_3 = \frac{1}{9-4.5} = 0.222,\quad
+  \theta_4 = \frac{1}{16-4.5} = 0.087.
+\]
+Rank them by magnitude:
+\[
+  \abs{\theta_2}=2.0 \;>\; \abs{\theta_1}=0.286 \;>\; \abs{\theta_3}=0.222
+  \;>\; \abs{\theta_4}=0.087.
+\]
+The order has \emph{inverted}. In the original spectrum $\lambda_4=16$ was
+dominant and $\lambda_2=4$ was a small interior value; after the transform
+$\theta_2$ (from $\lambda_2=4$, nearest the shift) is by far the largest, and
+$\theta_1$ (from $\lambda_1=1$, the next nearest) is second. Subspace iteration on
+$\mat{T}_\sigma$ now converges \emph{first} to exactly the two eigenpairs we
+wanted---those near $\sigma=4.5$---and the convergence is fast, because
+$\abs{\theta_1/\theta_2}=0.286/2.0\approx 0.14$ is a small ratio, far from the
+$\abs{\lambda_3/\lambda_4}=9/16\approx 0.56$ ratio that throttled the untransformed
+iteration. We get the right eigenpairs \emph{and} faster convergence, both from
+the single act of bending the spectrum.
+
+\medskip
+\emph{Reading the answer back.} The iteration returns $\theta_2=-2.0$. We recover
+the physical eigenvalue by inverting \cref{eq:eigmap}:
+$\lambda = \sigma + 1/\theta = 4.5 + 1/(-2.0) = 4.5 - 0.5 = 4$, exactly
+$\lambda_2$. The eigenvector needs no untransforming---it is the \emph{same}
+vector $\vx$ in both problems.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    name=before,
+    width=0.82\linewidth, height=34mm,
+    xlabel={original eigenvalue $\lambda$},
+    xmin=-1, xmax=18, ymin=0, ymax=1.4,
+    axis lines=left, ytick=\empty, xtick={1,4,9,16},
+    xticklabel style={font=\scriptsize}, xlabel style={font=\scriptsize},
+    clip=false,
+  ]
+  % the four eigenvalues as stems
+  \addplot[ycomb, very thick, simBlue, mark=*, mark size=2pt] coordinates {
+    (1,1)(4,1)(9,1)(16,1)};
+  % shift marker
+  \draw[simRust, thick, densely dashed] (axis cs:4.5,0) -- (axis cs:4.5,1.3);
+  \node[font=\scriptsize, simRust] at (axis cs:4.5,1.42) {shift $\sigma=4.5$};
+  % wanted band
+  \node[font=\scriptsize\itshape, simGray] at (axis cs:13,1.15) {dominant end};
+  \node[font=\scriptsize, simBlue, anchor=south] at (axis cs:1,1) {$\lambda_1$};
+  \node[font=\scriptsize, simBlue, anchor=south] at (axis cs:4,1) {$\lambda_2$};
+  \node[font=\scriptsize, simBlue, anchor=south] at (axis cs:9,1) {$\lambda_3$};
+  \node[font=\scriptsize, simBlue, anchor=south] at (axis cs:16,1) {$\lambda_4$};
+\end{axis}
+\begin{axis}[
+    name=after, at={(before.south west)}, anchor=north west, yshift=-9mm,
+    width=0.82\linewidth, height=40mm,
+    xlabel={transformed eigenvalue $\theta=1/(\lambda-\sigma)$},
+    ylabel={}, xmin=-2.6, xmax=2.6, ymin=0, ymax=2.4,
+    axis lines=left, ytick=\empty,
+    xtick={-2.0,-0.286,0.087,0.222}, xticklabels={$-2.0$,,,},
+    xticklabel style={font=\scriptsize}, xlabel style={font=\scriptsize},
+    clip=false,
+  ]
+  % transformed eigenvalues, height = magnitude (dominance)
+  \addplot[ycomb, very thick, simRust, mark=*, mark size=2pt] coordinates {
+    (-2.0,2.0)(-0.286,0.286)(0.222,0.222)(0.087,0.087)};
+  \node[font=\scriptsize, simRust, anchor=south] at (axis cs:-2.0,2.0) {$\theta_2$ (was $\lambda_2$)};
+  \node[font=\scriptsize, simGray, anchor=south] at (axis cs:-0.286,0.286) {$\theta_1$};
+  \node[font=\scriptsize, simGray, anchor=south west] at (axis cs:0.222,0.222) {$\theta_3$};
+  \node[font=\scriptsize, simGray, anchor=south west] at (axis cs:0.087,0.087) {$\theta_4$};
+  \node[font=\scriptsize\itshape, simRust] at (axis cs:-1.4,1.7) {now dominant};
+\end{axis}
+\end{tikzpicture}
+\caption[Shift-and-invert reorders the spectrum]{The spectral transform of
+\cref{wex:reorder}, drawn. \emph{Top:} the original spectrum, four eigenvalues
+$\{1,4,9,16\}$; the wanted pair sits near the shift $\sigma=4.5$ (rust dashed),
+in the interior, while iteration's natural target is the dominant end at the
+right. \emph{Bottom:} after the map $\theta=1/(\lambda-\sigma)$, the stem heights
+show transformed magnitude (dominance). $\theta_2$ (from $\lambda_2=4$, nearest
+the shift) towers over the rest---it has become the dominant eigenvalue---and
+$\theta_1$ is second. Iteration on the transformed operator now finds exactly the
+near-$\sigma$ pair first. Bending the spectrum turns the hard interior request
+into the easy dominant one.}
+\label{fig:spectrum-reorder}
+\end{figure}
+
+\subsection{The cost: an inner linear solve per apply}
+
+The transform is not free, and the price is precisely located. To run iteration
+on $\mat{T}_\sigma=(\Kop-\sigma\Mop)^{-1}\Mop$ we must, at every step, compute
+$\mat{T}_\sigma\vv$ for the current iterate $\vv$. Written out, that is three
+moves:
+\begin{equation}
+  \vv
+  \;\xrightarrow{\ \text{apply }\Mop\ }\;
+  \vw = \Mop\vv
+  \;\xrightarrow{\ \text{inner solve}\ }\;
+  \vy = (\Kop-\sigma\Mop)^{-1}\vw
+  \;\xrightarrow{\ \text{untransform}\ }\;
+  \vy .
+  \label{eq:siapply}
+\end{equation}
+The first move is a cheap matrix--vector product against the mass matrix. The
+\emph{second} move is the expensive one: applying $(\Kop-\sigma\Mop)^{-1}$ means
+\emph{solving the linear system} $(\Kop-\sigma\Mop)\vy=\vw$. That is exactly the
+sparse linear solve of \cref{ch:krylov}---a \code{ksp\_solve}---and because the
+shifted matrix $\Kop-\sigma\Mop$ is large and sparse, it is itself solved
+iteratively, almost always with a preconditioner (\cref{ch:multigrid}). The third
+move is per-backend coordinate bookkeeping (an optional scaling un-twist) that
+does not change the direction.
+
+So the body of one shift-invert iteration step is the composition
+\begin{equation}
+  \text{apply }\Mop \;\rhd\; \text{inner }\code{ksp\_solve} \;\rhd\;
+  \text{scale-untransform},
+\end{equation}
+and the \emph{outer} eigenvalue iteration wraps this body in its power/subspace
+loop. \Cref{fig:si-apply} draws the body. This is the structural heart of the
+shift-invert eigensolve: \emph{an outer eigenvalue iteration whose every step
+contains an inner linear solve}. The solver of \cref{ch:krylov,ch:gmres} that we
+built to solve $\mat{A}\vx=\vb$ now reappears as a \emph{subroutine called once
+per eigen-iteration step}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  \node[data, minimum width=14mm] (v) {$\vv$};
+  \node[opbox, minimum width=22mm, right=10mm of v] (Mv) {apply $\Mop$};
+  \node[extern, minimum width=34mm, right=10mm of Mv] (solve)
+    {\textbf{inner }\code{ksp\_solve}\\[1pt]\footnotesize $(\Kop-\sigma\Mop)^{-1}$};
+  \node[opbox, minimum width=26mm, right=10mm of solve] (un) {scale-untransform};
+  \node[product, minimum width=20mm, right=10mm of un] (out) {$\mat{T}_\sigma\vv$};
+  \draw[flow] (v) -- (Mv);
+  \draw[flow] (Mv) -- node[above,font=\scriptsize]{$\vw$} (solve);
+  \draw[flow] (solve) -- node[above,font=\scriptsize]{$\vy$} (un);
+  \draw[flow] (un) -- (out);
+  % annotations
+  \node[font=\scriptsize\itshape, simGray, below=2mm of Mv] {cheap matvec};
+  \node[font=\scriptsize\itshape, simRust, below=2mm of solve, align=center]
+    {the cost:\\a full linear solve\\(\cref{ch:krylov,ch:multigrid})};
+  \node[font=\scriptsize\itshape, simGray, below=2mm of un] {coordinate twist};
+  % the outer loop wrapping
+  \draw[backflow] (out.north) to[out=90,in=90]
+    node[above,font=\scriptsize,simRust]{outer eigen-iteration repeats} (v.north);
+\end{tikzpicture}
+\caption[The shift-invert apply and its inner solve]{One application of the
+transformed operator $\mat{T}_\sigma=(\Kop-\sigma\Mop)^{-1}\Mop$, the body of the
+eigen-iteration. A matrix--vector product against the mass matrix $\Mop$ (cheap)
+feeds an \emph{inner linear solve} of the shifted operator $\Kop-\sigma\Mop$
+(expensive: a full \code{ksp\_solve}, \cref{ch:krylov}, usually preconditioned,
+\cref{ch:multigrid}), followed by a per-backend scale-untransform. The outer
+eigenvalue iteration (dashed rust) repeats this body each step. The linear solver
+of the earlier chapters becomes a subroutine of the eigensolver.}
+\label{fig:si-apply}
+\end{figure}
+
+\section{The eigensolver as a black box}
+\label{sec:blackbox}
+
+We now know, in principle, how to find the low resonances: transform the spectrum
+with a shift, run subspace iteration on the transformed operator, recover the
+eigenpairs. But Palace does \emph{not} write this loop. The eigenmode analysis is
+the one analysis in the book whose ``solve'' stage is a single, opaque call to a
+specialized library---and this section explains why, and what it means for the
+shape of the code.
+
+\subsection{The fourth solve corner}
+
+\Cref{ch:situating} sorted every analysis's middle stage into one of \emph{four
+solve corners}. Three of them are loops Palace writes: the fixed-operator family
+solve (electrostatics), the operator-varying sweep (driven), the sequential fold
+(transient). The fourth corner is different in kind: the \emph{opaque black-box
+solve}, and the eigenmode analysis is its sole inhabitant. As \cref{ch:operators}
+put it, a solver is an operator you \emph{apply}---and the eigensolver takes that
+to its limit. The entire outer iteration lives \emph{inside a library}; Palace
+hands over the operators and reads back the answer, authoring no loop at all.
+
+The reason is practical and decisive. The outer eigenvalue iteration is not the
+simple power iteration of \cref{sec:power}; production eigensolvers use
+\emph{Krylov--Schur} or \emph{Arnoldi} methods (\cref{ch:krylovschur}), which
+maintain and periodically ``restart'' a growing Krylov basis, run delicate
+re-orthogonalization, apply locking and purging of converged pairs, and decide
+convergence by subtle residual criteria. This machinery is intricate, easy to get
+subtly wrong, and already implemented to a very high standard in specialized
+libraries---SLEPc, ARPACK. Re-implementing it would be folly. So Palace composes
+against it: it assembles $(\Kop,\Mop)$, configures the shift and the inner solver,
+and calls the library's \code{Solve}.
+
+\subsection{Reverse communication: the library calls back}
+
+There is one wrinkle that makes the black box especially elegant. The library
+drives the iteration, but it does not contain Palace's operators---it cannot,
+because those operators are matrix-free and live in Palace's data structures
+(\cref{ch:matrixfree}). So the library and Palace cooperate through
+\emph{reverse communication}: the library runs its loop, and whenever it needs a
+matrix--vector product, it \emph{pauses and calls back} into Palace, saying ``apply
+the operator to this vector and hand me the result.'' Palace supplies the
+\code{apply}---which, for shift-invert, is the whole inner-solve body of
+\cref{fig:si-apply}---and the library resumes.
+
+\Cref{fig:blackbox-rci} draws the control flow. The outer loop is the library's;
+the apply callbacks are Palace's; and the line between them is the one interface
+of \cref{ch:operators}: \code{apply(op, v)}. The eigensolver never sees Palace's
+mesh, materials, or assembly; Palace never sees the library's Krylov basis,
+restart logic, or convergence test. Each side holds what it owns and speaks to the
+other only through the apply interface.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  % the library box (drives the loop)
+  \node[extern, minimum width=40mm, minimum height=26mm] (lib) at (0,0) {};
+  \node[font=\footnotesize\bfseries, simViolet] at (lib.north) [yshift=-3.5mm]
+    {eigensolver library};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (lib.center) [yshift=2mm]
+    {Krylov--Schur loop\\(\cref{ch:krylovschur}):\\restart, orthogonalize,\\
+     lock, convergence test};
+  \node[font=\scriptsize, simViolet] at (lib.south) [yshift=3.5mm] {SLEPc / ARPACK};
+  % Palace apply box
+  \node[stage, minimum width=34mm, minimum height=20mm, right=34mm of lib] (pal) {};
+  \node[font=\footnotesize\bfseries, simBlue] at (pal.north) [yshift=-3.5mm]
+    {Palace \code{apply}};
+  \node[font=\scriptsize, simInk, align=center] at (pal.center) [yshift=-1mm]
+    {$\vv\mapsto\mat{T}_\sigma\vv$:\\apply $\Mop$, inner solve,\\untransform
+     (\cref{fig:si-apply})};
+  % the reverse-communication callback arrows
+  \draw[flow] (lib.east|-0,0.5) -- node[above,font=\scriptsize]{``apply to $\vv$''}
+    (pal.west|-0,0.5);
+  \draw[backflow] (pal.west|-0,-0.5) -- node[below,font=\scriptsize]{result $\mat{T}_\sigma\vv$}
+    (lib.east|-0,-0.5);
+  % setup in, eigenpairs out
+  \node[data, align=center, text width=22mm, above=8mm of lib] (in)
+    {assemble $(\Kop,\Mop)$,\\ shift $\sigma$, inner ksp};
+  \draw[flow] (in) -- (lib);
+  \node[product, align=center, text width=22mm, below=8mm of lib] (out)
+    {converged\\eigenpairs $(\lambda_i,\vx_i)$};
+  \draw[flow] (lib) -- (out);
+  % labels for who owns what
+  \node[font=\scriptsize\itshape, simViolet, above=0.5mm of in] {one opaque call};
+  \node[font=\scriptsize\bfseries, simInk] at ($(lib.east)!0.5!(pal.west)+(0,1.6)$)
+    {one interface: \code{apply}};
+\end{tikzpicture}
+\caption[The eigensolver as a black box with reverse-communication callbacks]{The
+black-box eigensolve. Palace assembles the pencil $(\Kop,\Mop)$, picks a shift
+$\sigma$ and an inner linear solver, and makes \emph{one opaque call} into a
+specialized library (SLEPc, ARPACK). The library \emph{drives} the outer
+iteration---the Krylov--Schur restart, orthogonalization, locking, and convergence
+test of \cref{ch:krylovschur}---and whenever it needs a matrix--vector product it
+\emph{calls back} into Palace through the one \code{apply} interface of
+\cref{ch:operators} (\emph{reverse communication}). Palace's apply is the entire
+shift-invert body of \cref{fig:si-apply}. Converged eigenpairs come back out. No
+Palace-authored loop exists.}
+\label{fig:blackbox-rci}
+\end{figure}
+
+\subsection{Contrast with the linear-solve corners}
+
+The contrast with the other three solve corners is sharp and worth stating
+plainly. In the electrostatic, driven, and transient analyses, Palace
+\emph{writes the loop}: the per-terminal family loop, the frequency sweep, the
+time march are all Palace source, and the linear solver they call is a
+\code{ksp\_solve} \emph{whose iteration Palace also owns} (\cref{ch:krylov}).
+There the solver is a constructed operator Palace builds and drives.
+
+In the eigenmode analysis the ownership inverts. The \emph{outer} loop belongs to
+the library; Palace owns only the \emph{apply} the library calls back for. The
+eigensolve is therefore the deepest composition in the book: a library-owned outer
+iteration, calling back into a Palace-owned shift-invert body, which itself
+contains a Palace-owned \emph{inner} \code{ksp\_solve}, which itself calls a
+preconditioner. Three nested layers of ``a solver is an operator''
+(\cref{ch:operators}), and the outermost one is not even Palace's code.
+
+\begin{pitfall}
+Because the outer eigen-iteration is library-owned, the eigenmode analysis is the
+one place in this book where the constructive ``iteration rotation'' of the later
+chapters \emph{cannot reach the loop}: there is no Palace-authored kernel to
+re-express. The shift-invert \emph{body} lifts cleanly to a global tensor-field
+expression---it is just apply-$\Mop$, solve, untransform---but the \emph{loop}
+around it is an opaque-library obstruction, a genuine boundary of what the
+specification can rotate. The honest disposition is to document the boundary, not
+to pretend a loop exists where the library hides one. The full constructive
+realization of what the library does---Lanczos, Arnoldi, Krylov--Schur in our own
+vocabulary---is \cref{ch:krylovschur}; here it stays a black box on purpose.
+\end{pitfall}
+
+\section{The quadratic eigenproblem: linearization}
+\label{sec:quadratic}
+
+The derivation so far assumed a lossless cavity, giving the linear pencil
+$\Kop\vx=\lambda\Mop\vx$. Real cavities lose energy---to wall conductivity,
+dielectric absorption, radiation through ports---and \cref{ch:reductions-pde}
+showed that loss adds a damping operator $\Cop$ and makes the eigenproblem
+\emph{quadratic} in the eigenvalue:
+\begin{equation}
+  \bigl(\Kop + \lambda\,\Cop + \lambda^2\,\Mop\bigr)\,\vx = \mathbf 0,
+  \qquad \lambda = i\omega.
+  \label{eq:qevp}
+\end{equation}
+Now $\lambda$ is complex: its imaginary part is the oscillation frequency, its
+real part the decay rate. This is a \emph{polynomial eigenvalue problem}, and the
+shift-invert iteration we built expects an ordinary or generalized \emph{linear}
+problem. The standard remedy is \emph{linearization}: trade the quadratic
+$N\times N$ problem for a linear $2N\times 2N$ one, at the cost of doubling the
+size.
+
+The trick is the same order-reduction we used for the transient ODE in
+\cref{ch:reductions-pde}: introduce a second unknown for $\lambda\vx$. Set
+$\vz=\lambda\vx$ and stack $(\vx,\vz)$. Then \cref{eq:qevp} becomes the linear
+generalized eigenproblem
+\begin{equation}
+  \underbrace{\begin{pmatrix} \mathbf 0 & \mat{I} \\ -\Kop & -\Cop \end{pmatrix}}_{\tilde\Kop}
+  \begin{pmatrix}\vx\\\vz\end{pmatrix}
+  =
+  \lambda
+  \underbrace{\begin{pmatrix} \mat{I} & \mathbf 0 \\ \mathbf 0 & \Mop \end{pmatrix}}_{\tilde\Mop}
+  \begin{pmatrix}\vx\\\vz\end{pmatrix},
+  \label{eq:linearization}
+\end{equation}
+which one can multiply out to verify: the top block row reads $\vz=\lambda\vx$
+(the definition of $\vz$), and the bottom row reads
+$-\Kop\vx-\Cop\vz=\lambda\Mop\vz$, i.e.
+$-\Kop\vx-\Cop\lambda\vx=\lambda^2\Mop\vx$, which rearranges to the quadratic
+\cref{eq:qevp}. The doubled pencil $(\tilde\Kop,\tilde\Mop)$ is an ordinary
+generalized eigenproblem of the kind \cref{sec:shift-invert} handles---so we apply
+the \emph{same} shift-invert machinery to it, and the library solves it with the
+\emph{same} black-box call, now on the $2N$-dimensional pencil. Each eigenpair of
+the doubled problem yields the physical $(\lambda,\vx)$ directly; the extra block
+$\vz=\lambda\vx$ is discarded.
+
+For the still more general \emph{nonlinear} eigenproblem---where the operator
+depends on $\lambda$ in a way no polynomial captures, $\bigl(\Kop+\lambda\Cop
++\lambda^2\Mop+\mat{A}_2(\lambda)\bigr)\vx=\mathbf 0$---linearization no longer
+suffices, and one needs a genuinely nonlinear eigensolver built on
+\emph{deflation} (finding eigenpairs one at a time and projecting out the ones
+already found). That is the subject of \cref{ch:deflation}; we flag it here only
+to place the quadratic case as the easy middle rung between the linear pencil and
+the fully nonlinear problem.
+
+\section{Reading the results}
+\label{sec:results}
+
+The library hands back a set of converged eigenpairs $(\lambda_i,\vx_i)$. Two
+short steps turn them into the physical products the engineer asked for, and one
+necessary cleanup keeps the answer honest.
+
+\subsection{Eigenvalue to frequency, eigenvector to mode field}
+
+The eigenvalue carries the frequency. For the lossless linear problem
+$\lambda=\omega^2$, so
+\begin{equation}
+  \omega = \sqrt\lambda,\qquad
+  f = \frac{\omega}{2\pi} = \frac{\sqrt\lambda}{2\pi}.
+  \label{eq:freq}
+\end{equation}
+For the lossy quadratic problem $\lambda=i\omega$ is complex, so the frequency is
+$\omega = \lambda/i = -i\lambda$, and the resonant frequency is read from its
+imaginary part. The \emph{eigenvector} $\vx_i$ is, directly, the spatial pattern
+of the mode field---the standing-wave shape the cavity rings in, the
+three-dimensional analogue of the $\sin(n\pi x/L)$ modes we computed by hand in
+\cref{ch:reductions-pde}.
+
+The lossy case carries a bonus the lossless case cannot: the \emph{quality
+factor} $Q$, the dimensionless measure of how slowly a mode loses energy. It
+comes from the ratio of the imaginary part of $\lambda$ (the oscillation) to its
+real part (the decay):
+\begin{equation}
+  Q = \frac{\abs{\Im\lambda}}{2\,\abs{\Re\lambda}}
+    = \frac{\Im\omega}{2\,\Re\omega}\cdot(\text{convention}),
+\end{equation}
+a high $Q$ meaning a sharp, long-ringing resonance. The exact assembly of $Q$
+from the complex eigenpair is an output reduction, treated with the other
+postprocessing products in \cref{ch:reductions}; here we note only that the
+eigenmode analysis is the one that \emph{produces} it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=9mm]
+  \node[data, minimum width=20mm] (pair) {$(\lambda_i,\vx_i)$};
+  % eigenvalue branch
+  \node[opbox, minimum width=26mm, right=12mm of pair, yshift=8mm] (lam)
+    {$\lambda_i$ (eigenvalue)};
+  \node[product, minimum width=30mm, right=12mm of lam] (freq)
+    {$f_i=\sqrt{\lambda_i}/2\pi$};
+  \node[opbox, minimum width=26mm, below=4mm of freq] (q)
+    {$Q_i$ (from $\Im\lambda$)};
+  % eigenvector branch
+  \node[opbox, minimum width=26mm, right=12mm of pair, yshift=-8mm] (vec)
+    {$\vx_i$ (eigenvector)};
+  \node[product, minimum width=30mm, right=12mm of vec, yshift=-6mm] (mode)
+    {mode field $\vE_i(\vx)$};
+  \draw[flow] (pair.east) to[out=30,in=180] (lam.west);
+  \draw[flow] (pair.east) to[out=-30,in=180] (vec.west);
+  \draw[flow] (lam) -- (freq);
+  \draw[flow] (lam.east) to[out=-20,in=160] (q.west);
+  \draw[flow] (vec) -- (mode);
+  \node[font=\scriptsize\itshape, simGray, below=1mm of mode]
+    {(\cref{ch:reductions-pde} computed the 1-D version by hand)};
+\end{tikzpicture}
+\caption[From eigenpair to physical product]{Reading the eigensolver's output.
+Each converged eigenpair $(\lambda_i,\vx_i)$ splits two ways. The
+\emph{eigenvalue} $\lambda_i$ gives the resonant frequency $f_i=\sqrt{\lambda_i}/
+2\pi$ (and, in the lossy case, the quality factor $Q_i$ from its imaginary part,
+reduced in \cref{ch:reductions}). The \emph{eigenvector} $\vx_i$ \emph{is} the
+mode field $\vE_i(\vx)$, the spatial standing-wave pattern---the
+three-dimensional descendant of the hand-computed cavity modes of
+\cref{ch:reductions-pde}.}
+\label{fig:readout}
+\end{figure}
+
+\subsection{Spurious modes and the divergence-free projection}
+
+There is one trap the raw eigensolver output sets, and the eigenmode analysis must
+spring it before reporting results. The curl--curl operator $\Kop$ has a large
+\emph{null space}---it annihilates every gradient field $\Grad\phi$, because
+$\Curl\Grad\equiv\mathbf 0$ (the gauge freedom of \cref{ch:reductions-pde}). Every
+such gradient field is an eigenvector with eigenvalue $\lambda=0$. These are not
+physical resonances; they are \emph{spurious modes}, artifacts of the operator's
+null space, clustered at and near zero frequency exactly where the eigensolver,
+hunting the lowest eigenvalues, will dredge them up by the dozen.
+
+Left in, they pollute the answer: the solver returns a heap of bogus zero-frequency
+``modes'' that crowd out the real low resonances. The cure is the
+\emph{divergence-free projection} of \cref{ch:bc}: project each candidate
+eigenvector onto the subspace orthogonal to the gradients (the discrete Helmholtz
+decomposition), removing its gradient component before it is accepted as a mode.
+With the gradient null-space projected away, the spurious zero-frequency modes
+vanish and the eigensolver's lowest eigenvalues are the genuine physical
+resonances.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    name=raw,
+    width=0.46\linewidth, height=38mm,
+    title={\footnotesize raw eigensolver output},
+    title style={font=\footnotesize, yshift=-1mm},
+    xlabel={frequency $f$}, ylabel={},
+    xmin=-0.3, xmax=5, ymin=0, ymax=1.4,
+    axis lines=left, ytick=\empty, xtick={0,2,3.2,4.4},
+    xticklabels={$0$,,,}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, clip=false,
+  ]
+  % spurious cluster near zero (gray) + physical modes
+  \addplot[ycomb, very thick, simGray] coordinates {
+    (0,1.0)(0.12,0.9)(0.22,0.85)(0.05,0.95)(0.3,0.8)};
+  \addplot[ycomb, very thick, simBlue, mark=*, mark size=1.6pt] coordinates {
+    (2,1.0)(3.2,1.0)(4.4,1.0)};
+  \node[font=\scriptsize\itshape, simGray, align=center] at (axis cs:0.6,1.3)
+    {spurious\\(gradient null-space)};
+\end{axis}
+\begin{axis}[
+    name=proj, at={(raw.east)}, anchor=west, xshift=10mm,
+    width=0.46\linewidth, height=38mm,
+    title={\footnotesize after divergence-free projection},
+    title style={font=\footnotesize, yshift=-1mm},
+    xlabel={frequency $f$}, ylabel={},
+    xmin=-0.3, xmax=5, ymin=0, ymax=1.4,
+    axis lines=left, ytick=\empty, xtick={0,2,3.2,4.4},
+    xticklabels={$0$,,,}, xticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, clip=false,
+  ]
+  \addplot[ycomb, very thick, simBlue, mark=*, mark size=1.6pt] coordinates {
+    (2,1.0)(3.2,1.0)(4.4,1.0)};
+  \node[font=\scriptsize\itshape, simGreen, align=center] at (axis cs:0.9,1.3)
+    {spurious removed};
+  \node[font=\scriptsize, simBlue] at (axis cs:2,1.12) {$f_1$};
+  \node[font=\scriptsize, simBlue] at (axis cs:3.2,1.12) {$f_2$};
+  \node[font=\scriptsize, simBlue] at (axis cs:4.4,1.12) {$f_3$};
+\end{axis}
+\end{tikzpicture}
+\caption[Spurious modes removed by the divergence-free projection]{The gradient
+null space and its cure. \emph{Left:} the raw eigensolver output, hunting the
+lowest eigenvalues, dredges up a cluster of \emph{spurious} zero-frequency modes
+(gray)---gradient fields $\Grad\phi$ in the null space of the curl--curl operator
+($\Curl\Grad\equiv\mathbf 0$, \cref{ch:reductions-pde})---crowding the genuine
+physical resonances (blue). \emph{Right:} the divergence-free projection of
+\cref{ch:bc} removes each eigenvector's gradient component, the spurious cluster
+vanishes, and the lowest remaining eigenvalues are the true low resonances
+$f_1,f_2,f_3$.}
+\label{fig:spurious}
+\end{figure}
+
+\section{A worked power iteration}
+\label{sec:worked-power}
+
+We close the technical development by running power iteration on a small matrix
+fully by hand, watching the iterate rotate toward the dominant eigenvector and the
+Rayleigh quotient close in on the eigenvalue---the concrete realization of
+\cref{sec:power} that the shift-invert machinery then redirects toward the low end.
+
+\begin{workedexample}{Power iteration and the Rayleigh quotient}{power}
+Take the symmetric matrix
+\[
+  \mat{A} = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix},
+\]
+whose eigenvalues are $\mu_1=3$ (eigenvector $\vu_1=\tfrac{1}{\sqrt2}(1,1)$) and
+$\mu_2=1$ (eigenvector $\vu_2=\tfrac{1}{\sqrt2}(1,-1)$). The dominant eigenpair is
+$(3,\vu_1)$; the convergence ratio is $\abs{\mu_2/\mu_1}=1/3$. Start from
+$\vx_0=(1,0)$---deliberately \emph{not} aligned with either eigenvector---and
+iterate $\vx_{k+1}=\mat{A}\vx_k/\norm{\mat{A}\vx_k}$, recording the Rayleigh
+quotient $\rho_k=\inner{\mat{A}\vx_k}{\vx_k}/\inner{\vx_k}{\vx_k}$ at each step.
+
+\medskip
+\emph{Step 0.} $\vx_0=(1,0)$;\;
+$\mat{A}\vx_0=(2,1)$;\;
+$\rho_0 = \dfrac{(2,1)\cdot(1,0)}{(1,0)\cdot(1,0)} = \dfrac{2}{1} = 2.000$.
+
+\emph{Step 1.} Normalize: $\vx_1=(2,1)/\sqrt5=(0.894,0.447)$.\;
+$\mat{A}\vx_1=(2.236,1.789)$;\;
+$\rho_1 = \dfrac{(2.236)(0.894)+(1.789)(0.447)}{1} = 2.800$.
+
+\emph{Step 2.} Normalize $\mat{A}\vx_1$: $\vx_2=(0.781,0.625)$.\;
+$\mat{A}\vx_2=(2.187,2.031)$;\;
+$\rho_2 = (2.187)(0.781)+(2.031)(0.625) = 2.976$.
+
+\emph{Step 3.} $\vx_3=(0.732,0.681)$;\;
+$\mat{A}\vx_3=(2.145,2.094)$;\;
+$\rho_3 = (2.145)(0.732)+(2.094)(0.681) = 2.997$.
+
+\emph{Step 4.} $\vx_4=(0.717,0.697)$;\;
+$\rho_4 = 2.9997$.
+
+\medskip
+The iterate $\vx_k$ marches steadily from $(1,0)$ toward
+$\vu_1\approx(0.707,0.707)$---the second component climbing $0\to0.447\to0.625\to
+0.681\to0.697$ toward equality with the first---and the Rayleigh quotient closes
+in on $\mu_1=3$: $2.000\to2.800\to2.976\to2.997\to2.9997$. The error in $\rho_k$
+shrinks by roughly the factor $(\mu_2/\mu_1)^2=1/9$ per step (the \emph{squared}
+ratio, the symmetric-case bonus of \cref{eq:rayleigh}): $1.0\to0.20\to0.024\to
+0.003\to0.0003$, each about a ninth of the last. \Cref{fig:power-conv} plots the
+convergence.
+
+This is power iteration finding the \emph{dominant} eigenvalue $\mu_1=3$. To find
+the \emph{smallest} eigenvalue $\mu_2=1$ instead---the analogue of the low cavity
+resonance---we would run the same iteration on the shifted-inverted operator
+$(\mat{A}-\sigma\mat{I})^{-1}$ with a shift $\sigma$ near $1$: by \cref{eq:eigmap}
+the eigenvalue $\mu_2=1$ would become dominant in the transformed problem, and
+this same iteration would converge to it instead.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.66\linewidth, height=50mm,
+    xlabel={iteration $k$}, ylabel={Rayleigh quotient $\rho_k$},
+    xmin=0, xmax=4, ymin=1.8, ymax=3.15,
+    axis lines=left, xtick={0,1,2,3,4}, ytick={2.0,2.5,3.0},
+    xticklabel style={font=\scriptsize}, yticklabel style={font=\scriptsize},
+    xlabel style={font=\scriptsize}, ylabel style={font=\scriptsize},
+    legend style={font=\scriptsize, draw=simGray!50, at={(0.98,0.04)},
+      anchor=south east},
+    every axis plot/.append style={very thick},
+  ]
+  % the target eigenvalue
+  \addplot[simGray, densely dashed, domain=0:4, samples=2] {3.0};
+  \addlegendentry{$\mu_1=3$ (target)}
+  % the Rayleigh quotient trajectory
+  \addplot[simBlue, mark=*, mark size=2pt] coordinates {
+    (0,2.000)(1,2.800)(2,2.976)(3,2.997)(4,2.9997)};
+  \addlegendentry{$\rho_k$ (Rayleigh quotient)}
+\end{axis}
+\end{tikzpicture}
+\caption[Power-iteration convergence of the Rayleigh quotient]{The Rayleigh
+quotient $\rho_k$ of \cref{wex:power} converging to the dominant eigenvalue
+$\mu_1=3$ (gray dashed). Starting from a generic vector, $\rho_k$ climbs
+$2.000\to2.800\to2.976\to2.997\to2.9997$, its error falling by roughly the squared
+ratio $(\mu_2/\mu_1)^2=1/9$ each step---the second-order accuracy the Rayleigh
+quotient buys on a symmetric matrix. The fast, clean convergence here reflects a
+well-separated spectrum ($\mu_1/\mu_2=3$); a clustered low spectrum would crawl,
+which is exactly why the eigenmode problem needs the spectral transform.}
+\label{fig:power-conv}
+\end{figure}
+
+\section{The shape of the eigenmode solve}
+
+Step back and assemble the chapter into one picture. The eigenmode analysis,
+alone among the six, solves an \emph{eigenvalue} problem rather than a linear
+system or an evolution. It wants a few low resonances of a huge pencil
+$(\Kop,\Mop)$---the hard, interior, lower end of the spectrum. The naive tool,
+power/subspace iteration, finds the wrong (dominant) end and crawls on the
+clustered low modes we care about. The spectral transform fixes both at once:
+iterating against $(\Kop-\sigma\Mop)^{-1}\Mop$ remaps the eigenvalues so the ones
+near the shift become dominant, at the cost of an inner linear solve per step. And
+the whole outer iteration is delegated to a specialized library through reverse
+communication, so Palace assembles the pencil, hands over the shift and the inner
+solver, calls one opaque routine, and reads back the eigenpairs---which it turns
+into frequencies, quality factors, and mode fields after projecting away the
+spurious gradient null space.
+
+\begin{keyidea}
+The eigenmode solve is the deepest composition in the book: a
+\emph{library-owned} outer eigenvalue iteration (\cref{ch:krylovschur}), calling
+back through the \code{apply} interface (\cref{ch:operators}) into a Palace-owned
+shift-invert body (apply $\Mop$, inner solve, untransform), whose inner solve is
+itself a Palace-owned \code{ksp\_solve} (\cref{ch:krylov}) calling a
+preconditioner (\cref{ch:multigrid}). Three nested ``a solver is an operator''
+rotations, the outermost not even Palace's code. The spectral transform is the
+hinge: it converts the hard interior eigenproblem into the easy dominant one the
+iteration can solve, and pays for the conversion in inner linear solves.
+\end{keyidea}
+
+\summarysection
+The eigenmode analysis seeks a few eigenpairs $(\lambda,\vx)$ of the generalized
+eigenproblem $\Kop\vx=\lambda\Mop\vx$ ($\lambda=\omega^2$), with $\Kop$ the
+curl--curl stiffness and $\Mop$ the mass---specifically the \emph{smallest}
+nonzero $\lambda$, the lowest resonances at the hard interior/lower end of a vast
+spectrum. \emph{Power iteration} $\vx\leftarrow\mat{A}\vx/\norm{\cdot}$ converges
+to the \emph{dominant} (largest-magnitude) eigenvector at rate $\abs{\mu_2/\mu_1}$,
+with the \emph{Rayleigh quotient} $\rho(\vx)=\inner{\mat{A}\vx}{\vx}/
+\inner{\vx}{\vx}$ reading off the eigenvalue; subspace iteration finds several at
+once. But this finds the wrong end and crawls on clustered spectra. The
+\emph{spectral transform} (shift-and-invert) fixes both: iterating against
+$\mat{T}_\sigma=(\Kop-\sigma\Mop)^{-1}\Mop$ maps each eigenvalue
+$\lambda\mapsto\theta=1/(\lambda-\sigma)$, so the eigenvalues \emph{nearest the
+shift} $\sigma$ become \emph{dominant}---turning ``find eigenvalues near $\sigma$''
+(hard, interior) into ``find the dominant eigenvalues of $\mat{T}_\sigma$'' (easy).
+The cost is an \emph{inner linear solve} of $(\Kop-\sigma\Mop)$ per apply---a
+\code{ksp\_solve}, usually preconditioned---so the body is apply-$\Mop$
+$\rhd$ inner-solve $\rhd$ untransform. In practice the \emph{outer} eigenvalue
+iteration (Krylov--Schur/Arnoldi) lives inside a specialized library (SLEPc,
+ARPACK) that drives the loop and \emph{calls back} for the apply (reverse
+communication): the eigenmode driver assembles $(\Kop,\Mop)$, hands them plus the
+shift to the library, and reads back converged eigenpairs in one opaque call---the
+fourth, black-box solve corner. The lossy \emph{quadratic} eigenproblem
+$(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$ is \emph{linearized} to a doubled
+linear pencil and solved the same way. Finally, eigenvalues become frequencies
+$f=\sqrt\lambda/2\pi$ (and quality factors $Q$ from the imaginary part) and
+eigenvectors become mode fields, after a \emph{divergence-free projection} removes
+the spurious gradient null-space modes clustered at zero frequency.
+
+\furtherreading
+The definitive modern treatment of large-scale eigenvalue computation---power and
+subspace iteration, the spectral transform, and the projection methods of the next
+chapter---is Saad's \emph{Numerical Methods for Large Eigenvalue
+Problems}~\citep{saad2011eig}; its chapters on the shift-and-invert Arnoldi method
+are the direct background for \cref{sec:shift-invert,sec:blackbox}. The
+Krylov--Schur restarting that the library uses to drive the outer iteration is due
+to Stewart~\citep{stewart2001krylovschur}, the subject of \cref{ch:krylovschur}.
+For the underlying linear-algebra fundamentals---the Rayleigh quotient, its
+second-order accuracy, and the geometry of convergence---Trefethen and
+Bau~\citep{trefethenbau1997} remain the clearest undergraduate-accessible source.
+The reverse-communication black-box structure of \cref{sec:blackbox} is the
+ARPACK/SLEPc design; the constructive realization of the loop those libraries hide
+is developed, in our own vocabulary, in \cref{ch:krylovschur}, and the nonlinear
+(deflation) generalization in \cref{ch:deflation}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Which end, and why.} The eigenmode analysis wants the
+  \emph{smallest} nonzero $\lambda$, yet power iteration finds the
+  \emph{largest}. Using the eigenbasis expansion \cref{eq:power-expand}, explain
+  in one sentence why iteration amplifies the dominant eigenvector. Then state the
+  convergence ratio for the dominant pair and explain why a \emph{clustered} low
+  spectrum (the cavity's near-degenerate overtones) makes \emph{direct} iteration
+  for those modes especially slow.
+  \item \textbf{The eigenvalue map by hand.} A pencil has eigenvalues
+  $\lambda\in\{2,5,11,20\}$ and you want the two nearest $\lambda=6$. (i) Choose a
+  shift $\sigma=6$ and compute the four transformed eigenvalues
+  $\theta_i=1/(\lambda_i-\sigma)$. (ii) Rank them by magnitude and confirm the two
+  you wanted are now dominant. (iii) The iteration returns $\theta=-1.0$; recover
+  the physical $\lambda$. (iv) Why does the eigenvector need no untransforming?
+  \item \textbf{Locating the cost.} Write out the three moves of one application of
+  $\mat{T}_\sigma=(\Kop-\sigma\Mop)^{-1}\Mop$ to a vector $\vv$
+  (\cref{eq:siapply}). Which move dominates the cost, and which chapter's machinery
+  performs it? Explain why the shifted matrix $\Kop-\sigma\Mop$ is solved
+  \emph{iteratively} rather than factored once, given that the shift $\sigma$ is
+  held fixed for the whole eigensolve. (Hint: contrast with the fixed-operator
+  electrostatic family of \cref{ch:reductions-pde}---when \emph{is} a single
+  factorization the right call?)
+  \item \textbf{Rayleigh quotient accuracy.} Run two more steps of the power
+  iteration of \cref{wex:power} starting from $\vx_4=(0.717,0.697)$, computing
+  $\rho_5$ and $\rho_6$. Verify the error in $\rho_k$ shrinks by roughly $1/9$ per
+  step, and explain where the factor $1/9$ comes from. What would the per-step
+  error-reduction factor be if instead $\mu_1=3$, $\mu_2=2.9$ (a near-cluster)?
+  \item \textbf{The black box, drawn.} In your own words, describe \emph{reverse
+  communication}: what does the library own, what does Palace own, and what is the
+  single interface across which they cooperate? Why can the library not simply hold
+  Palace's operators directly (\cref{ch:matrixfree})? Contrast the eigenmode solve
+  corner with the electrostatic one: in which does Palace write the outer loop, and
+  in which does it write only the apply?
+  \item \textbf{Linearize the quadratic.} Verify by direct multiplication that the
+  doubled pencil \cref{eq:linearization} is equivalent to the quadratic
+  eigenproblem \cref{eq:qevp}: expand both block rows and recover
+  $(\Kop+\lambda\Cop+\lambda^2\Mop)\vx=\mathbf 0$. What is the size of the doubled
+  problem relative to the original, and what is discarded from each computed
+  eigenvector when reading back the physical mode?
+  \item \textbf{Spurious modes.} Explain why the curl--curl stiffness $\Kop$ has a
+  large null space (cite the exactness identity from \cref{ch:reductions-pde}) and
+  why every null-space vector is an eigenvalue-zero eigenvector of the pencil. Why
+  do these spurious modes appear precisely where the eigenmode solver is looking
+  (the low end)? What operation (\cref{ch:bc}) removes them, and what subspace does
+  it project onto?
+  \item \textbf{Reading the results.} A lossy eigensolve returns the complex
+  eigenvalue $\lambda = i\,\omega$ with $\lambda = (-0.02 + 6.28\,i)\times10^{9}$.
+  (i) What resonant frequency $f$ (in Hz) does this mode have? (ii) Which part of
+  $\lambda$ carries the decay, and does a \emph{smaller} real part mean a higher or
+  lower quality factor $Q$? (iii) Why does the lossless linear problem
+  ($\lambda=\omega^2$ real) produce no $Q$ at all?
+  \item \textbf{Choosing the shift.} You want the lowest five resonances of a
+  cavity, and you know the fundamental is near $f_0$. (i) What shift $\sigma$ (in
+  terms of $\lambda=\omega^2=(2\pi f)^2$) would you pass to the eigensolver, and
+  why place it slightly below the lowest wanted eigenvalue rather than at zero?
+  (ii) What goes wrong if you set $\sigma$ exactly equal to an eigenvalue? (iii) If
+  the five wanted modes span a wide frequency range, why might a single shift
+  converge slowly on the highest of them, and what does that suggest about the
+  trade-off in choosing $\sigma$?
+\end{enumerate}

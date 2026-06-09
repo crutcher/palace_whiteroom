@@ -1,0 +1,887 @@
+\chapter{The Synthesized Library: Architecture}
+\label{ch:synthlib}
+
+\chapterorient{Five parts have disassembled Palace into named pieces and shown
+that every analysis is a composition of the same handful of them. This part puts
+the pieces back---not as the C++ they came from, but as a small, clean
+\emph{library} written in the calculus of Part~III: the simulator rendered as
+code. This opening chapter lays out that library's \emph{architecture}. We meet
+the three \emph{views} of the machine the book has been building (top-down,
+bottom-up, and---new here---the implementation view), then the five modules the
+library splits into, the dependency graph that orders them, the load-bearing rule
+that keeps the code a \emph{view} of the spec rather than a second copy of it, and
+the \texttt{\#extern} boundary where three opaque kernels stop. By the end you
+will know the shape of the whole library; the next two chapters tour its modules
+(\cref{ch:fivelibs}) and trace one driver through it as code
+(\cref{ch:composing}).}
+
+\section{Three views of one machine}
+\label{sec:threeviews}
+
+A complete simulator is a large object, and a large object is best understood from
+more than one side. This book has, by now, walked around the machine and looked at
+it from three. It is worth naming all three at once, because this part is the
+third of them, and it only makes sense in relation to the other two.
+
+The first view is \emph{top-down}: \emph{what does the machine do?} You stand at
+the user-facing entry points---the six analyses an engineer actually invokes---and
+read each as a coherent feature: the electrostatic capacitance extraction, the
+driven frequency sweep, the eigenmode solve. Part~V took this view, devoting one
+chapter to each modality and closing, in \cref{ch:fulltrace}, with a single driver
+traced from its configuration file to its output plot. A driver, seen top-down, is
+a \emph{composition root}: inputs are configuration, the output is the physical
+product, and the body composes already-built vocabulary. The top-down view answers
+``what is this analysis, end to end?''
+
+The second view is \emph{bottom-up}: \emph{what is each piece?} You start at the
+ground---cited Palace source---and climb, re-expressing each operation in a
+cleaner vocabulary one rotation at a time, until you reach the small calculus of
+combinators at the top (\cref{ch:operators}, \cref{ch:rotations}). Parts~II
+through~IV took this view: the function spaces, the assembly fold, the Krylov
+solvers, the multigrid preconditioners, the reduction verbs, each defined in
+itself, with its signature, its laws, its place in the vocabulary. The bottom-up
+view answers ``what is \code{fe\_assemble}, exactly, and where is it used?''
+
+The third view is the one this part adds. It is the \emph{implementation view}:
+\emph{what is the code?} Not what the machine does (top-down), not what each piece
+is (bottom-up), but the actual library a programmer would read if the spec were
+realized as software---the def bodies, written out, in the pseudo-language of
+\cref{ch:language}, organized into modules, with every cross-reference resolving to
+a real function in a real file. The implementation view answers ``show me the code
+that realizes all of this.''
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % the central machine
+  \node[stage, minimum width=26mm, minimum height=14mm, fill=simBgGray, draw=simGray,
+        align=center] (m) at (0,0) {\textbf{the simulator}\\[1pt]\scriptsize one machine};
+  % --- top-down view (from above) ---
+  \node[product, align=center, text width=30mm] (td) at (0,2.7)
+    {\textbf{top-down view}\\[1pt]\scriptsize \emph{what does it do?}\\6 driver features\\(Part~V, \cref{ch:fulltrace})};
+  \draw[flow, simRust] (td.south) -- node[right, font=\scriptsize]{compose} (m.north);
+  % --- bottom-up view (from below) ---
+  \node[opbox, align=center, text width=30mm] (bu) at (0,-2.7)
+    {\textbf{bottom-up view}\\[1pt]\scriptsize \emph{what is each piece?}\\vocabulary L0$\to$L4\\(Parts~II--IV)};
+  \draw[flow, simTeal] (bu.north) -- node[right, font=\scriptsize]{decompose} (m.south);
+  % --- implementation view (from the side: THIS PART) ---
+  \node[stage, fill=simBgViolet, draw=simViolet, very thick, align=center, text width=32mm]
+    (iv) at (5.6,0) {\textbf{implementation view}\\[1pt]\scriptsize \emph{what is the code?}\\the synthesized library\\(\textbf{this Part})};
+  \draw[flow, simViolet] (iv.west) -- node[above, font=\scriptsize]{render} (m.east);
+  % the three angles annotation
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-4.15)
+    {three views of the \emph{same} machine---the simulator does not change,\\only the side we read it from};
+\end{tikzpicture}
+\caption[Three views of one machine]{The same simulator, read from three sides.
+The \emph{top-down} view (above, rust) enters at the user-facing driver features
+and asks what each analysis \emph{does}, reading it as a composition of vocabulary;
+Part~V took this view. The \emph{bottom-up} view (below, teal) enters at cited
+source and asks what each \emph{piece is}, climbing the vocabulary from L0 to L4;
+Parts~II--IV took this view. The \emph{implementation view} (right, violet) is this
+Part: it renders the same vocabulary as concrete library \emph{code}---the def
+bodies a programmer would read. The machine is one object; the three views are
+three angles on it, not three machines.}
+\label{fig:threeviews}
+\end{figure}
+
+\Cref{fig:threeviews} sets the three side by side. They are not three machines;
+they are three angles on one machine. The top-down view recomposes the vocabulary
+into features; the bottom-up view decomposes the features into vocabulary; the
+implementation view renders that same vocabulary as the code that realizes it. The
+last is the natural endpoint of the journey: \cref{ch:bigidea} chose the
+pure-function picture precisely because it is ``the form the accelerator wants''---a
+library of pure tensor-in, tensor-out functions, ready to lower onto a GPU. This
+part writes that library down.
+
+\begin{keyidea}
+The simulator can be read from three sides. \emph{Top-down} (Part~V): what does each
+analysis \emph{do}---a driver as a composition root over the vocabulary.
+\emph{Bottom-up} (Parts~II--IV): what is each \emph{piece}---the vocabulary defined
+in itself, L0 to L4. \emph{The implementation view} (this Part): what is the
+\emph{code}---the same vocabulary rendered as a small library of pure functions, the
+bridge to a real GPU or accelerator backend. The synthesized library \emph{is} the
+simulator written out as code; it is the destination \cref{ch:bigidea} pointed at
+when it chose the pure-function picture for being ``the form the accelerator wants.''
+\end{keyidea}
+
+\subsection{Why a synthesized \emph{library}, and not a port}
+
+A word on what we are and are not building. We are not porting Palace---not
+translating its C++ line by line into another language. We are \emph{synthesizing}
+a library: writing down, in one clean place, the code that the spec describes,
+factored the way the spec factored it (combinator-primary, \cref{ch:combinators}),
+with the optimization tricks of the original erased (\cref{ch:bigidea}) and the
+pure-function reading made literal. The result is shorter than the original by a
+large factor, because the original's bulk is mostly performance machinery and
+boilerplate that the spec has already stripped away. What remains is the algorithm.
+
+This is why the library is small enough to print. The composition tree of
+\cref{ch:fulltrace}---the whole driven driver expanded to its matrix-free
+leaves---was finite and shallow; rendered as code, each box in that tree is a few
+lines, and the whole library is a few hundred lines across five modules. That
+smallness is not a trick of presentation. It is the payoff of five parts of
+disassembly: once you have found the handful of combinators that the whole
+simulator is built from, writing them down as code is a short exercise.
+
+\section{The five-library partition}
+\label{sec:fivelib}
+
+The library splits into five modules. The split is not arbitrary: three of the
+five \emph{mirror} the three groups the calculus of \cref{ch:combinators} already
+fell into, and the other two \emph{bracket} those three---one below, one above---to
+make the whole stack come out in a clean order. \Cref{fig:bracket} is the hero
+figure of the chapter: the five-library bracket, drawn as a stack.
+
+\begin{figure}[p]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % ===== drivers cap (top) =====
+  \node[product, minimum width=92mm, minimum height=11mm, align=center] (drv) at (0,5.2)
+    {\textbf{\code{drivers}} \;\; \emph{the entry-point surfaces}\\[1pt]
+     \scriptsize 6 sim drivers \;$\cdot$\; 6 output products \;$\cdot$\; the \code{lifecycle} ROOT \;\;(composes everything below)};
+  % ===== three middle columns =====
+  \node[stage, fill=simBgGreen, draw=simGreen, minimum width=28mm, minimum height=22mm,
+        align=center] (iter) at (-3.1,2.6)
+    {\textbf{\code{iteration}}\\[2pt]\scriptsize \code{iterate\_while}\\\code{krylov\_step}\\\code{chebyshev}\\[2pt]\itshape iteration \&\\step combinators};
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=28mm, minimum height=22mm,
+        align=center] (data) at (0,2.6)
+    {\textbf{\code{data-algebra}}\\[2pt]\scriptsize \code{linear\_combination}\\\code{inner\_product}\\\code{fe\_assemble} \dots\\[2pt]\itshape data-algebra\\combinators \& verbs};
+  \node[stage, fill=simBgRust, draw=simRust, minimum width=28mm, minimum height=22mm,
+        align=center] (coord) at (3.1,2.6)
+    {\textbf{\code{coordination}}\\[2pt]\scriptsize \code{ksp\_solve}\\\code{solve\_family}\\\code{fold\_solve} \dots\\[2pt]\itshape outer-driver caps\\\& coordination};
+  % ===== types slab (bottom) =====
+  \node[stage, fill=simBgBlue, draw=simBlue, minimum width=92mm, minimum height=11mm,
+        align=center] (types) at (0,-0.3)
+    {\textbf{\code{types}} \;\; \emph{the shared cross-cutting records}\\[1pt]
+     \scriptsize \code{IoData} \;$\cdot$\; \code{OpParams} \;$\cdot$\; \code{SimState} \;\;(every consumer rests on these)};
+  % ===== brackets / arrows =====
+  % drivers composes the three middle
+  \draw[depedge] (drv.south west) ++(8mm,0) -- (iter.north);
+  \draw[depedge] (drv.south)              -- (data.north);
+  \draw[depedge] (drv.south east) ++(-8mm,0) -- (coord.north);
+  % three middle rest on types
+  \draw[depedge] (iter.south)  -- (types.north west) ++(8mm,0);
+  \draw[depedge] (data.south)  -- (types.north);
+  \draw[depedge] (coord.south) -- (types.north east) ++(-8mm,0);
+  % the "mirrors the calculus" tag
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,0.95)
+    {the three middle libraries \emph{mirror} the three calculus doc-groups of \cref{ch:combinators}};
+  % bracket labels on the side
+  \node[font=\scriptsize\bfseries, text=simRust, anchor=west, align=left] at (5.2,5.2)
+    {top bracket:\\\scriptsize composes down};
+  \node[font=\scriptsize\bfseries, text=simBlue, anchor=west, align=left] at (5.2,-0.3)
+    {bottom bracket:\\\scriptsize everything rests on it};
+  % topological-order arrow
+  \draw[->, simGray, thick] (-5.4,-0.3) -- (-5.4,5.2)
+    node[midway, rotate=90, anchor=south, font=\scriptsize\itshape, text=simGray]
+    {topological order: a def appears after everything it uses};
+\end{tikzpicture}}
+\caption[The five-library bracket]{The architecture of the synthesized library: a
+five-module stack. The three middle libraries (\code{iteration},
+\code{data-algebra}, \code{coordination}) \emph{mirror} the three doc-groups the
+calculus of \cref{ch:combinators} already fell into---iteration and step
+combinators, data-combining verbs, and outer-driver coordination. They are
+\emph{bracketed} below by \code{types}, the genuinely shared record definitions
+(\code{IoData}, \code{OpParams}, \code{SimState}) that every consumer rests on, and
+above by \code{drivers}, the entry-point surfaces (the 6 drivers, 6 output
+products, and the \code{lifecycle} ROOT) that \emph{compose} everything beneath
+them. The bottom slab must come first and the top cap last because the stack is in
+\emph{topological order}: a definition appears only after everything it uses, so
+shared types precede their consumers and composing drivers come last. Read the
+stack bottom to top and you are reading the library in the order you could actually
+compile it.}
+\label{fig:bracket}
+\end{figure}
+
+\subsection{The three middle libraries mirror the calculus}
+
+{\sloppy
+Recall \cref{ch:combinators}. The combinator vocabulary fell naturally into groups:
+the \emph{iteration-structural} combinators that thread a carry through a loop or a
+family (\code{iterate\_while} and its relatives), and the \emph{data-algebra}
+combinators that combine tensors into tensors or scalars (\code{linear\_combination}
+and \code{inner\_product}). The synthesized library keeps that grouping, refining it
+into three modules:\par}
+
+\begingroup\sloppy
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[\code{iteration} --- iteration \& step combinators.] The value-threaded loop
+  primitive \code{iterate\_while} (\cref{ch:fold}) and the step kernels it folds:
+  the Krylov step \code{krylov\_step}, the Chebyshev smoother \code{chebyshev}.
+  These are the machines that drive one iterative solve to convergence.
+  \item[\code{data-algebra} --- data-combining verbs.] The tensor-sum combinator
+  \code{linear\_combination} and the scalar-producing \code{inner\_product}
+  (\cref{ch:combinators}), together with the named verbs that the steps and
+  reductions call: \code{fe\_assemble}, the reduction verbs \code{gram\_reduce} /
+  \code{sparameter\_reduce} / the rest, the operator builders. These are the
+  machines that combine data.
+  \item[\code{coordination} --- outer-driver caps \& coordination.] The
+  \code{Solve}-monadic outer driver \code{ksp\_solve} (\cref{ch:monad}) and the
+  family combinators that drive it over a collection: \code{solve\_family},
+  \code{frequency\_sweep}, \code{fold\_solve}, and the eigensolve cap
+  \code{eigsolve}. These are the machines that coordinate many solves.
+\end{description}
+\endgroup
+
+These three are the heart of the library, and they are exactly the three questions
+\cref{ch:bigidea} taught us to ask of any computation: \emph{what operations}
+(\code{data-algebra}), \emph{who owns the state} (the \code{Solve} monad, in
+\code{coordination}), \emph{how is evolution coordinated} (the combinators, split
+between \code{iteration} and \code{coordination}). The library's middle is the
+calculus, modularized.
+
+\subsection{The two brackets: \texttt{types} below, \texttt{drivers} above}
+
+The three middle libraries do not stand alone. They are bracketed.
+
+Beneath them sits \code{types}, the foundation. It holds only the records that are
+\emph{genuinely shared}---used by two or more of the API groups above it. There are
+three: \code{IoData}, the parsed configuration every solve reads (\cref{ch:records},
+\cref{ch:strata}); \code{OpParams}, the read-only operator-internal parameters the
+Krylov kernel and the coordination caps both close over; and \code{SimState}, the
+solve-state record the iteration kernel evolves and the coordination caps thread.
+A record used by only \emph{one} group does not live here---it is placed with that
+group (the rule has a name, below). \code{types} is the cross-cutting remainder,
+and it sits at the bottom because every consumer rests on it.
+
+Above the three sits \code{drivers}, the cap. It holds the entry-point
+surfaces---the same composition roots Part~V studied top-down: the six simulation
+drivers, the six output products, and the \code{lifecycle} ROOT that dispatches
+among them. Each is rendered as code that \emph{composes} the three middle
+libraries. The electrostatic driver, written out, is a few lines calling
+\code{fe\_assemble}, \code{solve\_family}, and \code{gram\_reduce}---exactly the
+composition of \cref{ch:fulltrace}, now as a function. \code{drivers} sits at the
+top because it uses everything below it and nothing uses it.
+
+\begin{notationbox}
+The three middle libraries take their names---\code{iteration},
+\code{data-algebra}, \code{coordination}---directly from the three calculus
+doc-groups of \cref{ch:combinators}; reading them is reading that chapter's two
+combinator branches as modules. The two brackets, \code{types} and \code{drivers},
+are the \emph{new} names this Part introduces, and they are bookkeeping names: the
+shared-record floor and the entry-point cap. Five modules, three of them the
+calculus you already know and two of them the brackets that order it.
+\end{notationbox}
+
+\subsection{Why a bracket, and why this order}
+
+Why must \code{types} be first and \code{drivers} last? Because the library is
+written in \emph{topological order}: a definition appears only after everything it
+mentions has already been defined. This is the ordinary discipline of any
+single-pass module---you cannot call a function before you have written it---and it
+forces the bracket shape. A shared record like \code{SimState} is mentioned in the
+signature of \code{krylov\_step} (which evolves it) and \code{ksp\_solve} (which
+threads it); so \code{SimState} must be defined before both, which puts \code{types}
+at the bottom. A driver like \code{electrostatic} mentions \code{fe\_assemble},
+\code{solve\_family}, and \code{gram\_reduce}; so those must all be defined before
+it, which puts \code{drivers} at the top. The brackets are not a stylistic choice;
+they are where topological order \emph{forces} the shared floor and the composing
+cap to go.
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=4mm]
+  % a linear "reading order" of defs, left to right, with dependency arcs pointing backward
+  \def\dy{0}
+  \node[stage, fill=simBgBlue, draw=simBlue] (t1) at (0,\dy) {\code{SimState}};
+  \node[stage, fill=simBgBlue, draw=simBlue, right=of t1] (t2) {\code{OpParams}};
+  \node[opbox, fill=simBgGreen, draw=simGreen, right=of t2] (iw) {\code{iterate\_while}};
+  \node[opbox, fill=simBgGreen, draw=simGreen, right=of iw] (ks) {\code{krylov\_step}};
+  \node[opbox, fill=simBgRust, draw=simRust, right=of ks] (kspv) {\code{ksp\_solve}};
+  \node[opbox, fill=simBgRust, draw=simRust, right=of kspv] (sf) {\code{solve\_family}};
+  \node[product, right=of sf] (el) {\code{electrostatic}};
+  % the reading-order baseline
+  \draw[->, simGray, very thick] (-1.0,-0.85) -- (12.6,-0.85)
+    node[right, font=\scriptsize\itshape, text=simGray] {reading / compile order};
+  % drop ticks
+  \foreach \n in {t1,t2,iw,ks,kspv,sf,el}{
+    \draw[simGray!50] (\n.south) -- (\n.south |- 0,-0.85);}
+  % dependency arcs (each points BACKWARD to something already defined): u -> v means u uses v
+  \draw[depedge] (ks.north) to[out=120,in=60] (iw.north);          % krylov_step uses iterate_while
+  \draw[depedge] (ks.north) to[out=140,in=40] (t1.north);          % ...and SimState
+  \draw[depedge] (kspv.north) to[out=120,in=60] (ks.north);        % ksp_solve folds krylov_step
+  \draw[depedge] (kspv.north) to[out=150,in=30] (t2.north);        % ...and OpParams
+  \draw[depedge] (sf.north) to[out=120,in=60] (kspv.north);        % solve_family maps ksp_solve
+  \draw[depedge] (el.north) to[out=120,in=60] (sf.north);          % electrostatic uses solve_family
+  % annotation: every arc points LEFT (backward)
+  \node[font=\scriptsize\itshape, text=simBlue, align=center] at (6.0,2.0)
+    {every dependency arc points \emph{backward}: a def appears only after everything it uses};
+\end{tikzpicture}}
+\caption[Topological definition order]{Topological order, read along one line. The
+library's definitions are laid out left to right in the order a single-pass reader
+(or compiler) meets them; the lower arc is that reading order. Each curved arc above
+is a \code{depends-on} edge---\code{krylov\_step} uses \code{iterate\_while} and
+\code{SimState}; \code{ksp\_solve} folds \code{krylov\_step} and reads
+\code{OpParams}; \code{solve\_family} maps \code{ksp\_solve}; the
+\code{electrostatic} driver composes \code{solve\_family}. The defining property is
+that \emph{every arc points backward}: a definition appears only after everything it
+uses has already appeared. This is exactly why the shared \code{types}
+(\code{SimState}, \code{OpParams}) come first and the composing driver comes last---a
+forward-pointing arc would be a use-before-definition, which topological order
+forbids. The five-library bracket of \cref{fig:bracket} is this one line, folded into
+a stack.}
+\label{fig:topo}
+\end{figure}
+
+\Cref{fig:topo} draws the order as a single line of defs with their dependency arcs,
+and makes the defining property visible at a glance: every arc points
+\emph{backward}. A forward-pointing arc would name something not yet defined---a
+use-before-definition---and topological order is precisely the absence of such arcs.
+The bracket of \cref{fig:bracket} is this line folded into a stack: the floor is its
+left end, the cap its right.
+
+\begin{keyidea}
+The library is five modules: a \code{types} floor, three middle libraries
+(\code{iteration}, \code{data-algebra}, \code{coordination}) that \emph{mirror} the
+three calculus doc-groups of \cref{ch:combinators}, and a \code{drivers} cap that
+\emph{composes} them into the entry-point surfaces of Part~V. The shape is a
+bracket because the library is in \emph{topological order}---a def appears after
+everything it uses---so the genuinely shared records must come first (the floor)
+and the composing drivers must come last (the cap). Read bottom to top, the stack
+is the order you could compile it in.
+\end{keyidea}
+
+\subsection{The type-placement rule}
+\label{sec:typeplacement}
+
+One subtlety of the floor deserves its own statement, because it is the rule that
+keeps \code{types} small. \code{types} holds only records shared across \emph{two or
+more} API groups. A record used by exactly \emph{one} group is not cross-cutting,
+and putting it in the floor would force the reader to hold an unfamiliar type in
+mind long before reaching the code that uses it. So a single-group record is placed
+\emph{immediately before its own group}, bundled with its \emph{utility} API---its
+constructors, field accessors, and trivial projections, the small namespace
+intrinsic to the type. Its \emph{consumer} methods---the substantive operators that
+read the record to do real work---stay in the group proper, after the type.
+
+The Krylov workspace \code{Krylov} is used only by the iteration kernels, so it
+lives at the head of \code{iteration}, not in the floor. The eigensolve state
+\code{EigState} is used only by \code{eigsolve}, so it lives at the head of
+\code{coordination}. The per-driver configuration records are thin projections of
+\code{IoData} used only by their own driver, so they live at the head of
+\code{drivers}. Only the truly cross-cutting three---\code{IoData}, \code{OpParams},
+\code{SimState}---earn a place in the shared floor. Topological order still governs
+throughout: a type and its utility API always precede their consumers, whether the
+type sits in the floor or at the head of its group.
+
+\section{The dependency graph and its two edge classes}
+\label{sec:depgraph}
+
+The bracket of \cref{fig:bracket} is a picture of \emph{dependencies}: who uses
+whom. To make the picture precise, we draw the dependency graph explicitly and
+distinguish its two kinds of edge, because the distinction is what makes the
+ordering well-defined.
+
+A \emph{dependency} between two defs comes in two flavors. A \textbf{\code{depends-on}}
+edge is a real build dependency: def $u$ \code{depends-on} def $v$ when $u$'s body
+\emph{calls} $v$, so $v$ must be defined before $u$ can be. These edges are
+\emph{blocking}---they constrain the order, and they are exactly the edges
+topological order must respect. \code{ksp\_solve} \code{depends-on}
+\code{krylov\_step} (it folds it); \code{electrostatic} \code{depends-on}
+\code{fe\_assemble}, \code{solve\_family}, and \code{gram\_reduce} (it composes
+them); every consumer \code{depends-on} the \code{types} it reads.
+
+A \textbf{\code{reference}} edge is navigational only: $u$ \code{reference}s $v$
+when $u$ \emph{points the reader at} $v$ without calling it---a cross-link, a ``see
+also,'' a ``this is the same idea as.'' These edges are \emph{free}: they do not
+constrain the order and they impose no build dependency. When the \code{driven}
+driver's documentation notes that its port modes ``come from the boundary-mode
+analysis,'' that is a \code{reference}, not a \code{depends-on}: \code{driven} does
+not \emph{call} \code{boundary\_mode}; it consumes a product that happens to be
+produced elsewhere, and the cross-link is a courtesy to the reader, not a wire in
+the build graph.
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >=Stealth, node distance=10mm and 16mm]
+  % the stack, as nodes
+  \node[product, minimum width=24mm] (drv) at (0,3.6) {\code{drivers}};
+  \node[stage, fill=simBgGreen, draw=simGreen, minimum width=20mm] (it) at (-3,1.8) {\code{iteration}};
+  \node[stage, fill=simBgGold,  draw=simGold,  minimum width=22mm] (da) at (0,1.8) {\code{data-algebra}};
+  \node[stage, fill=simBgRust,  draw=simRust,  minimum width=22mm] (co) at (3,1.8) {\code{coordination}};
+  \node[stage, fill=simBgBlue,  draw=simBlue,  minimum width=24mm] (ty) at (0,0) {\code{types}};
+  % depends-on edges (solid blue): drivers -> three middle -> types
+  \draw[depedge] (drv) -- (it);
+  \draw[depedge] (drv) -- (da);
+  \draw[depedge] (drv) -- (co);
+  \draw[depedge] (it) -- (ty);
+  \draw[depedge] (da) -- (ty);
+  \draw[depedge] (co) -- (ty);
+  % an internal depends-on: coordination -> iteration (ksp_solve folds krylov_step)
+  \draw[depedge] (co) -- node[above, font=\scriptsize, pos=0.45]{folds} (it);
+  % coordination -> data-algebra (drives the verbs)
+  % a reference edge (dotted gray): a driver cross-links a sibling driver's product
+  \draw[refedge] (drv.east) .. controls +(2.4,-0.4) and +(1.6,1.4) ..
+    node[right, font=\scriptsize, pos=0.5, text=simGray]{\emph{reference} (sibling product)} (co.east);
+  % legend (sample edges drawn directly, with adjacent labels)
+  \draw[depedge] (-6.6,3.6) -- (-6.0,3.6);
+  \node[anchor=west, font=\scriptsize] at (-5.9,3.6) {\code{depends-on}};
+  \node[anchor=west, font=\scriptsize, text=simGray] at (-6.6,3.15) {blocking; constrains order};
+  \draw[refedge] (-6.6,2.4) -- (-6.0,2.4);
+  \node[anchor=west, font=\scriptsize] at (-5.9,2.4) {\code{reference}};
+  \node[anchor=west, font=\scriptsize, text=simGray] at (-6.6,1.95) {navigational; free};
+\end{tikzpicture}}
+\caption[The dependency graph and its two edge classes]{The library's dependency
+graph, with its two edge classes distinguished. A \code{depends-on} edge (solid
+blue) is a real build dependency---$u$ \code{depends-on} $v$ when $u$'s body calls
+$v$---so it \emph{constrains the order}: the arrows all point downward, from
+\code{drivers} through the three middle libraries to \code{types}, and an internal
+arrow records that \code{coordination} folds \code{iteration}'s kernels. These are
+the edges topological order respects. A \code{reference} edge (dotted gray) is
+merely navigational---a cross-link to a sibling's product, here a driver pointing
+at another driver's output it consumes---and is \emph{free}: it imposes no build
+dependency and constrains nothing. The stack \code{types} $\leftarrow$
+\{\code{iteration}, \code{data-algebra}, \code{coordination}\} $\leftarrow$
+\code{drivers} is exactly the \code{depends-on} order.}
+\label{fig:depgraph}
+\end{figure}
+
+\Cref{fig:depgraph} draws the graph. The \code{depends-on} edges (solid) all run
+downward: \code{drivers} \code{depends-on} the three middle libraries, each of which
+\code{depends-on} \code{types}, with the one internal cross-edge that
+\code{coordination} folds \code{iteration}'s step kernels. Follow only the solid
+edges and you recover the bracket stack of \cref{fig:bracket}; that is the whole
+content of ``topological order''---the solid arrows never point up. The
+\code{reference} edges (dotted) are the free cross-links the reader navigates by;
+they are allowed to point any direction, because they bind nothing.
+
+\begin{pitfall}
+The distinction between \code{depends-on} and \code{reference} is not pedantry; it
+is what keeps the dependency graph \emph{well-founded}. If we treated every
+cross-link as a build dependency, the graph would tangle: the driven driver
+``references'' the boundary-mode driver, the boundary-mode driver shares vocabulary
+with the eigenmode driver, and soon every module appears to depend on every other
+and no topological order exists. By reserving \code{depends-on} for actual calls and
+demoting cross-links to free \code{reference} edges, the build graph stays a clean
+downward stack while the reader still gets every helpful pointer. A cross-link that
+is \emph{not} a call must be a \code{reference}, or the order breaks.
+\end{pitfall}
+
+\section{The implementation view versus the semantics}
+\label{sec:viewvssem}
+
+We come now to the load-bearing distinction of the whole part---the one rule that
+makes the synthesized library a \emph{view} of the specification rather than a
+second, rivalrous copy of it. State it plainly: \emph{the library renders the def
+bodies; it does not restate the semantics.}
+
+Every operator in this book has a definitional home---a chapter where its
+signature, its algebraic laws, its meaning, and (for a record) its field schema are
+stated \emph{once} and authoritatively. \code{linear\_combination}'s laws live in
+\cref{ch:combinators}; \code{ksp\_solve}'s convergence semantics live in the Krylov
+chapters; \code{SimState}'s field schema lives with the records of
+\cref{ch:records}. The synthesized library does \emph{not} repeat any of that. It
+renders the \emph{code}---the def body, the concrete expression that computes the
+result---and for everything else it \emph{links} to the authoritative home. A
+rendered \code{linear\_combination} in the library is a few lines of foldl; it does
+not re-derive the concatenation-homomorphism law, it points at \cref{ch:combinators}
+where that law is proved.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % LEFT: the semantics home
+  \node[stage, fill=simBgGold, draw=simGold, minimum width=34mm, minimum height=22mm,
+        align=center] (sem) at (-3.4,0)
+    {\textbf{the semantics home}\\[2pt]\scriptsize (the operator chapter,\\\cref{ch:combinators};\\the calculus, Part~III)\\[3pt]
+     \footnotesize signature\\laws\\meaning\\record schema};
+  \node[font=\scriptsize\itshape, text=simGold, anchor=north] at (-3.4,-1.7)
+    {stated ONCE, authoritative};
+  % RIGHT: the rendered code
+  \node[stage, fill=simBgViolet, draw=simViolet, minimum width=34mm, minimum height=22mm,
+        align=center] (code) at (3.4,0)
+    {\textbf{the synthesized def}\\[2pt]\scriptsize (the library chapter,\\this Part)\\[4pt]
+     \footnotesize the def \emph{body}:\\the concrete code\\that computes it};
+  \node[font=\scriptsize\itshape, text=simViolet, anchor=north] at (3.4,-1.7)
+    {the implementation VIEW};
+  % the link (reference) from code to semantics
+  \draw[refedge, very thick] (code.west) -- node[above, font=\scriptsize]{\emph{links to}}
+    node[below, font=\scriptsize, text=simGray]{(does not restate)} (sem.east);
+  % the "no back-copy" forbidden arrow
+  \draw[-{Stealth[length=2mm]}, simRust, dashed, thick] (sem.north east) ++(0,0.2)
+    .. controls +(1.5,1.0) and +(-1.5,1.0) .. (code.north west) ++(0,0.2);
+  \node[font=\scriptsize\itshape, text=simRust] at (0,2.05) {$\times$ no second copy of the laws};
+\end{tikzpicture}
+\caption[Implementation view versus semantics]{The load-bearing distinction. The
+\emph{semantics} of an operator---its signature, its algebraic laws, its meaning,
+and (for a record) its field schema---live \emph{once}, authoritatively, in its
+home chapter (left, gold): \code{linear\_combination}'s laws in
+\cref{ch:combinators}, a record's schema with \cref{ch:records}. The synthesized
+library (right, violet) renders only the def \emph{body}---the concrete code that
+computes the result---and \emph{links} to the home for everything else (solid
+arrow). It does \emph{not} copy the laws across (the forbidden dashed arrow): the
+library is a \emph{view} of the spec, like generated code is a view of its source,
+not a second authoritative statement of it. This is what keeps the code and the spec
+from drifting into two rivalrous copies.}
+\label{fig:viewvssem}
+\end{figure}
+
+\Cref{fig:viewvssem} draws the rule. Why insist on it? Because a specification and
+its implementation, if both state the laws, will eventually \emph{disagree}---someone
+edits one and forgets the other, and now there are two answers to ``what does this
+operator mean.'' By making the library a pure \emph{view}---bodies plus links, no
+restated laws---we guarantee there is exactly one authoritative statement of every
+semantic fact, and the code is checked \emph{against} it rather than competing with
+it. This is the same relationship generated code has to its source: the generated
+form is real, runnable, and useful to read, but it is not where the meaning
+\emph{lives}; the meaning lives in the source it was generated from. The synthesized
+library is generated code in exactly this sense, and the calculus of Part~III is its
+source.
+
+\begin{keyidea}
+The synthesized library is a \emph{view}, not a second copy. It renders the def
+\emph{bodies}---the concrete code---and \emph{links} to each operator's home chapter
+for the signature, laws, meaning, and record schema, which are stated \emph{once and
+only once} there. It never restates the semantics. This is the discipline that keeps
+the implementation and the specification from drifting into two rivalrous truths:
+there is one authoritative statement of every fact, and the code is a checkable view
+of it, exactly as generated code is a view of its source. The implementation view is
+parallel to the top-down feature spine---another angle on the one machine, not a new
+machine.
+\end{keyidea}
+
+\section{The \texttt{\#extern} boundary: where the library stops}
+\label{sec:extern}
+
+There is one more thing the library must be honest about: its \emph{edges}. Not
+every operation the simulator performs is ours to write. Three of them bottom out in
+an opaque external kernel---a specialized library Palace calls but does not
+itself implement---and the synthesized code must mark those boundaries rather than
+fabricate a body for them. The mark is \code{\#extern}.
+
+When a def's implementation lives behind an opaque library boundary, the library
+renders its \emph{type signature} and then, in place of a body, writes
+\code{\#extern NAME}. This says, exactly: \emph{here is the contract---the input and
+output types---and here is where our code stops and the external kernel takes over;
+we do not fabricate what we do not own.} Three kernels in the whole simulator earn
+an \code{\#extern}:
+
+\begin{description}[style=nextline, leftmargin=0pt, font=\normalfont\itshape]
+  \item[The libCEED element-quadrature kernel.] Inside \code{fe\_assemble}
+  (\cref{ch:assembly}), the element-local quadrature contraction is performed by
+  libCEED, the matrix-free kernel library (\cref{ch:matrixfree}). The assembly fold
+  is ours; the per-element kernel it calls is \code{\#extern}.
+  \item[The SLEPc eigensolve loop.] Inside \code{eigsolve} (\cref{ch:krylovschur}),
+  the eigenvalue iteration itself runs inside SLEPc---Palace writes no loop, it
+  hands the whole problem across and waits. The cap is ours; the iteration is
+  \code{\#extern}.
+  \item[The ODE time-step.] Inside \code{fold\_solve} (\cref{ch:time}), the transient
+  analysis's per-step time advance bottoms out in an MFEM time-integrator (an
+  implicit Runge--Kutta or generalized-$\alpha$ step). The fold that threads the
+  state is ours; the step it folds is \code{\#extern}.
+\end{description}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % the def: type signature (ours) + extern body (opaque) + the impl link
+  \node[stage, minimum width=40mm, minimum height=8mm, align=center] (sig) at (0,2.4)
+    {\code{eigen\_iterate :: OpParams -> ...}\\[1pt]\scriptsize the type signature (ours: the contract)};
+  \node[extern, minimum width=40mm, minimum height=9mm, align=center] (ext) at (0,1.0)
+    {\code{\#extern eigen\_iterate}\\[1pt]\scriptsize the opaque kernel (SLEPc EPS loop);\\our code stops here};
+  \draw[flow] (sig) -- (ext);
+  % the kernel-API label
+  \node[font=\scriptsize\bfseries, text=simViolet, anchor=west] at (3.2,1.0)
+    {= the kernel-\emph{API}};
+  \node[font=\scriptsize\itshape, text=simGray, anchor=west, align=left] at (3.2,0.55)
+    {the boundary / contract\\(what the spine calls)};
+  % the separate kernel-IMPL node, linked by realizes-kernel-api (dashed ref)
+  \node[stage, fill=simBgGreen, draw=simGreen, minimum width=46mm, minimum height=12mm,
+        align=center] (impl) at (0,-1.4)
+    {\textbf{the kernel-\emph{implementation}}\\[1pt]\scriptsize a SEPARATE constructive realization\\in OUR vocabulary: Lanczos / Arnoldi /\\Krylov--Schur (\cref{ch:krylovschur})};
+  \draw[refedge, very thick] (ext.south) --
+    node[right, font=\scriptsize, pos=0.5]{\code{realizes-kernel-api}}
+    node[left, font=\scriptsize, text=simGray, pos=0.5, align=right]{(reviewable;\\not a call)} (impl.north);
+\end{tikzpicture}
+\caption[The \texttt{\#extern} boundary and the kernel-API/impl split]{The
+\code{\#extern} boundary, and the distinction it does \emph{not} erase. An opaque
+kernel renders as its \emph{type signature} (top: the contract, ours to state)
+followed by \code{\#extern NAME} (middle, violet dashed) in place of a body: our
+code stops here and the external library---here SLEPc's eigenvalue loop---takes
+over. This \code{\#extern} surface is the \emph{kernel-API}: the boundary and
+contract the simulator calls across. It is \emph{not} the last word. Separately, the
+book gives a \emph{kernel-implementation} (bottom, green): a constructive realization
+of the same kernel in our own vocabulary---for the eigensolve, the Lanczos / Arnoldi
+/ Krylov--Schur iteration of \cref{ch:krylovschur}. The two are linked by a
+\code{realizes-kernel-api} edge (dashed): a \emph{reviewable correspondence}, not a
+build call---a reader checks that the from-our-primitives version matches the opaque
+contract. The \code{\#extern} marks where \emph{the library} stops; the kernel-impl
+is where \emph{the book} keeps going.}
+\label{fig:extern}
+\end{figure}
+
+\Cref{fig:extern} draws the boundary and the crucial thing it does \emph{not} do:
+it does not abandon the question. An \code{\#extern} surface is the
+\emph{kernel-API}---the contract the simulator calls across, the opaque library
+boundary. But for each of these kernels the book \emph{separately} provides a
+\emph{kernel-implementation}: a constructive realization of the same operation in
+our own vocabulary, built from primitives we already own. The SLEPc eigensolve loop
+is \code{\#extern} in the library, but \cref{ch:krylovschur} reconstructs what that
+loop does---the Lanczos, Arnoldi, and Krylov--Schur iterations---in our calculus, so
+the curious reader can read both the black-box contract and a glass-box realization
+of it. The two are tied together by a \code{realizes-kernel-api} link: a
+\emph{reviewable correspondence}, not a build call. The implementation does not
+\code{depends-on} the API and the API does not call the implementation; rather, a
+reader checks that the from-our-primitives version computes what the opaque contract
+promises.
+
+\begin{notationbox}
+\code{\#extern NAME} is not a stub and not a failure---it is an honest edge. It
+appears \emph{after} the type signature, never before: the library always states the
+\emph{contract} (the input and output types) even where it does not own the
+\emph{body}. Read \code{\#extern} as ``the contract is here; the implementation is
+external; and---for these three---the book gives a constructive realization
+separately, linked by \code{realizes-kernel-api}.'' Three kernels carry it: libCEED
+quadrature, the SLEPc eigensolve loop, the ODE time-step.
+\end{notationbox}
+
+\begin{keyidea}
+The library marks its edges with \code{\#extern}. Where an operation bottoms out in
+an opaque external kernel---libCEED quadrature inside \code{fe\_assemble}, the SLEPc
+eigensolve loop inside \code{eigsolve}, the ODE step inside \code{fold\_solve}---the
+library renders the type signature and then writes \code{\#extern NAME} in place of
+a body: it states the contract but does not fabricate what it does not own. The
+\code{\#extern} surface is the \emph{kernel-API}. Distinct from it is the
+\emph{kernel-implementation}: a separate, constructive realization of the same kernel
+in our own vocabulary (e.g. the Krylov--Schur iteration of \cref{ch:krylovschur} for
+the eigensolve), tied to the API by a \emph{reviewable} \code{realizes-kernel-api}
+link, not a build call. The \code{\#extern} is where the \emph{library} stops; the
+kernel-impl is where the \emph{book} keeps going.
+\end{keyidea}
+
+\section{Worked examples}
+
+\begin{workedexample}{Reading the topological order, and placing \texttt{ksp\_solve}}{topo}
+We make ``topological order'' concrete by deriving why \code{types} must come first
+and \code{lifecycle} last, and then placing one specific operator,
+\code{ksp\_solve}, in its module with its dependencies all pointing downward.
+
+\emph{Why \code{types} first.} Pick any record in the floor, say \code{SimState}.
+It is mentioned in the \emph{signature} of \code{krylov\_step} (whose monadic effect
+\emph{is} the \code{SimState} transition) and in the signature of \code{ksp\_solve}
+(which returns a \code{SimState}). Topological order forbids mentioning a name before
+it is defined, so \code{SimState} must precede both \code{krylov\_step} (in
+\code{iteration}) and \code{ksp\_solve} (in \code{coordination}). The same holds for
+\code{OpParams} (read by the kernel and the caps) and \code{IoData} (read by every
+driver). Three records, each used by two or more groups, each forced to precede its
+users---so the cross-cutting records form a floor, and the floor is \code{types}.
+
+\emph{Why \code{lifecycle} last.} The \code{lifecycle} ROOT \emph{dispatches} on the
+problem type to one of the six drivers and calls it; so it mentions all six driver
+names, which must already be defined. The drivers in turn mention the middle-library
+verbs, which mention the floor. Nothing mentions \code{lifecycle}---it is the entry
+point, the thing the user invokes, so no other def calls it. A def that uses
+everything and is used by nothing is, by definition, topologically \emph{last}.
+
+\emph{Placing \code{ksp\_solve}.} The preconditioned Krylov solve cap is an
+outer-driver coordination machine: it runs the outer loop, classifies termination,
+and projects the terminal state. So it belongs in \code{coordination}. Read its
+dependencies:
+\begin{lstlisting}[style=l4style]
+ksp_solve :: OpParams -> Inputs -> SimState
+ksp_solve op inp = execState (solve_loop op inp) (initial_state inp)
+  where
+    solve_loop op inp = do
+      o <- one_cycle op inp
+      unless (done o) (solve_loop op inp)
+    one_cycle op inp = do
+      s <- get
+      let (kn, _) = iterate_while (krylov_step op (fresh_krylov op inp s)) cont
+      modify (\s -> s { x = s.x `plus` (kn.basis `applyBasis` kn.y) })
+      pure (classify kn op s)
+\end{lstlisting}
+Every name on the right-hand side is in a \emph{lower or equal} stratum:
+\code{OpParams}, \code{SimState}, \code{Inputs} are in \code{types} (the floor);
+\code{krylov\_step} and \code{iterate\_while} are in \code{iteration} (a middle
+sibling, defined before \code{coordination} because \code{coordination} folds it);
+\code{execState}, \code{get}, \code{modify} are the \code{Solve}-monad utilities
+defined at the head of \code{coordination} itself, before \code{ksp\_solve}. No
+dependency points \emph{up}: \code{ksp\_solve} never mentions a driver, never
+mentions \code{lifecycle}. Its \code{depends-on} edges all run downward---\code{types}
+and \code{iteration}---so it sits cleanly in \code{coordination}, above its
+dependencies and below the \code{drivers} that will fold it into
+\code{solve\_family}. That downward-only property is exactly what topological order
+\emph{is}, checked at one node.
+\end{workedexample}
+
+\begin{workedexample}{The \texttt{\#extern} boundary inside \texttt{fe\_assemble}}{externassemble}
+We render the assembly fold with its opaque kernel marked, and read off precisely
+what the boundary means---contrasting it with the kernel-\emph{implementation} that
+\cref{ch:matrixfree} provides.
+
+The assembly verb \code{fe\_assemble} (\cref{ch:assembly}) folds a list of
+weak-form terms over the mesh, accumulating each term's element-local contributions
+into the operator. The \emph{fold} is ours---it is the ordinary
+\code{linear\_combination}-shaped accumulation of \cref{ch:combinators}. But the
+innermost step, evaluating one term's quadrature contraction on one element, is
+performed by libCEED, the matrix-free kernel library. So the synthesized library
+renders the fold and marks the kernel:
+\begin{lstlisting}[style=l4style]
+-- the assembly fold: ours. the per-element quadrature kernel: external.
+fe_assemble :: FESpace -> [WeakTerm] -> LinOp
+fe_assemble space terms =
+  foldl (\op term -> op `plus_op` assemble_term space term) zero_op terms
+  where
+    -- one weak-form term -> its operator contribution, via the libCEED kernel.
+    -- the CONTRACT (types) is ours; the BODY is the opaque matrix-free kernel.
+    assemble_term :: FESpace -> WeakTerm -> LinOp
+    #extern assemble_term
+\end{lstlisting}
+Read the two parts. The body of \code{fe\_assemble} is a plain \code{foldl}: it is
+our code, the assembly fold of \cref{ch:assembly}, accumulating one operator
+contribution per term. But \code{assemble\_term}---the per-element quadrature
+contraction that turns one weak-form term into its matrix-free operator
+action---renders as \code{\#extern} after its signature. That is the boundary: we
+\emph{call into} libCEED's element-quadrature kernel, and the body is not ours to
+fabricate. We state the contract (a \code{FESpace} and a \code{WeakTerm} in, a
+\code{LinOp} out) and stop.
+
+\emph{The contrast with the kernel-impl.} The \code{\#extern} is not the end of the
+story for this kernel either. \Cref{ch:matrixfree} gives the
+kernel-\emph{implementation}: a constructive realization of exactly this element
+quadrature as a sequence of tensor contractions---gather the element DoFs, apply the
+basis-evaluation tensor, contract against the quadrature weights and the geometry
+factors, apply the basis-transpose, scatter back. That realization is built from
+tensor primitives we already own, and it \emph{realizes-kernel-api} the
+\code{\#extern assemble\_term} contract above: a reviewable correspondence, checked
+by reading both, not a build call. So the same quadrature kernel appears twice in the
+book, deliberately: once as the opaque contract the assembly fold calls
+(\code{\#extern}, here), and once as the from-our-primitives tensor-contraction
+implementation (\cref{ch:matrixfree}). The library renders the call site; the book
+supplies the glass box beside it. That double rendering---API where the library
+stops, impl where the book continues---is exactly the kernel-API/kernel-impl
+distinction of \cref{sec:extern}, made concrete on the assembly kernel.
+\end{workedexample}
+
+\section{What the next two chapters do}
+\label{sec:whatnext}
+
+We have the architecture. \Cref{fig:bracket} is the floor plan: five modules, a
+\code{types} floor, three middle libraries mirroring the calculus, a \code{drivers}
+cap, all in topological order, with the \code{depends-on} edges running downward and
+the \code{reference} cross-links free. We know the library is a \emph{view}---bodies
+and links, never a second copy of the laws---and we know where it stops, at the three
+\code{\#extern} kernels whose contracts it states but whose bodies it does not own.
+
+The next two chapters fill the plan in. \Cref{ch:fivelibs} tours the five libraries
+one at a time, opening each module and reading its rendered defs---the actual code,
+module by module, from the \code{types} floor up through the \code{drivers} cap.
+\Cref{ch:composing} then takes one driver---the electrostatic capacitance extraction,
+the cleanest of the six---and composes it end to end \emph{in code}, the rendered
+form of the very composition tree \cref{ch:fulltrace} expanded as a diagram. Together
+they turn this architecture into the running library it describes, and
+\cref{ch:wholemachine} closes the book by standing back from the whole machine and
+asking where it goes next---onto the GPU and accelerator backends the pure-function
+picture was chosen for in the first place.
+
+\begin{keyidea}
+\textbf{The whole simulator is one small library of composed functions---the
+implementation view, mirroring the calculus.} Five modules: a \code{types} floor of
+shared records, three middle libraries (\code{iteration}, \code{data-algebra},
+\code{coordination}) that \emph{are} the three calculus doc-groups of
+\cref{ch:combinators} rendered as code, and a \code{drivers} cap that composes them
+into the entry-point surfaces of Part~V---all in topological order. It renders the
+def \emph{bodies} and \emph{links} to the spec for the laws (a view, not a copy), and
+marks its three opaque edges with \code{\#extern}. A hundred-thousand-line C++
+simulator becomes a few hundred lines across five small modules, because once you
+have found the handful of combinators it is built from, writing them as code is
+short. That smallness is the whole book's thesis, finally rendered as the program it
+always was.
+\end{keyidea}
+
+\summarysection
+This chapter opens Part~VI, which renders the whole specification as a small
+\emph{synthesized library}---the simulator written out as code in the calculus of
+Part~III. We first named the three \emph{views} of the one machine: the
+\emph{top-down} view of Part~V (what each analysis \emph{does}, a driver as a
+composition root), the \emph{bottom-up} view of Parts~II--IV (what each \emph{piece
+is}, the vocabulary L0$\to$L4), and---new here---the \emph{implementation view} (what
+the \emph{code} is), the destination \cref{ch:bigidea} pointed at when it chose the
+pure-function picture for matching the accelerator backend. The library splits into
+\emph{five modules}: a \code{types} floor (the genuinely shared records
+\code{IoData}, \code{OpParams}, \code{SimState}); three middle libraries
+(\code{iteration}, \code{data-algebra}, \code{coordination}) that \emph{mirror} the
+three calculus doc-groups of \cref{ch:combinators}; and a \code{drivers} cap that
+\emph{composes} them into Part~V's entry-point surfaces. The bracket shape is forced
+by \emph{topological order}---a def appears after everything it uses---so shared types
+come first and composing drivers last; the type-placement rule keeps the floor small
+by placing single-group records with their group. The dependency graph has two edge
+classes: \code{depends-on} (a real call; blocking; constrains the order; the downward
+arrows of the stack) and \code{reference} (navigational; free; the cross-links),
+whose distinction keeps the graph well-founded. The load-bearing discipline is that
+the library is a \emph{view}: it renders the def \emph{bodies} and \emph{links} to
+each operator's home for the laws, meaning, and record schema---stated once
+there---never restating them, exactly as generated code is a view of its source.
+Finally, three opaque kernels (libCEED quadrature in \code{fe\_assemble}, the SLEPc
+eigensolve loop in \code{eigsolve}, the ODE step in \code{fold\_solve}) render as
+\code{\#extern NAME} after their type signature: the library states the contract but
+does not fabricate the body. Each \code{\#extern} kernel-\emph{API} has a separate
+kernel-\emph{implementation}---a constructive realization in our own vocabulary
+(e.g. \cref{ch:krylovschur} for the eigensolve)---tied to it by a \emph{reviewable}
+\code{realizes-kernel-api} link. The payoff: a hundred-thousand-line simulator becomes
+a few hundred lines across five small modules; \cref{ch:fivelibs} tours them and
+\cref{ch:composing} composes one driver as code.
+
+\furtherreading
+The pseudo-language the library is rendered in---Haskell-style type signatures over
+pure functions, with do-notation for the state monad---is the notation of functional
+programming; the standard reference for the language that crystallized it is the
+\emph{Haskell} report and Peyton Jones's account of its design~\citep{peytonjones2003},
+and the modular, type-directed style the five-library split follows is its everyday
+practice. The \code{\#extern} libCEED quadrature kernel is documented in the CEED
+project's matrix-free finite-element interface~\citep{ceed2021}, whose element-local
+evaluation is exactly the contract \code{assemble\_term} renders as external and
+\cref{ch:matrixfree} reconstructs as tensor contractions. The simulator whose surface
+this library synthesizes is Palace~\citep{palace2023}; the synthesized form here is a
+clean-room \emph{view} of that codebase's algorithm, not a transcription of its C++,
+and the correspondence between the two---rendered body against cited source---is the
+reviewable link the whole book has been building. The three-view framing and the
+combinator-primary organization the middle libraries mirror were developed in
+\cref{ch:bigidea} and \cref{ch:combinators}; this chapter only assembles them into an
+architecture.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Name the three views.} State, in one sentence each, the question
+  that the top-down view, the bottom-up view, and the implementation view answer
+  about the simulator. Which Parts of the book take each view? Why is the
+  implementation view the natural \emph{last} one, given the choice
+  \cref{ch:bigidea} made about how to describe a computation?
+  \item \textbf{Place a record.} The Krylov workspace \code{Krylov} is read only by
+  the iteration kernels; the configuration record \code{IoData} is read by every
+  driver and the coordination caps. Using the type-placement rule
+  (\S\ref{sec:typeplacement}), say which module each belongs in and where within
+  it, and explain why \code{IoData} earns a place in the \code{types} floor while
+  \code{Krylov} does not.
+  \item \textbf{Two edge classes.} The driven driver consumes port modes produced by
+  the boundary-mode analysis but does not call \code{boundary\_mode}. Is the link
+  from \code{driven} to \code{boundary\_mode} a \code{depends-on} edge or a
+  \code{reference} edge? Justify your answer from the definitions, and explain what
+  would go wrong with the topological order if every such cross-link were treated as
+  a \code{depends-on}.
+  \item \textbf{The view discipline.} The library's rendered \code{linear\_combination}
+  is a few lines of \code{foldl} and contains \emph{no} statement of the
+  concatenation-homomorphism law. Where does that law live, and why is it
+  \emph{deliberately} absent from the rendered code? State the failure mode the
+  ``view, not a copy'' discipline (\S\ref{sec:viewvssem}) is designed to prevent.
+  \item \textbf{Mark the externs.} Of the three \code{\#extern} kernels (libCEED
+  quadrature, the SLEPc eigensolve loop, the ODE time-step), say which module's def
+  each appears inside, and what part of that def is \emph{ours} versus external. For
+  one of them, explain in a sentence what the corresponding kernel-\emph{implementation}
+  provides and which chapter gives it.
+  \item \textbf{Topological check at a node.} Take \code{solve\_family}, which is
+  \lstinline[style=l4style]|map (\inp -> ksp_solve op inp) rhss|. List every name on
+  its right-hand side and assign each to a module; confirm that none of them sits in
+  a module \emph{above} \code{coordination} (where \code{solve\_family} lives). What
+  single fact about \code{solve\_family}'s dependencies makes it legal to place it in
+  \code{coordination}?
+  \item \textbf{Why the library is short.} The original Palace is roughly
+  $10^5$ lines of C++; the synthesized library is a few hundred lines across five
+  modules. Drawing on \cref{ch:bigidea}'s distinction between transparent
+  optimization tricks and the base algebra, give two reasons the synthesized form is
+  so much smaller, and name one thing that is \emph{deliberately not} reproduced in
+  it. Is the library a \emph{port} of Palace? Explain the difference.
+\end{enumerate}

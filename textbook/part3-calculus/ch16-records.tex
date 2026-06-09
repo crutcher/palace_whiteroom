@@ -1,0 +1,780 @@
+\chapter{Records and Immutability}
+\label{ch:records}
+
+\chapterorient{A simulation's state is rarely a single number. It is a
+\emph{bundle}: the current field, how many iterations have run, whether the
+solver has converged, the residual it is chasing. This chapter introduces the
+data structure that carries such a bundle---the \emph{record}, a collection of
+named, typed fields---and the one rule that governs every record in this book:
+they never change. ``Updating'' a record does not overwrite it; it builds a
+fresh one that differs in a field or two and leaves the original untouched. That
+single discipline---update means fresh copy---is what turns a tangle of mutable
+state into the clean, traceable dataflow the rest of Part~III is built on.}
+
+\section{A bundle of named fields}
+
+In \cref{ch:language} we built a vocabulary of \emph{values} and the
+\emph{functions} that map between them. The values so far have been simple: a
+tensor, an integer, a boolean. But the quantities a simulation actually carries
+around are seldom so lonely. Consider what a linear solver knows about itself in
+the middle of a run. It holds a current guess at the answer---a tensor. It has
+taken some number of steps---an integer. It has decided, or not, that it is
+close enough---a boolean. These three facts travel together; they are the state
+of \emph{one} solver at \emph{one} moment. We want a single value that holds all
+three.
+
+That value is a \emph{record}: a bundle of named, typed fields. We write one
+with braces, listing each field as \lstinline[style=l4style]|name: value| pairs
+separated by commas. Here is the solver state just described:
+
+\begin{lstlisting}[style=l4style]
+{ x: theField, it: 7, converged: False }
+\end{lstlisting}
+
+This is a single value. It has three fields: \code{x}, whose value is some
+tensor we have named \code{theField}; \code{it}, an integer that happens to be
+$7$; and \code{converged}, a boolean that happens to be \code{False}. The names
+\code{x}, \code{it}, \code{converged} are chosen by us and are part of the
+record's \emph{type}, which we may write the same way but with types in the
+value slots:
+
+\begin{lstlisting}[style=l4style]
+{ x: Tensor[N], it: Int, converged: Bool }
+\end{lstlisting}
+
+Read this as a sentence: ``a record with a field \code{x} holding a tensor of
+length \code{N}, a field \code{it} holding an integer, and a field
+\code{converged} holding a boolean.'' Every record value of this type has
+exactly these three fields, with exactly these types. \Cref{fig:card} draws the
+value as what it morally is: a small labeled card.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the card
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=46mm, minimum height=30mm, inner sep=6pt] (card) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simBlue]
+    at ($(card.north)+(0,-1.5mm)$) {SolverState};
+  % rows
+  \node[anchor=west] at ($(card.north west)+(3mm,-7mm)$)
+    {\code{x}\,:\ \(\mathsf{Tensor}[N]\) \;\(=\ \mathbf{theField}\)};
+  \node[anchor=west] at ($(card.north west)+(3mm,-14mm)$)
+    {\code{it}\,:\ \(\mathsf{Int}\) \;\(=\ 7\)};
+  \node[anchor=west] at ($(card.north west)+(3mm,-21mm)$)
+    {\code{converged}\,:\ \(\mathsf{Bool}\) \;\(=\ \mathrm{False}\)};
+  % separating rules
+  \draw[simGray!40] ($(card.north west)+(2mm,-10mm)$) -- ($(card.north east)+(-2mm,-10mm)$);
+  \draw[simGray!40] ($(card.north west)+(2mm,-17mm)$) -- ($(card.north east)+(-2mm,-17mm)$);
+\end{tikzpicture}
+\caption[A record as a labeled card]{A record is a card of named, typed fields.
+Each row carries a field name, the field's type, and the value currently stored
+there. The card as a whole is a single value of type
+\code{\{ x: Tensor[N], it: Int, converged: Bool \}}; the rows
+are reached by name.}
+\label{fig:card}
+\end{figure}
+
+\subsection{Reaching a field: the dot}
+
+To pull one field out of a record we write the record, a dot, and the field
+name. If \code{s} is the record above, then
+
+\begin{lstlisting}[style=l4style]
+s.it          -- the integer 7
+s.converged   -- the boolean False
+s.x           -- the tensor theField
+\end{lstlisting}
+
+Field access \lstinline[style=l4style]|s.it| is a value-producing expression
+like any other: it names the integer in the \code{it} slot. The reduction rule
+is exactly what intuition demands---projecting a field from a record literal
+returns the value in that slot:
+\[
+  \{l_1\!:\!v_1,\dots,l_n\!:\!v_n\}.\,l_k \;\to\; v_k .
+\]
+There is nothing more to it. A record is a finite map from names to values, and
+the dot looks one up.
+
+Field access composes with everything else in the language. Because
+\lstinline[style=l4style]|s.it| is an ordinary expression, it can appear wherever
+a value can: as a function argument \lstinline[style=l4style]|norm(s.x)|, in
+arithmetic \lstinline[style=l4style]|s.it + 1|, in a comparison
+\lstinline[style=l4style]|s.it < s.max_it|, or as the field of \emph{another}
+record \lstinline[style=l4style]|{ count: s.it }|. A record is not a special kind
+of thing you must unpack before use; its fields are values the moment you name
+them, and they flow through the pure-function vocabulary of \cref{ch:language}
+unchanged.
+
+\begin{notationbox}
+We write record \emph{types} and record \emph{values} with the same brace
+syntax, distinguished by what sits after each colon. A \emph{type} has a type in
+the value slot---\lstinline[style=l4style]|{ it: Int }|---while a \emph{value}
+has an actual value---\lstinline[style=l4style]|{ it: 7 }|. Field access is the
+dot: \lstinline[style=l4style]|s.it|. (When a field name collides with a TeX
+underscore, as in \code{final\_res}, the underscore is escaped in running prose
+but typed literally in code.)
+\end{notationbox}
+
+\subsection{Records versus tuples}
+
+The calculus also has \emph{tuples}---ordered bundles written with parentheses,
+\lstinline[style=l4style]|(theField, 7, False)|, whose components are reached by
+\emph{position}: $\pi_1$ for the first, $\pi_2$ for the second, and so on. A
+tuple and a record can carry the same data. The difference is how you address a
+component, and the difference matters more than it first appears.
+
+A tuple's components are anonymous. To read the iteration count from
+\lstinline[style=l4style]|(theField, 7, False)| you must \emph{know} that the
+count is the second slot---and if someone later inserts a field, every
+$\pi_i$ downstream silently shifts to the wrong thing. A record's components
+are named. \lstinline[style=l4style]|s.it| means the iteration count no matter
+where in the record it sits, and adding a field disturbs nothing. For a bundle
+that travels a long way through a program and accumulates fields over a project's
+lifetime---which is exactly what a simulation's state does---names are
+self-documenting and robust where positions are cryptic and brittle. We will use
+tuples for short-lived, obviously-ordered pairs (a quotient and remainder, a
+coordinate) and records for everything that earns a name.
+
+\begin{keyidea}
+A record is to a function what a \emph{struct} is to a procedure: a bundle of
+named fields that a routine reads and ``updates.'' The whole of this chapter is
+the one place that analogy breaks. A struct is a box you reach into and
+overwrite; a record is a value you can only \emph{read}. To ``update'' a record
+you build a new one. That single change---from a box you mutate to a value you
+copy---is what the rest of Part~III rests on.
+\end{keyidea}
+
+\section{Immutable update: building a fresh copy}
+
+Here is the central fact, and it is worth stating before any syntax. \emph{A
+record, once built, never changes.} There is no operation that reaches into an
+existing record and overwrites a field. None. The only thing you can do with a
+record is read its fields and use them to build \emph{other} records. When we
+speak---as we constantly will---of ``updating'' a record, we always mean: build
+a new record, like the old one but differing in some field. The old record is
+still there, unchanged, for anyone still holding it.
+
+\subsection{The spread}
+
+The syntax for ``a fresh record like \code{s} but with one field changed'' is the
+\emph{spread}. We open a record literal, write \lstinline[style=l4style]|...s| to
+mean ``copy in all of \code{s}'s fields,'' and then list the fields we want to
+override:
+
+\begin{lstlisting}[style=l4style]
+{ ...s, it: s.it + 1 }
+\end{lstlisting}
+
+Read this aloud: ``a fresh record, with all of \code{s}'s fields, except that
+\code{it} is \lstinline[style=l4style]|s.it + 1|.'' If \code{s} was
+\lstinline[style=l4style]|{ x: theField, it: 7, converged: False }|, then the
+expression above is a \emph{new} value
+\lstinline[style=l4style]|{ x: theField, it: 8, converged: False }|. The fields
+\code{x} and \code{converged} are copied straight across; \code{it} is replaced.
+The reduction rule is precisely this---a spread over a record literal collapses
+to a record literal with the named slot overwritten and the rest carried through:
+\[
+  \{\,\dots\{l_1\!:\!v_1,\dots,l_n\!:\!v_n\},\ l_k\!:\!w\,\}
+  \;\to\;
+  \{l_1\!:\!v_1,\dots,l_k\!:\!w,\dots,l_n\!:\!v_n\}.
+\]
+
+\Cref{fig:spread} draws what just happened. The original card \code{s} is on the
+left, untouched. The spread produces a \emph{second} card on the right, identical
+but for the one changed field. Both cards exist. Nothing was erased.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % --- left card: original s ---
+  \begin{scope}
+  \node[draw=simGray, fill=white, rounded corners=3pt, thick,
+        minimum width=34mm, minimum height=26mm, inner sep=5pt] (s) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simGray] at ($(s.north)+(0,-1mm)$) {\code{s} (unchanged)};
+  \node[anchor=west] at ($(s.north west)+(2.5mm,-7mm)$)  {\code{x}\,:\ \textbf{theField}};
+  \node[anchor=west] at ($(s.north west)+(2.5mm,-13mm)$) {\code{it}\,:\ \(7\)};
+  \node[anchor=west] at ($(s.north west)+(2.5mm,-19mm)$) {\code{converged}\,:\ F};
+  \end{scope}
+  % --- right card: fresh s' ---
+  \begin{scope}[xshift=58mm]
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=34mm, minimum height=26mm, inner sep=5pt] (s2) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simBlue] at ($(s2.north)+(0,-1mm)$) {fresh copy};
+  \node[anchor=west] at ($(s2.north west)+(2.5mm,-7mm)$)  {\code{x}\,:\ \textbf{theField}};
+  \node[anchor=west, text=simRust, font=\footnotesize\bfseries]
+        at ($(s2.north west)+(2.5mm,-13mm)$) {\code{it}\,:\ \(8\)};
+  \node[anchor=west] at ($(s2.north west)+(2.5mm,-19mm)$) {\code{converged}\,:\ F};
+  \end{scope}
+  % the spread arrow
+  \draw[flow] (s.east) -- node[above, font=\scriptsize\ttfamily]{\{...s, it: s.it+1\}}
+                          node[below, font=\scriptsize, text=simGray]{copies \code{x}, \code{converged}} (s2.west);
+\end{tikzpicture}
+\caption[Spread produces a fresh card]{The spread
+\code{\{ ...s, it: s.it + 1 \}} reads \code{s} and builds a
+\emph{new} card. The unchanged fields \code{x} and \code{converged} are copied;
+\code{it} is set to its successor (shown in rust). Crucially, the original card
+\code{s} on the left is untouched---it is still a perfectly good value that
+anyone holding it still sees as \code{it}~$=7$.}
+\label{fig:spread}
+\end{figure}
+
+\subsection{Contrast: mutating a struct in place}
+
+To feel the difference, picture the procedural alternative. In a language with
+mutable structs you would write something like \code{s.it = s.it + 1}, and that
+statement \emph{reaches into the box \code{s} and overwrites the \code{it} slot.}
+After it runs, there is no ``old \code{s}'' anymore---the $7$ is gone, replaced
+by $8$, in place. Anyone else holding a pointer to that same box now sees $8$
+too, whether they expected the change or not. The assignment is a side effect: it
+modifies the world, and its effect ripples to every name aliased to that box.
+
+The spread does none of this. \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|
+is an \emph{expression}, not a command. It computes a value and changes nothing.
+The $7$ in \code{s} is still $7$. The new value $8$ lives in a different
+record, and the only way anyone sees it is by being handed that new record. This
+is the difference between ``mutate the box'' and ``compute a new value,'' and it
+is the line dividing the procedural world from the one we work in.
+
+\begin{pitfall}
+The single most common misreading of the spread is to think
+\lstinline[style=l4style]|{ ...s, it: s.it + 1 }| \emph{changes \code{s}}. It
+does not. The spread \emph{reads} \code{s} and \emph{produces a new record};
+\code{s} is exactly as it was. If you find yourself writing ``and then \code{s}'s
+\code{it} becomes $8$,'' stop---\code{s}'s \code{it} is still $7$ forever. What
+became $8$ is the \code{it} of a different record, the one the spread built. The
+moment you internalize that the spread never touches its source, the value-history
+traces below read themselves.
+\end{pitfall}
+
+\subsection{Spreading several fields at once}
+
+A spread may override more than one field; just list them all:
+
+\begin{lstlisting}[style=l4style]
+{ ...s, it: s.it + 1, converged: True }
+\end{lstlisting}
+
+This builds a fresh record advancing the counter \emph{and} flipping the
+convergence flag in one stroke, copying \code{x} across unchanged. The order of
+the overrides does not matter as long as no name is given twice; each names a
+distinct slot of the result. And a field's new value may be computed from the old
+record's fields---\lstinline[style=l4style]|s.it + 1| reads \code{s.it} to
+compute the replacement---which is the normal way a step advances state: read the
+current bundle, compute the next, package it as a fresh bundle.
+
+\subsection{Reading a spread by its reduction rule}
+
+Because the spread is just an expression with a reduction rule, we can evaluate
+one by hand the way \cref{ch:language} evaluated function applications: rewrite
+step by step until no rule applies. This is worth doing once explicitly---it
+turns ``update means fresh copy'' from a slogan into a mechanical fact.
+
+\begin{example}[A spread, reduced step by step]
+\label{ex:reduce}
+Take \lstinline[style=l4style]|s = { x: f, it: 7, converged: False }| and evaluate
+the increment \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|. First substitute
+the value of \code{s} (the \textsf{let}-rule of \cref{ch:language}):
+\begin{lstlisting}[style=l4style]
+{ ...{ x: f, it: 7, converged: False }, it: s.it + 1 }
+\end{lstlisting}
+The field read \lstinline[style=l4style]|s.it| projects (the \textsf{proj} rule),
+giving $7$, so the override value \lstinline[style=l4style]|s.it + 1| reduces to
+$8$:
+\begin{lstlisting}[style=l4style]
+{ ...{ x: f, it: 7, converged: False }, it: 8 }
+\end{lstlisting}
+Now the spread rule fires: copy the inner record's fields, overwriting the named
+one:
+\begin{lstlisting}[style=l4style]
+{ x: f, it: 8, converged: False }
+\end{lstlisting}
+No rule applies; this is the value. Notice what the trace makes undeniable: the
+inner record \lstinline[style=l4style]|{ x: f, it: 7, converged: False }|---the
+value of \code{s}---was \emph{read} (its fields copied, its \code{it} projected)
+but at no point \emph{altered}. The result is a brand-new literal sitting beside
+it. There is no rule in the calculus that overwrites a field of an existing
+record; the spread rule \emph{constructs}, it does not assign.
+\end{example}
+
+This is why we can say, flatly, that records are immutable: not as a convention we
+promise to honor, but because the only rules that act on records are projection,
+destructuring, and spread, and \emph{none of them mutates}. Projection reads;
+destructuring reads; spread builds anew. Immutability is a property of the
+rules, not a discipline imposed on top of them.
+
+\begin{workedexample}{Three updates, and the originals all survive}{history}
+We start from an initial solver state and apply three spread-updates in sequence,
+naming each result. The point is to watch every intermediate record \emph{survive}
+its own update---a value-history trace.
+
+\textbf{Setup.} Let
+\begin{lstlisting}[style=l4style]
+let s0 = { x: f0, it: 0, converged: False }
+\end{lstlisting}
+where \code{f0} is the initial field guess. Now three steps, each a spread:
+\begin{lstlisting}[style=l4style]
+let s1 = { ...s0, x: f1, it: 1 }
+let s2 = { ...s1, x: f2, it: 2 }
+let s3 = { ...s2, x: f3, it: 3, converged: True }
+\end{lstlisting}
+Here \code{f1}, \code{f2}, \code{f3} are the successively-improved fields (their
+computation is the solver's business; \cref{ch:fold} supplies it). Each line
+reads the previous record and builds a fresh one.
+
+\tcblower
+\textbf{The trace.} Because no spread ever mutates its source, all four records
+coexist:
+\[
+\begin{array}{l@{\;=\;}l}
+\code{s0} & \{\ \code{x}\!: f_0,\ \code{it}\!: 0,\ \code{converged}\!: \mathrm{F}\ \} \\[2pt]
+\code{s1} & \{\ \code{x}\!: f_1,\ \code{it}\!: 1,\ \code{converged}\!: \mathrm{F}\ \} \\[2pt]
+\code{s2} & \{\ \code{x}\!: f_2,\ \code{it}\!: 2,\ \code{converged}\!: \mathrm{F}\ \} \\[2pt]
+\code{s3} & \{\ \code{x}\!: f_3,\ \code{it}\!: 3,\ \code{converged}\!: \mathrm{T}\ \}
+\end{array}
+\]
+After all three updates, \lstinline[style=l4style]|s0.it| is still $0$ and
+\lstinline[style=l4style]|s0.converged| is still \code{False}. The update that
+produced \code{s1} did not reach back and alter \code{s0}; it produced a
+\emph{new} record. Each later step likewise leaves its predecessor intact. We
+have, for free, a complete history of the solve---every intermediate state, still
+readable---simply because nothing was ever overwritten. \Cref{fig:chain} draws the
+chain.
+\end{workedexample}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=12mm]
+  \tikzset{rec/.style={draw, rounded corners=2pt, thick, align=center,
+     minimum width=22mm, minimum height=13mm, inner sep=2pt, font=\scriptsize}}
+  \node[rec, draw=simGray,  fill=white]     (a) {\code{s0}\\[-1pt]\(it\!=\!0\)\\\(\mathrm{F}\)};
+  \node[rec, draw=simGray,  fill=white, right=of a] (b) {\code{s1}\\[-1pt]\(it\!=\!1\)\\\(\mathrm{F}\)};
+  \node[rec, draw=simGray,  fill=white, right=of b] (c) {\code{s2}\\[-1pt]\(it\!=\!2\)\\\(\mathrm{F}\)};
+  \node[rec, draw=simBlue, fill=simBgBlue, right=of c] (d) {\code{s3}\\[-1pt]\(it\!=\!3\)\\\(\mathrm{T}\)};
+  \draw[flow] (a) -- node[above,font=\scriptsize]{spread} (b);
+  \draw[flow] (b) -- node[above,font=\scriptsize]{spread} (c);
+  \draw[flow] (c) -- node[above,font=\scriptsize]{spread} (d);
+  \node[font=\scriptsize, text=simGray, align=center] at ($(a)+(0,-12mm)$)
+    {\(it=0\)\\\emph{still readable}};
+\end{tikzpicture}
+\caption[A chain of fresh records]{The value history of
+\cref{wex:history}. Each spread reads one record and emits a fresh successor;
+the arrow is exactly the \emph{value-threading} of \cref{ch:targets}'s transient
+solve. None of \code{s0}, \code{s1}, \code{s2} is destroyed when its successor is
+built---the whole chain persists, so \code{s0.it} is $0$ even
+after \code{s3} exists.}
+\label{fig:chain}
+\end{figure}
+
+\section{Destructuring: pulling fields out by name}
+
+Reaching fields one dot at a time is fine for a single field but clumsy when a
+function needs several. \emph{Destructuring} lets a \code{let} bind several fields
+to names in one move. Instead of binding the whole record to a name and dotting
+into it, we write a brace pattern on the left of the \lstinline[style=l4style]|=|:
+
+\begin{lstlisting}[style=l4style]
+let { x, it } = s in
+  -- here x is bound to s.x and it to s.it
+  ...
+\end{lstlisting}
+
+This says: ``take \code{s}, and bind the local names \code{x} and \code{it} to its
+\code{x} and \code{it} fields.'' Inside the body, \code{x} \emph{is}
+\lstinline[style=l4style]|s.x| and \code{it} \emph{is} \lstinline[style=l4style]|s.it|,
+without any further dotting. The reduction is the obvious one---destructuring a
+record literal substitutes each bound name by the matching field:
+\[
+  \textsf{let}\ \{l_1,\dots,l_n\} = \{l_1\!:\!v_1,\dots,l_n\!:\!v_n\}\ \textsf{in}\ e
+  \;\to\; e[v_1/l_1,\dots,v_n/l_n].
+\]
+A pattern need not mention every field---\lstinline[style=l4style]|let { it } = s|
+binds only \code{it} and ignores the rest. \Cref{fig:destructure} pictures the
+fields being pulled out by name.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=40mm, minimum height=26mm, inner sep=5pt] (s) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simBlue] at ($(s.north)+(0,-1mm)$) {\code{s}};
+  \node[anchor=west] (fx)  at ($(s.north west)+(2.5mm,-7mm)$)  {\code{x}\,:\ theField};
+  \node[anchor=west] (fit) at ($(s.north west)+(2.5mm,-13mm)$) {\code{it}\,:\ \(7\)};
+  \node[anchor=west]       at ($(s.north west)+(2.5mm,-19mm)$) {\code{converged}\,:\ F};
+  % pulled-out names
+  \node[draw=simGreen, fill=simBgGreen, rounded corners=2pt, font=\ttfamily\footnotesize] (nx)  at (5.6,0.7) {x};
+  \node[draw=simGreen, fill=simBgGreen, rounded corners=2pt, font=\ttfamily\footnotesize] (nit) at (5.6,-0.1) {it};
+  \draw[flow, simGreen] (fx.east)  to[out=0,in=180] (nx.west);
+  \draw[flow, simGreen] (fit.east) to[out=0,in=180] (nit.west);
+  \node[font=\scriptsize, text=simGray, align=center] at (5.6,-1.0)
+    {\ttfamily let \{ x, it \} = s};
+\end{tikzpicture}
+\caption[Destructuring pulls fields out by name]{The pattern
+\code{let \{ x, it \} = s} binds the local names \code{x} and
+\code{it} to the matching fields of \code{s}, by name. The \code{converged} field
+is simply not mentioned, so no name is bound to it. Destructuring reads \code{s};
+it does not consume or alter it.}
+\label{fig:destructure}
+\end{figure}
+
+\subsection{Destructuring with a rest}
+
+Sometimes a function wants a couple of fields by name \emph{and} the remaining
+fields kept as a record---to forward them, or to spread them into a result. The
+\emph{rest} pattern, written \lstinline[style=l4style]|...r|, captures whatever is
+left:
+
+\begin{lstlisting}[style=l4style]
+let { it, ...rest } = s in
+  { ...rest, it: it + 1 }
+\end{lstlisting}
+
+Here \code{it} is bound to \lstinline[style=l4style]|s.it|, and \code{rest} is
+bound to a record holding all of \code{s}'s \emph{other} fields (\code{x} and
+\code{converged}). The body then spreads \code{rest} back in and overrides
+\code{it}---which is just our increment-step written so that the unchanged fields
+flow through a name rather than being copied by \lstinline[style=l4style]|...s|.
+The two idioms---\lstinline[style=l4style]|{ ...s, it: ... }| and destructure-with-rest
+then re-spread---compute the same fresh record; pick whichever reads more clearly
+at the use site.
+
+\begin{workedexample}{Destructure, derive, rebuild---nothing mutated}{derive}
+We destructure a state record, compute a derived quantity from its fields, and
+build a \emph{new} record carrying that quantity---then check that the original
+survived.
+
+\textbf{Setup.} Suppose a step record carries a residual tensor and a target
+tolerance:
+\begin{lstlisting}[style=l4style]
+let s = { r: residualVec, it: 4, tol: 1.0e-6 }
+\end{lstlisting}
+We want to decide convergence---is the residual's norm below \code{tol}?---and
+record the verdict in a fresh state with the counter advanced.
+
+\textbf{The step.} Destructure the fields we need, derive, rebuild:
+\begin{lstlisting}[style=l4style]
+let { r, it, tol } = s in
+let nrm  = norm(r) in           -- derived scalar (a pure function of r)
+let done = nrm < tol in         -- derived boolean
+  { ...s, it: it + 1, converged: done }
+\end{lstlisting}
+
+\tcblower
+\textbf{What happened.} The destructure read \code{r}, \code{it}, \code{tol} from
+\code{s}. The two \code{let}s computed derived values---a norm and a comparison---
+that are \emph{not stored in \code{s} at all}; they are ephemeral intermediates,
+born here and gone after the result is built. The final spread built a fresh
+record: all of \code{s}'s fields, with \code{it} advanced and a new
+\code{converged} field set to \code{done}.
+
+\textbf{The original survives.} After this expression evaluates,
+\lstinline[style=l4style]|s| is byte-for-byte what it was:
+\lstinline[style=l4style]|s.it| is still $4$, \lstinline[style=l4style]|s.r| is
+still the same residual tensor, and \code{s} has no \code{converged} field at all.
+Reading \code{s}, deriving from it, and building a new record from the derived
+values \emph{never touched \code{s}}. This is the discipline in miniature: data
+flows \emph{out} of records by destructuring and \emph{into} new records by
+spreading, and the records in between are immutable all the way down.
+\end{workedexample}
+
+\section{Why immutability is the right discipline for a simulation}
+
+The reader entitled to ask, at this point, why we tie our hands. Mutable structs
+are the default in every systems language; copying a whole record to change one
+field sounds wasteful. Three payoffs justify the discipline, and each one is a
+load-bearing beam of the rest of the book.
+
+\subsection{The dataflow is the dependency graph}
+
+A simulation \emph{evolves} state: each step produces the next state from the
+current one. When ``produces the next from the current'' literally means ``reads
+record \code{s} and builds record \code{s'},'' the program's text \emph{is} a
+graph of who-feeds-whom. The arrow from \code{s} to \code{s'} in
+\cref{fig:chain} is not a metaphor; it is the dependency edge \code{s'} depends
+on \code{s}, and it is visible right there in the spread that names \code{s}. In
+\cref{ch:language} we saw that pure functions make data flow explicit; records
+make the \emph{state} that flows be a first-class, inspectable value. Together
+they make the whole computation a graph you can read off the page---which is
+exactly what the calculus needs to reason about equivalence between layers, and
+what a backend needs to schedule the work.
+
+If instead each step \emph{mutated} a shared state box, the arrows would
+vanish into invisible side effects. Two steps writing the same box would be
+ordered only by accident of execution, and ``what does step~$k$ depend on'' would
+be unanswerable from the text. Immutability buys us a readable graph; mutation
+spends it.
+
+\subsection{Only one field actually changes}
+
+Look again at the increment step \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|.
+Of the three fields, \emph{one} is overridden; the other two are copied verbatim.
+This is not an accident of the example. Across a great many solver steps, the
+record that threads through carries several fields but the step touches
+\emph{one}---the iteration counter ticks while the heavy field is recomputed
+elsewhere, or the field advances while the counter and flags ride along. The
+spread makes this visible: the override list is short, and it names exactly what
+changed. We will return to this in \cref{ch:strata}, where the observation that a
+solve's externally-visible state mutates at essentially a single point---the
+counter---becomes the key to separating the strata of a record cleanly. For now,
+notice only that the spread \emph{advertises} its single mutation point; a
+mutable struct hides it among a dozen possible assignments.
+
+\subsection{Sharing is safe}
+
+Here is the payoff that the mutable world simply cannot offer. Because a record
+never changes, two names may refer to the \emph{same} record with no hazard
+whatsoever. There is no such thing as ``\code{a} aliases \code{b}, so changing
+\code{a} surprises \code{b}''---because nothing can change \code{a}. Aliasing,
+the perennial bug-farm of mutable state, is \emph{impossible to misuse}: the worst
+that aliasing can do is let two names read the same unchanging value, which is
+exactly what you want.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick, align=left,
+        minimum width=36mm, minimum height=20mm, inner sep=4pt] (rec) at (0,0)
+        {\scriptsize\code{x}: theField\\[1pt]\scriptsize\code{it}: \(7\)\\[1pt]\scriptsize\code{converged}: F};
+  \node[font=\scriptsize\bfseries, text=simBlue, anchor=south] at (rec.north) {one immutable record};
+  \node[draw=simGray, fill=white, rounded corners=2pt, font=\ttfamily\footnotesize] (na) at (-3.6,1.0) {a};
+  \node[draw=simGray, fill=white, rounded corners=2pt, font=\ttfamily\footnotesize] (nb) at (-3.6,-1.0) {b};
+  \draw[flow] (na.east) to[out=0,in=160] (rec.west);
+  \draw[flow] (nb.east) to[out=0,in=200] (rec.west);
+  \node[font=\scriptsize, text=simGreen, align=left, anchor=west] at (2.4,0)
+    {both names read\\the same value;\\neither can\\change it};
+\end{tikzpicture}
+\caption[Safe sharing]{Two names \code{a} and \code{b} bound to the same
+immutable record. In a mutable world this would be a hazard---a write through
+\code{a} would silently change what \code{b} sees. Here it is free and safe:
+because the record cannot change, sharing it is indistinguishable from each name
+having its own copy, but costs nothing.}
+\label{fig:sharing}
+\end{figure}
+
+\Cref{fig:sharing} draws the situation. This safety is not a minor convenience.
+It is what lets a spread like \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|
+be cheap in practice: the new record need not deep-copy \code{s}'s tensor field
+\code{x}: it can \emph{share} the very same immutable tensor, because that tensor
+can never change underneath it. The conceptual model is ``fresh copy''; the
+implementation, licensed by immutability, shares everything that did not change.
+You get the clean semantics of copying with the runtime cost of pointer-sharing,
+and you get it precisely \emph{because} nothing mutates.
+
+\begin{keyidea}
+Immutability turns aliasing from a hazard into a free optimization. Conceptually,
+every spread builds a fresh record. In practice, the fresh record shares the
+unchanged fields with its source---safely, because no one can ever mutate the
+shared parts. ``Update means fresh copy'' is the \emph{semantics}; ``share what
+didn't change'' is the \emph{implementation}, and immutability is exactly what
+makes the second a sound realization of the first.
+\end{keyidea}
+
+\section{Records of records, optional fields, and demand}
+
+Two refinements round out the record vocabulary; both will be used heavily later
+and are introduced here only far enough to read.
+
+\subsection{Records nest}
+
+A field may itself hold a record. The simulator's full state is a record whose
+fields are themselves bundles---a configuration sub-record, a solver sub-record,
+an output sub-record. Access chains through dots,
+\lstinline[style=l4style]|state.solver.it|, and a spread updates a nested field
+by spreading at each level:
+
+\begin{lstlisting}[style=l4style]
+{ ...state, solver: { ...state.solver, it: state.solver.it + 1 } }
+\end{lstlisting}
+
+This builds a fresh outer record whose \code{solver} field is a fresh inner
+record with \code{it} advanced---and every other field, inner and outer, copied
+across. The nesting is just the rules we already have, applied at two levels.
+
+There is a subtlety worth naming, because it is exactly where the procedural
+intuition wants to lead you astray. To bump a nested counter you must rebuild
+\emph{both} levels: the inner record (with \code{it} advanced) and the outer
+record (with its \code{solver} field pointing at the new inner record). You
+cannot ``reach in'' and bump \code{state.solver.it}---there is no such operation,
+just as there is none at the top level. But this costs almost nothing in
+practice: by the safe-sharing argument of the previous section, the
+\emph{untouched} branches of \code{state}---its \code{cfg} field, the
+\code{solver}'s other fields---are shared, not copied. Only the spine from the
+root down to the changed field is rebuilt. A deep update touches one path through
+the tree and shares everything off it, which is precisely the immutable-data
+idiom every functional language uses to make ``copy the whole structure'' cheap.
+
+\begin{example}[A nested update shares the untouched branch]
+\label{ex:nested}
+Let \lstinline[style=l4style]|state = { cfg: c, solver: { x: f, it: 2 } }|. The
+expression \lstinline[style=l4style]|{ ...state, solver: { ...state.solver, it: 3 } }|
+reduces to \lstinline[style=l4style]|{ cfg: c, solver: { x: f, it: 3 } }|. The
+inner \code{x} field still holds the very same tensor \code{f} (shared, since it
+did not change), and the outer \code{cfg} still holds the very same \code{c}.
+Only two records were freshly built---the inner \code{solver} and the outer
+\code{state}---and the original \code{state} is, as always, untouched and still
+reports \lstinline[style=l4style]|state.solver.it| as $2$.
+\end{example}
+
+\subsection{Optional fields and demand-pruning}
+
+A record type may declare a field \emph{optional}, written with a trailing
+\lstinline[style=l4style]|?|:
+
+\begin{lstlisting}[style=l4style]
+{ x: Tensor[N], it: Int, residual?: Scalar }
+\end{lstlisting}
+
+The \code{residual?} field may or may not be present in a given value. Optionality
+is the calculus's answer to a recurring need: a step can \emph{declare} an output
+that downstream code might want---a residual norm for monitoring, say---without
+forcing it to be computed when nobody asks. The rule, which \cref{ch:fold}
+develops in full, is \emph{demand-pruning}: a field that no consumer reads is
+never computed. \Cref{fig:optional} greys out exactly such a field.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \node[draw=simBlue, fill=simBgBlue, rounded corners=3pt, thick,
+        minimum width=44mm, minimum height=26mm, inner sep=5pt] (s) at (0,0) {};
+  \node[anchor=north, font=\scriptsize\bfseries, text=simBlue] at ($(s.north)+(0,-1mm)$) {step output};
+  \node[anchor=west] at ($(s.north west)+(2.5mm,-7mm)$)  {\code{x}\,:\ theField};
+  \node[anchor=west] at ($(s.north west)+(2.5mm,-13mm)$) {\code{it}\,:\ \(8\)};
+  \node[anchor=west, text=simGray!60] at ($(s.north west)+(2.5mm,-19mm)$)
+    {\itshape\code{residual?}\,:\ (not read \(\Rightarrow\) not computed)};
+  \draw[simGray!40, densely dashed] ($(s.north west)+(2mm,-16mm)$) -- ($(s.north east)+(-2mm,-16mm)$);
+\end{tikzpicture}
+\caption[An optional, demand-pruned field]{A step declares an optional field
+\code{residual?}. Because no downstream consumer reads it here, demand-pruning
+elides it---the field is greyed out and never materializes. The same step,
+consumed by code that \emph{does} read \code{residual?}, would compute it. The
+declaration is fixed; whether the value is produced depends on demand.
+\Cref{ch:fold} makes this precise.}
+\label{fig:optional}
+\end{figure}
+
+This is a deep idea with a light footprint here: it replaces, in one stroke, the
+logging flags, verbosity switches, and conditional ``if monitoring, also
+compute\dots'' branches that clutter procedural simulators. An operator simply
+declares every output it \emph{could} produce; consumers read what they need; the
+unread outputs cost nothing. We meet it again, with its reduction rule, in
+\cref{ch:fold}.
+
+\section{The book's real records: a forward map}
+
+Everything in this chapter is rehearsal for three records you will meet
+everywhere in Part~III and beyond. We name them now---only their shapes, so that
+when they appear they are familiar---and defer their full treatment to
+\cref{ch:strata}, which exists precisely to dissect them.
+
+\begin{definition}[The three workhorse records]
+\label{def:workhorse}
+The recurring state records of the simulator's solve are:
+\begin{itemize}[nosep]
+  \item \textbf{\code{OpParams}}---\emph{build-time configuration.} The readonly
+  bundle a solver is set up with: variant selectors, tolerances, the constructed
+  operator surfaces. Captured once, never re-evolved.
+  \item \textbf{\code{SimState}}---\emph{run-time evolving state.} The
+  caller-visible quantities a solve carries step to step: the current iterate, the
+  iteration count, the convergence flag. The very record this chapter has been
+  drawing as cards.
+  \item \textbf{\code{SolveResult}}---\emph{a returned bundle.} The record one step
+  hands back: the next state, the working data, and the demand-prunable per-step
+  outputs.
+\end{itemize}
+\end{definition}
+
+Their shapes, in the syntax of this chapter:
+
+\begin{lstlisting}[style=l4style]
+OpParams    = { tol: Float, max_it: Int, flexible: Bool, ... }   -- build-time, readonly
+SimState    = { x: Tensor[N], it: Int, converged: Bool, ... }    -- run-time, evolving
+SolveResult = { sim: SimState, outputs: StepOutputs, ... }       -- a step's returned bundle
+\end{lstlisting}
+
+Notice the strata at a glance. \code{OpParams} is fixed once and read forever---
+the ``operator parameters'' a step closes over but never changes. \code{SimState}
+is the bundle that threads, the one whose \code{it} ticks step by step.
+\code{SolveResult} is what a step returns: it \emph{contains} a fresh
+\code{SimState} and adds the per-step readouts. The discipline of this
+chapter---read by destructuring, write by spreading, never mutate---is exactly how
+every step over these records is written. \Cref{ch:strata} explains \emph{why} the
+state splits into these three strata (build-time versus run-time, and the single
+mutation point we flagged above); \cref{ch:monad} shows how the threading of
+\code{SimState} through a chain of steps is itself packaged so the spreads stay
+out of the algorithm's way. For this chapter it is enough that you can read each
+shape as a card of named fields and know that ``updating'' any of them means
+building a fresh one.
+
+\summarysection
+A \emph{record} is a bundle of named, typed fields,
+written \lstinline[style=l4style]|{ x: theField, it: 7, converged: False }|, with
+a field reached by the dot, \lstinline[style=l4style]|s.it|. Records carry the
+state a simulation evolves. The governing discipline is \emph{immutability}: a
+record never changes. ``Updating'' a record means building a fresh one with the
+\emph{spread}, \lstinline[style=l4style]|{ ...s, it: s.it + 1 }|---a new value,
+like \code{s} but for the named fields, with \code{s} left untouched. This
+contrasts sharply with mutating a struct field in place, which destroys the old
+value and ripples through every alias. Fields are pulled out by name with
+\emph{destructuring}, \lstinline[style=l4style]|let { x, it } = s|, optionally
+keeping a rest, \lstinline[style=l4style]|let { it, ...rest } = s|. Immutability
+pays three dividends for simulation: the value-threading of fresh records
+\emph{is} the dependency graph (\cref{ch:targets}); the short override list of a
+spread advertises that typically a single field changes per step
+(\cref{ch:strata}); and sharing a record is always safe, which lets ``fresh
+copy'' be implemented as ``share what didn't change'' at no semantic cost. Records
+nest, and optional fields (\lstinline[style=l4style]|residual?|) introduce
+demand-pruning, by which an unread output is never computed (\cref{ch:fold}). The
+book's three workhorse records---\code{OpParams} (build-time),
+\code{SimState} (run-time), \code{SolveResult} (a step's return)---are previewed
+here and dissected in \cref{ch:strata}.
+
+\furtherreading
+The record syntax used here---brace literals, field access by name, the spread
+for non-destructive update, destructuring with rest---is the common surface of
+the typed functional and modern scripting languages; the calculus borrows the
+TypeScript spelling deliberately for readability. The deeper point, that
+immutable values make sharing safe and dataflow explicit, is the thesis of pure
+functional programming; the standard exposition, and the source of the
+``everything is a value, updates build fresh values'' discipline this chapter
+distills, is Peyton Jones's account of the lazy, purely functional
+language~\citep{peytonjones2003}, where immutability and demand-driven evaluation
+(our optional fields) appear as two faces of one design.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item Let \code{s = \{ x: a, it: 3, converged: False \}}.
+  Write the value of each of \code{s.it},
+  \code{\{ ...s, it: s.it + 1 \}}, and
+  \code{\{ ...s, converged: True \}}. Then state the value of
+  \code{s.it} \emph{after} all three expressions have been
+  evaluated, and explain in one sentence why it is what it is.
+  \item Rewrite the increment \code{\{ ...s, it: s.it + 1 \}}
+  using destructure-with-rest instead of \code{...s}. Argue
+  that the two produce the same record.
+  \item A colleague writes, ``the spread \code{\{ ...s, it: 0 \}}
+  resets \code{s}'s counter to zero.'' Correct the statement precisely. What, if
+  anything, happens to \code{s}?
+  \item Give a record value and a tuple value that carry the same three pieces of
+  data. Then suppose a fourth field/component is inserted at the front. For each,
+  say what (if anything) breaks in code that read the \emph{old} second
+  field/component, and use this to explain when you would prefer a record over a
+  tuple.
+  \item Take \code{state = \{ cfg: c, solver: \{ x: f, it: 5 \} \}}.
+  Write a single expression that produces a fresh \code{state} whose
+  \code{solver.it} is $6$ and whose every other field (inner and outer) is
+  unchanged.
+  \item Explain why two names bound to the same record cause no aliasing hazard
+  here, whereas two pointers to the same mutable struct do. Connect your answer
+  to why a spread may safely \emph{share} the unchanged tensor field \code{x}
+  rather than deep-copying it.
+  \item A step record declares an optional field
+  \code{residual?: Scalar}. Describe a consumer that causes it
+  to be computed and a consumer that causes it to be pruned. In one sentence,
+  state what procedural feature (flag, branch, or monad) the optional field
+  replaces.
+  \item In \cref{wex:history}, suppose a bug replaced the third step with an
+  imagined in-place mutation \code{s2.it = 3; s2.converged = True} (not legal in
+  our calculus). Which earlier records in the trace would now be wrong if other
+  code still held them, and why? Use this to state, in your own words, the single
+  guarantee immutability provides.
+\end{enumerate}

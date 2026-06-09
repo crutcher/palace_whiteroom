@@ -1,0 +1,1012 @@
+\chapter{The de Rham Complex and Discrete Exactness}
+\label{ch:derham}
+
+\chapterorient{The previous chapter introduced the four finite-element spaces one
+at a time, by the degrees of freedom that define them, and ended with a promise:
+that $\Hone$, $\Hcurl$, $\Hdiv$, and $\Ltwo$ are not four unrelated spaces but the
+four rungs of a single ladder, linked by the gradient, curl, and divergence. This
+chapter keeps that promise. It is the structural heart of Part~II. We assemble the
+four spaces into the \emph{de Rham complex}, prove the two vector-calculus
+identities $\Curl\Grad=0$ and $\Div\Curl=0$ that make it a complex, and read off
+their physical content---that a gradient field is curl-free and a curl field is
+divergence-free, the very facts that license the scalar and vector potentials of
+\cref{ch:maxwell}. Then comes the payoff that makes the whole apparatus matter for
+a simulator: the discrete finite-element spaces inherit the \emph{same} exactness,
+through a commuting diagram relating interpolation to differentiation. That single
+property---discrete exactness---is why edge elements avoid spurious modes, why the
+eigenmode solver can project onto a divergence-free subspace, and why the gradient
+fields form the null space the curl--curl operator must learn to ignore. By the end
+you will be able to draw the complex from memory, verify exactness by hand on a
+small mesh, and recognize the de Rham structure wherever it surfaces in the
+solver chapters ahead.}
+
+\section{Four spaces, three arrows}
+
+\Cref{ch:functionspaces} left us with \cref{tab:fourdofs}: four spaces, each
+defined by where its degrees of freedom live and what continuity that forces.
+Reading the table top to bottom traced a ladder---vertices, edges, faces, cell
+interiors; full continuity, tangential, normal, none. We now make the rungs of
+that ladder into a single mathematical object by naming the \emph{arrows} between
+them.
+
+The three arrows are the differential operators of vector calculus. The gradient
+$\Grad$ turns a scalar field into a vector field; the curl $\Curl$ turns a vector
+field into another vector field; the divergence $\Div$ turns a vector field into a
+scalar field. What \cref{ch:functionspaces} hinted at, and we now assert
+precisely, is that each of these operators maps one of our four spaces
+\emph{exactly into the next}:
+\[
+  \Hone \xrightarrow{\;\Grad\;} \Hcurl \xrightarrow{\;\Curl\;} \Hdiv
+         \xrightarrow{\;\Div\;} \Ltwo .
+\]
+This sequence is the \emph{de Rham complex}. It is the central diagram of this
+book, and we draw it properly in \cref{fig:derham}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=24mm and 30mm]
+  % --- the four space nodes ---
+  \node[space, minimum width=18mm] (h1)   {$\Hone$};
+  \node[space, minimum width=18mm, right=of h1]   (hcurl) {$\Hcurl$};
+  \node[space, minimum width=18mm, right=of hcurl] (hdiv)  {$\Hdiv$};
+  \node[space, minimum width=18mm, right=of hdiv]  (l2)    {$\Ltwo$};
+  % --- the three differential arrows ---
+  \draw[flow] (h1)    -- node[above,font=\small]{$\Grad$}
+                         node[below,font=\scriptsize\itshape,simGray]{gradient} (hcurl);
+  \draw[flow] (hcurl) -- node[above,font=\small]{$\Curl$}
+                         node[below,font=\scriptsize\itshape,simGray]{curl} (hdiv);
+  \draw[flow] (hdiv)  -- node[above,font=\small]{$\Div$}
+                         node[below,font=\scriptsize\itshape,simGray]{divergence} (l2);
+  % --- DoF annotations under each node ---
+  \node[font=\scriptsize, simBlue,   below=10mm of h1.south,    align=center] (a1)
+    {nodal\\(vertices)\\value $V$};
+  \node[font=\scriptsize, simRust,   below=10mm of hcurl.south, align=center] (a2)
+    {edge\\(circulations)\\$\vE,\vA$};
+  \node[font=\scriptsize, simGreen,  below=10mm of hdiv.south,  align=center] (a3)
+    {face\\(fluxes)\\$\vB,\vD$};
+  \node[font=\scriptsize, simViolet, below=10mm of l2.south,    align=center] (a4)
+    {cell\\(densities)\\$\rho$};
+  \draw[refedge] (h1.south)    -- (a1.north);
+  \draw[refedge] (hcurl.south) -- (a2.north);
+  \draw[refedge] (hdiv.south)  -- (a3.north);
+  \draw[refedge] (l2.south)    -- (a4.north);
+  % --- the two exactness identities, above the arrows ---
+  \node[font=\scriptsize\itshape, simInk, above=12mm of hcurl.north] (id1)
+    {$\Curl\Grad=0$};
+  \node[font=\scriptsize\itshape, simInk, above=12mm of hdiv.north]  (id2)
+    {$\Div\Curl=0$};
+  \draw[refedge, bend right=18] (h1.north)  to (id1);
+  \draw[refedge, bend left=18]  (hdiv.north) to (id1);
+  \draw[refedge, bend right=18] (hcurl.north) to (id2);
+  \draw[refedge, bend left=18]  (l2.north)    to (id2);
+\end{tikzpicture}
+\caption[The de Rham complex]{The de Rham complex: the four finite-element spaces
+of \cref{ch:functionspaces}, linked by the three differential operators. Each space
+carries a different \emph{kind} of degree of freedom (blue nodal values, rust edge
+circulations, green face fluxes, violet cell densities) and each arrow is a
+\emph{first-order} differential operator that maps each space exactly into the next.
+The two identities above the arrows---$\Curl\Grad=0$ and $\Div\Curl=0$---are what make
+this sequence a \emph{complex}: applying two consecutive arrows annihilates everything.
+This single picture organizes the whole of electromagnetic finite-element theory;
+it recurs throughout the book.}
+\label{fig:derham}
+\end{figure}
+
+Before we can call it a complex we must check that the arrows even \emph{type-check}:
+that each operator genuinely lands in the next space. The four spaces were defined
+in \cref{ch:functionspaces} precisely so that they do.
+
+\begin{itemize}[nosep]
+\item \textbf{$\Grad : \Hone \to \Hcurl$.} A field $u\in\Hone$ is square-integrable
+  with a square-integrable gradient---that is the very definition of $\Hone$. So
+  $\Grad u$ is square-integrable. Is it in $\Hcurl$? A field is in $\Hcurl$ if its
+  curl is square-integrable; and $\Curl\Grad u = 0$ (proven below), which is
+  certainly square-integrable. So $\Grad u\in\Hcurl$. The tangential trace of
+  $\Grad u$ is the tangential derivative of the continuous scalar $u$---continuous
+  across faces---so $\Grad u$ has exactly the tangential continuity that $\Hcurl$
+  requires.
+\item \textbf{$\Curl : \Hcurl \to \Hdiv$.} A field $\vu\in\Hcurl$ has
+  square-integrable curl by definition, so $\Curl\vu$ is square-integrable. Is it in
+  $\Hdiv$? A field is in $\Hdiv$ if its divergence is square-integrable; and
+  $\Div\Curl\vu=0$, square-integrable. So $\Curl\vu\in\Hdiv$. The normal trace of a
+  curl is determined by the tangential data of $\vu$ on the face, which $\Hcurl$
+  makes continuous---so $\Curl\vu$ has the normal continuity $\Hdiv$ requires.
+\item \textbf{$\Div : \Hdiv \to \Ltwo$.} A field $\vu\in\Hdiv$ has square-integrable
+  divergence by definition. So $\Div\vu\in\Ltwo$, no constraint to check: $\Ltwo$
+  asks for nothing beyond square-integrability.
+\end{itemize}
+
+The arrows fit. Each space is built with just enough regularity that the
+differential operator leaving it lands in the next space with just enough regularity
+to leave again. This is no accident of our four choices: it is the reason these four
+spaces, and not others, are the canonical ones. They are the spaces \emph{on which
+the de Rham complex closes}.
+
+\begin{notationbox}
+We write the complex left to right, $\Hone\to\Hcurl\to\Hdiv\to\Ltwo$, with the
+operators $\Grad,\Curl,\Div$ over the arrows. In three dimensions this is the full
+complex; in two dimensions it shortens to
+$\Hone\xrightarrow{\Grad}\Hcurl\xrightarrow{\operatorname{curl}}\Ltwo$, where the
+\emph{scalar} curl $\operatorname{curl}(u_1,u_2)=\partial_x u_2-\partial_y u_1$ plays
+the role of both curl and divergence at once. Palace builds the discrete arrows for
+both cases; the 2-D scalar curl is the \code{H\_CURL}$\to$\code{INTEGRAL} branch of
+its interpolator (\cref{sec:discrete-arrows}). Throughout this chapter ``the
+complex'' means the 3-D version unless stated otherwise.
+\end{notationbox}
+
+\section{Exactness: range equals kernel}
+
+A sequence of spaces and arrows is a \emph{complex} when the composition of any two
+consecutive arrows is zero. It is \emph{exact} when something stronger holds: the
+\emph{range} of each arrow is exactly the \emph{kernel} of the next. We take these
+two properties in turn, because they are different in strength and different in
+consequence, and the discrete theory will need to track them separately.
+
+\subsection{The complex property: two consecutive arrows vanish}
+
+The complex property is the pair of vector-calculus identities
+\[
+  \Curl\,\Grad = 0, \qquad \Div\,\Curl = 0.
+\]
+These say that the gradient of any scalar has zero curl, and the curl of any vector
+has zero divergence. They are usually quoted as facts; we derive them, because the
+derivation is short, it is the engine of everything that follows, and---crucially---
+the \emph{discrete} versions will be derived the same way.
+
+\begin{lemma}[The complex identities]\label{lem:complex}
+For any twice-continuously-differentiable scalar field $\phi$ and vector field $\vF$,
+\[
+  \Curl(\Grad\phi) = \mathbf{0}, \qquad \Div(\Curl\vF) = 0.
+\]
+\end{lemma}
+
+\begin{proof}
+Both follow from a single fact: \emph{mixed partial derivatives commute},
+$\partial_i\partial_j\phi=\partial_j\partial_i\phi$ (Clairaut's theorem, valid for
+$C^2$ fields).
+
+For the first identity, compute the curl of a gradient component by component. With
+$\Grad\phi=(\partial_x\phi,\partial_y\phi,\partial_z\phi)$, the $x$-component of the
+curl is
+\[
+  (\Curl\Grad\phi)_x
+  = \partial_y(\Grad\phi)_z - \partial_z(\Grad\phi)_y
+  = \partial_y\partial_z\phi - \partial_z\partial_y\phi
+  = 0,
+\]
+the last step by commuting the mixed partials. The $y$- and $z$-components vanish
+identically the same way. Hence $\Curl\Grad\phi=\mathbf 0$.
+
+For the second identity, with $\vF=(F_1,F_2,F_3)$,
+\[
+  \Curl\vF
+  = \bigl(\partial_y F_3 - \partial_z F_2,\;
+          \partial_z F_1 - \partial_x F_3,\;
+          \partial_x F_2 - \partial_y F_1\bigr),
+\]
+and its divergence is
+\[
+  \Div\Curl\vF
+  = \partial_x(\partial_y F_3 - \partial_z F_2)
+  + \partial_y(\partial_z F_1 - \partial_x F_3)
+  + \partial_z(\partial_x F_2 - \partial_y F_1).
+\]
+The six terms cancel in pairs: $\partial_x\partial_y F_3$ against
+$-\partial_y\partial_x F_3$, $-\partial_x\partial_z F_2$ against
+$\partial_z\partial_x F_2$, and $\partial_y\partial_z F_1$ against
+$-\partial_z\partial_y F_1$, each pair by commuting the mixed partials. The total is
+zero.
+\end{proof}
+
+Both identities are corollaries of one symmetry---that the order of differentiation
+does not matter. We will revisit this in \cref{wex:component}, where we watch the
+cancellation happen on a concrete polynomial field, and again in
+\cref{sec:discrete-exact}, where the \emph{discrete} gradient and curl satisfy the
+same identities for a discrete reason that is structurally identical.
+
+\subsection{Exactness: the kernel is filled by the previous range}
+
+The complex property says $\operatorname{range}(\Grad)\subseteq\ker(\Curl)$: every
+gradient is curl-free, so the range of $\Grad$ sits inside the kernel of $\Curl$.
+\emph{Exactness} asserts the reverse inclusion as well---that the kernel contains
+\emph{nothing but} previous-range elements:
+\[
+  \operatorname{range}(\Grad) = \ker(\Curl), \qquad
+  \operatorname{range}(\Curl) = \ker(\Div).
+\]
+In words: \emph{every} curl-free field is a gradient, and \emph{every}
+divergence-free field is a curl. \Cref{fig:exact} draws the two pictures side by
+side---the easy inclusion (a complex) and the full equality (exactness).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+% --- Left: complex (one inclusion) ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.5,2.55) {complex: range $\subseteq$ kernel};
+  % kernel of Curl as a big ellipse inside Hcurl
+  \draw[simInk,thick] (1.5,1.0) ellipse (1.6 and 1.25);
+  \node[simInk] at (1.5,2.05) {$\ker(\Curl)$};
+  % range of Grad as a smaller blob inside
+  \fill[simBlue!18] (1.2,0.85) ellipse (0.85 and 0.6);
+  \draw[simBlue,thick] (1.2,0.85) ellipse (0.85 and 0.6);
+  \node[simBlue] at (1.2,0.85) {$\operatorname{range}(\Grad)$};
+  \node[simRust,font=\scriptsize] at (2.35,0.25) {gap?};
+  \node[simGray,align=center] at (1.5,-0.7) {curl-free fields not\\[-1pt]known to be gradients};
+\end{scope}
+% --- Right: exactness (equality) ---
+\begin{scope}[shift={(5.6,0)}]
+  \node[font=\footnotesize\bfseries] at (1.5,2.55) {exact: range $=$ kernel};
+  \draw[simInk,thick] (1.5,1.0) ellipse (1.6 and 1.25);
+  \node[simInk] at (1.5,2.05) {$\ker(\Curl)$};
+  \fill[simBlue!18] (1.5,1.0) ellipse (1.55 and 1.2);
+  \draw[simBlue,thick] (1.5,1.0) ellipse (1.55 and 1.2);
+  \node[simBlue] at (1.5,1.0) {$\operatorname{range}(\Grad)$};
+  \node[simGreen,font=\scriptsize] at (1.5,-0.05) {no gap};
+  \node[simGray,align=center] at (1.5,-0.7) {every curl-free field\\[-1pt]\emph{is} a gradient};
+\end{scope}
+\end{tikzpicture}
+\caption[Complex versus exact]{The difference between a complex and an exact
+sequence, drawn at the $\Hcurl$ rung. \emph{Left:} the complex property
+$\Curl\Grad=0$ guarantees only that the range of $\Grad$ (blue) sits \emph{inside}
+the kernel of $\Curl$ (the curl-free fields); a gap may remain---curl-free fields
+that are not gradients. \emph{Right:} \emph{exactness} closes the gap: the range
+fills the kernel exactly, so every curl-free field is a gradient. The size of the
+gap is a property of the domain's \emph{topology} (\cref{rmk:cohomology}); for the
+simply-connected domains of most simulations the gap is empty and the sequence is
+exact.}
+\label{fig:exact}
+\end{figure}
+
+The reverse inclusions are not automatic---and whether they hold is a statement
+about the \emph{shape} of the domain, not about calculus. On a domain with no holes
+(a ball, a box, any \emph{simply-connected} region with connected boundary) the
+sequence is exact: a curl-free field on such a domain really is a gradient, and a
+divergence-free field really is a curl. On a domain with a hole---a solid torus, the
+region around a wire---the reverse inclusion can fail, and the failure is measured by
+the topology. That refinement is the subject of \cref{rmk:cohomology}; for now we
+record the clean statement for the domains where it holds.
+
+\begin{theorem}[Exactness on a simply-connected domain]\label{thm:exact}
+Let $\dom\subset\Real^3$ be a bounded, simply-connected domain with connected
+boundary. Then the de Rham complex on $\dom$ is exact:
+\[
+  \operatorname{range}(\Grad)=\ker(\Curl), \qquad
+  \operatorname{range}(\Curl)=\ker(\Div).
+\]
+Equivalently: every curl-free field is the gradient of a scalar potential, and every
+divergence-free field is the curl of a vector potential.
+\end{theorem}
+
+The proof constructs the potential explicitly---one integrates the field along paths
+from a base point, and simple-connectivity guarantees the answer is
+path-independent. We do not reproduce it (it is the Poincar\'e-lemma computation of
+any vector-calculus course); the references in \cref{sec:furtherreading} give it in
+full. What matters here is not the proof but the \emph{use}: exactness is the
+mathematical fact behind the electromagnetic potentials, and it is the property the
+discrete spaces must preserve.
+
+\section{The potentials of Maxwell are de Rham facts}
+\label{sec:potentials}
+
+\Cref{ch:maxwell} introduced two potentials almost in passing: the scalar potential
+$V$ with $\vE=-\Grad V$, and the magnetic vector potential $\vA$ with $\vB=\Curl\vA$.
+We can now see that neither was a lucky guess. Each is forced---\emph{exists at
+all}---by the exactness of the de Rham complex.
+
+Two of Maxwell's equations are homogeneous (source-free) in the regimes the
+simulator solves:
+\[
+  \Curl\vE = 0 \quad\text{(electrostatics)}, \qquad
+  \Div\vB = 0 \quad\text{(always).}
+\]
+Read each through \cref{thm:exact}. The electrostatic field $\vE$ is curl-free; by
+exactness at the $\Hcurl$ rung, a curl-free field is a gradient, so there exists a
+scalar $V$ with $\vE=-\Grad V$ (the sign is convention). The magnetic field $\vB$ is
+divergence-free---always, this is the ``no magnetic monopoles'' law; by exactness at
+the $\Hdiv$ rung, a divergence-free field is a curl, so there exists a vector field
+$\vA$ with $\vB=\Curl\vA$. \Cref{fig:potentials} lays the correspondence out.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+% --- top row: electrostatic / scalar potential ---
+\begin{scope}
+  \node[stage, minimum width=30mm] (e1) {$\Curl\vE=0$};
+  \node[font=\scriptsize\itshape,simGray, right=8mm of e1] (e2) {exactness at $\Hcurl$};
+  \node[stage, minimum width=30mm, right=8mm of e2] (e3) {$\vE=-\Grad V$};
+  \draw[flow] (e1) -- (e2);
+  \draw[flow] (e2) -- (e3);
+  \node[font=\scriptsize,simBlue, below=1mm of e1] {$\vE$ curl-free};
+  \node[font=\scriptsize,simBlue, below=1mm of e3] {scalar potential $V\in\Hone$};
+\end{scope}
+% --- bottom row: magnetostatic / vector potential ---
+\begin{scope}[shift={(0,-2.4)}]
+  \node[stage, minimum width=30mm] (b1) {$\Div\vB=0$};
+  \node[font=\scriptsize\itshape,simGray, right=8mm of b1] (b2) {exactness at $\Hdiv$};
+  \node[stage, minimum width=30mm, right=8mm of b2] (b3) {$\vB=\Curl\vA$};
+  \draw[flow] (b1) -- (b2);
+  \draw[flow] (b2) -- (b3);
+  \node[font=\scriptsize,simGreen, below=1mm of b1] {$\vB$ divergence-free};
+  \node[font=\scriptsize,simGreen, below=1mm of b3] {vector potential $\vA\in\Hcurl$};
+\end{scope}
+\end{tikzpicture}
+\caption[Potentials are exactness]{The electromagnetic potentials of
+\cref{ch:maxwell} read as de Rham facts. \emph{Top:} the electrostatic Maxwell
+equation $\Curl\vE=0$ says $\vE$ is curl-free; exactness at the $\Hcurl$ rung
+(\cref{thm:exact}) supplies a scalar potential $V$ with $\vE=-\Grad V$, living one
+rung up the complex in $\Hone$. \emph{Bottom:} the law $\Div\vB=0$ says $\vB$ is
+divergence-free; exactness at the $\Hdiv$ rung supplies a vector potential $\vA$ with
+$\vB=\Curl\vA$, one rung up in $\Hcurl$. The potential always lives in the space
+\emph{one rung above} the field it generates---a structural fact, not a coincidence.}
+\label{fig:potentials}
+\end{figure}
+
+\begin{keyidea}
+The potentials are not tricks; they are exactness. ``$\vE$ is curl-free, therefore
+$\vE=-\Grad V$'' \emph{is} the statement $\ker(\Curl)=\operatorname{range}(\Grad)$,
+read at a particular field. ``$\vB$ is divergence-free, therefore $\vB=\Curl\vA$''
+\emph{is} $\ker(\Div)=\operatorname{range}(\Curl)$. The potential of a field always
+lives one rung \emph{up} the de Rham complex: $V\in\Hone$ generates $\vE\in\Hcurl$;
+$\vA\in\Hcurl$ generates $\vB\in\Hdiv$. When the magnetostatic analysis of
+\cref{ch:targets} solves the curl--curl equation $\Curl(\nu\Curl\vA)=\vJ$ for $\vA$
+in $\Hcurl$, it is solving for a potential whose \emph{existence} the de Rham complex
+guarantees and whose \emph{home space} the complex names.
+\end{keyidea}
+
+There is a consequence we will need repeatedly. Because $\vA=\Grad\psi$ added to any
+$\vA$ leaves $\Curl\vA$ unchanged (since $\Curl\Grad\psi=0$), the vector potential is
+not unique: $\vA$ and $\vA+\Grad\psi$ describe the same $\vB$ for any scalar $\psi$.
+This freedom is the \emph{gauge}, and the gradient fields $\Grad\psi$ are precisely
+the directions in which it acts. The same gradient fields are the null space of the
+curl--curl operator $\Curl(\nu\Curl\,\cdot)$---for $\Curl(\nu\Curl(\Grad\psi))=0$---
+which is the reason that operator is singular and the reason the eigenmode solver
+must project them out. We return to this in \cref{sec:divfree}.
+
+\section{The discrete complex}
+\label{sec:discrete-arrows}
+
+Everything so far has been about the continuous spaces. A simulator computes in the
+\emph{discrete} subspaces $\Hone_h,\Hcurl_h,\Hdiv_h,\Ltwo_h$ of
+\cref{ch:functionspaces}---the finite-dimensional spaces of nodal, edge, face, and
+cell functions. The question that makes or breaks the method is whether the discrete
+spaces form a complex of their own, with discrete arrows, and whether that complex is
+\emph{exact}. The answer---remarkably---is yes, and the rest of the chapter is about
+why and what it buys.
+
+\subsection{The discrete arrows are interpolation matrices}
+
+The continuous arrows $\Grad,\Curl,\Div$ are differential operators. Their discrete
+counterparts are \emph{matrices}: rectangular arrays that take the coefficient vector
+of a field in one discrete space to the coefficient vector of its image in the next.
+Palace builds them with a single constructor, the \emph{discrete interpolator}, whose
+job is to realize one de Rham arrow at the discrete level. From the source
+(\code{fespace.cpp}'s \code{BuildDiscreteInterpolator}), the constructor dispatches on
+the \emph{pair} of spaces it is handed and selects the matching arrow:
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+discrete arrow & from $\to$ to & kernel selected \\
+\midrule
+discrete gradient $\mathsf{G}$ & $\Hone_h\to\Hcurl_h$ & \code{GradientInterpolator} \\
+discrete curl $\mathsf{C}$     & $\Hcurl_h\to\Hdiv_h$ & \code{CurlInterpolator} \\
+discrete curl (2-D) & $\Hcurl_h\to\Ltwo_h$ & \code{CurlInterpolator} (native) \\
+discrete divergence $\mathsf{D}$ & $\Hdiv_h\to\Ltwo_h$ & \code{DivergenceInterpolator} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Each is an honest rectangular matrix: $\mathsf{G}$ has as many rows as there are
+edges and as many columns as there are vertices; $\mathsf{C}$ as many rows as faces
+and columns as edges; $\mathsf{D}$ as many rows as cells and columns as faces. (The
+constructor refuses any pair that is not de Rham-adjacent in the correct
+direction---a built-in check that the arrow even exists.) We write $\mathsf{G}$,
+$\mathsf{C}$, $\mathsf{D}$ for the three matrices, reserving the continuous
+$\Grad,\Curl,\Div$ for the operators they discretize.
+
+The construction of $\mathsf{G}$ is so concrete it is worth stating outright, because
+we will compute with it in \cref{wex:discrete}. The discrete gradient is, up to sign,
+the \emph{incidence matrix} of the mesh: the matrix that records, for each edge, which
+two vertices it joins.
+
+\begin{definition}[The lowest-order discrete gradient]\label{def:discrete-grad}
+Let the mesh have vertices indexed $1,\dots,n_v$ and edges $1,\dots,n_e$, with edge
+$e$ oriented from vertex $\operatorname{tail}(e)$ to vertex $\operatorname{head}(e)$.
+The lowest-order discrete gradient is the $n_e\times n_v$ matrix $\mathsf{G}$ with
+\[
+  \mathsf{G}_{e,v} =
+  \begin{cases}
+    +1 & v = \operatorname{head}(e),\\
+    -1 & v = \operatorname{tail}(e),\\
+    0  & \text{otherwise.}
+  \end{cases}
+\]
+That is, $(\mathsf{G}\,\vu)_e = u_{\operatorname{head}(e)} - u_{\operatorname{tail}(e)}$:
+the discrete gradient of a nodal field reads off, on each edge, the difference of the
+nodal values at its two endpoints.
+\end{definition}
+
+This is exactly right as a discrete gradient. A nodal field $u$ has one number per
+vertex; its continuous gradient, integrated along an edge, is
+$\int_e\Grad u\cdot d\vec\ell = u(\operatorname{head}) - u(\operatorname{tail})$ by
+the fundamental theorem of calculus---and the edge degree of freedom of $\Hcurl_h$ is
+exactly that edge circulation (\cref{ch:functionspaces}). So the discrete gradient
+$\mathsf{G}\vu$, read as edge circulations, holds the true edge circulations of
+$\Grad u$. The matrix is not an approximation of the gradient; on these degrees of
+freedom it is \emph{exact}.
+
+\subsection{The commuting diagram}
+
+To say the discrete arrows ``are'' the continuous ones, we need a precise statement,
+and it is the conceptual core of the chapter. Each space comes with a canonical
+\emph{interpolant}: an operator $\Pi$ that takes a smooth field and reads off its
+degrees of freedom, producing the discrete field with those DoFs. There is one per
+space: $\Pi_{\Hone}$ reads nodal values, $\Pi_{\Hcurl}$ reads edge circulations,
+$\Pi_{\Hdiv}$ reads face fluxes, $\Pi_{\Ltwo}$ reads cell averages. The claim is that
+\emph{interpolating then differentiating discretely gives the same result as
+differentiating then interpolating}:
+\[
+  \mathsf{G}\,\Pi_{\Hone} = \Pi_{\Hcurl}\,\Grad, \qquad
+  \mathsf{C}\,\Pi_{\Hcurl} = \Pi_{\Hdiv}\,\Curl, \qquad
+  \mathsf{D}\,\Pi_{\Hdiv} = \Pi_{\Ltwo}\,\Div.
+\]
+This is the \emph{commuting-diagram property}, drawn in \cref{fig:commute}. It says
+the square formed by a continuous arrow on top, a discrete arrow on the bottom, and
+interpolation arrows down the sides \emph{commutes}: both ways around the square give
+the same discrete field.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, node distance=20mm and 34mm]
+  % continuous row
+  \node[space, fill=simBgGray, draw=simGray, minimum width=16mm] (Ha) {$\Hone$};
+  \node[space, fill=simBgGray, draw=simGray, minimum width=16mm, right=of Ha] (Hb) {$\Hcurl$};
+  % discrete row
+  \node[space, minimum width=16mm, below=of Ha] (ha) {$\Hone_h$};
+  \node[space, minimum width=16mm, below=of Hb] (hb) {$\Hcurl_h$};
+  % top arrow (continuous)
+  \draw[flow] (Ha) -- node[above,font=\small]{$\Grad$} (Hb);
+  % bottom arrow (discrete)
+  \draw[depedge] (ha) -- node[below,font=\small]{$\mathsf{G}$} (hb);
+  % side arrows (interpolation, downward)
+  \draw[flow, simViolet] (Ha) -- node[left,font=\scriptsize]{$\Pi_{\Hone}$} (ha);
+  \draw[flow, simViolet] (Hb) -- node[right,font=\scriptsize]{$\Pi_{\Hcurl}$} (hb);
+  % commuting marker
+  \node[font=\Large, simGreen] at ($(Ha)!0.5!(hb)$) {$\circlearrowleft$};
+  % caption-of-square
+  \node[font=\scriptsize\itshape, simGray, right=2mm of hb, text width=34mm, align=left]
+    {$\mathsf{G}\,\Pi_{\Hone}=\Pi_{\Hcurl}\,\Grad$\\[2pt]both paths agree};
+\end{tikzpicture}
+\caption[The commuting diagram]{The commuting-diagram property, shown for the
+gradient square (the curl and divergence squares are identical in form). Start at a
+smooth scalar field in $\Hone$ (top left). Going \emph{right then down}: differentiate
+continuously with $\Grad$, then interpolate the result into the edge space with
+$\Pi_{\Hcurl}$. Going \emph{down then right}: interpolate the scalar into nodal DoFs
+with $\Pi_{\Hone}$, then apply the discrete gradient matrix $\mathsf{G}$. The two
+paths land on the \emph{same} discrete edge field---the square commits
+($\circlearrowleft$). This single property is what makes $\Hone_h,\Hcurl_h,\Hdiv_h,
+\Ltwo_h$ a faithful discrete copy of the continuous complex.}
+\label{fig:commute}
+\end{figure}
+
+Why does the square commute? For the gradient case it is the fundamental theorem of
+calculus again. Interpolate a smooth $u$ into nodal DoFs (read its vertex values),
+then apply $\mathsf{G}$: by \cref{def:discrete-grad} the result on edge $e$ is
+$u(\operatorname{head}(e))-u(\operatorname{tail}(e))$. Going the other way, take the
+continuous gradient $\Grad u$, then interpolate into edge DoFs (read its
+circulations): the circulation on edge $e$ is
+$\int_e\Grad u\cdot d\vec\ell=u(\operatorname{head}(e))-u(\operatorname{tail}(e))$.
+Identical. The curl and divergence squares commute for the same reason, with Stokes'
+theorem and the divergence theorem playing the role the fundamental theorem of
+calculus plays here---each relates the differential operator's DoF (face flux, cell
+average) to a boundary integral of the field's lower DoFs.
+
+\subsection{Discrete exactness}
+\label{sec:discrete-exact}
+
+The commuting diagram has an immediate and decisive corollary: the discrete arrows
+compose to zero, exactly as the continuous ones do.
+
+\begin{theorem}[Discrete exactness]\label{thm:discrete-exact}
+The discrete arrows satisfy the complex identities
+\[
+  \mathsf{C}\,\mathsf{G} = 0, \qquad \mathsf{D}\,\mathsf{C} = 0,
+\]
+and on a discretization of a simply-connected domain the discrete complex
+$\Hone_h\xrightarrow{\mathsf{G}}\Hcurl_h\xrightarrow{\mathsf{C}}\Hdiv_h
+\xrightarrow{\mathsf{D}}\Ltwo_h$ is exact:
+$\operatorname{range}(\mathsf{G})=\ker(\mathsf{C})$ and
+$\operatorname{range}(\mathsf{C})=\ker(\mathsf{D})$.
+\end{theorem}
+
+\begin{proof}[Why $\mathsf{C}\mathsf{G}=0$]
+We give the argument for the first identity; the second is identical with $\Div\Curl$
+in place of $\Curl\Grad$. Take any discrete nodal field $u_h\in\Hone_h$; we must show
+$\mathsf{C}\mathsf{G}u_h=0$. The lowest-order discrete spaces have the property that
+each discrete field is the interpolant of itself, so we may write $u_h=\Pi_{\Hone}u$
+for the smooth representative $u$ that $u_h$ samples. Now chase the commuting diagram
+twice:
+\[
+  \mathsf{C}\,\mathsf{G}\,u_h
+  = \mathsf{C}\,\mathsf{G}\,\Pi_{\Hone}u
+  = \mathsf{C}\,\Pi_{\Hcurl}\,\Grad u
+  = \Pi_{\Hdiv}\,\Curl\,\Grad u
+  = \Pi_{\Hdiv}\,\mathbf{0}
+  = 0,
+\]
+using the gradient commuting square at the second step, the curl commuting square at
+the third, and the \emph{continuous} identity $\Curl\Grad=0$ (\cref{lem:complex}) at
+the fourth. The discrete identity is the continuous identity, pulled through the
+commuting diagram.
+\end{proof}
+
+This is the heart of the matter. \emph{Discrete exactness is not a separate
+miracle---it is the continuous exactness, inherited through the commuting diagram.}
+The finite-element spaces of \cref{ch:functionspaces} were not chosen for accuracy
+alone; they were chosen so that their canonical interpolants commute with
+differentiation, which is exactly the condition that makes the discrete complex a
+faithful copy of the continuous one. \Cref{fig:incidence} shows the discrete identity
+$\mathsf{C}\mathsf{G}=0$ as a statement about the mesh's incidence structure.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+  % a triangle with a vertex, two edges, one face
+  \coordinate (A) at (0,0);
+  \coordinate (B) at (2.4,0);
+  \coordinate (C) at (1.2,2.0);
+  \fill[simBgGreen] (A)--(B)--(C)--cycle;
+  \draw[simInk,thick] (A)--(B)--(C)--cycle;
+  % vertices
+  \fill[simBlue] (A) circle (2.4pt); \node[simBlue,below left] at (A) {$v_1$};
+  \fill[simBlue] (B) circle (2.4pt); \node[simBlue,below right] at (B) {$v_2$};
+  \fill[simBlue] (C) circle (2.4pt); \node[simBlue,above] at (C) {$v_3$};
+  % oriented edges with circulation arrows
+  \draw[-{Stealth[length=2mm]},simRust,thick] ($(A)!0.3!(B)$)--($(A)!0.7!(B)$);
+  \node[simRust,below] at ($(A)!0.5!(B)$) {$e_1$};
+  \draw[-{Stealth[length=2mm]},simRust,thick] ($(B)!0.3!(C)$)--($(B)!0.7!(C)$);
+  \node[simRust,right] at ($(B)!0.5!(C)$) {$e_2$};
+  \draw[-{Stealth[length=2mm]},simRust,thick] ($(C)!0.3!(A)$)--($(C)!0.7!(A)$);
+  \node[simRust,left] at ($(C)!0.5!(A)$) {$e_3$};
+  % face circulation marker
+  \draw[simGreen,thick,-{Stealth[length=1.8mm]}] (1.2,0.75) arc (-90:170:0.32);
+  \node[simGreen] at (1.2,0.62) {$f$};
+  % the algebra to the right
+  \node[align=left, font=\scriptsize, text width=58mm, anchor=west] at (3.4,1.0) {%
+    \textbf{Discrete gradient} $\mathsf{G}$ (edge $=$ head $-$ tail):\\[2pt]
+    $\mathsf{G}\vu=(u_2{-}u_1,\;u_3{-}u_2,\;u_1{-}u_3)$\\[4pt]
+    \textbf{Discrete curl} $\mathsf{C}$ (face $=$ signed edge sum):\\[2pt]
+    $\mathsf{C}(\mathsf{G}\vu)=(u_2{-}u_1)+(u_3{-}u_2)+(u_1{-}u_3)=0$\\[4pt]
+    The loop of edge differences \emph{telescopes}: $\mathsf{C}\mathsf{G}=0$.};
+\end{tikzpicture}
+\caption[Discrete $\mathsf{C}\mathsf{G}=0$ telescopes]{The discrete identity
+$\mathsf{C}\mathsf{G}=0$ on a single triangle. The discrete gradient places, on each
+oriented edge, the difference of its endpoint nodal values (head minus tail). The
+discrete curl sums the edge circulations around the face boundary, with sign. Going
+around the loop $e_1,e_2,e_3$, the differences \emph{telescope}: every vertex value
+appears once with $+$ and once with $-$, so the sum is identically zero. This is the
+discrete avatar of ``the line integral of a gradient around a closed loop is
+zero''---and the discrete avatar of $\Curl\Grad=0$.}
+\label{fig:incidence}
+\end{figure}
+
+\begin{keyidea}
+\textbf{Discrete exactness is why edge elements avoid spurious modes.} The
+spurious-mode pathology of \cref{ch:functionspaces} had a structural cause: a
+componentwise-nodal discretization of $\vE$ has the \emph{wrong} kernel for its
+discrete curl, so the discrete curl--curl operator's null space is polluted with
+non-physical fields that masquerade as resonances. Edge elements ($\Hcurl_h$) fix
+this because they sit in an \emph{exact} discrete complex: by
+\cref{thm:discrete-exact} the kernel of the discrete curl is \emph{exactly} the range
+of the discrete gradient---the discrete gauge fields $\mathsf{G}\,\psi_h$, and nothing
+else. The curl--curl operator's null space is then precisely the discrete gradients,
+a space we can identify and handle (\cref{sec:divfree}), with no spurious extras
+hiding in it. Get the discrete complex exact and the spectrum is clean; break
+exactness and spurious modes return. This is the single deepest reason the four
+finite-element spaces are the ones a Maxwell solver must use.
+\end{keyidea}
+
+\section{Whitney forms: the canonical basis}
+\label{sec:whitney}
+
+The lowest-order discrete complex has a canonical basis---one set of shape functions,
+one per mesh entity, that realizes all four spaces at once and makes the discrete
+arrows the incidence matrices of \cref{def:discrete-grad}. These are the
+\emph{Whitney forms}. We met one already: the edge function
+$\boldsymbol\phi_{ij}=\lambda_i\Grad\lambda_j-\lambda_j\Grad\lambda_i$ of
+\cref{wex:whitney}. The full family, built from the barycentric coordinates
+$\lambda_0,\dots,\lambda_d$ of a simplex, is:
+
+\begin{itemize}[nosep]
+\item \textbf{Nodal} ($\Hone_h$, on vertices): $\lambda_i$ itself---the barycentric
+  hat function, $1$ at vertex $i$, $0$ at the others.
+\item \textbf{Edge} ($\Hcurl_h$, on edges): $\boldsymbol\phi_{ij}=
+  \lambda_i\Grad\lambda_j-\lambda_j\Grad\lambda_i$ on edge $(i,j)$---unit circulation
+  on its own edge, zero on the others.
+\item \textbf{Face} ($\Hdiv_h$, on faces): $\boldsymbol\phi_{ijk}=
+  2\bigl(\lambda_i(\Grad\lambda_j\times\Grad\lambda_k)
+  +\lambda_j(\Grad\lambda_k\times\Grad\lambda_i)
+  +\lambda_k(\Grad\lambda_i\times\Grad\lambda_j)\bigr)$ on face $(i,j,k)$---unit flux
+  through its own face.
+\item \textbf{Cell} ($\Ltwo_h$, on cells): the constant (or $\det$-scaled constant)
+  on each cell---unit cell average.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.05, every node/.style={font=\scriptsize}]
+% three triangles showing nodal / edge / face Whitney forms
+% --- nodal ---
+\begin{scope}
+  \node[font=\footnotesize\bfseries] at (1.0,2.1) {nodal $\lambda_i$};
+  \coordinate (a) at (0,0); \coordinate (b) at (2.0,0); \coordinate (c) at (1.0,1.7);
+  \draw[simInk,thick] (a)--(b)--(c)--cycle;
+  \fill[simBlue] (a) circle (3pt);
+  \fill[simBlue!35] (b) circle (1.6pt); \fill[simBlue!35] (c) circle (1.6pt);
+  \node[simGray] at (1.0,-0.45) {one per vertex};
+\end{scope}
+% --- edge ---
+\begin{scope}[shift={(3.6,0)}]
+  \node[font=\footnotesize\bfseries] at (1.0,2.1) {edge $\boldsymbol\phi_{ij}$};
+  \coordinate (a) at (0,0); \coordinate (b) at (2.0,0); \coordinate (c) at (1.0,1.7);
+  \draw[simInk,thick] (a)--(b)--(c)--cycle;
+  % tangential circulation along the bottom edge
+  \foreach \t in {0.2,0.4,0.6,0.8}{
+    \draw[-{Stealth[length=1.5mm]},simRust,thick]
+      ($(a)!\t!(b)+(0,0.12)$)--+(0.28,0);}
+  \node[simGray] at (1.0,-0.45) {one per edge};
+\end{scope}
+% --- face ---
+\begin{scope}[shift={(7.2,0)}]
+  \node[font=\footnotesize\bfseries] at (1.0,2.1) {face $\boldsymbol\phi_{ijk}$};
+  \coordinate (a) at (0,0); \coordinate (b) at (2.0,0); \coordinate (c) at (1.0,1.7);
+  \fill[simGreen!16] (a)--(b)--(c)--cycle;
+  \draw[simInk,thick] (a)--(b)--(c)--cycle;
+  % flux out of the face (dot = out of page)
+  \node[circle,draw=simGreen,fill=white,inner sep=1.1pt] at (1.0,0.55) {};
+  \fill[simGreen] (1.0,0.55) circle (1.0pt);
+  \node[simGreen] at (1.45,0.55) {$\odot$};
+  \node[simGray] at (1.0,-0.45) {one per face};
+\end{scope}
+\end{tikzpicture}
+\caption[Whitney forms on a triangle]{The lowest-order Whitney basis, the canonical
+realization of the discrete de Rham complex. \emph{Left:} the nodal form $\lambda_i$,
+one per vertex, peaking at its vertex (the $\Hone_h$ basis). \emph{Middle:} the edge
+form $\boldsymbol\phi_{ij}$, one per edge, carrying unit tangential circulation along
+its own edge (the $\Hcurl_h$ basis of \cref{wex:whitney}). \emph{Right:} the face form
+$\boldsymbol\phi_{ijk}$, one per face, carrying unit normal flux through its own face
+(the $\Hdiv_h$ basis, drawn here as flux out of the page, $\odot$). Together they make
+the discrete arrows the incidence matrices of \cref{def:discrete-grad}: the gradient
+of a nodal hat is a sum of edge forms, and so on up the complex.}
+\label{fig:whitney}
+\end{figure}
+
+The decisive algebraic fact---the one that ties the basis to the incidence matrices---
+is how the differential operators act on the Whitney forms. Applying the gradient to a
+nodal hat $\lambda_i$ produces a field that, expanded in the edge forms
+$\boldsymbol\phi_{ij}$, has coefficients $\pm 1$ on the edges touching vertex $i$ and
+$0$ elsewhere---exactly the column of the incidence matrix $\mathsf{G}$ for vertex
+$i$. The Whitney forms are the basis in which the discrete gradient, curl, and
+divergence \emph{are} the signed incidence matrices of the mesh. This is why
+\cref{def:discrete-grad} could state $\mathsf{G}$ combinatorially: in the Whitney
+basis, the analysis is purely topological.
+
+\begin{remark}[For the curious: cohomology and holes]
+\label{rmk:cohomology}
+We claimed exactness for \emph{simply-connected} domains and warned of a gap
+otherwise. That gap is not a defect---it is information, and it is the gateway to a
+beautiful corner of mathematics. On a domain with holes, the quotient
+$\ker(\Curl)/\operatorname{range}(\Grad)$---the curl-free fields that are \emph{not}
+gradients, modulo those that are---is a finite-dimensional vector space whose
+dimension \emph{counts the holes}. Its elements are the \emph{harmonic} fields: those
+in the kernel of both the differential operator above and the (adjoint) one below.
+For a solid torus this space is one-dimensional; for a domain with $g$ independent
+tunnels it is $g$-dimensional. This is \emph{de Rham cohomology}, and its punchline is
+startling: a purely analytic object (which curl-free fields fail to be gradients) is
+counting a purely topological one (how many holes the domain has). The discrete
+complex inherits this too---a correctly-constructed Whitney complex on a meshed torus
+has exactly one discrete harmonic field, and a solver can find it. Palace's domains
+are usually simply-connected, so the harmonic space is trivial and the complex is
+exact; but the machinery is there, and the fact that finite elements can count the
+holes of a domain is one of the quiet triumphs of the theory. The canonical reference
+is Arnold, Falk, and Winther's finite-element exterior calculus~\citep{arnold2006feec};
+we say no more here.
+\end{remark}
+
+\section{Worked examples}
+
+\subsection{The continuous identities, component by component}
+
+We first watch \cref{lem:complex} happen on concrete polynomial fields, so the
+mixed-partial cancellation is not an abstraction but an arithmetic fact you can check.
+
+\begin{workedexample}{Verifying $\Curl\Grad\phi=0$ and $\Div\Curl\vF=0$}{component}
+\textbf{Part 1: $\Curl\Grad\phi=0$.} Take the scalar field
+$\phi(x,y,z)=x^2 y + y z^2$. Its gradient is
+\[
+  \Grad\phi = \bigl(\,2xy,\;\; x^2 + z^2,\;\; 2yz\,\bigr).
+\]
+Now take the curl of this vector field. The $x$-component is
+\[
+  (\Curl\Grad\phi)_x
+  = \partial_y(2yz) - \partial_z(x^2+z^2)
+  = 2z - 2z = 0.
+\]
+The $y$-component is
+\[
+  (\Curl\Grad\phi)_y
+  = \partial_z(2xy) - \partial_x(2yz)
+  = 0 - 0 = 0.
+\]
+The $z$-component is
+\[
+  (\Curl\Grad\phi)_z
+  = \partial_x(x^2+z^2) - \partial_y(2xy)
+  = 2x - 2x = 0.
+\]
+So $\Curl\Grad\phi=\mathbf 0$. Notice the mechanism in the $x$-component: the term
+$2z$ came from $\partial_y\partial_z\phi$ and the term $-2z$ from
+$-\partial_z\partial_y\phi$; they cancel because mixed partials commute. The other
+components cancel the same way.
+
+\textbf{Part 2: $\Div\Curl\vF=0$.} Take the vector field
+$\vF(x,y,z)=\bigl(\,xy z,\;\; y^2 x,\;\; z x^2\,\bigr)$. Its curl is
+\[
+  \Curl\vF =
+  \begin{pmatrix}
+    \partial_y(z x^2) - \partial_z(y^2 x)\\[2pt]
+    \partial_z(x y z) - \partial_x(z x^2)\\[2pt]
+    \partial_x(y^2 x) - \partial_y(x y z)
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    0 - 0\\
+    x y - 2 z x\\
+    y^2 - x z
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    0\\ xy - 2zx\\ y^2 - xz
+  \end{pmatrix}.
+\]
+Now its divergence:
+\[
+  \Div\Curl\vF
+  = \partial_x(0) + \partial_y(xy - 2zx) + \partial_z(y^2 - xz)
+  = 0 + x + (-x)
+  = 0.
+\]
+Again the surviving terms cancel in a mixed-partial pair: $\partial_y(xy)=x$ from the
+second component against $\partial_z(-xz)=-x$ from the third. The identity holds not
+by luck but by the structure of the curl, which arranges every term to meet its
+negative.
+\end{workedexample}
+
+\subsection{Discrete $\mathsf{C}\mathsf{G}=0$ on a small mesh}
+
+Now the discrete version. We build the lowest-order discrete gradient on a tiny
+two-triangle mesh, apply it to a concrete nodal field, and verify by hand that the
+discrete curl annihilates the result---a single instance of
+\cref{thm:discrete-exact}.
+
+\begin{workedexample}{The discrete gradient on a square of two triangles}{discrete}
+\textbf{The mesh.} Take a unit square split into two triangles by its diagonal, with
+vertices
+\[
+  v_1=(0,0),\quad v_2=(1,0),\quad v_3=(1,1),\quad v_4=(0,1),
+\]
+and five edges---the four sides and the diagonal---oriented as
+\[
+  e_1: v_1\!\to\!v_2,\;\;
+  e_2: v_2\!\to\!v_3,\;\;
+  e_3: v_4\!\to\!v_3,\;\;
+  e_4: v_1\!\to\!v_4,\;\;
+  e_5: v_1\!\to\!v_3 \ (\text{diagonal}).
+\]
+The two triangular faces are
+$f_1=(v_1,v_2,v_3)$ and $f_2=(v_1,v_3,v_4)$.
+
+\textbf{The discrete gradient $\mathsf{G}$.} By \cref{def:discrete-grad}, each row of
+the $5\times 4$ matrix $\mathsf{G}$ is $+1$ at the edge's head, $-1$ at its tail:
+\[
+  \mathsf{G} =
+  \begin{array}{c@{\,}c}
+  & \begin{matrix} v_1 & v_2 & v_3 & v_4 \end{matrix}\\
+  \begin{matrix} e_1\\ e_2\\ e_3\\ e_4\\ e_5 \end{matrix} &
+  \begin{pmatrix*}[r]
+    -1 & 1 & 0 & 0\\
+     0 & -1 & 1 & 0\\
+     0 & 0 & 1 & -1\\
+    -1 & 0 & 0 & 1\\
+    -1 & 0 & 1 & 0
+  \end{pmatrix*}
+  \end{array}.
+\]
+\textbf{A nodal field and its discrete gradient.} Take the nodal field
+$\vu=(u_1,u_2,u_3,u_4)=(0,1,3,2)$ (one value per vertex). Then
+\[
+  \mathsf{G}\vu =
+  \begin{pmatrix*}[r]
+    u_2-u_1\\ u_3-u_2\\ u_3-u_4\\ u_4-u_1\\ u_3-u_1
+  \end{pmatrix*}
+  =
+  \begin{pmatrix*}[r]
+    1-0\\ 3-1\\ 3-2\\ 2-0\\ 3-0
+  \end{pmatrix*}
+  =
+  \begin{pmatrix*}[r] 1\\ 2\\ 1\\ 2\\ 3 \end{pmatrix*}.
+\]
+These five numbers are the edge circulations of the discrete gradient field
+$\Grad u_h$: one per edge.
+
+\textbf{The discrete curl, face by face, and $\mathsf{C}\mathsf{G}=0$.} The discrete
+curl on a face is the signed sum of the circulations of its boundary edges, traversed
+consistently with the face orientation. Walk the boundary of $f_1=(v_1,v_2,v_3)$:
+$v_1\!\to\!v_2$ along $+e_1$, $v_2\!\to\!v_3$ along $+e_2$, and $v_3\!\to\!v_1$ along
+$-e_5$ (the diagonal, traversed against its orientation). So
+\[
+  (\mathsf{C}\mathsf{G}\vu)_{f_1}
+  = (+1)(\mathsf{G}\vu)_{e_1} + (+1)(\mathsf{G}\vu)_{e_2} + (-1)(\mathsf{G}\vu)_{e_5}
+  = 1 + 2 - 3 = 0.
+\]
+Now the other face $f_2=(v_1,v_3,v_4)$: $v_1\!\to\!v_3$ along $+e_5$, $v_3\!\to\!v_4$
+along $-e_3$, and $v_4\!\to\!v_1$ along $-e_4$. So
+\[
+  (\mathsf{C}\mathsf{G}\vu)_{f_2}
+  = (+1)(\mathsf{G}\vu)_{e_5} + (-1)(\mathsf{G}\vu)_{e_3} + (-1)(\mathsf{G}\vu)_{e_4}
+  = 3 - 1 - 2 = 0.
+\]
+Both faces give zero: $\mathsf{C}\mathsf{G}\vu=\mathbf 0$. And the reason is exactly
+the telescoping of \cref{fig:incidence}: on $f_1$ the circulations are
+$(u_2-u_1)+(u_3-u_2)-(u_3-u_1)$, in which every nodal value cancels its own appearance.
+The result holds for \emph{every} nodal field $\vu$, not just our chosen one---that
+is the content of $\mathsf{C}\mathsf{G}=0$. The discrete gradient of any nodal function
+has zero discrete curl, edge differences around any face loop always telescoping to
+nothing.
+\end{workedexample}
+
+\section{Consequences for the solver}
+\label{sec:divfree}
+
+The de Rham structure is not theory for its own sake; the solver chapters lean on it
+constantly. We close by collecting the three consequences that recur, each a direct
+reading of discrete exactness.
+
+\paragraph{The gradient null space of curl--curl.} Every magnetic and wave analysis
+assembles the curl--curl operator $\mathsf{K}\sim\Curl(\nu\Curl\,\cdot)$ on $\Hcurl_h$.
+By discrete exactness, $\mathsf{C}\mathsf{G}=0$, so this operator annihilates every
+discrete gradient: $\mathsf{K}\,\mathsf{G}\psi_h=0$ for any nodal $\psi_h$. The
+operator is therefore \emph{singular}, with null space exactly the discrete gradients
+$\operatorname{range}(\mathsf{G})$---the discrete gauge fields of \cref{sec:potentials}.
+This is not a bug to be regularized away; it is the discrete image of gauge freedom,
+and discrete exactness tells us precisely what it is.
+
+\paragraph{Projecting onto the divergence-free subspace.} Because the curl--curl
+operator has this gradient null space, an eigenmode solve will, left alone, return
+spurious ``zero-frequency'' modes living in $\operatorname{range}(\mathsf{G})$,
+interleaved with the physical resonances. The fix is to confine the solver to the
+\emph{complement}: the divergence-free subspace, those Nedelec fields $\vy$ with
+$\mathsf{G}^\top\mathsf{M}\vy=0$ (no discrete-gradient component in the $\mathsf{M}$-inner
+product). Palace's divergence-free projector
+\[
+  P = I - \mathsf{G}\,(\mathsf{G}^\top\mathsf{M}\mathsf{G})^{-1}\mathsf{G}^\top\mathsf{M}
+\]
+removes the gradient part of any field, mapping it into the divergence-free subspace;
+the eigensolver applies $P$ to each candidate vector to keep it physical. Every
+ingredient of $P$ is a de Rham object: $\mathsf{G}$ is the discrete gradient built by
+the interpolator of \cref{sec:discrete-arrows}, and the subspace it projects onto is
+the kernel of the discrete divergence the complex defines. We develop the projector and
+its place in the eigenmode pipeline in \cref{ch:eigenmodes}.
+
+\paragraph{The Helmholtz decomposition.} Underlying both is the discrete
+\emph{Helmholtz decomposition}: every Nedelec field splits uniquely as a
+divergence-free part plus a gradient part,
+\[
+  \vy = \underbrace{\vy_{\mathrm{df}}}_{\text{divergence-free}}
+        \;+\; \underbrace{\mathsf{G}\psi}_{\text{gradient}},
+\]
+and the projector $P$ is exactly the operator that extracts the first summand. This is
+the discrete shadow of the continuous decomposition (\cref{ch:bc}), and it is a direct
+consequence of discrete exactness: the two summands live in $\ker(\mathsf{C})$'s
+complement and in $\operatorname{range}(\mathsf{G})=\ker(\mathsf{C})$ respectively, the
+equality being \cref{thm:discrete-exact}. The same decomposition is what makes the
+magnetostatic and electrostatic analyses well-posed, and it is the structural reason the
+boundary-condition chapter can speak of ``the divergence-free field'' as a definite
+object.
+
+\begin{keyidea}
+Three solver facts, one structural source. The curl--curl operator is singular
+\emph{because} $\mathsf{C}\mathsf{G}=0$; its null space is the discrete gradients
+\emph{because} the discrete complex is exact; and the eigensolver projects onto the
+divergence-free subspace \emph{because} that is the exactness-supplied complement of
+the gradient null space. Discrete exactness is not a property one checks and files
+away---it is load-bearing in every magnetic, wave, and eigenmode solve in the book.
+\end{keyidea}
+
+\summarysection
+The four finite-element spaces of \cref{ch:functionspaces} assemble into the
+\emph{de Rham complex}
+$\Hone\xrightarrow{\Grad}\Hcurl\xrightarrow{\Curl}\Hdiv\xrightarrow{\Div}\Ltwo$:
+each differential operator maps one space exactly into the next. The complex
+\emph{property} is the pair of identities $\Curl\Grad=0$ and $\Div\Curl=0$, both
+corollaries of the commuting of mixed partial derivatives; \emph{exactness} is the
+stronger statement that the range of each arrow equals the kernel of the next, true on
+simply-connected domains. Exactness is the mathematical content of the electromagnetic
+potentials: $\Curl\vE=0$ forces $\vE=-\Grad V$, and $\Div\vB=0$ forces $\vB=\Curl\vA$,
+the potential always living one rung up the complex. The discrete finite-element spaces
+inherit the same structure: their canonical interpolants \emph{commute with
+differentiation} (the commuting-diagram property), and through that diagram the discrete
+arrows---the incidence-style matrices $\mathsf{G},\mathsf{C},\mathsf{D}$ built by
+Palace's discrete interpolator---satisfy $\mathsf{C}\mathsf{G}=0$ and
+$\mathsf{D}\mathsf{C}=0$ and form an \emph{exact discrete complex}. The Whitney forms are
+the canonical lowest-order basis realizing it, in which the discrete arrows are the
+signed incidence matrices of the mesh. Discrete exactness is the deep reason edge
+elements avoid spurious modes: it makes the curl--curl operator's null space exactly the
+discrete gradients, no spurious extras, so the eigensolver can project onto the
+divergence-free complement and recover a clean spectrum. Every divergence-free
+projection, every gauge null space, and the Helmholtz decomposition of \cref{ch:bc} is a
+reading of this one structure.
+
+\furtherreading
+\label{sec:furtherreading}
+The unifying modern framework is \emph{finite-element exterior calculus}, which casts
+the four spaces as discrete differential forms and the complex as the central object;
+Arnold, Falk, and Winther~\citep{arnold2006feec} is the canonical and remarkably readable
+account, and is the natural sequel to this chapter for the cohomology remark
+(\cref{rmk:cohomology}). For the electromagnetic specialization---$\Hcurl$, $\Hdiv$, the
+N\'ed\'elec and Raviart--Thomas elements, the commuting interpolants, and the spurious-mode
+analysis worked through with full rigour---Monk~\citep{monk2003} is the standard reference.
+The discrete de Rham complex and the role of Whitney forms in computational
+electromagnetics were brought to prominence by Hiptmair, whose work on the canonical
+basis and the commuting-diagram property~\citep{hiptmair1998} is the bridge between the
+abstract complex and the matrices a solver actually builds. Readers wanting the continuous
+exactness theorem (\cref{thm:exact}, the Poincar\'e lemma) and the topology of the harmonic
+spaces will find both in any of the three.
+
+\exercisessection
+\begin{enumerate}[nosep]
+\item \textbf{Type-checking the arrows.} For the 2-D complex
+  $\Hone\xrightarrow{\Grad}\Hcurl\xrightarrow{\operatorname{curl}}\Ltwo$, write out the
+  scalar curl $\operatorname{curl}(u_1,u_2)=\partial_x u_2-\partial_y u_1$ and verify
+  directly that $\operatorname{curl}(\Grad\phi)=0$ for any scalar $\phi$. Which single
+  mixed-partial cancellation does it rest on?
+\item \textbf{Another concrete instance.} Repeat \cref{wex:component} for
+  $\phi=e^{x}\sin(yz)$: compute $\Grad\phi$ and confirm $\Curl\Grad\phi=\mathbf 0$
+  component by component. (You will need the product and chain rules, but the
+  cancellation is the same mixed-partial symmetry.)
+\item \textbf{Range versus kernel.} On the annulus $\{1<x^2+y^2<2\}$ in the plane, the
+  field $\vF=(-y,x)/(x^2+y^2)$ is curl-free but is \emph{not} the gradient of any
+  single-valued scalar. Compute $\operatorname{curl}\vF$ to confirm it is curl-free, then
+  explain in one sentence why this does not contradict \cref{thm:exact}. (Which
+  hypothesis of the theorem does the annulus violate?)
+\item \textbf{Potentials are exactness.} State, in the language of ranges and kernels,
+  the precise de Rham fact that licenses each of: (a) $\vE=-\Grad V$ in electrostatics;
+  (b) $\vB=\Curl\vA$ in magnetostatics. For each, name the rung of the complex at which
+  the exactness is read.
+\item \textbf{Gauge freedom.} Show that if $\vB=\Curl\vA$ then also $\vB=\Curl\vA'$ for
+  $\vA'=\vA+\Grad\psi$, any scalar $\psi$. Which de Rham identity makes this work, and how
+  does it explain why the discrete curl--curl operator is singular?
+\item \textbf{Discrete gradient on a hexahedral face.} Build the lowest-order discrete
+  gradient $\mathsf{G}$ for a single square cell with vertices
+  $v_1,v_2,v_3,v_4$ (counterclockwise) and four boundary edges oriented
+  $v_1\!\to\!v_2\!\to\!v_3\!\to\!v_4\!\to\!v_1$. Take the nodal field
+  $\vu=(2,5,4,1)$, compute the four edge circulations $\mathsf{G}\vu$, and verify that
+  the discrete curl on the single face (the signed sum around the boundary) is zero.
+\item \textbf{Telescoping is the mechanism.} Prove the general claim behind
+  \cref{wex:discrete}: for \emph{any} oriented cycle of edges
+  $e_1,\dots,e_k$ forming a closed loop and any nodal field $\vu$, the signed sum of
+  edge differences $\sum_j \pm(u_{\mathrm{head}(e_j)}-u_{\mathrm{tail}(e_j)})$ around the
+  loop is zero. (This is $\mathsf{C}\mathsf{G}=0$ for one face; the sign on $e_j$ is its
+  orientation relative to the loop traversal.)
+\item \textbf{The commuting square in symbols.} Using the commuting-diagram property
+  $\mathsf{G}\,\Pi_{\Hone}=\Pi_{\Hcurl}\,\Grad$ and the analogous curl square, reproduce
+  the diagram-chase proof that $\mathsf{C}\mathsf{G}=0$, and identify which single
+  \emph{continuous} fact (\cref{lem:complex}) the discrete identity inherits.
+\item \textbf{Why not nodal vectors, revisited.} In one paragraph, connect the
+  spurious-mode pitfall of \cref{ch:functionspaces} to discrete exactness: explain why a
+  componentwise-nodal discretization of $\vE$ fails to sit in an exact discrete complex,
+  and what goes wrong with the kernel of its discrete curl as a result.
+\item \textbf{Cohomology counts holes (open-ended).} Read \cref{rmk:cohomology} again. On
+  a solid torus, how many independent discrete harmonic fields does the Whitney complex
+  carry, and what feature of the geometry does that number measure? (No computation
+  required---state the count and its topological meaning.)
+\end{enumerate}

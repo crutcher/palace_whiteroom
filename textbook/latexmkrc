@@ -1,0 +1,4 @@
+$pdf_mode = 1;            # pdflatex
+$bibtex_use = 2;         # run bibtex when needed
+$out_dir = '.';
+$clean_ext = 'aux bbl blg fls fdb_latexmk lof lot out toc synctex.gz run.xml';

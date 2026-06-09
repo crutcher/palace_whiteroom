@@ -1,0 +1,1014 @@
+\chapter{From Strong to Weak: Integration by Parts}
+\label{ch:weak}
+
+% local vector-field macros not in simbook.sty (trial/test fields)
+\providecommand{\vu}{\mathbf{u}}
+\providecommand{\vv}{\mathbf{v}}
+\providecommand{\vp}{\mathbf{p}}
+\providecommand{\vz}{\mathbf{z}}
+
+\chapterorient{The previous chapter handed us five partial differential
+equations, each written in \emph{strong form}: a differential operator set
+equal to a source, holding at every point of the domain. A computer cannot
+discretize that equation directly---it asks too much of the unknown, and it
+asks it pointwise. This chapter performs the single move that makes the finite
+element method possible: multiply by a test function, integrate over the
+domain, and integrate by parts. The derivative is ``spread around,'' the
+smoothness demand is halved, and the equation reorganizes into a
+\emph{bilinear form} on the left and a \emph{linear functional} on the right.
+We do this slowly in one dimension, carefully in three, and then for the curl
+operator the vector problems need. The payoff is a single template,
+$a(u,v)=(Q\,\diffop u,\diffop v)$, that covers every term every Palace driver
+assembles.}
+
+\section{Why weak forms}
+
+A partial differential equation in strong form is a demanding object. Take the
+electrostatic equation from \cref{ch:reductions-pde},
+\begin{equation}
+  -\Div(\varepsilon\,\Grad u) = f \quad\text{in } \dom,
+  \label{eq:strong-es}
+\end{equation}
+and read it literally. It asserts that a particular second-order differential
+operator, applied to the unknown potential $u$, equals the source $f$ at
+\emph{every single point} of the domain $\dom$. For that assertion even to make
+sense, $u$ must be twice differentiable: we have to be able to take its
+gradient, multiply by the material coefficient $\varepsilon$, take the
+divergence of the result, and have a genuine function come out. If the
+permittivity $\varepsilon$ jumps across a material interface---as it does in
+every real capacitor, where a dielectric meets a vacuum---then $\varepsilon\Grad
+u$ is discontinuous, its divergence is not an ordinary function at the
+interface, and \cref{eq:strong-es} fails to hold there in any classical sense.
+The strong form has painted us into a corner: the physically correct solution
+is not smooth enough to satisfy the equation we wrote down.
+
+\begin{physicsbox}
+Across the boundary between two dielectrics, the physics does \emph{not} ask
+the field to be smooth. It asks for two interface conditions: the tangential
+electric field is continuous, and the \emph{normal} component of the flux
+$\varepsilon\Grad u$ is continuous---while the normal derivative of $u$ itself
+jumps. A formulation that bakes in twice-differentiability cannot represent this
+kink. The weak form, by contrast, treats the interface conditions as
+\emph{consequences} rather than assumptions, and asks only that $u$ have one
+finite derivative. It is the formulation that matches the physics.
+\end{physicsbox}
+
+The weak form escapes the corner with a classical trick. Rather than demand that
+a differential equation hold pointwise, we test it against a family of probe
+functions and demand only that the \emph{averages} match. Concretely: pick a
+\emph{test function} $v$, multiply the equation by it, and integrate over the
+domain. If \cref{eq:strong-es} holds pointwise then certainly
+\begin{equation}
+  \int_\dom \bigl(-\Div(\varepsilon\Grad u)\bigr)\,v \dV
+  = \int_\dom f\,v \dV
+  \label{eq:weighted-residual}
+\end{equation}
+holds for every $v$. So far we have only lost information---we replaced a
+pointwise statement with a family of integral statements. The decisive step
+comes next: integrate the left side by parts. One derivative moves off $u$ and
+onto $v$. The second derivative on $u$ disappears, the requirement that $u$ be
+twice differentiable evaporates, and what remains asks $u$ to have only
+\emph{one} derivative---a demand the discontinuous-flux solution can meet.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  \node[stage, text width=30mm, align=center] (strong)
+    {\textbf{strong form}\\[2pt]\footnotesize $-\Div(\varepsilon\Grad u)=f$\\[1pt]\scriptsize needs $u\in$ ``$C^2$''};
+  \node[opbox, right=14mm of strong, text width=24mm] (test)
+    {multiply by $v$,\\ integrate};
+  \node[opbox, right=12mm of test, text width=26mm] (ibp)
+    {integrate\\ by parts};
+  \node[product, right=14mm of ibp, text width=30mm, align=center] (weak)
+    {\textbf{weak form}\\[2pt]\footnotesize $a(u,v)=\ell(v)$\\[1pt]\scriptsize needs $u\in$ ``$C^1$''};
+  \draw[flow] (strong) -- (test);
+  \draw[flow] (test) -- (ibp);
+  \draw[flow] (ibp) -- (weak);
+  % derivative-count annotation underneath
+  \node[font=\scriptsize\itshape, simRust, below=7mm of test.south] (d2) {2 derivatives on $u$};
+  \node[font=\scriptsize\itshape, simGreen, below=7mm of weak.south] (d1) {1 on $u$, 1 on $v$};
+  \draw[refedge] (test.south) -- (d2);
+  \draw[refedge] (weak.south) -- (d1);
+\end{tikzpicture}
+\caption[Strong to weak: spreading the derivative]{The strong-to-weak pipeline.
+Multiplying by a test function $v$ and integrating turns a pointwise equation
+into an averaged one; integrating by parts then moves one derivative off the
+unknown $u$ and onto the test function $v$. Two derivatives concentrated on $u$
+become one derivative on each---the smoothness demand on the unknown is halved,
+which is exactly what lets the solution have the kinks the physics requires.}
+\label{fig:strongweak}
+\end{figure}
+
+There is a second reason to prefer the weak form, and it is not merely
+technical: it is the form in which the physics was \emph{originally} stated.
+Long before anyone wrote Poisson's equation as a differential equation,
+physicists characterized equilibrium by a variational principle. A soap film
+settles into the shape of least area; a hanging chain into the shape of least
+potential energy; an electrostatic field into the configuration that minimizes
+the stored energy $\tfrac12\int_\dom \varepsilon\,\abs{\Grad u}^2\dV$ subject to
+the imposed voltages. The strong-form PDE is what you get by differentiating
+that energy and setting the result to zero---the Euler--Lagrange equation of the
+variational problem. The weak form sits one step \emph{before} the
+differentiation: it is the statement that the energy is stationary, that no
+small ``virtual'' perturbation $v$ of the field changes the energy to first
+order. We will make this precise in \cref{sec:virtual-work}; for now, hold onto
+the slogan.
+
+\begin{keyidea}
+A weak form replaces ``the equation holds at every point'' with ``the equation,
+averaged against every test function, holds.'' Integration by parts then trades
+one derivative on the unknown for one derivative on the test function. Two gains
+follow at once: the solution may be \emph{less smooth} (one derivative instead
+of two), and the equation takes the form of a \emph{variational} (energy)
+principle---the form in which the physics naturally lives.
+\end{keyidea}
+
+The rest of this chapter executes this move three times, with increasing
+generality, and then extracts the single template they share.
+
+\section{The one-dimensional archetype}
+\label{sec:1d}
+
+We begin where every student of the subject begins: the one-dimensional
+Poisson equation. It is small enough to do completely by hand, and every
+structural feature of the general theory is already present in it.
+
+Let the domain be the interval $\dom = (0,1)$, and consider the boundary-value
+problem
+\begin{equation}
+  -u''(x) = f(x) \quad\text{for } x\in(0,1), \qquad u(0)=u(1)=0.
+  \label{eq:1d-strong}
+\end{equation}
+Here $u$ is the unknown (think of it as a temperature along an insulated rod, or
+the deflection of a stretched string under a transverse load $f$), and the
+boundary conditions pin both ends to zero. This is the strong form: it asks for
+a function $u$, twice differentiable, whose second derivative equals $-f$
+everywhere.
+
+\subsection{Multiply, integrate, integrate by parts}
+
+Choose a \emph{test function} $v$. For now we require only two things of it: it
+should be once-differentiable (so that $v'$ makes sense), and---this is the
+crucial choice---it should \emph{vanish at the boundary}, $v(0)=v(1)=0$. We will
+see in a moment exactly why. Multiply \cref{eq:1d-strong} by $v$ and integrate
+over $(0,1)$:
+\begin{equation}
+  -\int_0^1 u''(x)\,v(x)\dx = \int_0^1 f(x)\,v(x)\dx.
+  \label{eq:1d-weighted}
+\end{equation}
+Now integrate the left-hand side by parts. Recall the one-dimensional formula
+$\int_0^1 p'\,q = \bigl[p\,q\bigr]_0^1 - \int_0^1 p\,q'$. Apply it with $p=u'$
+(so $p'=u''$) and $q=v$:
+\begin{equation}
+  -\int_0^1 u''\,v\dx
+  = -\Bigl[\,u'(x)\,v(x)\,\Bigr]_0^1 + \int_0^1 u'(x)\,v'(x)\dx.
+  \label{eq:1d-ibp}
+\end{equation}
+Look at the boundary term $\bigl[u'\,v\bigr]_0^1 = u'(1)v(1) - u'(0)v(0)$. This
+is exactly where our requirement $v(0)=v(1)=0$ earns its keep: \emph{both}
+$v(1)$ and $v(0)$ are zero, so the entire boundary term vanishes. We chose the
+test functions to die at the boundary precisely so that this term would
+disappear. What survives is clean:
+\begin{equation}
+  \int_0^1 u'(x)\,v'(x)\dx = \int_0^1 f(x)\,v(x)\dx
+  \qquad\text{for all admissible } v.
+  \label{eq:1d-weak}
+\end{equation}
+This is the \emph{weak form} of \cref{eq:1d-strong}. Read it carefully and
+notice what has changed. On the left, $u$ now appears only through its
+\emph{first} derivative $u'$, never $u''$. The unknown no longer needs to be
+twice differentiable; it needs one derivative, and that derivative may be
+merely square-integrable. The price was symmetry: where the strong form treated
+$u$ specially, the weak form treats $u$ and $v$ even-handedly---each contributes
+exactly one derivative.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % axis
+  \draw[->,simGray] (-0.3,0) -- (5.3,0) node[right,font=\scriptsize]{$x$};
+  \draw[->,simGray] (0,-0.3) -- (0,2.4);
+  \node[font=\scriptsize,simGray,below] at (0,0) {$0$};
+  \node[font=\scriptsize,simGray,below] at (5,0) {$1$};
+  \draw[simGray,densely dotted] (5,0) -- (5,2.2);
+  % the solution u (a smooth bump)
+  \draw[simBlue,very thick,domain=0:5,samples=80]
+    plot (\x,{1.9*sin(180*\x/5)});
+  \node[simBlue,font=\small] at (4.0,1.95) {$u(x)$};
+  % a hat test function v
+  \draw[simRust,thick] (0,0) -- (2.4,1.25) -- (5,0);
+  \node[simRust,font=\small] at (1.9,1.45) {$v(x)$};
+  % endpoints clamped
+  \fill[simInk] (0,0) circle (1.6pt);
+  \fill[simInk] (5,0) circle (1.6pt);
+  \node[font=\scriptsize,simRust] at (3.6,0.55) {$v(0)=v(1)=0$};
+\end{tikzpicture}
+\caption[A test function against the unknown]{The unknown $u$ (blue) and one
+admissible test function $v$ (rust), here a piecewise-linear ``hat.'' The test
+function is required to vanish at both ends, $v(0)=v(1)=0$; this is what kills
+the boundary term in the integration by parts. A hat like this is the prototype
+of the finite-element basis functions of \cref{ch:functionspaces}: the weak form
+only ever pairs $u'$ against $v'$, so $v$ needs just one (possibly jumpy)
+derivative.}
+\label{fig:hat}
+\end{figure}
+
+\subsection{Naming the parts: bilinear form and linear functional}
+
+The weak form \cref{eq:1d-weak} has a structure worth naming, because the names
+will persist unchanged through every generalization to come. Define
+\begin{align}
+  a(u,v) &\;=\; \int_0^1 u'(x)\,v'(x)\dx, \label{eq:1d-bilinear}\\
+  \ell(v) &\;=\; \int_0^1 f(x)\,v(x)\dx. \label{eq:1d-linear}
+\end{align}
+The first, $a(u,v)$, is a \emph{bilinear form}: it takes two functions and
+returns a number, and it is linear in each argument separately. Linearity in
+the first slot means $a(\alpha u_1 + \beta u_2, v) = \alpha\,a(u_1,v) +
+\beta\,a(u_2,v)$, and similarly in the second---both are immediate from the
+linearity of the integral and the derivative. The second, $\ell(v)$, is a
+\emph{linear functional}: it takes one function and returns a number, linearly.
+With these names, the entire weak problem collapses to one line:
+\begin{equation}
+  \boxed{\;\text{find } u \text{ with } u(0)=u(1)=0 \text{ such that } a(u,v)=\ell(v) \text{ for all admissible } v.\;}
+  \label{eq:1d-abstract}
+\end{equation}
+This abstract shape---$a(u,v) = \ell(v)$, a symmetric bilinear form equated to a
+linear functional---is the form the finite element method discretizes. When in
+\cref{ch:galerkin} we replace the infinite-dimensional space of admissible
+functions with a finite-dimensional one spanned by hat functions like the one in
+\cref{fig:hat}, the bilinear form $a$ becomes a matrix, the functional $\ell$
+becomes a vector, and \cref{eq:1d-abstract} becomes a linear system $\mat{K}\vx
+= \vb$. Everything downstream is bookkeeping on $a$ and $\ell$.
+
+\begin{notationbox}
+We will write the bilinear form as an inner product whenever it is convenient:
+$a(u,v) = \inner{u'}{v'}$, where $\inner{\cdot}{\cdot}$ is the $\Ltwo(\dom)$
+inner product $\inner{p}{q} = \int_\dom p\,q$. The two notations
+$\int_0^1 u'v'\dx$ and $\inner{u'}{v'}$ mean the same thing; the inner-product
+notation makes the structure ``differential operator applied to each argument,
+paired in $\Ltwo$'' visible at a glance, and it is the notation in which the
+unifying family of \cref{sec:family} is cleanest.
+\end{notationbox}
+
+\subsection{A complete worked example}
+
+Let us carry the 1-D problem all the way to a number, so that nothing is
+abstract.
+
+\begin{workedexample}{The 1-D weak form with a concrete load}{1dfull}
+Solve, in weak form, the problem
+\[
+  -u''(x) = \pi^2\sin(\pi x) \quad\text{on } (0,1), \qquad u(0)=u(1)=0,
+\]
+and verify the weak statement on a specific test function.
+
+\medskip\noindent\textbf{Strong solution (for checking).}
+The strong problem has the exact solution $u(x)=\sin(\pi x)$: indeed
+$u''=-\pi^2\sin(\pi x)$, so $-u'' = \pi^2\sin(\pi x)=f$, and $u(0)=u(1)=0$. We
+keep this in our pocket to check the weak form against.
+
+\medskip\noindent\textbf{The bilinear form and functional.}
+With $f(x)=\pi^2\sin(\pi x)$ the weak problem is: find $u$ with $u(0)=u(1)=0$ such
+that, for every admissible $v$,
+\[
+  a(u,v)=\int_0^1 u'(x)\,v'(x)\dx
+  \;=\;
+  \ell(v)=\int_0^1 \pi^2\sin(\pi x)\,v(x)\dx.
+\]
+
+\medskip\noindent\textbf{Test it on $v(x)=\sin(\pi x)$.}
+This $v$ is admissible: it is smooth and vanishes at both ends. With the candidate
+solution $u(x)=\sin(\pi x)$ we have $u'(x)=\pi\cos(\pi x)$ and
+$v'(x)=\pi\cos(\pi x)$, so the left side is
+\[
+  a(u,v)=\int_0^1 \pi^2\cos^2(\pi x)\dx
+  = \pi^2\cdot\tfrac12 = \tfrac{\pi^2}{2},
+\]
+using $\int_0^1\cos^2(\pi x)\dx=\tfrac12$. The right side is
+\[
+  \ell(v)=\int_0^1 \pi^2\sin^2(\pi x)\dx
+  = \pi^2\cdot\tfrac12 = \tfrac{\pi^2}{2},
+\]
+using $\int_0^1\sin^2(\pi x)\dx=\tfrac12$. The two agree: $a(u,v)=\ell(v)=\pi^2/2$.
+The weak equation is satisfied on this test function, as it must be for the true
+solution.
+
+\medskip\noindent\textbf{Where the boundary term went.}
+The integration by parts produced the term $-[u'v]_0^1 = -\bigl(u'(1)v(1) -
+u'(0)v(0)\bigr)$. Here $u'(x)=\pi\cos(\pi x)$, so $u'(1)=-\pi$ and $u'(0)=\pi$ are
+both \emph{nonzero}; the boundary term vanished entirely because $v(1)=v(0)=0$,
+not because the derivative of $u$ was small. This is the general mechanism: the
+homogeneous Dirichlet condition on the \emph{test} space, not any property of the
+solution, is what discards the boundary contribution.
+\end{workedexample}
+
+\subsection{What changes at a Neumann end}
+\label{sec:1d-neumann}
+
+The Dirichlet condition $u(0)=u(1)=0$ in \cref{eq:1d-strong} entered the weak
+form in two distinct ways, and it is worth separating them, because the
+distinction is the seed of the whole essential-versus-natural story of
+\cref{sec:essential-natural}. First, the condition on $u$ itself restricts the
+\emph{trial space}: we look for the solution among functions that already vanish
+at the ends. Second, the matching condition on $v$ restricts the \emph{test
+space}, and that is what annihilated the boundary term. The boundary condition on
+$u$ is enforced by \emph{constraining the space}; the boundary term, meanwhile,
+is a separate object that we made disappear by a choice on $v$.
+
+Now change one end. Suppose instead of $u(1)=0$ we are told the \emph{derivative}
+there: $u'(1) = g$ for some given flux $g$ (a Neumann, or natural, condition---
+physically, a prescribed heat flux or surface charge), while keeping $u(0)=0$.
+The strong problem is now
+\[
+  -u'' = f \text{ on } (0,1), \qquad u(0)=0, \quad u'(1)=g.
+\]
+Repeat the derivation. We multiply by $v$ and integrate by parts exactly as
+before, arriving again at \cref{eq:1d-ibp}. But now we can no longer ask $v(1)=0$:
+the value of $u$ at $x=1$ is \emph{not} prescribed, so the trial space does not
+constrain it, and correspondingly we must leave the test functions free there.
+We retain $v(0)=0$ (the left end is still Dirichlet). The boundary term is
+therefore
+\[
+  -\Bigl[u'v\Bigr]_0^1 = -\bigl(u'(1)v(1) - u'(0)v(0)\bigr)
+  = -u'(1)\,v(1) = -g\,v(1),
+\]
+because $v(0)=0$ kills the left contribution while $u'(1)=g$ is \emph{known}. The
+weak form becomes
+\begin{equation}
+  \underbrace{\int_0^1 u'v'\dx}_{a(u,v)}
+  \;=\;
+  \underbrace{\int_0^1 f\,v\dx + g\,v(1)}_{\ell(v)}.
+  \label{eq:1d-neumann-weak}
+\end{equation}
+Two things happened, and both are general. The Dirichlet end ($x=0$) was
+enforced by constraining the space and produced nothing in the equation---it is
+an \emph{essential} condition. The Neumann end ($x=1$) was \emph{not} imposed on
+the space at all; instead the prescribed flux $g$ rode in through the surviving
+boundary term and landed in the functional $\ell$ as a source---it is a
+\emph{natural} condition. A homogeneous Neumann condition ($g=0$) would land
+nothing and need no enforcement: it is the condition you get ``for free'' by
+doing nothing, which is why the weak form is sometimes said to satisfy it
+naturally. Keep these two roles in view; \cref{sec:essential-natural} is nothing
+but their three-dimensional restatement.
+
+\section{The three-dimensional scalar case: electrostatics}
+\label{sec:3d-scalar}
+
+We now lift the 1-D archetype to three dimensions. The structure will be
+identical; only the integration-by-parts identity changes, from the
+one-dimensional formula to the divergence theorem. This is the case that
+governs the electrostatic driver---the capacitance analysis of
+\cref{ch:targets}---so we work it concretely.
+
+The strong form is \cref{eq:strong-es},
+\[
+  -\Div(\varepsilon\,\Grad u) = f \quad\text{in } \dom,
+\]
+with $\dom\subset\Real^3$ a bounded domain, $\varepsilon$ the (possibly
+position-dependent, possibly matrix-valued) permittivity, $u$ the electrostatic
+potential, and $f$ a charge density. Following the 1-D recipe to the letter:
+choose a scalar test function $v$, multiply, and integrate over $\dom$:
+\begin{equation}
+  -\int_\dom \Div(\varepsilon\Grad u)\,v\dV = \int_\dom f\,v\dV.
+  \label{eq:3d-weighted}
+\end{equation}
+
+\subsection{Green's first identity}
+
+The three-dimensional analogue of integration by parts is \emph{Green's first
+identity}, and it is itself a one-line consequence of the divergence theorem. We
+derive it so that nothing is taken on faith. Start from the product rule for the
+divergence of a scalar times a vector field. For a scalar field $v$ and a vector
+field $\vF$,
+\begin{equation}
+  \Div(v\,\vF) = \Grad v\cdot\vF + v\,\Div\vF.
+  \label{eq:prodrule}
+\end{equation}
+Integrate this over $\dom$ and apply the divergence theorem
+$\int_\dom\Div(\,\cdot\,)\dV=\oint_\bdry(\,\cdot\,)\cdot\vn\,\mathrm{d}S$ to the
+left side, where $\vn$ is the outward unit normal on the boundary $\bdry$:
+\[
+  \oint_\bdry v\,\vF\cdot\vn\,\mathrm{d}S
+  = \int_\dom \Grad v\cdot\vF\dV + \int_\dom v\,\Div\vF\dV.
+\]
+Rearranging,
+\begin{equation}
+  \int_\dom v\,\Div\vF\dV
+  = -\int_\dom \Grad v\cdot\vF\dV
+  + \oint_\bdry v\,(\vF\cdot\vn)\,\mathrm{d}S.
+  \label{eq:green1}
+\end{equation}
+This is Green's first identity. Compare it term-for-term with the 1-D formula
+\cref{eq:1d-ibp}: $\int v\,\Div\vF$ plays the role of $\int u''v$, the
+volume term $\int\Grad v\cdot\vF$ is the new $\int u'v'$, and the surface
+integral $\oint_\bdry$ is the boundary term $[u'v]_0^1$. The divergence theorem
+\emph{is} integration by parts in three dimensions; the only genuine change is
+that the ``boundary'' of an interval (two points) has become the boundary of a
+solid (a surface).
+
+\subsection{Applying it to the electrostatic problem}
+
+Set $\vF = \varepsilon\Grad u$ in Green's identity \cref{eq:green1}. Then
+$\Div\vF = \Div(\varepsilon\Grad u)$, and the identity reads
+\[
+  \int_\dom v\,\Div(\varepsilon\Grad u)\dV
+  = -\int_\dom \Grad v\cdot(\varepsilon\Grad u)\dV
+  + \oint_\bdry v\,(\varepsilon\Grad u)\cdot\vn\,\mathrm{d}S.
+\]
+Substitute this into the left side of the weighted residual
+\cref{eq:3d-weighted} (which carries an overall minus sign):
+\begin{equation}
+  \int_\dom \varepsilon\,\Grad u\cdot\Grad v\dV
+  \;-\;
+  \oint_\bdry v\,(\varepsilon\Grad u)\cdot\vn\,\mathrm{d}S
+  \;=\;
+  \int_\dom f\,v\dV.
+  \label{eq:3d-with-boundary}
+\end{equation}
+There is the volume bilinear form we were after, $\int_\dom\varepsilon\Grad
+u\cdot\Grad v$, sitting on the left exactly as $\int u'v'$ did in one dimension.
+And there is the boundary integral, the three-dimensional descendant of the
+$[u'v]_0^1$ term, carrying the normal flux $(\varepsilon\Grad u)\cdot\vn$ across
+$\bdry$. What we do with that surface integral---make it vanish, or keep it as a
+source---is precisely the essential/natural dichotomy, and it is important
+enough to get its own section.
+
+\subsection{Splitting the boundary: essential and natural}
+\label{sec:essential-natural}
+
+Partition the boundary into two disjoint pieces,
+\[
+  \bdry = \Gamma_D \cup \Gamma_N, \qquad \Gamma_D\cap\Gamma_N=\emptyset,
+\]
+where on $\Gamma_D$ (the \emph{Dirichlet} part) the potential is prescribed,
+$u = u_0$, and on $\Gamma_N$ (the \emph{Neumann} part) the normal flux is
+prescribed, $(\varepsilon\Grad u)\cdot\vn = g$. Physically, $\Gamma_D$ is a
+conductor held at a fixed voltage and $\Gamma_N$ is a surface with a given
+surface charge (with $g=0$ the natural ``no-flux'' wall).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  % a blobby domain
+  \fill[simBgBlue]
+    (0,0) .. controls (0.4,1.6) and (2.2,2.0) .. (3.6,1.4)
+          .. controls (4.8,0.95) and (4.6,-0.6) .. (3.2,-1.0)
+          .. controls (1.8,-1.4) and (-0.4,-1.0) .. (0,0) -- cycle;
+  % Dirichlet portion (thick blue arc, lower-left)
+  \draw[simBlue,line width=2.2pt]
+    (0,0) .. controls (1.8,-1.4) and (3.2,-1.0) .. (3.2,-1.0);
+  % Neumann portion (thick green arc, upper)
+  \draw[simGreen,line width=2.2pt]
+    (0,0) .. controls (0.4,1.6) and (2.2,2.0) .. (3.6,1.4)
+          .. controls (4.8,0.95) and (4.6,-0.6) .. (3.2,-1.0);
+  \node[simInk,font=\large] at (2.1,0.3) {$\dom$};
+  \node[simBlue,font=\small] at (1.4,-1.5) {$\Gamma_D:\ u=u_0$};
+  \node[simGreen,font=\small] at (4.7,1.55) {$\Gamma_N:\ (\varepsilon\Grad u)\cdot\vn=g$};
+  % outward normal on Neumann part
+  \draw[-{Stealth[length=2mm]},simGreen,thick] (3.55,1.42) -- (4.25,1.85)
+     node[right,font=\scriptsize]{$\vn$};
+  % test function vanishes on Dirichlet
+  \node[simBlue,font=\scriptsize\itshape] at (1.5,-0.75) {$v=0$ here};
+\end{tikzpicture}
+\caption[The boundary splits into Dirichlet and Neumann parts]{Green's first
+identity produces a boundary integral over all of $\bdry$. Splitting
+$\bdry=\Gamma_D\cup\Gamma_N$ disposes of it in two ways. On the Dirichlet part
+$\Gamma_D$ (blue) the potential is prescribed and we constrain the test space to
+vanish, $v=0$, so the integral there drops---the condition is \emph{essential}.
+On the Neumann part $\Gamma_N$ (green) the normal flux $(\varepsilon\Grad
+u)\cdot\vn=g$ is prescribed; the integral survives and carries $g$ into the
+right-hand side as a surface source---the condition is \emph{natural}.}
+\label{fig:greenbdry}
+\end{figure}
+
+Now dispose of the boundary integral $\oint_\bdry v(\varepsilon\Grad
+u)\cdot\vn\,\mathrm{d}S$ piece by piece, exactly as in the 1-D Neumann
+discussion of \cref{sec:1d-neumann}.
+
+\emph{On $\Gamma_D$}, where $u$ is prescribed, we have no information about the
+flux $(\varepsilon\Grad u)\cdot\vn$---it is part of the unknown response. We
+remove the difficulty the same way we did in one dimension: we demand that the
+test functions vanish on $\Gamma_D$, $v|_{\Gamma_D}=0$. Then the integral over
+$\Gamma_D$ is zero, regardless of the unknown flux. The Dirichlet datum $u=u_0$
+is enforced separately, by constraining the trial space to functions that equal
+$u_0$ on $\Gamma_D$. This is the \emph{essential} boundary condition: it lives in
+the \emph{space}, not in the equation, and it leaves no trace in $a$ or $\ell$.
+
+\emph{On $\Gamma_N$}, where the flux is prescribed, the integrand
+$(\varepsilon\Grad u)\cdot\vn = g$ is \emph{known}. We keep the test functions
+free there, substitute $g$, and move the resulting surface integral to the
+right-hand side. It becomes a source term in the functional. This is the
+\emph{natural} boundary condition: it lives in the \emph{equation}, contributing
+to $\ell$.
+
+Putting it together, the electrostatic weak form is
+\begin{equation}
+  \boxed{\;
+  \underbrace{\int_\dom \varepsilon\,\Grad u\cdot\Grad v\dV}_{a(u,v)}
+  \;=\;
+  \underbrace{\int_\dom f\,v\dV \;+\; \oint_{\Gamma_N} g\,v\,\mathrm{d}S}_{\ell(v)}
+  \;}
+  \label{eq:3d-weak}
+\end{equation}
+for all test functions $v$ with $v|_{\Gamma_D}=0$, sought among trial functions
+$u$ with $u|_{\Gamma_D}=u_0$. The homogeneous-Neumann case $g=0$---the most
+common wall condition in a capacitance problem, where no charge sits on the
+insulating outer boundary---drops the surface integral entirely and is enforced
+by doing nothing at all. That is the sense in which Neumann conditions are
+``natural.''
+
+\begin{pitfall}
+It is tempting to think the essential (Dirichlet) condition is the ``easy'' one
+because it looks simpler in the strong form. In the weak/discrete setting it is
+the \emph{harder} one to implement: it must be built into the function space, by
+eliminating or constraining the degrees of freedom that sit on $\Gamma_D$
+(\cref{ch:bc}). The natural (Neumann) condition, which looks like the
+complicated one, requires almost nothing---a homogeneous Neumann wall is handled
+by simply not assembling a boundary term. ``Essential'' means ``you must enforce
+it yourself''; ``natural'' means ``the weak form enforces it for you.''
+\end{pitfall}
+
+\begin{workedexample}{The electrostatic weak form, term by term}{esweak}
+Take a parallel-plate capacitor: $\dom$ the slab between two conducting plates,
+the top plate held at $u=V$ and the bottom at $u=0$ (both Dirichlet, so both part
+of $\Gamma_D$), the side walls insulating (homogeneous Neumann, $g=0$, so part of
+$\Gamma_N$), no free charge in the dielectric ($f=0$), and a uniform scalar
+permittivity $\varepsilon$.
+
+\medskip\noindent\textbf{Identify the pieces of the template.}
+Reading \cref{eq:3d-weak} against $a(u,v)=(Q\,\diffop u,\diffop v)$:
+\begin{itemize}\setlength\itemsep{1pt}
+  \item the coefficient is $Q=\varepsilon$, the permittivity;
+  \item the differential operator is $\diffop=\Grad$, the gradient;
+  \item the bilinear form is $a(u,v)=\inner{\varepsilon\Grad u}{\Grad v}_{\Ltwo(\dom)}=\int_\dom\varepsilon\,\Grad u\cdot\Grad v\dV$.
+\end{itemize}
+
+\medskip\noindent\textbf{Assemble the functional.}
+With $f=0$ in the volume and $g=0$ on the insulating walls, the functional is
+\[
+  \ell(v) = \int_\dom 0\cdot v\dV + \oint_{\Gamma_N} 0\cdot v\,\mathrm{d}S = 0.
+\]
+The right-hand side is \emph{empty}. The problem is not, however, trivial: the
+nonzero plate voltage $u=V$ is an \emph{inhomogeneous essential} condition, and
+it enters not through $\ell$ but through the trial space (the solution must equal
+$V$ on the top plate). In the discrete setting this inhomogeneous Dirichlet datum
+is ``lifted'' into the right-hand side by the elimination procedure of
+\cref{ch:bc}---which is exactly why an apparently source-free problem
+($f=g=0$) still produces a nonzero load vector. The physics confirms it: a
+charged capacitor with no free charge in the dielectric still stores energy,
+driven entirely by the imposed plate voltages.
+
+\medskip\noindent\textbf{The product.}
+Solving the weak problem yields the potential $u$; the capacitance follows from
+the stored energy $U=\tfrac12\int_\dom\varepsilon\abs{\Grad u}^2\dV =
+\tfrac12\,a(u,u)$ via $C = 2U/V^2$. The bilinear form $a$ evaluated on the
+solution against \emph{itself} is the energy---a connection we exploit in
+\cref{sec:virtual-work} and again in the capacitance reduction of
+\cref{ch:electrostatics}.
+\end{workedexample}
+
+\section{The vector case: curl--curl}
+\label{sec:curlcurl}
+
+The electrostatic problem lives on a \emph{scalar} field, the potential $u$, and
+its natural derivative is the gradient. The magnetostatic and eigenmode problems
+of \cref{ch:reductions-pde} live on \emph{vector} fields---the magnetic vector
+potential $\vA$, the electric field $\vE$---and their natural derivative is the
+\emph{curl}. The integration-by-parts move is structurally identical, but the
+identity it rests on is the curl analogue of Green's formula, and the function
+space is different. We sketch the derivation and read off the same template.
+
+The strong form of the magnetostatic problem is the curl--curl equation
+\begin{equation}
+  \Curl(\nu\,\Curl\vu) = \vJ \quad\text{in }\dom,
+  \label{eq:curlcurl-strong}
+\end{equation}
+where $\vu$ is the unknown vector field (the vector potential $\vA$), $\nu=1/\mu$
+is the reluctivity (the magnetic coefficient, the analogue of $\varepsilon$), and
+$\vJ$ is the source current density. Multiply by a vector test function $\vv$ and
+integrate---now the multiplication is a dot product, since both factors are
+vectors:
+\begin{equation}
+  \int_\dom \Curl(\nu\Curl\vu)\cdot\vv\dV = \int_\dom \vJ\cdot\vv\dV.
+  \label{eq:curlcurl-weighted}
+\end{equation}
+
+\subsection{The curl integration-by-parts identity}
+
+The identity we need plays the exact role Green's first identity played for the
+gradient. For two vector fields $\vp$ and $\vv$,
+\begin{equation}
+  \int_\dom (\Curl\vp)\cdot\vv\dV
+  = \int_\dom \vp\cdot(\Curl\vv)\dV
+  + \oint_\bdry (\vp\times\vn)\cdot\vv\,\mathrm{d}S.
+  \label{eq:curlibp}
+\end{equation}
+Like Green's identity, this follows from a vector product rule---$\Div(\vp\times
+\vv) = (\Curl\vp)\cdot\vv - \vp\cdot(\Curl\vv)$---integrated over $\dom$ with the
+divergence theorem applied to the left side; the surface term
+$\oint_\bdry(\vp\times\vv)\cdot\vn\,\mathrm{d}S$ is rewritten as
+$\oint_\bdry(\vp\times\vn)\cdot\vv\,\mathrm{d}S$ by the scalar triple-product
+identity. The shape is the same as before: a derivative on $\vp$ moves to a
+derivative on $\vv$, at the cost of a boundary integral. Apply it with
+$\vp = \nu\Curl\vu$:
+\[
+  \int_\dom \Curl(\nu\Curl\vu)\cdot\vv\dV
+  = \int_\dom (\nu\Curl\vu)\cdot(\Curl\vv)\dV
+  + \oint_\bdry \bigl((\nu\Curl\vu)\times\vn\bigr)\cdot\vv\,\mathrm{d}S.
+\]
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    row/.style={font=\small},
+    lbl/.style={font=\footnotesize\bfseries, text=simInk},
+  ]
+  % column headers
+  \node[lbl] at (0,2.0) {dimension / operator};
+  \node[lbl] at (3.7,2.0) {move a derivative\dots};
+  \node[lbl] at (8.4,2.0) {\dots leaving a boundary term};
+  \draw[simGray,semithick] (-2.0,1.6) -- (10.6,1.6);
+  % 1-D row
+  \node[row,simBlue,anchor=west] at (-2.0,1.0)
+    {1-D: \ $\displaystyle\int u''\,v$};
+  \node[row,anchor=west] at (2.3,1.0)
+    {$\displaystyle =-\int u'\,v'$};
+  \node[row,simRust,anchor=west] at (6.6,1.0)
+    {$+\,\bigl[u'\,v\bigr]_0^1$};
+  % 3-D gradient row
+  \node[row,simBlue,anchor=west] at (-2.0,0.1)
+    {$\Grad$: \ $\displaystyle\int v\,\Div\vF$};
+  \node[row,anchor=west] at (2.3,0.1)
+    {$\displaystyle =-\int \Grad v\cdot\vF$};
+  \node[row,simRust,anchor=west] at (6.6,0.1)
+    {$+\displaystyle\oint_\bdry v\,(\vF\cdot\vn)$};
+  % curl row
+  \node[row,simBlue,anchor=west] at (-2.0,-0.8)
+    {$\Curl$: \ $\displaystyle\int(\Curl\vp)\cdot\vv$};
+  \node[row,anchor=west] at (2.3,-0.8)
+    {$\displaystyle =\int \vp\cdot(\Curl\vv)$};
+  \node[row,simRust,anchor=west] at (6.6,-0.8)
+    {$+\displaystyle\oint_\bdry(\vp\times\vn)\cdot\vv$};
+  \draw[simGray,semithick] (-2.0,-1.3) -- (10.6,-1.3);
+  \node[font=\scriptsize\itshape,simGray,anchor=west] at (-2.0,-1.75)
+    {one move, three settings: a derivative crosses from one factor to the other, and a boundary term is born.};
+\end{tikzpicture}
+\caption[The three integration-by-parts identities, aligned]{The same move in
+three settings. One-dimensional integration by parts, Green's first identity (for
+the gradient), and the curl integration-by-parts identity all have the identical
+shape: a derivative is transferred from one factor to the other (middle column),
+at the cost of a boundary integral (rust). The 1-D boundary ``surface'' is two
+endpoints; in three dimensions it is a genuine surface $\bdry$. Choosing test
+functions that vanish (gradient case) or whose tangential part vanishes (curl
+case) on the Dirichlet boundary kills that term---the one mechanism that recurs
+throughout the chapter.}
+\label{fig:threeibp}
+\end{figure}
+
+Substituting into the weighted residual \cref{eq:curlcurl-weighted} and, as
+before, choosing test functions whose \emph{tangential} component vanishes on the
+Dirichlet boundary (so the surface term drops there) gives the weak form
+\begin{equation}
+  \boxed{\;
+  \underbrace{\int_\dom \nu\,(\Curl\vu)\cdot(\Curl\vv)\dV}_{a(\vu,\vv)}
+  \;=\;
+  \underbrace{\int_\dom \vJ\cdot\vv\dV \;+\;(\text{natural-BC surface term})}_{\ell(\vv)}
+  \;}
+  \label{eq:curlcurl-weak}
+\end{equation}
+for all admissible $\vv$. The natural boundary condition here prescribes the
+\emph{tangential} field $\nu\Curl\vu\times\vn$ (physically, a tangential
+magnetic field $\vH$); the essential condition prescribes the tangential
+component of $\vu$ itself. The pattern is the gradient story with ``value on the
+boundary'' replaced by ``tangential component on the boundary''---a change forced
+by the geometry of the curl, treated fully in \cref{ch:functionspaces} and
+\cref{ch:bc}.
+
+\subsection{The mass term}
+\label{sec:mass}
+
+Eigenmode and driven problems pair the curl--curl stiffness term with a second,
+\emph{lower-order} term that carries no derivative at all. In the eigenmode
+problem $\Curl(\nu\Curl\vE)=\omega^2\varepsilon\vE$, the right side
+$\omega^2\varepsilon\vE$ contributes, after multiplying by $\vv$ and integrating,
+the term
+\begin{equation}
+  m(\vu,\vv) = \int_\dom \varepsilon\,\vu\cdot\vv\dV,
+  \label{eq:mass}
+\end{equation}
+with \emph{no} integration by parts---there is no derivative to move. This is the
+\emph{mass} term (a name inherited from the analogous term in structural
+dynamics, where the coefficient is literally a mass density). It is the
+``identity'' member of the family: the differential operator applied to $\vu$ and
+$\vv$ is the identity, $\diffop\vu=\vu$, and the pairing is just the
+$Q$-weighted $\Ltwo$ inner product. The eigenmode weak form is then the
+\emph{pencil} $a(\vu,\vv)=\omega^2\,m(\vu,\vv)$, which discretizes to the
+generalized eigenvalue problem $\mat{K}\vx=\lambda\mat{M}\vx$ of
+\cref{ch:targets}---the stiffness $\mat{K}$ from the curl--curl term, the mass
+$\mat{M}$ from \cref{eq:mass}.
+
+That the curl--curl term and the mass term are \emph{the same kind of object}---a
+coefficient-weighted $\Ltwo$ pairing of a differential operator applied to both
+arguments, differing only in \emph{which} operator---is the observation the next
+section turns into the chapter's payoff.
+
+\section{The unifying bilinear-form family}
+\label{sec:family}
+
+Lay the three bilinear forms we have derived side by side, written in the
+inner-product notation of the notation box:
+\begin{align*}
+  \text{electrostatic (gradient):}\quad & a(u,v) = \inner{\varepsilon\,\Grad u}{\Grad v}_{\Ltwo(\dom)},\\
+  \text{magnetostatic (curl):}\quad & a(\vu,\vv) = \inner{\nu\,\Curl\vu}{\Curl\vv}_{\Ltwo(\dom)},\\
+  \text{mass (identity):}\quad & m(\vu,\vv) = \inner{\varepsilon\,\vu}{\vv}_{\Ltwo(\dom)}.
+\end{align*}
+The three are visibly instances of one shape. In each, a differential operator
+is applied to both the trial and the test function; the two results are paired in
+the $\Ltwo(\dom)$ inner product; and a material coefficient $Q$ weights the
+pairing. Only \emph{which differential operator} changes: $\Grad$, then $\Curl$,
+then the identity. Naming the differential operator $\diffop$ and the coefficient
+$Q$, all three collapse into a single template.
+
+\begin{keyidea}
+\textbf{The bilinear-form family.}
+Every domain bilinear form the simulator assembles has the form
+\begin{equation}
+  a(u,v) \;=\; \bigl(Q\,\diffop u,\ \diffop v\bigr)_{\Ltwo(\dom)}
+            \;=\; \int_\dom (Q\,\diffop u)\cdot(\diffop v)\dV,
+  \label{eq:family}
+\end{equation}
+where $\diffop\in\{\,\text{value},\ \Grad,\ \Curl,\ \Div\,\}$ is a differential
+operator applied to both trial and test functions, and $Q$ is a material
+coefficient (scalar or matrix-valued). A weak-form problem is built by choosing,
+for each term, a pair $(Q,\diffop)$. The four choices of $\diffop$ are:
+\[
+\begin{array}{llll}
+  \diffop=\text{value} & a(u,v)=(Q\,u,\,v) & \text{mass / }\Ltwo\text{ pairing} & \text{any space}\\[2pt]
+  \diffop=\Grad        & a(u,v)=(Q\,\Grad u,\,\Grad v) & \text{electrostatic (diffusion)} & \Hone\\[2pt]
+  \diffop=\Curl        & a(u,v)=(Q\,\Curl u,\,\Curl v) & \text{magnetostatic / eigenmode} & \Hcurl\\[2pt]
+  \diffop=\Div         & a(u,v)=(Q\,\Div u,\,\Div v) & \text{div--div} & \Hdiv
+\end{array}
+\]
+\end{keyidea}
+
+This template is the load-bearing abstraction of the entire field-theory part of
+the book, and it is worth pausing on what it buys us. A weak-form term is now a
+\emph{piece of data}: a pair $(\text{coefficient } Q,\ \text{differential
+operator } \diffop)$. To specify the physics of a problem is to write down a
+short list of such pairs. The electrostatic stiffness is the single term
+$(\varepsilon,\Grad)$; the magnetostatic stiffness is $(\nu,\Curl)$; the
+eigenmode problem is two terms, $(\nu,\Curl)$ for the stiffness and
+$(\varepsilon,\text{value})$ for the mass. The machinery that turns such a pair
+into an actual matrix---element quadrature, basis evaluation, assembly---is
+\emph{completely indifferent} to which pair it was handed; it is the same fold
+over terms in every case, the subject of \cref{ch:galerkin} and
+\cref{ch:assembly}.
+
+\begin{figure}[t]
+\centering
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tikzpicture}[
+    cell/.style={draw=simGray, semithick, minimum width=33mm, minimum height=20mm,
+      align=center, font=\footnotesize, inner sep=2pt},
+    hdr/.style={font=\small\bfseries, text=simInk},
+  ]
+  % four cells in a row
+  \node[cell, fill=simBgGray] (val) at (0,0)
+    {$\diffop=\text{value}$\\[3pt]$(Q\,u,\;v)$\\[3pt]\textit{mass}\\[1pt]\scriptsize any space};
+  \node[cell, fill=simBgBlue, right=2mm of val] (grad)
+    {$\diffop=\Grad$\\[3pt]$(Q\,\Grad u,\;\Grad v)$\\[3pt]\textit{electrostatic}\\[1pt]\scriptsize $\Hone$};
+  \node[cell, fill=simBgRust, right=2mm of grad] (curl)
+    {$\diffop=\Curl$\\[3pt]$(Q\,\Curl u,\;\Curl v)$\\[3pt]\textit{magnetostatic}\\[1pt]\scriptsize $\Hcurl$};
+  \node[cell, fill=simBgGreen, right=2mm of curl] (div)
+    {$\diffop=\Div$\\[3pt]$(Q\,\Div u,\;\Div v)$\\[3pt]\textit{div--div}\\[1pt]\scriptsize $\Hdiv$};
+  % unifying brace above
+  \draw[decorate,decoration={brace,amplitude=5pt},simInk]
+    ($(val.north west)+(0,3mm)$) -- ($(div.north east)+(0,3mm)$)
+    node[midway,above=5pt,font=\small\bfseries]{$a(u,v)=(Q\,\diffop u,\;\diffop v)_{\Ltwo(\dom)}$};
+  % de Rham hint below
+  \node[font=\scriptsize\itshape,simGray] at ($(val.south)!0.5!(div.south)+(0,-6mm)$)
+    {one template, four differential operators --- the de Rham ladder of \cref{ch:derham}};
+\end{tikzpicture}
+\caption[The four-operator bilinear-form family]{The bilinear-form family as a
+labeled grid. A single template $a(u,v)=(Q\,\diffop u,\diffop v)_{\Ltwo(\dom)}$
+(brace) specializes to four terms by the choice of differential operator
+$\diffop$. The value (mass) term carries no derivative; gradient, curl, and
+divergence each carry one, and each is well-formed on a different
+finite-element space---$\Hone$, $\Hcurl$, $\Hdiv$---the slots of the de Rham
+complex of \cref{ch:derham}. The coefficient $Q$ rides every cell uniformly.}
+\label{fig:family}
+\end{figure}
+
+\begin{remark}[How Palace records a term]
+This is not an abstraction imposed from outside; it is the structure Palace's own
+code already has. The simulator builds an operator by pushing
+\emph{integrator} objects onto a list, each integrator carrying a coefficient and
+a differential-operator type: the diffusion integrator for $\diffop=\Grad$, the
+curl--curl integrator for $\diffop=\Curl$, the mass integrator for the value
+term. Every integrator inherits the same coefficient slot from a shared base
+class, which is exactly the statement that $Q$ is variant-invariant while
+$\diffop$ is the variant axis. The pair $(Q,\diffop)$ is, almost literally, a row
+in Palace's integrator list. We pick up this thread, and the fold that consumes
+the list, in \cref{ch:assembly}.
+\end{remark}
+
+A fourth operator, $\diffop=\Div$, completes the family on grounds of symmetry:
+it is the div--div term, well-formed on the $\Hdiv$ space, and it fills the last
+slot of the de Rham ladder $\Hone\xrightarrow{\Grad}\Hcurl\xrightarrow{\Curl}
+\Hdiv\xrightarrow{\Div}\Ltwo$ that organizes \cref{ch:derham}. Among the five
+analyses of this book it happens that no driver assembles a div--div stiffness
+term, so it appears here as the symmetric completion of the family rather than as
+a witnessed workhorse---but the template is the more compelling for being closed
+under the full ladder of differential operators.
+
+\section{The weak form as virtual work}
+\label{sec:virtual-work}
+
+We close the conceptual arc by returning to the energy principle promised in
+\cref{sec:virtual-work}'s forward reference at the start of the chapter. The
+bilinear-form family is not just a computational convenience; when $a$ is
+symmetric and positive---as the electrostatic and magnetostatic stiffness forms
+are---the weak problem $a(u,v)=\ell(v)$ is exactly the condition for a certain
+energy to be minimized.
+
+Define the energy functional
+\begin{equation}
+  J(w) \;=\; \tfrac12\,a(w,w) \;-\; \ell(w).
+  \label{eq:energy}
+\end{equation}
+For the electrostatic problem, $\tfrac12 a(w,w)=\tfrac12\int_\dom
+\varepsilon\abs{\Grad w}^2\dV$ is the electrostatic field energy stored by the
+trial potential $w$, and $\ell(w)$ is the work done by the sources; $J$ is the
+total potential energy. The claim is that the solution $u$ of the weak problem is
+precisely the minimizer of $J$.
+
+\begin{proposition}[Variational equivalence]
+\label{prop:varequiv}
+Let $a$ be a symmetric bilinear form ($a(w,z)=a(z,w)$) that is positive
+($a(w,w)>0$ for $w\neq0$), and let $\ell$ be linear. Then $u$ solves the weak
+problem $a(u,v)=\ell(v)$ for all $v$ \emph{if and only if} $u$ minimizes
+$J(w)=\tfrac12 a(w,w)-\ell(w)$.
+\end{proposition}
+
+\begin{proof}
+Perturb the candidate $u$ by an arbitrary admissible variation $v$, scaled by a
+real parameter $t$, and expand $J(u+tv)$ using bilinearity and symmetry of $a$:
+\[
+  J(u+tv) = \tfrac12 a(u,u) + t\,a(u,v) + \tfrac{t^2}{2}a(v,v) - \ell(u) - t\,\ell(v).
+\]
+Group by powers of $t$:
+\[
+  J(u+tv) = J(u) + t\bigl(a(u,v)-\ell(v)\bigr) + \tfrac{t^2}{2}a(v,v).
+\]
+The coefficient of the \emph{linear} term in $t$ is exactly the weak-form
+residual $a(u,v)-\ell(v)$. The quadratic coefficient $\tfrac12 a(v,v)$ is
+positive (for $v\neq0$) by hypothesis, so as a function of $t$, $J(u+tv)$ is an
+upward parabola. Its vertex sits at $t=0$---i.e.\ $u$ is the minimizer along the
+direction $v$---\emph{if and only if} the linear coefficient vanishes,
+$a(u,v)=\ell(v)$. Since $v$ was arbitrary, $u$ minimizes $J$ over all directions
+exactly when it solves the weak problem.
+\end{proof}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  \draw[->,simGray] (-2.6,0) -- (2.8,0) node[right,font=\scriptsize]{$t$ (amount of perturbation $v$)};
+  \draw[->,simGray] (0,-0.3) -- (0,2.7) node[above,font=\scriptsize]{$J(u+tv)$};
+  % the parabola, vertex at t=0
+  \draw[simBlue,very thick,domain=-2.3:2.3,samples=80]
+    plot (\x,{0.42*\x*\x+0.35});
+  % vertex marker
+  \fill[simRust] (0,0.35) circle (2pt);
+  \node[simRust,font=\small,below right] at (0,0.35) {$u$ (minimizer)};
+  % tangent line at vertex (horizontal) = zero linear term
+  \draw[simGreen,thick,densely dashed] (-1.6,0.35) -- (1.6,0.35);
+  \node[simGreen,font=\scriptsize] at (1.7,0.2) {slope $=a(u,v)-\ell(v)=0$};
+  % quadratic-term annotation
+  \node[simBlue,font=\scriptsize] at (1.9,2.2) {curvature $=a(v,v)>0$};
+\end{tikzpicture}
+\caption[The weak form as energy minimization]{The energy
+$J(u+tv)=J(u)+t\,(a(u,v)-\ell(v))+\tfrac{t^2}{2}a(v,v)$ along any perturbation
+direction $v$ is an upward parabola (positive curvature $a(v,v)>0$). Its vertex
+falls at $t=0$---meaning $u$ is the energy minimizer---precisely when the linear
+slope $a(u,v)-\ell(v)$ vanishes, which is the weak equation. ``Solve the weak
+form'' and ``minimize the energy against every virtual displacement'' are the
+same statement; the weak form is the principle of virtual work.}
+\label{fig:virtualwork}
+\end{figure}
+
+\Cref{prop:varequiv} is the rigorous form of the slogan we opened with. The
+linear term $a(u,v)-\ell(v)$ is the first-order change in energy under a
+``virtual'' perturbation $v$; demanding that it vanish for every $v$ is the
+\emph{principle of virtual work}, and it is identically the weak form
+(\cref{fig:virtualwork}). When $a$ is symmetric and positive, solving the weak
+form is minimizing an energy---the form in which a physicist would have posed the
+problem in the first place. (The driven and eigenmode problems are not energy
+minimizations in this simple sense---their forms are indefinite or
+complex---but the weak form survives intact as the master formulation; it is only
+the energy \emph{interpretation} that is special to the symmetric-positive case.)
+
+\section{From weak form to finite elements: the road ahead}
+
+We have, in this chapter, taken five strong-form PDEs and reduced each to the
+same abstract shape: \emph{find $u$ such that $a(u,v)=\ell(v)$ for all admissible
+$v$}, with $a$ drawn from the one-parameter family $a(u,v)=(Q\,\diffop u,\diffop
+v)$. Two large questions remain, and they organize the next several chapters.
+
+First, what is the space of ``admissible'' functions, and how do we replace it
+with a finite-dimensional one we can compute in? The weak form demands only one
+derivative, which is exactly the regularity the piecewise-polynomial
+finite-element spaces provide; \emph{which} space ($\Hone$, $\Hcurl$, $\Hdiv$)
+goes with which differential operator is the content of \cref{ch:galerkin} and
+\cref{ch:functionspaces}, and the way the four spaces interlock is the de Rham
+complex of \cref{ch:derham}. Second, how does the bilinear form become a matrix?
+Restricting $a$ to a finite-dimensional space spanned by basis functions turns
+$a(u,v)=\ell(v)$ into a linear system $\mat{K}\vx=\vb$, assembled element by
+element as a fold over the weak-form terms---the Galerkin method of
+\cref{ch:galerkin} and the assembly machinery of \cref{ch:assembly}. The
+essential/natural boundary distinction we drew here is implemented, in that
+discrete setting, by the degree-of-freedom elimination of \cref{ch:bc}.
+
+\summarysection
+The strong form of a PDE asks too much: it demands a twice-differentiable
+solution and enforces the equation pointwise. Multiplying by a test function $v$,
+integrating over the domain, and integrating by parts trades one derivative on
+the unknown $u$ for one on $v$, halving the smoothness demand and reorganizing
+the equation into a \emph{bilinear form} $a(u,v)$ equal to a \emph{linear
+functional} $\ell(v)$. In one dimension the integration by parts is the ordinary
+formula and produces $\int u'v'=\int fv$; in three dimensions the divergence
+theorem (Green's first identity) produces $a(u,v)=\int_\dom\varepsilon\Grad
+u\cdot\Grad v$ plus a boundary integral; for vector fields the curl
+integration-by-parts identity produces $a(\vu,\vv)=\int_\dom\nu\,\Curl\vu\cdot
+\Curl\vv$, paired in eigenmode problems with the mass term
+$\int_\dom\varepsilon\,\vu\cdot\vv$. The boundary integral splits into an
+\emph{essential} (Dirichlet) part---enforced by constraining the test/trial
+space, leaving no trace in the equation---and a \emph{natural} (Neumann) part,
+which survives as a source in $\ell$. All of these are instances of one template,
+$a(u,v)=(Q\,\diffop u,\diffop v)_{\Ltwo(\dom)}$, with $\diffop\in\{\text{value},
+\Grad,\Curl,\Div\}$ and $Q$ a material coefficient---the four-term family that
+every Palace driver assembles. When $a$ is symmetric and positive, the weak form
+is equivalent to minimizing the energy $J=\tfrac12 a(u,u)-\ell(u)$: the principle
+of virtual work.
+
+\furtherreading
+The classical reference for the variational formulation and its analysis is
+Brenner and Scott~\citep{brennerscott2008}, which develops weak forms, Sobolev
+regularity, and the Lax--Milgram and C\'ea theorems we have only gestured at.
+For the curl--curl and vector cases specific to electromagnetics---Green's
+identities for the curl operator, the $\Hcurl$ and $\Hdiv$ spaces, and the
+boundary conditions of Maxwell problems---Monk~\citep{monk2003} is the standard
+graduate treatment. Jin~\citep{jin2014} gives the same material from a
+practicing computational-electromagnetics viewpoint, with the bilinear forms
+written exactly as the integrators that appear in a solver. Readers wanting the
+energy/virtual-work perspective in its mechanical home will find it in any
+finite-element text rooted in structural analysis; the equivalence of
+\cref{prop:varequiv} is there called the principle of minimum potential energy.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{(1-D, from scratch.)} Derive the weak form of $-u''+u=f$ on
+  $(0,1)$ with $u(0)=u(1)=0$. Identify the bilinear form $a(u,v)$ and the
+  functional $\ell(v)$. How does $a$ differ from the pure-Poisson case
+  \cref{eq:1d-bilinear}, and which two members of the family
+  \cref{eq:family} does it combine?
+  \item \textbf{(Boundary bookkeeping.)} Redo the 1-D derivation of
+  \cref{sec:1d} but with the \emph{inhomogeneous} Dirichlet condition $u(0)=a$,
+  $u(1)=b$. Show that the bilinear form is unchanged and explain where the data
+  $a,b$ must enter instead. (This is the ``lifting'' of \cref{ch:bc}, in
+  miniature.)
+  \item \textbf{(Why $v$ vanishes.)} In the 1-D Neumann derivation
+  \cref{eq:1d-neumann-weak} we kept $v(1)$ free but required $v(0)=0$. What weak
+  form results if you mistakenly require $v(1)=0$ as well? Show that the
+  prescribed flux $g$ then disappears from the equation entirely, and explain in
+  one sentence why that makes the discrete problem wrong.
+  \item \textbf{(Green's identity by hand.)} Starting from the product rule
+  \cref{eq:prodrule}, derive Green's \emph{second} identity
+  $\int_\dom (u\Lap v - v\Lap u)\dV = \oint_\bdry(u\,\partial_n v - v\,\partial_n
+  u)\,\mathrm{d}S$ by applying Green's first identity twice (with the roles of
+  $u$ and $v$ swapped) and subtracting. Here $\partial_n=\vn\cdot\Grad$.
+  \item \textbf{(Reading the template.)} For each of the following bilinear
+  forms, identify the coefficient $Q$, the differential operator $\diffop$, and
+  the finite-element space on which it is well-formed: (a)
+  $\int_\dom \mu^{-1}\Curl\vu\cdot\Curl\vv$; (b) $\int_\dom \rho\,u\,v$; (c)
+  $\int_\dom \kappa\,\Grad T\cdot\Grad S$ (steady heat conduction). Which member
+  of \cref{fig:family} is each?
+  \item \textbf{(Symmetry and the energy.)} Show directly from the definition
+  \cref{eq:family} that $a(u,v)=a(v,u)$ whenever the coefficient $Q$ is a
+  symmetric matrix (or a scalar). Then exhibit a $2\times2$ matrix coefficient
+  $Q$ for which $a(u,v)\neq a(v,u)$, and explain why \cref{prop:varequiv}'s
+  energy interpretation fails for that $Q$.
+  \item \textbf{(Eigenmode pencil.)} The eigenmode weak form is
+  $a(\vu,\vv)=\omega^2 m(\vu,\vv)$ with $a$ the curl--curl form and $m$ the mass
+  form \cref{eq:mass}. Writing both as members of the family
+  \cref{eq:family}, give the pair $(Q,\diffop)$ for each. Discretized, this
+  becomes $\mat{K}\vx=\lambda\mat{M}\vx$ with $\lambda=\omega^2$; which form
+  produces $\mat{K}$ and which produces $\mat{M}$?
+  \item \textbf{(Virtual work numerically.)} For the 1-D problem of
+  \cref{wex:1dfull} (with exact solution $u=\sin\pi x$), compute the energy
+  $J(u)=\tfrac12 a(u,u)-\ell(u)$ at the true solution. Then compute $J(w)$ for
+  the perturbed trial function $w(x)=\sin\pi x + \tfrac1{10}\sin 2\pi x$ and
+  confirm $J(w)>J(u)$, consistent with \cref{prop:varequiv}. (You may use
+  $\int_0^1\sin m\pi x\,\sin n\pi x\dx=\tfrac12\delta_{mn}$ and the matching
+  cosine identity.)
+\end{enumerate}

@@ -1,0 +1,1013 @@
+\chapter{A Tour of the Five Libraries}
+\label{ch:fivelibs}
+
+\chapterorient{The previous chapter drew the architecture of the synthesized
+library---five modules, a topological order, an \texttt{\#extern} boundary where
+an opaque kernel sits. This chapter walks the shelves. We open four of the five
+libraries one at a time---the shared \emph{types}, and the three calculus
+libraries \emph{iteration}, \emph{data-algebra}, and \emph{coordination}---and
+read the actual synthesized code each holds: the record definitions, the def
+bodies, the \texttt{where}-local leaves, the kernel callouts. (The fifth library,
+\emph{drivers}, composes these four into the five analyses and is the subject of
+\cref{ch:composing}.) Two def bodies get a line-by-line reading. By the end you
+will have seen the whole vocabulary of the simulator rendered as code, and you
+will have noticed the one fact the tour exists to make vivid: across all four
+libraries the same handful of shapes keeps reappearing, because the library is
+small for the same reason the calculus is small.}
+
+\section{Four libraries, one tour}
+
+\Cref{ch:synthlib} laid out the synthesized library as five modules in a
+topological stack: a foundational \emph{types} module of shared records, the
+three calculus modules---\emph{iteration}, \emph{data-algebra},
+\emph{coordination}---and a top \emph{drivers} module that composes them into the
+five simulation analyses. A module appears in the stack \emph{after} everything it
+uses: \emph{types} defines records the others thread; \emph{iteration} holds the
+loop combinator the solvers fold; \emph{data-algebra} holds the tensor verbs the
+steps call; \emph{coordination} holds the outer caps that drive the loops; and
+\emph{drivers} sits on top, wiring the rest into electrostatics, the driven sweep,
+the eigenmode solve, and so on.
+
+This chapter tours the four lower libraries---the shared types and the three
+calculus libraries---and shows what each \emph{holds}, in real synthesized code.
+\Cref{fig:shelves} is the map for the tour: four labelled shelves, each stocked
+with the operators and types we will read. Keep it in view; every section that
+follows pulls items off one of these shelves and renders the def body. We save
+\emph{drivers} for \cref{ch:composing}, because a driver is not a new kind of
+thing---it is a \emph{composition} of the things on these four shelves, and you
+cannot compose a vocabulary you have not yet met.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=4mm]
+  \def\shelfw{34mm}
+  % ---- types ----
+  \node[stage, minimum width=\shelfw, align=center, fill=simBgGray, draw=simGray]
+    (tH) at (0,0) {\textbf{types}\\\scriptsize shared records};
+  \node[opbox, minimum width=\shelfw, align=left, below=of tH] (tB)
+    {\code{IoData} \scriptsize\itshape (config)\\
+     \code{OpParams} \scriptsize\itshape (build-time)\\
+     \code{SimState} \scriptsize\itshape (run-time)};
+  % ---- iteration ----
+  \node[stage, minimum width=\shelfw, align=center, fill=simBgGreen, draw=simGreen,
+    right=9mm of tH] (iH) {\textbf{iteration}\\\scriptsize loops \& steps};
+  \node[opbox, minimum width=\shelfw, align=left, below=of iH] (iB)
+    {\code{iterate\_while}\\
+     \code{iterate\_while\_with\_prev}\\
+     \code{krylov\_step} \scriptsize\itshape (A/B)\\
+     \code{chebyshev}\\
+     \scriptsize\itshape \code{Krylov} \code{StepOutputs} \code{PrevCarry}};
+  % ---- data-algebra ----
+  \node[stage, minimum width=\shelfw, align=center, fill=simBgGold, draw=simGold,
+    right=9mm of iH] (dH) {\textbf{data-algebra}\\\scriptsize tensor verbs};
+  \node[opbox, minimum width=\shelfw, align=left, below=of dH] (dB)
+    {\code{linear\_combination}\\
+     \code{inner\_product} \code{dot} \code{nrm2}\\
+     \code{mk\_matrix\_free\_operator}\\
+     \code{fe\_assemble} \scriptsize\itshape (\#extern)\\
+     \scriptsize\itshape gram / energy / S-param / \dots};
+  % ---- coordination ----
+  \node[stage, minimum width=\shelfw, align=center, fill=simBgBlue, draw=simBlue,
+    right=9mm of dH] (cH) {\textbf{coordination}\\\scriptsize outer caps};
+  \node[opbox, minimum width=\shelfw, align=left, below=of cH] (cB)
+    {\code{Solve} \scriptsize\itshape monad\\
+     \code{ksp\_solve} \code{eigsolve} \scriptsize\itshape(\#extern)\\
+     \code{solve\_family}\\
+     \code{frequency\_sweep} \code{fold\_solve}\\
+     \scriptsize\itshape \code{Outcome} \code{EigState}};
+\end{tikzpicture}
+\caption[The four libraries side by side]{The four libraries this chapter tours,
+each a shelf stocked with the operators and types we will render. \emph{types}
+holds the three cross-cutting records every solve threads. \emph{iteration} holds
+the loop combinator of \cref{ch:fold} and the step kernels it folds.
+\emph{data-algebra} holds the tensor-combining verbs of \cref{ch:combinators}.
+\emph{coordination} holds the \code{Solve}-monadic outer caps that drive the
+loops over families. The fifth library, \emph{drivers}, composes all four into the
+five analyses and is \cref{ch:composing}. Read left to right: the order is
+topological---each shelf uses only the shelves to its left.}
+\label{fig:shelves}
+\end{figure}
+
+One convention governs every code block below, and it is worth stating once. These
+libraries are the \emph{implementation view} of the spec: they render the
+synthesized code, but they do not restate the laws or the semantics, which live in
+the calculus chapters. So each def we read here links \emph{up} to its authoritative
+home---\code{iterate\_while}'s laws are in \cref{ch:fold}, \code{linear\_combination}'s
+in \cref{ch:combinators}, and so on. The code is what is new; the meaning we have
+already built. With that, we open the first shelf.
+
+\section{The \texttt{types} library: three records, three lifetimes}
+\label{sec:types}
+
+The foundational shelf holds the records that \emph{every} other library threads.
+There are exactly three that are genuinely cross-cutting---shared across two or
+more of the calculus libraries---and they are the three lifetimes we named in
+\cref{ch:strata}: a configuration parsed once and read forever, a bundle of
+operator parameters fixed at construction, and a solve-state that evolves as the
+loop runs. \Cref{fig:typecards} draws them as three cards, each tagged with its
+stratum.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  \def\cardw{40mm}
+  % IoData card
+  \node[draw=simGray, fill=simBgGray, rounded corners=3pt, thick,
+    minimum width=\cardw, align=left, inner sep=5pt] (io) at (0,0)
+    {\textbf{\code{IoData}}\\[1pt]\scriptsize\itshape parse-time, read-only\\[3pt]
+     \scriptsize problem / model / domains\\
+     \scriptsize boundaries / solver / units\\[2pt]
+     \scriptsize\textbf{selects the driver}\\\scriptsize via \code{problem.type}};
+  \node[band, fill=simGray, text=white, font=\scriptsize\bfseries, above=1mm of io]
+    {stratum 0: parse once};
+  % OpParams card
+  \node[draw=simGreen, fill=simBgGreen, rounded corners=3pt, thick,
+    minimum width=\cardw, align=left, inner sep=5pt, right=10mm of io] (op)
+    {\textbf{\code{OpParams}}\\[1pt]\scriptsize\itshape build-time, read-only\\[3pt]
+     \scriptsize \code{T} (apply surface)\\
+     \scriptsize \code{eps} (stopping test)\\
+     \scriptsize variant selectors,\\\scriptsize tolerances, \code{max\_it}};
+  \node[band, fill=simGreen, text=white, font=\scriptsize\bfseries, above=1mm of op]
+    {stratum 1: fixed at build};
+  % SimState card
+  \node[draw=simRust, fill=simBgRust, rounded corners=3pt, thick,
+    minimum width=\cardw, align=left, inner sep=5pt, right=10mm of op] (ss)
+    {\textbf{\code{SimState}}\\[1pt]\scriptsize\itshape run-time, evolving\\[3pt]
+     \scriptsize \code{x} (the iterate)\\
+     \scriptsize \code{it} \code{converged}\\
+     \scriptsize \code{final\_res} \code{initial\_res}\\[2pt]
+     \scriptsize\textbf{uniform across solvers}};
+  \node[band, fill=simRust, text=white, font=\scriptsize\bfseries, above=1mm of ss]
+    {stratum 2: evolves each step};
+\end{tikzpicture}
+\caption[The \texttt{types} records as stratum-tagged cards]{The three
+cross-cutting records of the \emph{types} library, each tagged with its stratum
+from \cref{ch:strata}. \code{IoData} is parsed once from the user's config and
+read for the rest of the run; its \code{problem.type} field selects which driver
+fires. \code{OpParams} is fixed at solver construction and read but never written
+during the solve. \code{SimState} is the one record that \emph{evolves}---a fresh
+value each step---and it has the \emph{same five fields} for every Krylov-shaped
+solver in the book. Three records, three lifetimes; the type-placement rule keeps
+only these cross-cutting three here.}
+\label{fig:typecards}
+\end{figure}
+
+\subsection{\texttt{IoData}: the configuration parsed once}
+
+The first record is the whole configuration, parsed once at startup from the
+user's JSON file and then read---never written---for the rest of the run. It is an
+aggregate of six sub-records: the problem type and solver-pipeline knobs, the mesh
+and material model, the per-domain data, the boundary conditions, the solver
+settings, and a units converter.
+
+\begin{lstlisting}[style=l4style]
+-- The aggregate parsed once at startup; read-only across the whole solve.
+IoData = {
+  problem    : ProblemConfig,   -- driver selector (problem.type) + pipeline knobs
+  model      : ModelConfig,     -- mesh file + refinement + material assignment
+  domains    : DomainConfig,    -- per-domain materials + postprocess energy regions
+  boundaries : BoundaryConfig,  -- BC surfaces (PEC/PMC/impedance/lumped-/wave-port)
+  solver     : SolverConfig,    -- linear/eigen/driven/transient settings + tolerances
+  units      : Units            -- SI <-> nondimensional scale converter
+}
+-- utility API (parse-time only)
+parseConfig :: FilePath -> IoData        -- parse the JSON config tree once
+problemType :: IoData -> ProblemType     -- the driver-dispatch selector (a projection)
+\end{lstlisting}
+The load-bearing field is \code{problem.type}. It is read once, at the very top of
+the run, by the dispatch that chooses which of the five drivers to invoke---the
+single point where the ``six analyses, one machine'' of \cref{ch:targets} becomes
+a concrete branch. The function \code{problemType} that reads it is a trivial
+projection: \code{IoData} carries no behaviour, only data. Everything an analysis
+does with the configuration, it does by reading fields out of this one immutable
+object.
+
+\subsection{\texttt{OpParams}: the operator's build-time parameters}
+
+The second record holds the parameters fixed when the operator is
+\emph{constructed}---the variant selectors, the tolerances, and the
+constructed-operator surfaces the kernel will apply. It is read by the step kernel
+(through its surfaces) and captured once by the outer caps; it never changes during
+the solve.
+
+\begin{lstlisting}[style=l4style]
+-- read-only; captured once at solve construction, never re-inspected per step.
+OpParams = {
+  T          : ConstructedOp,    -- the apply surface (preconditioned operator)
+  orthog?    : OrthogSurface,    -- GMRES/Arnoldi only; absent (no-op) for CG
+  scalars?   : ScalarSurface,    -- Chebyshev polynomial-recurrence scalars; else absent
+  eps        : Convergence,      -- the stopping-predicate surface
+  -- variant selectors (closed over by the surfaces above; not read by the body)
+  pc_side    : PreconditionerSide,
+  gs_orthog  : Orthogonalization,
+  flexible   : Bool,
+  poly_kind? : PolynomialKind,
+  restart    : RestartMode,
+  -- termination knobs (close into eps)
+  max_dim : Int, max_it : Int, rel_tol : Scalar, abs_tol : Scalar
+}
+\end{lstlisting}
+Notice what \cref{ch:strata} promised: the variant selectors (\code{pc\_side},
+\code{gs\_orthog}, \code{flexible}, \dots) are \emph{folded into the surfaces}
+\code{T}, \code{orthog}, \code{eps} at construction. The kernel never branches on
+``am I CG or GMRES?''---that question is answered once, when the surfaces are
+built, and the body just applies \code{T} and \code{eps} as given. The
+question-marks (\code{orthog?}, \code{scalars?}, \code{poly\_kind?}) mark fields
+present for some solvers and absent for others: CG has no orthogonalization
+surface, Chebyshev has no Krylov restart. A solver \emph{is} a choice of which of
+these are present.
+
+\subsection{\texttt{SimState}: the run-time solve state}
+
+The third record is the only one that evolves. It carries the externally-visible
+quantities a Krylov-shaped solve produces and reports, and---this is the fact worth
+underlining---it has the \emph{same five fields for every solver in the book}.
+
+\begin{lstlisting}[style=l4style]
+-- the value threaded by `Solve a = StateT SimState Identity a`; every field run-time.
+-- the iterate `x` is named with shape group S, not a fixed rank-1 axis.
+SimState = {
+  x           : Tensor[(S: ...)],  -- the current iterate (the solve's primary product)
+  it          : Int,               -- iteration count
+  converged   : Bool,              -- convergence flag
+  final_res   : Scalar,            -- final (absolute) residual, possibly an estimate
+  initial_res : Scalar             -- initial (absolute) residual, captured at entry
+}
+\end{lstlisting}
+
+\begin{keyidea}
+CG, GMRES, FGMRES, and Chebyshev all evolve the \emph{same} \code{SimState}: an
+iterate \code{x}, a counter \code{it}, a converged flag, and two residuals. The
+solvers differ in their \emph{ephemeral} workspace---CG's single search direction,
+GMRES's growing basis---but the run-time state they expose to the outside world is
+one five-field record. This is why \code{ksp\_solve} can be \emph{one} cap over
+\emph{four} solvers (\cref{sec:coordination}): the state it threads is uniform, and
+the differences live below it, in the step kernel's private \code{Krylov} bundle.
+\end{keyidea}
+
+\begin{notationbox}
+Only these three records live in \emph{types}, because only these three are shared
+across two or more libraries. A record used by just \emph{one} library---CG's
+\code{Krylov} workspace, the eigensolver's \code{EigState}---is placed with that
+library instead, bundled next to the operators that consume it. The
+\emph{type-placement rule} (\cref{ch:synthlib}) is exactly this: cross-cutting
+records go in \emph{types}; single-library records go with their library. We meet
+the single-library records as we reach each shelf.
+\end{notationbox}
+
+\section{The \texttt{iteration} library: the loop and its kernels}
+\label{sec:iteration}
+
+The second shelf holds the heart of the framework: the one loop combinator of
+\cref{ch:fold} and the step kernels it folds. Four operators in topological
+order---\code{iterate\_while} first (everything below it folds it), then its
+two-term-recurrence sibling, then the Krylov step, then the Chebyshev smoother---and
+three single-library workspace types rendered just ahead of them. This is the
+library whose first def we read line by line, in \cref{wex:readwhile}.
+
+\subsection{The clustering types: \texttt{Krylov}, \texttt{StepOutputs}, \texttt{PrevCarry}}
+
+Before the operators come the records they thread, the ones the type-placement rule
+keeps \emph{here} rather than in \emph{types} because only \emph{iteration} uses
+them. \code{Krylov} is the ephemeral per-restart workspace---born at restart entry,
+discarded at restart exit, threaded as a \emph{plain value} (not a monadic effect,
+because its lifetime is strictly inside one cycle). Its fields differ by solver:
+
+\begin{lstlisting}[style=l4style]
+-- Ephemeral workspace; born at restart, discarded at restart exit. Plain value.
+type Krylov_CG = {
+  r  : Tensor[(S: ...)],  -- residual
+  p  : Tensor[(S: ...)],  -- search direction
+  z? : Tensor[(S: ...)],  -- preconditioned residual (iff a preconditioner is set)
+  alpha : Scalar,         -- step length
+  beta  : Scalar          -- direction-update coeff (the convergence-test proxy)
+}
+type Krylov_GMRES = {
+  V  : [Tensor[(S: ...)]],  -- Arnoldi basis (array of basis columns)
+  Z? : [Tensor[(S: ...)]],  -- preconditioned basis (iff OpParams.flexible -- FGMRES)
+  H  : DenseMatrix,         -- upper-Hessenberg (small-dense, scalar-stratum)
+  s, cs, sn : [Scalar],     -- LS RHS / Givens cosines / Givens sines (small-dense)
+  beta : Scalar, j : Int    -- residual proxy; inner index within the restart cycle
+}
+\end{lstlisting}
+The contrast is the whole story of CG versus GMRES: CG's workspace is a fixed
+handful of vectors, so its memory is bounded; GMRES's \code{V} \emph{grows} with
+each inner iteration, which is exactly why GMRES restarts. \code{StepOutputs} is
+the demand-prunable per-step readout (a residual norm, an optional
+least-squares residual, an optional breakdown token)---the ``extras'' of
+\cref{ch:fold}, rendered as a record. And \code{PrevCarry} is the one-slot
+recurrence carry that Form~B of the Krylov step threads through the loop instead of
+storing in the state---the first-iteration-unrolling of \cref{ch:fold} made
+concrete.
+
+\subsection{\texttt{iterate\_while}: the def body itself}
+
+Here is the combinator the whole book turns on, rendered as synthesized code. We
+read it in full in \cref{wex:readwhile}; for now, see it whole.
+
+\begin{lstlisting}[style=l4style]
+-- # Arguments
+--   a    : a          -- the value-threaded carry (immutable); init
+--   cont : a -> Bool  -- loop predicate, PURE on the carry; fires before each step
+--   step : a -> Solve { state: a, ...e }  -- per-step body; Solve effect on SimState
+-- # Returns
+--   Solve { final_state: a, trajectory: [{ ...e }] }
+--     trajectory -- per-step extras in order; demand-pruned when only final_state read
+iterate_while :: a -> (a -> Bool) -> (a -> Solve { state: a, ...e })
+              -> Solve { final_state: a, trajectory: [{ ...e }] }
+iterate_while a cont step =
+  if cont a
+    then do
+      { state: a', ...e } <- step a
+      { final_state, trajectory } <- iterate_while a' cont step
+      pure { final_state, trajectory: [{ ...e }] ++ trajectory }
+    else
+      pure { final_state: a, trajectory: [] }
+
+-- the no-extras sugar (a bounded loop): e = (), body non-monadic.
+iterate_while_pure :: a -> (a -> Bool) -> (a -> a) -> a
+iterate_while_pure a cont f =
+  (iterate_while a cont (\x -> pure { state: f x })).final_state
+\end{lstlisting}
+This is the small-step rule of \cref{ch:fold} transcribed verbatim into code: test
+\code{cont a}; if true, run one \code{step}, recurse on the new carry, and prepend
+this step's extras to the trajectory; if false, stop with the carry as
+\code{final\_state} and an empty trajectory. The recursion sits in tail position, so
+it is a loop, not a stack. The \code{iterate\_while\_pure} below it is the sugar for
+loops with nothing to report---the carry threads, the trajectory is always empty,
+and you read back only the final value. \Cref{fig:whilestructure} diagrams the
+structure of the def; \cref{wex:readwhile} reads it line by line.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  % the predicate gate
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+    font=\scriptsize] (gate) at (0,0) {\code{cont a}?};
+  % FALSE branch (else)
+  \node[product, minimum width=30mm, align=left, right=20mm of gate] (base)
+    {\scriptsize\textbf{else (base case)}\\\scriptsize \code{final\_state: a}\\\scriptsize \code{trajectory: []}};
+  \draw[flow] (gate.east) -- node[above,font=\scriptsize,text=simRust]{no} (base.west);
+  % TRUE branch (then) -- three lines stacked below
+  \node[opbox, minimum width=46mm, align=left, below=10mm of gate] (s1)
+    {\scriptsize 1.\ \code{\{state: a', ...e\} <- step a}\\\scriptsize\itshape one step: next carry + extras};
+  \node[opbox, minimum width=46mm, align=left, below=4mm of s1] (s2)
+    {\scriptsize 2.\ \code{... <- iterate\_while a' cont step}\\\scriptsize\itshape tail recurse on the new carry};
+  \node[opbox, minimum width=46mm, align=left, below=4mm of s2] (s3)
+    {\scriptsize 3.\ \code{pure \{..., trajectory: [e] ++ ...\}}\\\scriptsize\itshape prepend this step's extras};
+  \draw[flow] (gate.south) -- node[left,font=\scriptsize,text=simGreen]{yes} (s1.north);
+  \draw[flow] (s1) -- (s2);
+  \draw[flow] (s2) -- (s3);
+  % the carry feedback to the gate (recursion)
+  \draw[backflow] (s2.east) .. controls +(2.4,0) and +(2.4,0) ..
+    node[right,font=\scriptsize,text=simRust,align=left,pos=0.5]{recurse:\\carry \code{a'}} (gate.east);
+\end{tikzpicture}
+\caption[The structure of the \texttt{iterate\_while} def]{The synthesized
+\code{iterate\_while} def as a structure diagram. The predicate \code{cont a} is
+tested \emph{first} (the \texttt{while} convention of \cref{ch:fold}). On
+\textcolor{simRust}{no}, the \texttt{else} arm returns the base case---the carry as
+\code{final\_state}, an empty trajectory. On \textcolor{simGreen}{yes}, the
+\texttt{then} arm runs three lines: take one step (producing the next carry \code{a'}
+and this step's extras \code{e}), tail-recurse on \code{a'} (the dashed feedback
+edge), and prepend \code{e} to the trajectory the recursion returns. Three lines and
+a gate; \cref{wex:readwhile} reads each in turn.}
+\label{fig:whilestructure}
+\end{figure}
+
+\subsection{The step kernels: \texttt{krylov\_step} and \texttt{chebyshev}}
+
+Above the loop sit the kernels it folds. \code{krylov\_step} is the per-step body
+of a Krylov solve, embedded in the \code{Solve} monad. It comes in two
+\emph{forms}, and seeing them side by side is the clearest picture of the
+first-iteration-unrolling rotation from \cref{ch:fold}. \emph{Form~A}---the
+default---keeps the ``is this the first iteration?'' branch \emph{inside} the body
+and folds with plain \code{iterate\_while}:
+
+\begin{lstlisting}[style=l4style]
+-- Form A (branch-in-body, default): folded by iterate_while.
+krylov_step :: OpParams -> Krylov -> (SimState -> Solve { krylov: Krylov, outputs: StepOutputs })
+krylov_step op K = \s -> do
+  let w     = apply_linop op.T K.input_field   -- operator apply (no SimState read)
+  let K_aux = optionally_apply_auxiliary op K w -- GMRES orthog / Chebyshev scalars / CG no-op
+  let K'    = krylov_update K_aux op w          -- bundle update (axpy/dot/nrm2, pure on K)
+  let outputs = derived_views K' op             -- residual_norm; ls_residual; breakdown
+  modify (\s -> s { it = s.it + 1 })            -- the sole monadic effect
+  pure { krylov: K', outputs }
+\end{lstlisting}
+\emph{Form~B}---opt-in---splits the body into a \code{first\_step} that
+manufactures the initial recurrence value and a \emph{branch-free}
+\code{steady\_step} that consumes it, folded by
+\code{iterate\_while\_with\_prev}. The canonical instance is CG, and reading the
+two CG steps next to each other shows what unrolling buys: the steady step's
+\code{p'} line is unconditional, where Form~A's would carry an \code{if it==0}
+test.
+
+\begin{lstlisting}[style=l4style]
+-- Form B, CG: the steady step is branch-free; beta_prev is the closure carry.
+cg_steady_step :: LinOp[(S: ...)] -> Scalar -> Scalar -> CgState
+              -> { state: CgState, residual_norm: Scalar }
+cg_steady_step opA eps beta_prev s =
+  let p'    = axpby 1.0 s.r (s.beta / beta_prev) s.p in  -- unconditional: p <- r + (beta/beta_prev) p
+  let Ap    = apply_linop opA p' in
+  let alpha = s.beta / dot Ap p' in
+  let x'    = axpy alpha p' s.x in                       -- x <- x + alpha p
+  let r'    = axpy (negate alpha) Ap s.r in              -- r <- r - alpha Ap
+  let beta' = dot r' r' in
+  let res'  = sqrt (abs beta') in
+  { state: { x: x', r: r', p: p', beta: beta', it: s.it + 1, converged: res' < eps },
+    residual_norm: res' }
+\end{lstlisting}
+Every line of that step is a \emph{data-algebra} call---\code{axpby}, \code{axpy},
+\code{dot}---which is the cue for the next shelf. But notice first that the step's
+shape is exactly the carry-threading fold of \cref{ch:fold}: a record in, a record
+out, the termination quantity (\code{beta}, \code{converged}) folded into the
+carry so the predicate can read it. \code{chebyshev}, the fourth operator, is the
+same story at two nesting levels: an outer Richardson sweep and an inner
+polynomial recurrence, both written as bounded \code{iterate\_while\_pure} folds
+with step-count predicates. We do not reproduce its body here---it is long, and
+\cref{ch:matrixfree} reads it as a smoother---but its shape is no surprise: a fold
+inside a fold, each a setting of the one combinator.
+
+\begin{notationbox}
+The \emph{iteration} library has \emph{no} \code{\#extern} kernel of its own. The
+loop combinators are pure calculus, and the opaque library boundaries the steps
+eventually hit---the libCEED quadrature inside \code{apply\_linop}, the SLEPc
+eigensolve loop---belong to the operators that \emph{own} those applies, and render
+\code{\#extern} on the \emph{data-algebra} and \emph{coordination} shelves
+instead. Here, \code{apply\_linop} is an abstract surface the step folds; its
+implementation lives where the operator is built.
+\end{notationbox}
+
+\section{The \texttt{data-algebra} library: the tensor verbs}
+\label{sec:dataalgebra}
+
+The third shelf holds the verbs that \emph{combine} tensors---the right-hand branch
+of the combinator vocabulary in \cref{ch:combinators}. Every line of the CG step we
+just read was one of these. There are two combinators at the top
+(\code{linear\_combination} and \code{inner\_product}), their named leaves and
+consumers, an operator constructor, the assemble fold with its one \code{\#extern}
+kernel, and a family of reduce verbs. We render the headline def and survey the
+rest.
+
+\subsection{\texttt{linear\_combination} and its arity leaves}
+
+The most-used verb in the book is \code{linear\_combination}, the scalar-weighted
+tensor sum $\sum_i a_i t_i$. It is a \code{foldl} over a term list, and the four
+BLAS routines hang off it as \code{where}-local arity leaves---specializations at a
+fixed term-list length, exactly the picture of \cref{fig:lincomb}.
+
+\begin{lstlisting}[style=l4style]
+-- The scalar-weighted-tensor-sum combinator: a pure fold over a (Scalar, Tensor)
+-- term list, producing the sum of a_i * t_i. No Solve monad, no carry.
+-- Laws (concatenation-homomorphism, multilinearity): see ch:combinators.
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[(S: ...)]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros) pairs
+  where
+    -- the four BLAS-1 arity leaves: this combinator at a fixed term-list length
+    -- (specialization notes, not co-equal ops -- accelerated kernels stopped low).
+    scal     a x          = linear_combination [(a, x)]
+    axpy     a x y        = linear_combination [(a, x), (1, y)]
+    axpby    a x b y      = linear_combination [(a, x), (b, y)]
+    axpbypcz a x b y c z  = linear_combination [(a, x), (b, y), (c, z)]
+\end{lstlisting}
+Read the four leaves top to bottom: \code{scal} is a one-term list, \code{axpy} a
+two-term list with the second coefficient pinned to $1$, \code{axpby} the general
+two-term list, \code{axpbypcz} the three-term list. They differ only in arity, and
+the concatenation law makes the chain exact---\code{axpbypcz}'s list is
+\code{axpby}'s list concatenated with \code{scal}'s. \Cref{fig:lincombleaves}
+redraws this as the trunk-and-leaves the synthesized code makes literal: one def, a
+\code{where}-block of four one-liners.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  % trunk
+  \node[stage, minimum width=66mm, align=center] (trunk) at (0,0)
+    {\code{linear\_combination} \;\itshape\quad sum of $a_i\,t_i$, term list, any length};
+  \def\ly{-1.7}
+  \node[opbox, minimum width=24mm, align=center] (l1) at (-4.8,\ly)
+    {\code{scal}\\\scriptsize arity 1\\\scriptsize \code{[(a,x)]}};
+  \node[opbox, minimum width=24mm, align=center] (l2) at (-1.6,\ly)
+    {\code{axpy}\\\scriptsize arity 2\\\scriptsize \code{[(a,x),(1,y)]}};
+  \node[opbox, minimum width=24mm, align=center] (l3) at (1.6,\ly)
+    {\code{axpby}\\\scriptsize arity 2\\\scriptsize \code{[(a,x),(b,y)]}};
+  \node[opbox, minimum width=24mm, align=center] (l4) at (4.8,\ly)
+    {\code{axpbypcz}\\\scriptsize arity 3\\\scriptsize \code{[..,(c,z)]}};
+  \foreach \l in {l1,l2,l3,l4}{ \draw[refedge] (trunk.south) -- (\l.north); }
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-2.9)
+    {rendered as a \code{where}-block of four one-liners beneath the one def:\\
+     the combinator is the entry; the leaves are settings of it};
+\end{tikzpicture}
+\caption[\texttt{linear\_combination} with its \texttt{where}-local leaves]{The
+synthesized \code{linear\_combination} and its four BLAS arity leaves, as the code
+renders them: one def for the combinator (trunk), a \code{where}-block of four
+one-liners beneath it (leaves). Each leaf is the combinator at a fixed term-list
+length---\code{scal} at one term, \code{axpy}/\code{axpby} at two, \code{axpbypcz}
+at three. This is the combinator-primary model of \cref{ch:combinators} made
+literal in the library: the fused kernels are ``stopped low'' as notes, and the
+combinator rises to be the entry. Compare \cref{fig:lincomb}.}
+\label{fig:lincombleaves}
+\end{figure}
+
+\subsection{\texttt{inner\_product}, \texttt{dot}, and \texttt{nrm2}}
+
+The scalar-producing sibling is \code{inner\_product}, $\langle x, y\rangle_M =
+x^{\!\top} M y$, a reduction over the shape group. \code{dot} is its
+$M = I$ \emph{leaf} (a specialization, hung below), and \code{nrm2} is a
+\emph{consumer}---$\sqrt{\,\cdot\,}\circ\code{dot}$ at the diagonal, built
+\emph{above} \code{dot}, not beneath it. The synthesized code keeps the distinction
+visible:
+
+\begin{lstlisting}[style=l4style]
+inner_product :: Tensor[(S: ...)] -> Tensor[(S: ...)] -> Scalar
+inner_product x y = reduce (+) zero (zipWith kernel x y)
+  where kernel xi yi = conj_if_complex xi * yi   -- Hermitian: arg-1 conjugated
+
+dot  x y = inner_product x y                       -- the M = I leaf
+nrm2 :: Tensor[(S: ...)] -> Scalar
+nrm2 x = sqrt (abs (inner_product x x))            -- a CONSUMER of inner_product
+\end{lstlisting}
+The \code{abs} inside \code{nrm2} is not decoration---it is the defensive
+non-negativity guard that keeps a round-off-negative radicand from reaching the
+square root, a load-bearing numerical detail preserved as an explicit part of the
+scalar map (\cref{ch:bigidea}). The CG step's \code{dot Ap p'} and the residual's
+\code{sqrt (abs beta')} we read in \cref{sec:iteration} are exactly these verbs.
+
+\subsection{The operator constructor and the assemble fold}
+
+Two larger items sit on this shelf. \code{mk\_matrix\_free\_operator} builds an
+operator \emph{value}---a closure whose \code{apply} is the five-stage contraction
+chain $G^{\!\top}\!\cdot B^{\!\top}\!\cdot D \cdot B \cdot G$ of \cref{ch:matrixfree},
+rendered inline because that chain \emph{is} the implementation:
+
+\begin{lstlisting}[style=l4style]
+-- A = G^T . B_D^T . D . B_D . G  (the un-materialized contraction chain; ch:matrixfree)
+mk_matrix_free_operator space term geom = mkOp (\v -> apply_chain v)
+  where apply_chain v =
+    element_restrict_T (basis_apply_T term
+      (quad_point_contract geom (basis_apply term (element_restrict space v))))
+\end{lstlisting}
+And \code{fe\_assemble} folds the weak-form-term list into a global operator,
+$K = \sum_t \code{assemble\_term}(\text{space}, t)$---a \code{foldr} over a
+commutative-monoid sum. Its per-term leaf is the \emph{first} \code{\#extern} we
+meet: \code{assemble\_term} is the libCEED-owned quadrature kernel, rendered as a
+callout in place of a body.
+
+\begin{lstlisting}[style=l4style]
+fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
+
+-- The opaque per-term leaf: ONE weak-form term to its global-dof contribution.
+-- libCEED-owned (the kernel-API boundary). Rendered #extern after its signature.
+assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...)]
+#extern assemble_term
+\end{lstlisting}
+
+\subsection{The reduce verbs}
+
+The bottom of the shelf holds the reductions of \cref{ch:reductions}---the verbs
+that turn a solved field into the physical product. There are five firm ones, each
+a \code{map}-then-collect over a family with no inter-element state:
+\code{gram\_reduce} (the symmetric Gram matrix behind capacitance and inductance),
+\code{domain\_energy\_reduce} (the per-domain energy table), \code{sparameter\_reduce}
+(the driven scattering matrix), \code{eigenfreq\_qfactor\_reduce} (the per-mode
+frequency and quality factor), and \code{waveguide\_mode\_reduce} (the boundary-mode
+field table). They share a shape but deliberately not a definition---a scalar table,
+a matrix, and a field-carrying table are different products, and \cref{ch:reductions}
+explains why forcing them together would be the wrong design. One example shows the
+shape:
+
+\begin{lstlisting}[style=l4style]
+-- per-mode (f, Q) table over the converged eigenpairs: map-then-collect, no state.
+eigenfreq_qfactor_reduce ptype kappa eigs =
+  [ let omega = untransform ptype lambda            -- eigenvalue -> angular frequency
+        f     = re omega                            -- eigenfrequency f = Re omega
+        k     = kappa mode                          -- loss rate
+        q     = if k == 0 then infinity else f / abs k  -- quality factor Q = omega / kappa
+    in (f, q)
+  | (lambda, _E) <- eigs ]                          -- map over the eigenpair family
+\end{lstlisting}
+The \code{if k == 0 then infinity} is the lossless-cavity guard---a cavity with no
+loss has infinite $Q$---the same kind of explicit boundary case as \code{nrm2}'s
+\code{abs}. Read past the physics and the shape is a \code{map} with a guard: the
+combinator-primary model again, this time on the reduce side.
+
+\section{The \texttt{coordination} library: the outer caps}
+\label{sec:coordination}
+
+The fourth shelf holds the \code{Solve}-monadic outer caps---the combinators that
+drive the iteration kernels to convergence and run them over families. This is the
+left-hand branch of \cref{ch:combinators}'s vocabulary and the home of the monad of
+\cref{ch:monad}. Its headline def, \code{ksp\_solve}, is the second we read line by
+line, in \cref{wex:kspsolve}.
+
+\subsection{The \texttt{Solve} monad and the termination sums}
+
+The coordination surface threads \code{SimState} through a state monad and
+classifies termination into sum types. The monad is the thin one of \cref{ch:monad}:
+
+\begin{lstlisting}[style=l4style]
+-- The outer-driver state monad: the effect domain is exactly SimState.
+type Solve a = StateT SimState Identity a
+
+-- the discharge that turns a monadic cap into a pure function:
+execState :: Solve a -> SimState -> SimState   -- run the action, project the state
+\end{lstlisting}
+And termination is a \emph{value}, a sum type the cap classifies once per cycle.
+Krylov solves use a three-arm \code{Outcome}; the eigensolver uses a richer four-arm
+\code{EigOutcome} that adds a first-class ``partially converged'' arm with no Krylov
+analog:
+
+\begin{lstlisting}[style=l4style]
+data Outcome    = Continue | Done Bool                    -- the Krylov 3-arm sum
+data EigStatus  = Converged | PartialConverged Int | MaxIterReached | LinearSolveFailed
+data EigOutcome = Continue | Done EigStatus               -- the eigen 4-arm extension
+\end{lstlisting}
+The eigensolver's persistent state, \code{EigState}, is a single-library record
+(only \code{eigsolve} names it), so the type-placement rule keeps it here, not in
+\emph{types}. It does not collapse to \code{SimState} because it carries a whole
+\emph{family} of converged eigenpairs, not one iterate.
+
+\subsection{\texttt{ksp\_solve}: the Krylov cap}
+
+Here is the cap, the def \cref{wex:kspsolve} reads. It seeds a \code{SimState},
+runs the outer driver over it, and projects the terminal state with
+\code{execState}---turning a monadic computation back into a pure
+$\code{OpParams}\to\code{Inputs}\to\code{SimState}$ function.
+
+\begin{lstlisting}[style=l4style]
+-- # Returns SimState: terminal .x ~ A^-1 b, plus .it / .converged / .final_res
+ksp_solve :: OpParams -> Inputs -> SimState
+ksp_solve op inp = execState (solve_loop op inp) (initial_state inp)
+  where
+    -- outer driver: tail-recurse the per-cycle body until the Outcome says stop.
+    solve_loop op inp = do
+      o <- restart_cycle op inp
+      unless (done o) (solve_loop op inp)
+
+    -- per-cycle body: fresh Krylov, inner kernel-fold, fold the correction, classify once.
+    restart_cycle op inp = do
+      s <- get
+      let k0        = fresh_krylov op inp s                 -- ephemeral bundle (plain value)
+          (kn, _os) = iterate_while (krylov_step op k0) cont -- inner fold of the kernel
+      modify (\s -> s { x = s.x `plus` (kn.basis `applyBasis` kn.y) })  -- the single per-cycle x write
+      pure (classify kn op s)                               -- Done True / Done False / Continue
+\end{lstlisting}
+The inner \code{krylov\_step} and \code{iterate\_while} are not re-rendered
+here---they live on the \emph{iteration} shelf, and the cap simply \emph{folds}
+them. That deep link is the topological order paying off: \code{coordination} sits
+above \code{iteration}, so it calls down to it.
+
+\subsection{\texttt{eigsolve} and the second \texttt{\#extern}}
+
+\code{eigsolve} is the cap that does \emph{not} own its loop. Where \code{ksp\_solve}
+writes the tail-recursion itself, the eigen-iteration runs \emph{inside} a library
+(SLEPc's \code{EPSSolve}), so the cap names the iteration by role and renders it
+\code{\#extern}---the second kernel boundary in the library:
+
+\begin{lstlisting}[style=l4style]
+eigsolve op inp = execState (solve_loop op inp) (initial_eig_state inp)
+  where solve_loop op inp = do
+    o <- eigen_iterate op inp     -- OPAQUE library fold (no Palace loop)
+    classify_into_state o
+
+-- The opaque eigen-iteration: the entire SLEPc EPSSolve loop. The kernel-API boundary.
+eigen_iterate :: OpParams -> Inputs -> Solve EigOutcome
+#extern eigen_iterate
+\end{lstlisting}
+This is the deliberate non-loop of \cref{ch:combinators}: the fourth solve corner,
+the one outside the map/fold grid because we write no loop at all. The
+\code{\#extern} marks exactly where our vocabulary stops and the library's begins.
+(\Cref{ch:krylov} separately reconstructs what that loop does internally, in our own
+\code{lanczos\_step}/\code{krylov\_step} vocabulary---a glass-box version that
+\emph{realizes} this API for the curious reader, without the cap depending on it.)
+
+\subsection{\texttt{solve\_family}, \texttt{frequency\_sweep}, \texttt{fold\_solve}}
+
+The top of the shelf holds the three family combinators of \cref{ch:combinators},
+and each is a near one-liner over the caps below it. \Cref{fig:caps} lines all five
+coordination caps up as the map/fold/black-box family they form.
+
+\begin{lstlisting}[style=l4style]
+-- fixed-operator map: capture op once, map ksp_solve over the RHS family.
+solve_family op rhss = map (\inp -> ksp_solve op inp) rhss
+
+-- operator-VARYING map: rebuild A(omega) INSIDE the map, then solve.
+frequency_sweep fam omegas =
+  map (\w -> ksp_solve (assemble_frequency_operator fam w) (rhs_at fam w)) omegas
+
+-- state-threaded fold: thread the field-state through a schedule by foldl.
+fold_solve op s0 schedule = foldl (\s t -> time_step_op op s t) s0 schedule
+time_step_op :: OpParams -> TimeState -> Time -> TimeState
+#extern time_step_op                              -- the opaque per-step integrator
+\end{lstlisting}
+The three differ by exactly the axes \cref{ch:combinators} named:
+\code{solve\_family} hoists the operator out of the map; \code{frequency\_sweep}
+rebuilds it inside; \code{fold\_solve} drops the independence and threads a carry,
+folding a third \code{\#extern} per-step integrator. Three lines, three corners.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  % the family header
+  \node[stage, minimum width=64mm, align=center] (hdr) at (0,2.0)
+    {the \emph{coordination} caps: \code{map} / \code{fold} / black-box};
+  % map row
+  \node[opbox, minimum width=30mm, fill=simBgBlue, draw=simBlue, align=center] (sf)
+    at (-3.6,0.3) {\code{solve\_family}\\\scriptsize fixed-op \textbf{map}};
+  \node[opbox, minimum width=30mm, fill=simBgBlue, draw=simBlue, align=center] (fs)
+    at (-0.0,0.3) {\code{frequency\_sweep}\\\scriptsize op-varying \textbf{map}};
+  \node[opbox, minimum width=30mm, fill=simBgGreen, draw=simGreen, align=center] (fo)
+    at (3.6,0.3) {\code{fold\_solve}\\\scriptsize state-threaded \textbf{fold}};
+  % bottom row: the two caps the families call / the black box
+  \node[opbox, minimum width=30mm, align=center] (ksp) at (-1.8,-1.6)
+    {\code{ksp\_solve}\\\scriptsize the Krylov cap (our loop)};
+  \node[extern, minimum width=30mm, align=center] (eig) at (1.8,-1.6)
+    {\code{eigsolve}\\\scriptsize black-box (\#extern loop)};
+  \draw[depedge] (hdr) -- (sf); \draw[depedge] (hdr) -- (fs); \draw[depedge] (hdr) -- (fo);
+  \draw[refedge] (sf.south) -- (ksp.north);
+  \draw[refedge] (fs.south) -- (ksp.north);
+  \node[font=\scriptsize\itshape, text=simViolet] at (1.8,-2.6) {(no map/fold: a single call)};
+\end{tikzpicture}
+\caption[The coordination caps as the map/fold/black-box family]{The five
+coordination caps as the family of \cref{ch:combinators}. \code{solve\_family} and
+\code{frequency\_sweep} are \code{map}s---independent solves, the first hoisting its
+operator, the second rebuilding it per member---and both call the Krylov cap
+\code{ksp\_solve} (our loop) per element. \code{fold\_solve} is the
+\code{fold}---a threaded carry, intrinsically sequential. \code{eigsolve} is the
+black-box: a single \code{\#extern} library call, outside the map/fold grid because
+no loop is ours to write. One header, three structural shapes.}
+\label{fig:caps}
+\end{figure}
+
+\section{The same shapes, again and again}
+\label{sec:samesahapes}
+
+Step back from the four shelves and look at what we actually rendered. The
+\emph{iteration} library was a fold and two kernels that are folds. The
+\emph{data-algebra} library was two folds (\code{linear\_combination},
+\code{inner\_product}) with named leaves, an operator that is a contraction chain,
+and five reductions that are \code{map}s-then-collect. The \emph{coordination}
+library was a state monad, three caps that are \code{map}s or a \code{fold}, and
+two \code{\#extern} boundaries. And the \emph{types} library was three records,
+distinguished only by lifetime. \Cref{fig:samesahapes} tallies the recurring
+shapes across the libraries; the count is strikingly small.
+
+\begin{figure}[t]
+\centering
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& \textbf{types} & \textbf{iteration} & \textbf{data-algebra} & \textbf{coordination} \\
+\midrule
+a \emph{fold}        & --- & \code{iterate\_while} & \code{linear\_combination} & \code{fold\_solve} \\
+                     &     & \code{krylov\_step}   & \code{inner\_product}      &                    \\
+a \emph{map}         & --- & ---                   & the reduce verbs           & \code{solve\_family} \\
+                     &     &                       &                            & \code{frequency\_sweep} \\
+a record by lifetime & all 3 & \code{Krylov} etc.  & \code{DofSet} etc.         & \code{EigState} etc. \\
+an \code{\#extern}   & --- & ---                   & \code{assemble\_term}      & \code{eigen\_iterate} \\
+                     &     &                       &                            & \code{time\_step\_op} \\
+\bottomrule
+\end{tabular}
+\caption[The recurring shapes, tallied across the libraries]{The four libraries,
+tallied by the shape of what they hold. Every operator is a \emph{fold}, a
+\emph{map}, or one of three \code{\#extern} boundaries; every type is a record
+distinguished by its lifetime. The table is mostly the same four rows repeating
+across the columns---which is the chapter's whole point. There is no fifth kind of
+thing. The library is small because the calculus is small: a few combinators, a few
+records threaded by lifetime, and a marked boundary where an opaque kernel sits.}
+\label{fig:samesahapes}
+\end{figure}
+
+\begin{keyidea}
+Across all four libraries you keep meeting the \emph{same handful of shapes}: a
+fold (\code{iterate\_while}, \code{linear\_combination}, \code{fold\_solve}), a map
+(\code{solve\_family}, the reduce verbs), a record distinguished only by its
+lifetime (\code{IoData}/\code{OpParams}/\code{SimState} and their single-library
+cousins), and a marked \code{\#extern} boundary where an opaque kernel lives
+(\code{assemble\_term}, \code{eigen\_iterate}, \code{time\_step\_op}). There is no
+fifth kind of thing. \textbf{The library is small because the calculus is small}:
+the entire synthesized implementation of a hundred-thousand-line simulator is a few
+combinators, a few records, and three kernel callouts---the vocabulary of
+\cref{part:framework}, rendered as code.
+\end{keyidea}
+
+This is the dividend the whole book has been compounding. \Cref{part:framework}
+argued that the simulator is built from a small calculus; \cref{part:machinery} and
+\cref{part:modalities} spent the bulk of the text showing that the argument holds
+component by component. Here, with the spec rendered as a library, we can simply
+\emph{count}: four shelves, and on them a fold, a map, a record, and an
+\code{\#extern}, repeated. The next chapter, \cref{ch:composing}, opens the fifth
+shelf---\emph{drivers}---and watches a single analysis composed end to end out of
+the items we have just toured. Nothing new appears there either; a driver is these
+four libraries, wired together.
+
+\section{Worked examples}
+
+\begin{workedexample}{Reading the \texttt{iterate\_while} def body line by line}{readwhile}
+We read the synthesized \code{iterate\_while} of \cref{sec:iteration} one line at a
+time, connecting each to a concept from \cref{ch:fold}. The body is:
+\begin{lstlisting}[style=l4style]
+iterate_while a cont step =
+  if cont a                                              -- (1)
+    then do
+      { state: a', ...e } <- step a                      -- (2)
+      { final_state, trajectory } <- iterate_while a' cont step  -- (3)
+      pure { final_state, trajectory: [{ ...e }] ++ trajectory }  -- (4)
+    else
+      pure { final_state: a, trajectory: [] }            -- (5)
+\end{lstlisting}
+
+\emph{Line (1): the predicate fires first.} \code{if cont a} tests the predicate
+\emph{before} any step runs---this is the \texttt{while} convention of
+\cref{ch:fold}, Rule~1. If \code{cont a} is already false on the initial carry, the
+body never executes and we fall straight to line~(5). A solver handed an
+already-converged input does zero work, exactly as promised.
+
+\emph{Line (2): one step, producing the next carry and the extras.}
+\code{\{ state: a', ...e \} <- step a} runs the step once and \emph{destructures}
+its output record: the \code{state} field becomes the next carry \code{a'}, and the
+remaining fields---the open \code{...e}---are this step's extras. The \code{<-} is
+the monadic bind: \code{step} runs in the \code{Solve} monad, so this line also
+threads the \code{SimState} effect (the counter increment) under the hood, while
+the carry \code{a'} stays a pure value. This is the carry/extras split of
+\cref{ch:fold}: the carry threads forward, the extras peel off.
+
+\emph{Line (3): tail-recurse on the new carry.}
+\code{iterate\_while a' cont step} calls the combinator again with the
+\emph{new} carry \code{a'} and the \emph{same} predicate and step. Because this call
+is the last thing the \texttt{then} arm does before line~(4) assembles the result,
+it is in tail position---the implementation realizes it as a loop, not a growing
+stack. The predicate will be re-tested on \code{a'} at the top of this recursive
+call; we may \emph{not} hoist that test out (\cref{ch:fold}'s non-law), or the loop
+never stops.
+
+\emph{Line (4): prepend this step's extras to the trajectory.}
+\code{[\{ ...e \}] ++ trajectory} puts this step's extras at the \emph{front} of
+whatever trajectory the recursion returned. Unrolled, the extras line up in
+iteration order: step~1's first, step~2's next, and so on---the trajectory of
+\cref{fig:unroll}. And because the trajectory is a \emph{value} the consumer may or
+may not read, the demand-driven pruning of \cref{ch:fold} applies: if nothing
+downstream reads \code{trajectory}, the \code{e}-producing work in line~(2) is
+eliminated at every step, and what remains is the bare carry spine of
+\code{iterate\_while\_pure}.
+
+\emph{Line (5): the base case.} \code{\{ final\_state: a, trajectory: [] \}}
+returns the current carry as the answer with an empty trajectory. This is the
+\texttt{else} arm, reached the first time \code{cont a} is false. It is the formal
+content of \cref{ch:fold}'s ``base case'' law: for \emph{any} step, an initial
+carry that fails the predicate yields itself and nothing else.
+
+Five lines: a gate, three lines of recursive work, one base case. Every iterative
+algorithm in the simulator---CG, GMRES, time-stepping, the adaptive
+loop---specializes \emph{this} body by supplying its own carry type, predicate, and
+step. The loop is the same five lines every time.
+\end{workedexample}
+
+\begin{workedexample}{Reading the \texttt{ksp\_solve} cap}{kspsolve}
+We read the \code{ksp\_solve} of \cref{sec:coordination}, connecting it to the monad
+of \cref{ch:monad} and the Krylov machinery of \cref{ch:krylov}. The cap is:
+\begin{lstlisting}[style=l4style]
+ksp_solve op inp = execState (solve_loop op inp) (initial_state inp)  -- (1)
+  where
+    solve_loop op inp = do
+      o <- restart_cycle op inp                            -- (2)
+      unless (done o) (solve_loop op inp)                  -- (3)
+    restart_cycle op inp = do
+      s <- get                                             -- (4)
+      let k0        = fresh_krylov op inp s                -- (5)
+          (kn, _os) = iterate_while (krylov_step op k0) cont  -- (6)
+      modify (\s -> s { x = s.x `plus` (kn.basis `applyBasis` kn.y) })  -- (7)
+      pure (classify kn op s)                              -- (8)
+\end{lstlisting}
+
+\emph{Line (1): the \code{execState} discharge.} The cap's type is
+$\code{OpParams}\to\code{Inputs}\to\code{SimState}$---a \emph{pure} function---yet
+its body is monadic. \code{execState} bridges the two: it runs the
+\code{Solve}-action \code{solve\_loop op inp} starting from a seeded state
+\code{initial\_state inp}, threads the \code{SimState} through every \code{modify}
+inside, and projects out the final state, dropping the action's unit return value.
+This is exactly the monad-to-pure-function discharge of \cref{ch:monad}: the thin
+\code{StateT} wrapper exists only inside the cap, and \code{execState} peels it
+away at the boundary so the outside world sees a plain function.
+
+\emph{Lines (2)--(3): the outer restart loop.} \code{solve\_loop} runs one
+\code{restart\_cycle}, binds its \code{Outcome} to \code{o}, and---via
+\code{unless (done o)}---recurses only if the outcome is not \code{Done}. This is
+the GMRES \emph{restart} structure of \cref{ch:krylov}: an \emph{outer} loop around
+the inner Krylov fold, deliberately not flattened (the two stop on different
+conditions, the non-fusion non-law of \cref{ch:fold}). For CG and Chebyshev, which
+do not restart, this outer loop runs exactly once.
+
+\emph{Line (4): read the state.} \code{s <- get} reads the current \code{SimState}
+out of the monad---the iterate, the counter, the residuals as they stand at the
+start of this cycle.
+
+\emph{Line (5): a fresh ephemeral workspace.} \code{fresh\_krylov op inp s} builds
+the \code{Krylov} bundle of \cref{sec:iteration}---born here, at cycle entry, as a
+\emph{plain value}, not a monadic effect. Its lifetime is exactly this one cycle;
+it will be discarded when the cycle ends. This is the ephemeral stratum of
+\cref{ch:strata} in action.
+
+\emph{Line (6): the inner Krylov fold.} \code{iterate\_while (krylov\_step op k0) cont}
+is the heart---the very combinator we read in \cref{wex:readwhile}, now folding the
+\code{krylov\_step} kernel of \cref{sec:iteration} over the working state until the
+convergence predicate \code{cont} fails. Every CG/GMRES iteration of
+\cref{ch:krylov} happens inside this one call. The result \code{kn} is the final
+Krylov bundle; the discarded \code{\_os} would be its trajectory, pruned here
+because the cap does not read it.
+
+\emph{Line (7): the single per-cycle \code{x} write.} \code{modify (\textbackslash s -> s \{ x = ... \})}
+is the cap's \emph{only} write to the iterate. After the inner fold finishes, the
+accumulated correction \code{kn.basis `applyBasis` kn.y} (the back-substituted
+solution increment) is added to \code{x} once. Not per inner iteration---\emph{once
+per restart cycle}. This is the deliberate write discipline of \cref{ch:monad}: the
+externally-visible iterate changes at cycle boundaries, while the inner fold works
+in the ephemeral \code{Krylov} space and never touches \code{SimState.x}.
+
+\emph{Line (8): classify the outcome once.} \code{classify kn op s} inspects the
+final bundle (its residual proxy, its inner-iteration count) and the state, and
+returns \code{Done True} (converged), \code{Done False} (hit \code{max\_it}), or
+\code{Continue} (restart). The classification happens \emph{once}, at the cycle
+boundary---the \code{Outcome} sum of \cref{sec:coordination}, the
+classify-once law of \cref{ch:monad}.
+
+Read whole: \code{ksp\_solve} is an outer restart loop (lines 2--3) around an inner
+Krylov fold (line 6), with one state read (4), one ephemeral workspace (5), one
+iterate write per cycle (7), and one termination classification (8), all discharged
+to a pure function by \code{execState} (1). Every Krylov solver in the book---CG,
+GMRES, FGMRES---is this same cap; what changes is only the \code{krylov\_step}
+kernel it folds.
+\end{workedexample}
+
+\summarysection
+The synthesized library is five modules in topological order; this chapter toured
+four of them. The \emph{types} library holds three cross-cutting records
+distinguished by lifetime: \code{IoData} (parsed once, selects the driver via
+\code{problem.type}), \code{OpParams} (fixed at build time, variant selectors
+folded into surfaces), and \code{SimState} (the run-time state, uniform across all
+Krylov solvers). The \emph{iteration} library holds the \code{iterate\_while}
+combinator of \cref{ch:fold}---rendered here as five lines of code---plus the
+\code{krylov\_step} kernel (Form~A branch-in-body, Form~B unrolled) and the
+\code{chebyshev} smoother, with \code{Krylov}/\code{StepOutputs}/\code{PrevCarry} as
+single-library types. The \emph{data-algebra} library holds
+\code{linear\_combination} with its \code{where}-local BLAS arity leaves,
+\code{inner\_product}/\code{dot}/\code{nrm2}, the matrix-free operator constructor,
+the \code{fe\_assemble} fold with its libCEED \code{\#extern}, and the five reduce
+verbs. The \emph{coordination} library holds the \code{Solve} monad, the
+\code{ksp\_solve} cap (read line by line), the \code{eigsolve} black-box with its
+SLEPc \code{\#extern}, and the three family combinators
+\code{solve\_family}/\code{frequency\_sweep}/\code{fold\_solve}. Across all four,
+the same handful of shapes recurs---a fold, a map, a record threaded by lifetime, a
+marked \code{\#extern} boundary---because the library is small for the same reason
+the calculus is small. The fifth library, \emph{drivers}, composes these four and
+is \cref{ch:composing}.
+
+\furtherreading
+The implementation idioms rendered here---the state monad as a thin wrapper
+discharged by \code{execState}, \code{where}-local helper clusters, the records
+threaded by lifetime---are standard functional-programming practice; Peyton Jones's
+account of Haskell's design~\citep{peytonjones2003} is the canonical reference for
+the monadic and record machinery. The Krylov kernels the \emph{iteration} and
+\emph{coordination} libraries fold (CG, GMRES, and the Arnoldi/Lanczos relatives
+behind \code{eigsolve}) are developed in full by Saad~\citep{saad2003}. The libCEED
+quadrature kernel behind \code{fe\_assemble}'s \code{\#extern} boundary---the
+matrix-free element-local contraction that \code{mk\_matrix\_free\_operator} renders
+inline---is documented by the CEED project~\citep{ceed2021}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item For each of the three \emph{types} records, name the stratum it belongs to
+  (\cref{ch:strata}) and one field whose value is fixed for the whole run. Which of
+  the three is the \emph{only} one written during the solve?
+  \item \code{SimState} has the same five fields for CG and for GMRES, yet the two
+  solvers clearly differ. Where does the difference live? (Hint: which library, and
+  which record, holds the search direction for CG versus the growing basis for
+  GMRES?)
+  \item In the \code{iterate\_while} body of \cref{wex:readwhile}, suppose a
+  consumer reads only \code{final\_state} and never the \code{trajectory}. Which
+  line's work is pruned, and what combinator does the def collapse to? (Cite the
+  relevant law from \cref{ch:fold}.)
+  \item The four BLAS leaves of \code{linear\_combination} are written as a
+  \code{where}-block of one-liners. Write \code{axpbypcz} in terms of \code{axpby}
+  and \code{scal} using the concatenation law, and explain why this makes them ``one
+  combinator, four leaves'' rather than four separate operators (\cref{ch:combinators}).
+  \item \code{nrm2} calls \code{inner\_product} but is \emph{not} a leaf of it,
+  while \code{dot} \emph{is}. Explain the difference using the
+  specialization-versus-consumer distinction of \cref{ch:combinators}, and say what
+  the \code{abs} inside \code{nrm2} guards against (\cref{ch:bigidea}).
+  \item Three operators across the four libraries render \code{\#extern}:
+  \code{assemble\_term} (\emph{data-algebra}), and \code{eigen\_iterate} /
+  \code{time\_step\_op} (\emph{coordination}). For each, name the opaque library
+  that owns it and say in one sentence why the synthesized code marks a boundary
+  there rather than rendering a body.
+  \item Reading \code{ksp\_solve} (\cref{wex:kspsolve}): the cap writes
+  \code{SimState.x} exactly once per restart cycle (line~7), not once per inner
+  iteration. Where do the \emph{inner} iterations do their work instead, and why is
+  it correct for the externally-visible iterate to change only at cycle boundaries?
+  Relate your answer to the strata of \cref{ch:strata}.
+  \item \code{solve\_family}, \code{frequency\_sweep}, and \code{fold\_solve} are
+  each near one-liners. Which two are \code{map}s and which is a \code{fold}? For the
+  two maps, what single difference distinguishes them (\cref{ch:combinators})? Which
+  of the three forbids reordering its elements, and why?
+\end{enumerate}

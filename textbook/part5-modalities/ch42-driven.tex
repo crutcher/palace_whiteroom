@@ -1,0 +1,918 @@
+\chapter{Driven Simulations and S-Parameters}
+\label{ch:driven}
+
+\chapterorient{We have built the anchor: electrostatics assembles one operator,
+\emph{hoists} it out of the loop, and maps a family of independent solves over it
+(\cref{ch:electrostatics}). This chapter takes that anchor and moves a single
+line of code---the line that captures the operator into the solver---from
+\emph{outside} the loop to \emph{inside} it. That one move changes the analysis
+from electrostatics to the driven frequency sweep, the workhorse of RF and
+microwave engineering. We feed a time-harmonic signal into the ports of a device,
+sweep the frequency across a band, and measure how much of each wave is
+transmitted and how much reflected: the scattering matrix $S(\omega)$. Along the
+way the operator is no longer fixed---it is rebuilt at every frequency from a
+small fixed basis---and the reduction is no longer a Gram but a port-projection.
+By the end you will see the driven analysis for exactly what it is: the anchor
+with the operator rebuilt \emph{inside} the sweep, capped by a projection
+readout.}
+
+\section{The physical question: what a network analyzer measures}
+
+Point a vector network analyzer at a microwave device---a filter, a coupler, a
+length of transmission line, a resonator on a chip---and it does something very
+concrete. It connects to the device's \emph{ports}: the places where signal
+enters and leaves, typically coaxial connectors or on-chip waveguide
+cross-sections. It then injects a pure sinusoid at one port, at one frequency
+$\omega$, waits for the transients to die away so the device is in
+\emph{time-harmonic steady state}, and measures two things at every port: how
+much of the injected wave came \emph{back} out of the port it went in
+(reflection), and how much came out of each \emph{other} port (transmission). It
+repeats this across a whole band of frequencies. The result is a table of complex
+numbers $S_{ij}(\omega)$---the \emph{scattering parameters}---and it is the
+universal currency of the field. A filter's passband, a coupler's split ratio, an
+antenna's match, a chip interconnect's loss: all of them are read directly off
+$S(\omega)$.
+
+\begin{physicsbox}
+A two-port device (\cref{fig:setup}) sits between a source and a load. At a single
+frequency, the analyzer launches an \emph{incident} wave $a_1$ into port~1. Part
+of it \emph{reflects} straight back out of port~1 (the wave $b_1$), and part
+\emph{transmits} through the device and emerges at port~2 (the wave $b_2$). The
+scattering parameters are the ratios of outgoing to incoming wave amplitudes,
+\[
+  b_1 = S_{11}\,a_1 + S_{12}\,a_2, \qquad
+  b_2 = S_{21}\,a_1 + S_{22}\,a_2,
+\]
+so that $S_{ij}$ is ``the wave that comes out of port~$i$ per unit wave injected
+into port~$j$, with all other ports terminated.'' The diagonal entries are
+\emph{reflection} coefficients (how much bounces back); the off-diagonals are
+\emph{transmission} coefficients (how much gets through). Everything in this
+chapter exists to compute that matrix, frequency by frequency.
+\end{physicsbox}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % the device
+  \node[stage, minimum width=30mm, minimum height=18mm, fill=simBgGray,
+        draw=simGray] (dev) at (0,0) {2-port device\\\scriptsize (filter / line)};
+  % port 1 (left) feed line
+  \draw[very thick, simBlue] (-3.6,0.35) -- (dev.west |- 0,0.35);
+  \draw[very thick, simBlue] (-3.6,-0.35) -- (dev.west |- 0,-0.35);
+  \node[font=\scriptsize, text=simBlue] at (-3.0,0.85) {port 1};
+  % port 2 (right) feed line
+  \draw[very thick, simGreen] (dev.east |- 0,0.35) -- (3.6,0.35);
+  \draw[very thick, simGreen] (dev.east |- 0,-0.35) -- (3.6,-0.35);
+  \node[font=\scriptsize, text=simGreen] at (3.0,0.85) {port 2};
+  % incident wave a1
+  \draw[->, thick, simRust] (-3.2,1.25) -- (-1.9,1.25)
+     node[midway, above, font=\scriptsize]{incident $a_1$};
+  % reflected wave b1
+  \draw[->, thick, simRust] (-1.9,-1.25) -- (-3.2,-1.25)
+     node[midway, below, font=\scriptsize]{reflected $b_1=S_{11}a_1$};
+  % transmitted wave b2
+  \draw[->, thick, simGreen!70!black] (1.9,1.25) -- (3.2,1.25)
+     node[midway, above, font=\scriptsize]{transmitted $b_2=S_{21}a_1$};
+  % the field inside
+  \node[font=\scriptsize\itshape, text=simInk] at (0,0.0) {};
+  \node[font=\scriptsize\itshape, align=center] at (0,-1.5)
+    {drive port 1, terminate port 2:\\ read $S_{11}$ (reflect), $S_{21}$ (transmit)};
+\end{tikzpicture}
+\caption[A two-port device and its scattering waves]{The physical setup. A
+time-harmonic wave $a_1$ is injected into port~1 of a two-port device. Part
+reflects back out of port~1 (the wave $b_1 = S_{11}a_1$); part transmits through
+and emerges at port~2 ($b_2 = S_{21}a_1$). Driving port~1 and reading both ports
+gives the first column of the scattering matrix; driving port~2 gives the second.
+A simulation reproduces this measurement: it solves the time-harmonic field
+inside the device with port~1 excited, then projects the solved field onto each
+port's mode to recover $S_{11}$ and $S_{21}$.}
+\label{fig:setup}
+\end{figure}
+
+The analyzer's loop---inject at a frequency, measure the scattered waves, step to
+the next frequency---is exactly the loop the simulation runs. The simulator does
+not have a physical sinusoid and a physical analyzer; it has the time-harmonic
+\emph{field equation} and a way to read scattered waves off the solved field. But
+the shape is identical: a sweep over frequency, an independent steady-state
+problem at each one, and a projection readout. That shape is the operator-varying
+map of \cref{ch:situating}, and the rest of this chapter is its anatomy.
+
+\section{Assemble the basis once: the frequency-dependent operator}
+\label{sec:assemble}
+
+Recall the time-harmonic reduction of Maxwell from \cref{ch:reductions-pde}. A
+field oscillating at a single angular frequency $\omega$ is written
+$\vE(\vx,t) = \Re\{\vE(\vx)\,e^{i\omega t}\}$, and the substitution
+$\partial_t \mapsto i\omega$, $\partial_t^2 \mapsto -\omega^2$ turns Maxwell's
+curl--curl equation with sources into a single complex linear system for the
+phasor field $\vE(\vx)$. Discretized on a Nédélec $\Hcurl$ finite-element space
+(\cref{ch:functionspaces}), that system reads
+\begin{equation}
+  \mat{A}(\omega)\,\vE \;=\; \vb(\omega),
+  \qquad
+  \mat{A}(\omega) \;=\; \Kop \;+\; i\omega\,\Cop \;-\; \omega^2\Mop
+    \;\bigl[\,+\,\mat{A}_2(\omega)\,\bigr],
+  \label{eq:driven-system}
+\end{equation}
+where the three operators are the same characters from every chapter of this
+book: $\Kop$ is the curl--curl \emph{stiffness} (built from the reluctivity
+$\nu=1/\mu$), $\Cop$ is the \emph{damping} (built from the surface impedance /
+conductivity---the term that makes the system lossy and complex), and $\Mop$ is
+the \emph{mass} (built from the permittivity $\varepsilon$). The optional
+$\mat{A}_2(\omega)$ collects any genuinely frequency-dependent contribution that
+is not a clean monomial in $\omega$---a dispersive material model, or a
+wave-port term whose modal admittance varies with frequency.
+
+Here is the structural fact this whole chapter turns on, and it is worth stating
+in two halves.
+
+\emph{The basis is fixed.} The three operators $\Kop$, $\Cop$, $\Mop$ do not
+depend on $\omega$. They are built from the mesh, the function space, and the
+materials---all of which are frozen the moment the configuration is parsed. So we
+assemble them exactly \emph{once}, before the sweep ever begins, and store them as
+a small fixed record (\cref{ch:records}):
+\[
+  \texttt{fam} \;=\; \{\,\Kop,\ \Cop,\ \Mop,\ \mat{A}_2\,\}.
+\]
+This is precisely the ``assemble once'' that electrostatics did with its single
+$\Kop$ (\cref{ch:electrostatics}); the driven analysis just has three operators in
+the basis instead of one.
+
+\emph{The system operator is not fixed.} The operator that actually appears on the
+left-hand side of the solve, $\mat{A}(\omega)$, is a frequency-dependent
+\emph{combination} of the fixed basis. At each frequency it is a different
+operator: the weights $1$, $i\omega$, $-\omega^2$ multiply the same three stored
+operators, but those weights change with $\omega$, so $\mat{A}(\omega_1)$ and
+$\mat{A}(\omega_2)$ are genuinely different matrices. We never store
+$\mat{A}(\omega)$ permanently; we \emph{form} it from the basis at each frequency
+we visit, use it for one solve, and discard it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % fixed basis on the left
+  \node[opbox, minimum width=9mm] (K) at (0,1.4) {$\Kop$};
+  \node[opbox, minimum width=9mm] (C) at (0,0.0) {$\Cop$};
+  \node[opbox, minimum width=9mm] (M) at (0,-1.4) {$\Mop$};
+  \node[font=\scriptsize\itshape, text=simGray, align=center] at (0,-2.3)
+    {fixed basis\\(assembled once)};
+  % weights
+  \node[font=\footnotesize] (wK) at (2.7,1.4) {$1$};
+  \node[font=\footnotesize] (wC) at (2.7,0.0) {$i\omega$};
+  \node[font=\footnotesize] (wM) at (2.7,-1.4) {$-\omega^2$};
+  \node[font=\scriptsize\itshape, text=simRust, align=center] at (2.7,-2.3)
+    {weights\\(depend on $\omega$)};
+  \draw[->, simGray] (K.east) -- (wK.west);
+  \draw[->, simGray] (C.east) -- (wC.west);
+  \draw[->, simGray] (M.east) -- (wM.west);
+  % sum node
+  \node[draw=simBlue, circle, thick, fill=simBgBlue, inner sep=1.5pt]
+    (sum) at (5.0,0.0) {$\Sigma$};
+  \draw[->, simInk] (wK.east) .. controls +(0.8,0) and +(-0.8,0.3) .. (sum.west);
+  \draw[->, simInk] (wC.east) -- (sum.west);
+  \draw[->, simInk] (wM.east) .. controls +(0.8,0) and +(-0.8,-0.3) .. (sum.west);
+  % result
+  \node[product, minimum width=20mm] (A) at (8.0,0.0) {$\mat{A}(\omega)$};
+  \draw[->, thick, simInk] (sum.east) -- (A.west);
+  \node[font=\scriptsize\itshape, align=center] at (8.0,-1.1)
+    {one system operator\\\emph{per frequency}};
+  \node[font=\scriptsize, text=simBlue, align=center] at (5.0,-2.3)
+    {\code{assemble\_frequency\_operator}\\$=$ \code{linear\_combination}};
+\end{tikzpicture}
+\caption[The system operator as an operator-valued linear combination]{The
+frequency-dependent system operator is an \emph{operator-valued linear
+combination} (\cref{ch:combinators}) of the fixed basis. The three operators
+$\Kop,\Cop,\Mop$ are assembled once and never change. The scalar weights
+$1,\,i\omega,\,-\omega^2$ \emph{do} change with $\omega$. Summing
+weight-times-operator yields the system operator $\mat{A}(\omega)$---a fresh
+operator at every frequency, formed from a fixed basis. This is the same
+\code{linear\_combination} combinator that sums tensors in BLAS-1; here its
+operands are \emph{operators} and its scalars are \emph{complex}.}
+\label{fig:opcombo}
+\end{figure}
+
+\subsection{The forming step is a linear combination}
+
+Forming $\mat{A}(\omega)$ from the basis is not a new idea. It is the
+\code{linear\_combination} combinator from \cref{ch:combinators}---the same one
+that builds $\alpha\vx + \beta\vy$ in BLAS-1---specialized to the case where the
+\emph{operands are operators} rather than tensors and the \emph{scalars are
+complex} (\cref{fig:opcombo}). Spelled out as the framework verb
+\code{assemble\_frequency\_operator}:
+\begin{lstlisting}[style=l4style]
+-- form the per-omega system operator from the fixed basis
+assemble_frequency_operator :: FrequencyOperatorFamily -> Scalar -> LinOp
+assemble_frequency_operator fam omega =
+  linear_combination                  -- operator-operand corner; complex scalars
+    [ (1,            fam.K)           --  K   with weight 1
+    , (1i * omega,   fam.C)           --  C   with weight  i*omega
+    , (-(omega^2),   fam.M)           --  M   with weight -omega^2
+    , (1,            fam.A2 omega) ]  --  A2(omega) with weight 1
+\end{lstlisting}
+There is no separate fold algebra here---the body is literally
+\code{linear\_combination} at term-list length four, with the operand monoid being
+operator addition (commutative, identity the zero operator) instead of tensor
+addition. The framework gives it its own name only because it is the named verb the
+driven sweep reaches for; underneath, it is the BLAS-1 combinator the whole book
+already trusts. The system operator $\mat{A}(\omega)$ is \emph{affine in $\omega$}
+in the monomial part ($1, i\omega, -\omega^2$) modulo the extra term
+$\mat{A}_2$; that affine structure is exactly what makes a reduced-order model
+possible (\cref{sec:cost}), though the uniform sweep does not exploit it.
+
+\begin{notationbox}
+The system operator carries a complex element type because two of its three
+weights are complex: $i\omega$ is imaginary and multiplies the damping $\Cop$,
+$-\omega^2$ is real and multiplies the mass $\Mop$. So even when $\Kop,\Cop,\Mop$
+are real operators, $\mat{A}(\omega)$ is a \emph{complex} operator, and the field
+$\vE$ it solves for is a complex (phasor) field: its magnitude is the amplitude of
+the oscillation and its argument is the phase. This is why the driven solve needs
+GMRES over $\Complex^N$, not CG over $\Real^N$ (\cref{sec:solve}). The complex
+arithmetic is not an implementation detail; it carries the phase information that
+\emph{is} the answer.
+\end{notationbox}
+
+\section{Solve: the operator-varying map (the hoist, negated)}
+\label{sec:solve}
+
+Now the sweep. We are given a list of frequencies
+$[\omega_0, \omega_1, \dots, \omega_{m-1}]$---the band, sampled---and at each one
+we must solve \cref{eq:driven-system} for the field $\vE_k = \vE(\omega_k)$. The
+solves are \emph{independent}: the field at $\omega_3$ does not depend on the
+field at $\omega_2$, because each is the steady-state response to its own
+frequency's excitation. Independence means the sweep is a \emph{map}, not a fold
+(\cref{ch:situating}): the frequencies could be solved in any order, or on
+separate machines, and the answers would be identical.
+
+What makes it the operator-\emph{varying} map---corner~2 of \cref{ch:situating},
+not corner~1---is that the operator on the left-hand side is not the same from one
+iteration to the next. At each frequency we must:
+\begin{enumerate}[nosep]
+  \item \textbf{rebuild} the system operator $\mat{A}(\omega_k)$ from the fixed
+  basis (\cref{sec:assemble});
+  \item \textbf{re-capture} it into the solver---the call that tells the Krylov
+  solver ``\emph{this} is the matrix you are about to invert'';
+  \item \textbf{form} the right-hand side $\vb(\omega_k)$ from the port
+  excitation at this frequency;
+  \item \textbf{solve} $\mat{A}(\omega_k)\,\vE_k = \vb(\omega_k)$ by preconditioned
+  GMRES (\cref{ch:gmres}).
+\end{enumerate}
+The framework names this combinator \code{frequency\_sweep}:
+\begin{lstlisting}[style=l4style]
+-- the operator-VARYING map: rebuild the operator INSIDE the loop
+frequency_sweep :: FrequencyOperatorFamily -> [Scalar] -> [Tensor]
+frequency_sweep fam omegas =
+  map solve_at omegas               -- independent: a map, not a fold
+  where
+    solve_at omega =
+      let a = assemble_frequency_operator fam omega   -- (1) rebuild A(omega)
+          b = excitation fam omega                    -- (3) per-omega RHS
+      in  ksp_solve a b                               -- (2,4) capture + GMRES solve
+\end{lstlisting}
+
+\subsection{The one line that is the whole difference}
+
+Set the driven sweep beside electrostatics and almost everything is shared: both
+assemble a basis once, both run a family of independent solves, both produce a
+family of fields, both feed a rank-2 reduction. The single structural difference
+is the \emph{position of the operator-capture call} relative to the loop
+(\cref{fig:hoist}).
+
+\begin{lstlisting}[style=l4style]
+-- ELECTROSTATIC (corner 1): operator-capture HOISTED OUTSIDE the loop
+solve_family k rhss =                    -- k assembled once, captured once
+  let solver = ksp_setup k               -- <<-- SetOperators OUTSIDE
+  in  map (\b -> ksp_run solver b) rhss   -- map: same operator every solve
+
+-- DRIVEN (corner 2): operator-capture INSIDE the loop
+frequency_sweep fam omegas =
+  map (\omega ->
+        let a      = assemble_frequency_operator fam omega
+            solver = ksp_setup a          -- <<-- SetOperators INSIDE
+        in  ksp_run solver (excitation fam omega))
+      omegas                              -- map: fresh operator every solve
+\end{lstlisting}
+
+In electrostatics, \code{ksp\_setup}---the call that factors the preconditioner and
+hands the operator to the solver---happens \emph{once}, before the map, because the
+operator $\Kop$ is the same for every right-hand side. We \emph{hoist} it out of
+the loop. In the driven sweep, \code{ksp\_setup} happens \emph{inside} the map,
+once per frequency, because the operator $\mat{A}(\omega)$ is a function of the
+loop index. We \emph{cannot} hoist it.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % ============== LEFT: electrostatic, hoisted ==============
+  \begin{scope}[shift={(0,0)}]
+    \node[font=\small\bfseries, text=simBlue] at (1.5,4.3)
+      {Electrostatic (corner 1)};
+    \node[font=\scriptsize\itshape, text=simGray] at (1.5,3.9)
+      {assemble once, \emph{hoist}};
+    % the operator capture, outside
+    \node[opbox, minimum width=30mm, fill=simBgBlue, draw=simBlue]
+      (setup1) at (1.5,3.2) {\code{SetOperators}($\Kop$)};
+    \node[font=\scriptsize, text=simBlue] at (1.5,2.65) {(once, OUTSIDE)};
+    % the loop box
+    \node[draw=simGray, densely dashed, rounded corners,
+          minimum width=42mm, minimum height=24mm, fill=simBgGray]
+      (loop1) at (1.5,0.6) {};
+    \node[font=\scriptsize, text=simGray, anchor=north west]
+      at (loop1.north west) {\ for each $\vb_i$:};
+    \node[opbox, minimum width=26mm] (sv1) at (1.5,0.4)
+      {\code{ksp\_run}($\vb_i$)};
+    \node[font=\scriptsize\itshape] at (1.5,-0.4) {same $\Kop$ each pass};
+    \draw[->, thick, simInk] (setup1.south) -- (loop1.north);
+    % loop back arrow
+    \draw[->, simGray, densely dashed]
+      (loop1.east) ++(0,-0.4) .. controls +(0.9,0) and +(0.9,0) ..
+      ($(loop1.east)+(0,0.6)$);
+  \end{scope}
+
+  % divider
+  \draw[simGray, thin] (4.1,-1.0) -- (4.1,4.5);
+
+  % ============== RIGHT: driven, inside ==============
+  \begin{scope}[shift={(5.3,0)}]
+    \node[font=\small\bfseries, text=simRust] at (1.7,4.3)
+      {Driven (corner 2)};
+    \node[font=\scriptsize\itshape, text=simGray] at (1.7,3.9)
+      {basis once, rebuild \emph{inside}};
+    % the basis, outside (only the basis is hoisted)
+    \node[opbox, minimum width=34mm, fill=simBgBlue, draw=simBlue]
+      (basis2) at (1.7,3.2) {assemble basis $\{\Kop,\Cop,\Mop\}$};
+    \node[font=\scriptsize, text=simBlue] at (1.7,2.65) {(once, OUTSIDE)};
+    % the loop box
+    \node[draw=simRust, densely dashed, rounded corners,
+          minimum width=46mm, minimum height=30mm, fill=simBgRust]
+      (loop2) at (1.7,0.1) {};
+    \node[font=\scriptsize, text=simRust, anchor=north west]
+      at (loop2.north west) {\ for each $\omega_k$:};
+    \node[opbox, minimum width=36mm, fill=white] (form2) at (1.7,0.95)
+      {form $\mat{A}(\omega_k)=\Kop{+}i\omega_k\Cop{-}\omega_k^2\Mop$};
+    \node[opbox, minimum width=36mm, fill=simBgRust, draw=simRust]
+      (setup2) at (1.7,0.1) {\code{SetOperators}($\mat{A}(\omega_k)$)};
+    \node[font=\scriptsize, text=simRust] at (1.7,-0.45) {(every pass, INSIDE)};
+    \node[opbox, minimum width=36mm, fill=white] (sv2) at (1.7,-1.05)
+      {\code{ksp\_run}($\vb(\omega_k)$)};
+    \draw[->, simInk] (form2.south) -- (setup2.north);
+    \draw[->, simInk] (setup2.south) -- (sv2.north);
+    \draw[->, thick, simInk] (basis2.south) -- (loop2.north);
+    \draw[->, simRust, densely dashed]
+      (loop2.east) ++(0,-0.4) .. controls +(0.9,0) and +(0.9,0) ..
+      ($(loop2.east)+(0,1.0)$);
+  \end{scope}
+\end{tikzpicture}
+\caption[The hoist, and its negation]{The chapter's centerpiece: the operator
+capture, hoisted versus not. \emph{Left}---electrostatics assembles $\Kop$ once
+and captures it into the solver \emph{outside} the loop; every pass of the map
+solves a new right-hand side against the \emph{same} operator. \emph{Right}---the
+driven sweep assembles only the \emph{basis} $\{\Kop,\Cop,\Mop\}$ outside the
+loop, then, \emph{inside} the loop, forms a fresh $\mat{A}(\omega_k)$ and captures
+it (\code{SetOperators}) before each solve. The capture call moves from outside
+the loop to inside it. That single move is the entire structural difference
+between the two analyses---and moving it the wrong way does not slow the code
+down, it computes the wrong answer.}
+\label{fig:hoist}
+\end{figure}
+
+\begin{keyidea}
+\textbf{Driven $=$ the anchor with the operator rebuilt \emph{inside} the sweep,
+plus a port-projection reduction.} Electrostatics hoists the operator capture
+\emph{outside} the loop (corner~1, the fixed-operator map). The driven analysis
+moves that one call \emph{inside} the loop (corner~2, the operator-varying map),
+because the system operator $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$
+is a function of the loop index. The fixed \emph{basis} $\{\Kop,\Cop,\Mop\}$ is
+still assembled once; only the \emph{combination} is rebuilt per frequency. Cap
+the sweep with the S-parameter port-projection instead of the Gram, and you have
+the entire driven driver. The position of one capture call relative to one loop is
+load-bearing: hoist it and you solve every frequency against the operator of the
+first one.
+\end{keyidea}
+
+\begin{pitfall}
+A well-meaning optimizer sees the \code{SetOperators} call inside the loop, notices
+it is ``expensive'' (it refactors the preconditioner), and hoists it out to ``save
+work.'' In electrostatics that is correct and free. In the driven sweep it is a
+\emph{silent wrong answer}: every frequency is now solved against
+$\mat{A}(\omega_0)$, the operator of the first frequency, so the computed
+$\vE_k$ is the steady-state response of the wrong physical system. Nothing crashes;
+the numbers are simply wrong, and wrong in a way that looks plausible (a smooth
+curve, just not the device's curve). The lesson of \cref{ch:situating} stated
+operationally: the loop position of one setup call is part of the algorithm, not a
+performance knob.
+\end{pitfall}
+
+\subsection{Why the solve is GMRES, not CG}
+
+The driven system operator $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$ is
+\emph{complex} and \emph{non-Hermitian}: the $i\omega\Cop$ term is purely
+imaginary, and the $-\omega^2\Mop$ term subtracts mass from stiffness, so the
+operator is indefinite as well. None of the structure CG relies on (\cref{ch:cg})
+survives: there is no symmetric positive-definite form, hence no short
+recurrence, hence no CG. This is exactly the regime GMRES was built for
+(\cref{ch:gmres})---a general nonsymmetric, possibly complex non-Hermitian
+operator---and the driven solve is its canonical application. Each frequency's
+solve is a full preconditioned GMRES (or FGMRES, if the preconditioner itself
+varies), and because the operator changes every frequency, the preconditioner must
+be rebuilt or refreshed every frequency too (\cref{sec:cost}).
+
+\section{The composition: \texttt{driven} end to end}
+
+We can now write the whole driver as one composition, in the framework's
+vocabulary. It is three stages: assemble the basis once, sweep with the operator
+rebuilt inside, reduce to S-parameters (\cref{fig:pipeline}).
+\begin{lstlisting}[style=l4style]
+-- the whole driven driver: config in, frequency response out
+driven :: DrivenConfig -> FrequencyResponse
+driven cfg =
+  let space  = nd_space cfg                                    -- H(curl) space
+      fam    = { K  = fe_assemble space [ curl_curl (reluctivity cfg) ]  -- assemble
+               , C  = fe_assemble space [ damping cfg ]                  --   basis
+               , M  = fe_assemble space [ mass (permittivity cfg) ]      --   ONCE
+               , A2 = \w -> extra_system_matrix space cfg w }
+      omegas = sample_frequencies cfg                          -- the swept band
+      es     = frequency_sweep fam omegas    -- operator-VARYING map: A(w) rebuilt inside
+  in  sparameter_reduce (ports cfg) es       -- port-projection reduction -> S(w)
+\end{lstlisting}
+Read it as a pipeline composition:
+\[
+  \texttt{driven}
+    \;=\;
+  \texttt{sparameter\_reduce}
+    \;\circ\;
+  \texttt{frequency\_sweep}
+    \;\circ\;
+  \texttt{fe\_assemble}^{\times 3}.
+\]
+The first stage (\code{fe\_assemble}, three times) is the once-only basis; the
+middle stage (\code{frequency\_sweep}) is the operator-varying solve map; the last
+stage (\code{sparameter\_reduce}) is the projection readout we turn to next. Each
+stage is firm, and each links down to its own chapter: the assemble fold to
+\cref{ch:assembly}, the combination to \cref{ch:combinators}, the solve to
+\cref{ch:gmres}, the reduction to \cref{ch:reductions}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=7mm and 9mm, font=\footnotesize, >=Stealth]
+  \node[data] (cfg) {config};
+  \node[stage, right=of cfg, align=center] (asm)
+    {assemble basis\\$\{\Kop,\Cop,\Mop\}$\\\scriptsize(once)};
+  \node[stage, right=of asm, fill=simBgRust, draw=simRust, align=center] (sweep)
+    {\textbf{frequency\_sweep}\\\scriptsize per $\omega$:};
+  \node[stage, right=of sweep, align=center] (red)
+    {sparameter\_\\reduce};
+  \node[product, right=of red] (S) {$S(\omega)$};
+  \draw[flow] (cfg) -- (asm);
+  \draw[flow] (asm) -- node[above,font=\scriptsize]{\code{fam}} (sweep);
+  \draw[flow] (sweep) -- node[above,font=\scriptsize]{$[\vE_k]$} (red);
+  \draw[flow] (red) -- (S);
+  % the per-omega inner body, drawn below the sweep box
+  \node[opbox, below=10mm of sweep, fill=white, align=center] (inner)
+    {form $\mat{A}(\omega)$ $\to$ \code{SetOperators} $\to$ GMRES};
+  \draw[refedge] (sweep.south) -- (inner.north);
+  \node[font=\scriptsize\itshape, text=simRust, below=1.5mm of inner]
+    {operator rebuilt + re-captured \emph{inside}};
+\end{tikzpicture}
+\caption[The driven pipeline]{The driven pipeline. The basis
+$\{\Kop,\Cop,\Mop\}$ is assembled once. \code{frequency\_sweep} maps over the
+swept band; its per-$\omega$ body (drawn below) forms the system operator
+$\mat{A}(\omega)$, re-captures it with \code{SetOperators}, and solves by GMRES.
+The solved fields $[\vE_k]$ feed \code{sparameter\_reduce}, the port-projection
+that yields the scattering matrix $S(\omega)$. The red box marks the one stage
+whose operator changes each step---the entire difference from electrostatics.}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{remark}[Uniform sweep versus adaptive ROM]
+The composition above is the \emph{uniform} sweep: a fixed list of frequencies,
+each solved fully and independently---an honest map. Palace also offers an
+\emph{adaptive} sweep, which builds a projection-based reduced-order model (a PROM)
+and greedily adds the next sample frequency where the model's error is largest. The
+adaptive sweep is \emph{not} a map: each new frequency choice depends on the model
+built from all previous solves, so it is a state-generated \emph{fold}
+(\cref{ch:situating}, \cref{ch:transient})---the running model is threaded through
+the loop. We mention it only to place it: the uniform sweep is the composed shape
+this chapter studies, and it is the operator-varying map. The affine-in-$\omega$
+structure of $\mat{A}(\omega)$ (\cref{sec:assemble}) is exactly what makes the
+reduced-order model cheap to evaluate, but the uniform sweep does not exploit it.
+\end{remark}
+
+\section{Reduce: the port-projection}
+\label{sec:reduce}
+
+The solve gives us a family of complex fields, one per swept frequency (and, when
+several ports are driven, one column per driven port). The reduction collapses
+each solved field into the scattering parameters the user asked for. This is the
+\emph{rank-2 port-projection}---reduction shape~2 of \cref{ch:situating} and
+\cref{ch:reductions}---and it is emphatically \emph{not} a Gram.
+
+The port modes $\vs_i$ themselves do not come from the driven solve. They come
+from the \emph{boundary-mode} analysis (\cref{ch:waveports}), which solves a small
+two-dimensional eigenproblem on each port's cross-section to find the field
+pattern that propagates there. The driven reduction \emph{consumes} those modes as
+the basis it projects onto. Given the solved field $\vE_j$ for drive port $j$ and
+the receiver modes $\vs_i$, each scattering entry is
+\begin{equation}
+  \boxed{\;S_{ij}
+    \;=\;
+  \sigma_{ij}\,\bigl(\,\inner{\vs_i}{\vE_j(\omega)} \;-\; \delta_{ij}\,\bigr)\;}
+  \label{eq:sparam}
+\end{equation}
+where each piece earns its place:
+\begin{itemize}[nosep]
+  \item $\inner{\vs_i}{\vE_j(\omega)}$ is the \emph{linear projection} of the
+  drive-$j$ field onto receiver mode $i$---how much of the solved field looks like
+  the wave that propagates out of port $i$. For a lumped port this is the inner
+  product $\vs_i\cdot\vE_j$; for a wave port it is the modal overlap
+  $(\vE_j\times\vH_i^\star)\cdot\vn$ integrated over the port face. It is
+  \emph{linear} in the field $\vE_j$.
+  \item $\delta_{ij}$ is the Kronecker self-term: $1$ when $i=j$, $0$ otherwise.
+  On the diagonal it subtracts the \emph{incident} wave from the total field,
+  leaving only the \emph{reflected} part. Without it, $S_{11}$ would report the
+  whole field at port~1 (incident plus reflected); with it, $S_{11}$ reports the
+  reflection alone, which is what ``return loss'' means.
+  \item $\sigma_{ij}$ is the port-kind \emph{scale}: an impedance ratio
+  $\sqrt{R_j/R_i}$ for lumped ports (generalized scattering parameters, which
+  normalize for unequal port impedances), or a de-embedding phase
+  $e^{ik_{n,i}d_i}\,e^{ik_{n,j}d_j}$ for wave ports (which shift the reference
+  plane from the mesh boundary to the physical port location).
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >=Stealth]
+  % field-space axes
+  \draw[->, simGray] (0,0) -- (0,3.4);
+  \draw[->, simGray] (0,0) -- (5.0,0);
+  % port mode basis vectors
+  \draw[->, very thick, simGreen] (0,0) -- (3.6,0)
+    node[right, font=\scriptsize, text=simGreen]{$\vs_1$ (port 1 mode)};
+  \draw[->, very thick, simGreen] (0,0) -- (0,2.8)
+    node[above, font=\scriptsize, text=simGreen]{$\vs_2$ (port 2 mode)};
+  % solved field
+  \draw[->, very thick, simRust] (0,0) -- (2.6,2.0)
+    node[midway, above left, font=\scriptsize, text=simRust]{$\vE_1(\omega)$};
+  % projections (dashed)
+  \draw[densely dashed, simBlue] (2.6,2.0) -- (2.6,0)
+    node[midway, right, font=\scriptsize, text=simBlue]{};
+  \draw[densely dashed, simBlue] (2.6,2.0) -- (0,2.0);
+  \node[font=\scriptsize, text=simBlue] at (2.6,-0.32)
+    {$\inner{\vs_1}{\vE_1}$};
+  \node[font=\scriptsize, text=simBlue, anchor=east] at (-0.1,2.0)
+    {$\inner{\vs_2}{\vE_1}$};
+  % the entries
+  \node[font=\footnotesize, align=left, text=simInk] at (6.9,2.2)
+    {$S_{11}=\sigma_{11}(\inner{\vs_1}{\vE_1}-1)$};
+  \node[font=\scriptsize, text=simGray] at (6.9,1.75)
+    {(reflection: self-term subtracted)};
+  \node[font=\footnotesize, align=left, text=simInk] at (6.9,1.0)
+    {$S_{21}=\sigma_{21}\,\inner{\vs_2}{\vE_1}$};
+  \node[font=\scriptsize, text=simGray] at (6.9,0.55)
+    {(transmission: no self-term)};
+\end{tikzpicture}
+\caption[The port projection]{The port-projection reduction. The solved field
+$\vE_1(\omega)$ (driving port~1) lives in field space; the port modes $\vs_1,\vs_2$
+(from the boundary-mode analysis, \cref{ch:waveports}) are the directions we
+project onto. Projecting $\vE_1$ onto $\vs_1$ and subtracting the incident
+self-term gives the reflection $S_{11}$; projecting onto $\vs_2$ (no self-term,
+since $2\neq1$) gives the transmission $S_{21}$. The projection is \emph{linear}
+in the field and the two index families ($\vs_i$ versus $\vE_j$) play different
+roles---this is why it is a projection, not a Gram.}
+\label{fig:proj}
+\end{figure}
+
+In the framework this reduction is the verb \code{sparameter\_reduce}, applied once
+per swept frequency:
+\begin{lstlisting}[style=l4style]
+-- project each solved field onto each receiver port mode -> the S-matrix
+sparameter_reduce :: [PortMode] -> [(Int, Tensor)] -> Matrix
+sparameter_reduce ports family =
+  matrix_from_columns
+    [ [ scale ports i j * (project (ports !! i) e - selfterm i j)  -- entry S_ij
+        | i <- [0 .. p-1] ]            -- over receiver ports i
+      | (j, e) <- family ]            -- one column per drive port j
+  where
+    p              = length ports
+    project s e    = port_dot s e               -- linear functional  s_i . E
+    selfterm i j   = if i == j then 1 else 0    -- the -1 self-reflection (diagonal)
+    scale ports i j = port_scale (ports!!i) (ports!!j)  -- impedance / de-embed
+\end{lstlisting}
+
+\subsection{Why it is rank-2 like a Gram but deliberately not a Gram}
+
+The S-matrix and the capacitance matrix (\cref{ch:reductions}) both come out as
+$p\times p$ arrays indexed by a port-like family. That shared \emph{output rank}
+is the whole of their resemblance, and \cref{ch:situating} already warned that
+reading more into it is the single most over-unified mistake the design could
+make. The driven reduction makes the distinction sharp.
+
+\begin{pitfall}
+\textbf{A matrix-shaped result is not a Gram.} The Gram reduction
+(capacitance, inductance) pairs a family \emph{with itself} through an operator,
+$\vx_j^{\!\top}\Kop\vx_i$---a \emph{bilinear} form, symmetric by construction, with
+the verb computing only the upper triangle. The S-parameter reduction projects one
+family (the solved fields $\vE_j$) onto a \emph{different} basis (the port modes
+$\vs_i$)---a \emph{linear} functional, two families in different roles, every entry
+computed independently. Three facts forbid merging them: (1) the Gram is a
+self-pairing, the projection is not; (2) the Gram is symmetric by construction,
+the projection's near-symmetry $S_{ij}\approx S_{ji}$ is reciprocity \emph{physics}
+when the medium is reciprocal, never a construction the reduction imposes---there
+is no \code{symmetric\_from\_upper} in its body; (3) the Gram is real and
+energy-valued, the projection is complex and carries the inhomogeneous
+$-\delta_{ij}$ self-term on its diagonal. Forcing one verb would smuggle a false
+symmetry into the S-matrix or burden the Gram with machinery it does not need.
+\emph{Sharing a shape is not sharing a meaning.}
+\end{pitfall}
+
+\section{Reading the answer: return loss and insertion loss}
+
+The product is the scattering matrix as a function of frequency, $S(\omega)$, and
+microwave engineers read it through two standard plots, both in decibels
+(\cref{fig:splot}). The \emph{return loss} is $\abs{S_{11}}$ in dB---how much power
+reflects off port~1; near a perfect match it dives toward $-\infty$ (a sharp dip),
+because almost nothing reflects. The \emph{insertion loss} is $\abs{S_{21}}$ in
+dB---how much power transmits from port~1 to port~2; in a passband it sits near
+$0\,$dB (almost everything gets through), and in a stopband it plunges (the device
+blocks the signal). A bandpass filter shows $\abs{S_{21}}$ flat and high across its
+passband and low outside it, with $\abs{S_{11}}$ dipping sharply wherever the match
+is good. The whole point of the simulation is to predict these curves before the
+device is fabricated.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.84\linewidth, height=6.0cm,
+  xlabel={frequency $f$ (GHz)}, ylabel={magnitude (dB)},
+  xmin=3, xmax=7, ymin=-45, ymax=3,
+  ytick={0,-10,-20,-30,-40},
+  xtick={3,4,5,6,7},
+  legend pos=south east, legend cell align=left,
+  grid=both, grid style={simGray!20},
+  tick label style={font=\footnotesize}, label style={font=\footnotesize},
+  legend style={font=\footnotesize},
+]
+% |S21| insertion loss: passband near 0 dB around 5 GHz, rolling off outside
+\addplot[very thick, simGreen, smooth, samples=120, domain=3:7]
+  { -2 - 30*( (x-5)/1.0 )^2 / (1 + 0.55*((x-5))^2 ) - 0.5*(x-5)^2 };
+\addlegendentry{$|S_{21}|$ (insertion loss)}
+% |S11| return loss: deep dip near the match frequency 5 GHz
+\addplot[very thick, simRust, smooth, samples=160, domain=3:7]
+  { -3 - 32*exp( -((x-5)^2)/0.06 ) + 2.0*((x-5))^2 };
+\addlegendentry{$|S_{11}|$ (return loss)}
+% passband band marker
+\draw[simBlue!50, densely dashed] (axis cs:4.4,3) -- (axis cs:4.4,-45);
+\draw[simBlue!50, densely dashed] (axis cs:5.6,3) -- (axis cs:5.6,-45);
+\node[font=\scriptsize, text=simBlue] at (axis cs:5.0,-43) {passband};
+\end{axis}
+\end{tikzpicture}
+\caption[A swept S-parameter plot]{The product: a swept S-parameter plot for a
+bandpass-like two-port. The insertion loss $\abs{S_{21}}$ (green) sits near
+$0\,$dB across the passband---signal passes through---and rolls off on either
+side. The return loss $\abs{S_{11}}$ (rust) dips sharply at the match frequency
+near $5\,$GHz, where almost no power reflects (a good match), and rises away from
+it. Each point on each curve is one converged GMRES solve at one frequency,
+projected onto the port modes. Reading these two curves is reading the device.}
+\label{fig:splot}
+\end{figure}
+
+\section{Cost: many independent solves, preconditioner reuse}
+\label{sec:cost}
+
+Because the sweep is a \emph{map}, the frequencies are embarrassingly parallel: a
+hundred-frequency sweep is a hundred independent GMRES solves, and they can run on a
+hundred machines with no communication. That is the good news, and it follows
+directly from corner~2's independence.
+
+The bad news is that each of those solves is a \emph{full} GMRES on a complex
+indefinite operator, and---unlike electrostatics---we cannot amortize a single
+factorization across the family, because the operator $\mat{A}(\omega)$ is
+different every frequency. The preconditioner (\cref{ch:precond}) is what makes
+each solve converge in a reasonable number of iterations, and rebuilding it from
+scratch at every frequency is expensive. Two structural facts soften this:
+\begin{itemize}[nosep]
+  \item \textbf{Nearby frequencies have nearby operators.} Because
+  $\mat{A}(\omega)$ depends smoothly on $\omega$, the operator at $\omega_{k+1}$ is
+  close to the operator at $\omega_k$. A preconditioner built for $\omega_k$ is
+  often a perfectly good preconditioner for $\omega_{k+1}$, so one can \emph{reuse}
+  a preconditioner across a band of nearby frequencies and only rebuild it
+  occasionally---trading a little extra GMRES iteration for a lot of saved
+  factorization. When the preconditioner is allowed to drift this way, the inner
+  solve becomes FGMRES (\cref{ch:gmres}), the flexible variant that tolerates a
+  changing preconditioner.
+  \item \textbf{The affine structure enables a reduced-order model.} The
+  affine-in-$\omega$ form $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$
+  means the solution $\vE(\omega)$ is a rational function of $\omega$, and a small
+  number of full solves can fit a reduced-order model that predicts $\vE$ at the
+  remaining frequencies cheaply. This is the adaptive sweep's payoff (the
+  state-generated fold of the earlier remark); the uniform sweep leaves it on the
+  table in exchange for simplicity and perfect parallelism.
+\end{itemize}
+
+\section{Two worked examples}
+
+\begin{workedexample}{The operator-varying map, made concrete}{opvary}
+We make the central claim---the operator changes every frequency---numerical, on a
+deliberately tiny basis so the arithmetic is visible. Take the $2\times2$ real
+basis operators
+\[
+  \Kop = \begin{pmatrix} 4 & -1 \\ -1 & 3 \end{pmatrix},\quad
+  \Cop = \begin{pmatrix} 2 & 0 \\ 0 & 1 \end{pmatrix},\quad
+  \Mop = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix},
+\]
+assembled \emph{once}, and take $\mat{A}_2 \equiv 0$ for clarity. The system
+operator is $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$. We form it at
+three frequencies.
+
+\medskip
+\emph{At $\omega = 0$} (the static limit): the weights are $1,\,0,\,0$, so
+\[
+  \mat{A}(0) = \Kop = \begin{pmatrix} 4 & -1 \\ -1 & 3 \end{pmatrix}.
+\]
+At zero frequency the driven operator collapses to the electrostatic stiffness:
+no damping, no mass. This is the anchor reappearing as a special case.
+
+\medskip
+\emph{At $\omega = 1$:} the weights are $1,\,i,\,-1$, so
+\[
+  \mat{A}(1)
+    = \Kop + i\Cop - \Mop
+    = \begin{pmatrix} 4-1 & -1 \\ -1 & 3-1 \end{pmatrix}
+      + i\begin{pmatrix} 2 & 0 \\ 0 & 1 \end{pmatrix}
+    = \begin{pmatrix} 3+2i & -1 \\ -1 & 2+i \end{pmatrix}.
+\]
+
+\emph{At $\omega = 2$:} the weights are $1,\,2i,\,-4$, so
+\[
+  \mat{A}(2)
+    = \Kop + 2i\Cop - 4\Mop
+    = \begin{pmatrix} 4-4 & -1 \\ -1 & 3-4 \end{pmatrix}
+      + i\begin{pmatrix} 4 & 0 \\ 0 & 2 \end{pmatrix}
+    = \begin{pmatrix} 0+4i & -1 \\ -1 & -1+2i \end{pmatrix}.
+\]
+
+Three frequencies, \emph{three different operators}---and all three complex, all
+three formed from the same fixed $\{\Kop,\Cop,\Mop\}$ by changing only the scalar
+weights. Contrast electrostatics, where the operator is $\Kop$ at \emph{every}
+solve. This is corner~1 versus corner~2 in two lines of arithmetic.
+
+\medskip
+\emph{One solve.} Take the excitation $\vb = (1,\,0)^{\!\top}$ and solve
+$\mat{A}(1)\,\vE = \vb$. With
+$\det\mat{A}(1) = (3+2i)(2+i) - (-1)(-1) = (4 + 7i) - 1 = 3 + 7i$,
+\[
+  \vE
+    = \frac{1}{3+7i}
+      \begin{pmatrix} 2+i & 1 \\ 1 & 3+2i \end{pmatrix}
+      \begin{pmatrix} 1 \\ 0 \end{pmatrix}
+    = \frac{1}{3+7i}\begin{pmatrix} 2+i \\ 1 \end{pmatrix}.
+\]
+Multiplying numerator and denominator by the conjugate $3-7i$ (with
+$\abs{3+7i}^2 = 58$),
+\[
+  \vE
+    = \frac{1}{58}\begin{pmatrix} (2+i)(3-7i) \\ (3-7i) \end{pmatrix}
+    = \frac{1}{58}\begin{pmatrix} 13 - 11i \\ 3 - 7i \end{pmatrix}
+    \approx \begin{pmatrix} 0.224 - 0.190\,i \\ 0.052 - 0.121\,i \end{pmatrix}.
+\]
+The solved field is genuinely complex: it has magnitude (amplitude) and phase, and
+the phase is the steady-state lag of the field behind the drive---information that
+a real-valued static solve simply does not carry. In the real driver this $2\times2$
+direct solve is replaced by preconditioned GMRES on a million-dimensional complex
+operator, but the structure is exactly this: rebuild $\mat{A}(\omega)$, then solve.
+\end{workedexample}
+
+\begin{workedexample}{A two-port S-parameter readout}{sparam}
+Now the reduction. Suppose we have driven port~1 of a two-port device at one
+frequency and solved for the field $\vE_1$. The boundary-mode analysis
+(\cref{ch:waveports}) gave us the two port modes $\vs_1,\vs_2$, and the projections
+of the solved field onto them came out as
+\[
+  \inner{\vs_1}{\vE_1} = 0.20 + 0.10\,i,
+  \qquad
+  \inner{\vs_2}{\vE_1} = 0.70 - 0.30\,i.
+\]
+Take lumped ports of equal impedance, so the scale is trivial,
+$\sigma_{ij} = \sqrt{R_j/R_i} = 1$. Apply \cref{eq:sparam}.
+
+\medskip
+\emph{Reflection $S_{11}$} (receiver $1$, drive $1$, so $i=j$---subtract the
+self-term):
+\[
+  S_{11}
+    = \sigma_{11}\bigl(\inner{\vs_1}{\vE_1} - \delta_{11}\bigr)
+    = (0.20 + 0.10\,i) - 1
+    = -0.80 + 0.10\,i.
+\]
+\emph{Transmission $S_{21}$} (receiver $2$, drive $1$, so $i\neq j$---no
+self-term):
+\[
+  S_{21}
+    = \sigma_{21}\bigl(\inner{\vs_2}{\vE_1} - \delta_{21}\bigr)
+    = (0.70 - 0.30\,i) - 0
+    = 0.70 - 0.30\,i.
+\]
+
+\medskip
+\emph{Read them.} The magnitudes are
+\[
+  \abs{S_{11}} = \sqrt{0.80^2 + 0.10^2} \approx 0.806,
+  \qquad
+  \abs{S_{21}} = \sqrt{0.70^2 + 0.30^2} \approx 0.762.
+\]
+In decibels, the return loss is
+$20\log_{10}\abs{S_{11}} \approx -1.87\,$dB and the insertion loss is
+$20\log_{10}\abs{S_{21}} \approx -2.36\,$dB. A return loss this shallow means a
+\emph{poor} match---about $65\%$ of the incident power
+($\abs{S_{11}}^2 \approx 0.65$) reflects straight back---so this frequency is not
+in a passband. Notice the load-bearing role of the self-term: without the
+$-\delta_{11}$, $S_{11}$ would have been the raw projection $0.20+0.10\,i$, with
+magnitude $\approx 0.22$, reporting a \emph{good} match (low reflection)---the
+exact opposite conclusion. The $-1$ is what converts ``total field at the driven
+port'' into ``reflected field at the driven port,'' and it is the difference
+between a right answer and a plausible wrong one.
+
+\medskip
+Sweeping this readout across the band---one solved field, one projection, per
+frequency---traces the $\abs{S_{11}}$ and $\abs{S_{21}}$ curves of
+\cref{fig:splot}. That sweep is the whole driven driver.
+\end{workedexample}
+
+\summarysection
+The driven analysis computes the frequency response of a microwave device: feed a
+time-harmonic signal into the ports, sweep the frequency band, and read off the
+scattering matrix $S(\omega)$. It is the anchor (\cref{ch:electrostatics}) with one
+corner swapped. \emph{Assemble} builds a fixed basis $\{\Kop,\Cop,\Mop\}$ once, but
+the system operator $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$
+$[+\mat{A}_2(\omega)]$ is a frequency-dependent linear combination of that basis
+(\code{assemble\_frequency\_operator}, a specialization of \code{linear\_combination}
+with operator operands and complex scalars). \emph{Solve} is the operator-varying
+map \code{frequency\_sweep}: at each frequency, rebuild $\mat{A}(\omega)$, re-capture
+it into the solver \emph{inside} the loop (the exact negation of electrostatics'
+hoist), and solve the complex non-Hermitian system by preconditioned GMRES
+(\cref{ch:gmres}). The solves are independent (a map, hence parallel), but each is a
+full GMRES, so preconditioner reuse across nearby frequencies matters. \emph{Reduce}
+is the rank-2 port-projection \code{sparameter\_reduce}:
+$S_{ij} = \sigma_{ij}(\inner{\vs_i}{\vE_j} - \delta_{ij})$---project each solved
+field onto each port mode (from the boundary-mode analysis, \cref{ch:waveports}),
+subtract the self-reflection on the diagonal, scale for impedance or de-embedding.
+It produces a matrix like the Gram but is deliberately \emph{not} a Gram: a linear
+projection of two distinct families, complex, asymmetric. The whole driver is
+$\texttt{driven} = \texttt{sparameter\_reduce}\circ\texttt{frequency\_sweep}\circ
+\texttt{fe\_assemble}^{\times3}$, and reading $\abs{S_{11}}$ (return loss) and
+$\abs{S_{21}}$ (insertion loss) across the band is reading the device.
+
+\furtherreading
+The scattering-parameter formalism, ports, impedance normalization, and the
+network-analyzer measurement this chapter simulates are the foundation of
+microwave engineering; Pozar's text~\citep{pozar2011} is the standard treatment and
+the place to deepen the physical reading of $S(\omega)$, return loss, insertion
+loss, and de-embedding. The finite-element formulation of the time-harmonic
+curl--curl system on $\Hcurl$, including wave-port boundary conditions and the modal
+projection that defines the port modes $\vs_i$, is developed at length by
+Jin~\citep{jin2014}. The complex, non-Hermitian, indefinite linear solve at each
+frequency---and the GMRES/FGMRES machinery that handles it, together with
+preconditioner reuse across a parameter sweep---is the subject of Saad's account of
+iterative methods~\citep{saad2003}, on which \cref{ch:gmres} and \cref{ch:precond}
+both draw. The boundary-mode analysis that produces the port modes is
+\cref{ch:waveports}; the state-generated fold that the adaptive sweep becomes is the
+shape of \cref{ch:transient}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{The one moved line.} In one sentence, name the single operation
+  whose position---inside the frequency loop versus outside it---is the entire
+  structural difference between the driven sweep and electrostatics. Explain why
+  hoisting it out of the driven loop changes the \emph{answer}, not merely the
+  speed.
+  \item \textbf{Form the operator.} Using the basis of
+  \cref{wex:opvary} ($\Kop,\Cop,\Mop$ as given, $\mat{A}_2\equiv0$), write down
+  $\mat{A}(\omega)$ at $\omega = \tfrac12$ and at $\omega = 3$. Confirm that the two
+  operators differ and that both are complex. Which weight is responsible for the
+  imaginary part, and which for making the operator indefinite at large $\omega$?
+  \item \textbf{Solve at a frequency.} With $\mat{A}(1)$ from \cref{wex:opvary} and
+  the excitation $\vb = (0,\,1)^{\!\top}$, solve $\mat{A}(1)\vE = \vb$ by hand
+  (the $2\times2$ inverse is given in the example). Report the magnitude and phase
+  of each component of $\vE$.
+  \item \textbf{The self-term.} In \cref{wex:sparam}, recompute $S_{11}$ and its
+  magnitude \emph{without} the $-\delta_{11}$ self-term. Show that omitting it flips
+  the physical conclusion from ``poor match'' to ``good match,'' and explain in one
+  sentence what the $-1$ physically subtracts.
+  \item \textbf{Projection, not Gram.} Give two structural reasons the S-parameter
+  matrix is not a Gram matrix (\cref{ch:reductions}). For each reason, name the
+  feature of \code{sparameter\_reduce}'s body that a Gram reduction would lack or
+  forbid.
+  \item \textbf{Why GMRES.} The driven system operator
+  $\mat{A}(\omega) = \Kop + i\omega\Cop - \omega^2\Mop$ is solved by GMRES, not CG.
+  Identify which two terms break the symmetric-positive-definite structure CG
+  requires, and say what each one does to the operator (one makes it complex
+  non-Hermitian; one makes it indefinite).
+  \item \textbf{Parallelism and cost.} The frequency sweep is a map, so its solves
+  are independent and parallel---yet the chapter calls each one expensive. Explain
+  the tension: what can the driven sweep \emph{not} amortize across the family that
+  electrostatics \emph{can}, and name the two mitigations the chapter offers.
+  \item \textbf{Place it on the grid.} Using the driver $\times$ framework grid of
+  \cref{ch:situating}, describe the driven analysis as ``electrostatics with these
+  cells changed.'' Exactly which stage-cells (function space, assemble, solve
+  corner, reduction) differ, and which stay the same?
+\end{enumerate}

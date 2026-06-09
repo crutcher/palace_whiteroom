@@ -1,0 +1,984 @@
+\chapter{Assembly as a Fold}
+\label{ch:assembly}
+\label{ch:fem}% alias: "the finite-element discretization/assembly" is cited as ch:fem in later chapters
+
+\chapterorient{Chapter~\ref{ch:galerkin} told us \emph{what} the global matrix
+is---the bilinear form sampled on basis pairs---and Chapter~\ref{ch:refelement}
+told us how to compute one element's worth of it on a reference cell. This
+chapter is about the \emph{seam} between the two: how the small, dense
+element matrices, each living in its own local coordinate system, are stitched
+into the one big sparse global matrix the solver actually sees. The mechanism
+is a pair of indexing operations---\emph{gather} and \emph{scatter}---and the
+moment we name them correctly, a structural fact about the whole simulator
+comes into focus. Assembly is not a tangle of nested loops; it is a
+\emph{fold}: a list of contributions combined, one at a time, by a single
+associative operation into a single result. That sentence is the seed of an
+idea this book spends Part~III harvesting---that the simulator's deep structure
+is folds over lists. By the end you will have assembled the 1-D Poisson matrix
+by hand a second time, but now the \emph{right} way, watching shared nodes
+collect contributions from both their neighbours, and you will have proved that
+the order in which terms and elements are accumulated never matters.}
+
+\section{The gap between local and global}
+
+We left Chapter~\ref{ch:galerkin} with a clean formula and a quiet omission. The
+formula was $\mat{K}_{ij}=a(\phi_j,\phi_i)$: every entry of the global stiffness
+matrix is the bilinear form evaluated on a pair of global basis functions. The
+omission was \emph{how you actually compute it}. Written as one integral over
+the whole domain $\dom$, the entry
+\begin{equation}
+\mat{K}_{ij}=\int_\dom Q\,\diffop\phi_j\cdot\diffop\phi_i\dV
+\label{eq:global-entry}
+\end{equation}
+is honest but useless as a recipe: the global basis functions $\phi_i$ are
+awkward piecewise objects, defined cell by cell, and nobody integrates them as
+single functions over the entire mesh. Real finite-element codes never form
+\cref{eq:global-entry} directly. They do something that looks, at first, like a
+detour: they compute small \emph{element matrices}, one per mesh cell, each
+holding only the interactions among the handful of basis functions that live on
+that one cell, and then they \emph{add} those small matrices into the big one.
+This chapter is about why that detour is in fact the royal road, and about the
+algebraic shape it gives to the whole assembly stage.
+
+The key observation is that the domain integral \cref{eq:global-entry} splits
+across cells. The mesh $\mathcal{T}=\{K_1,\dots,K_{n_e}\}$ partitions $\dom$ into
+$n_e$ non-overlapping elements, so any integral over $\dom$ is the sum of
+integrals over the elements:
+\begin{equation}
+\mat{K}_{ij}=\int_\dom Q\,\diffop\phi_j\cdot\diffop\phi_i\dV
+=\sum_{K\in\mathcal{T}}\;\int_K Q\,\diffop\phi_j\cdot\diffop\phi_i\dV.
+\label{eq:cellsplit}
+\end{equation}
+Already \cref{eq:cellsplit} has a summation in it---our first sum over elements,
+and the structural heart of the chapter. But most of its terms are zero. On a
+given cell $K$, the only basis functions that are nonzero are the few whose
+support touches $K$; for the hat basis of \cref{ch:galerkin} that is exactly the
+basis functions sitting on the \emph{vertices of $K$}. If either $\phi_i$ or
+$\phi_j$ vanishes on all of $K$, the cell's contribution to $\mat{K}_{ij}$ is
+zero. So each cell contributes to only a tiny block of the global matrix: the
+rows and columns indexed by \emph{its own} degrees of freedom.
+
+\begin{keyidea}
+Assembly inverts the two sums. \Cref{eq:cellsplit} loops over the global entries
+$(i,j)$ and, for each, sums over cells---most contributing nothing. A
+finite-element code loops the other way: \emph{over cells} on the outside, and
+for each cell computes the small dense block of interactions among only that
+cell's degrees of freedom, then \emph{adds} that block into the global matrix at
+the right rows and columns. The same number $\sum_K\int_K(\cdots)$ is computed,
+but the loop that is cheap (over elements, with dense local work) is on the
+outside, and the loop that is expensive (over the $N^2$ global entries, almost
+all zero) never happens.
+\end{keyidea}
+
+To make ``adds that block in at the right rows and columns'' precise we need a
+language for moving between the global degrees of freedom and an element's local
+ones. That language is gather and scatter.
+
+\section{Gather and scatter: the operator \texorpdfstring{$G$}{G} and its transpose}
+\label{sec:gatherscatter}
+
+Number the global degrees of freedom $1,\dots,N$; for the hat basis these are
+the interior mesh nodes. Each element $K$ owns a short list of \emph{local}
+degrees of freedom---for a 1-D linear element, its two endpoints; for a triangle,
+its three vertices---and there is a fixed table, the \emph{local-to-global map},
+that says which global number each local slot corresponds to. This table is the
+only bookkeeping assembly needs, and it is built once from the mesh.
+
+\begin{definition}[Element gather]
+For an element $K$ with $L$ local degrees of freedom, the \emph{gather} (or
+\emph{restriction}) operator $\mat{R}_K$ is the $L\times N$ matrix that copies the
+global degrees of freedom belonging to $K$ into a length-$L$ local vector, in the
+element's local order:
+\[
+(\mat{R}_K\vx)_{\,\ell}=\vx_{\,g(K,\ell)},\qquad \ell=1,\dots,L,
+\]
+where $g(K,\ell)$ is the global index of $K$'s $\ell$-th local degree of freedom.
+Each row of $\mat{R}_K$ is a single $1$ in column $g(K,\ell)$ and zeros
+elsewhere: $\mat{R}_K$ is a \emph{Boolean selection matrix}, carrying no
+arithmetic.
+\end{definition}
+
+The gather \emph{reads}. Its transpose \emph{writes}, and writes in a particular,
+crucial way.
+
+\begin{definition}[Element scatter-add]
+The \emph{scatter-add} (or \emph{assembly}) operator is the transpose
+$\mat{R}_K^{\mathsf T}$, an $N\times L$ matrix. Applied to a length-$L$ local
+vector $\vu$, it places each local entry into its global slot and
+\emph{accumulates}:
+\[
+(\mat{R}_K^{\mathsf T}\vu)_{\,m}=\sum_{\ell\,:\,g(K,\ell)=m}\vu_{\,\ell}.
+\]
+For a single element each global slot receives at most one local entry, but when
+the scatter-adds of \emph{many} elements are summed---which is exactly what
+assembly does---a global degree of freedom shared by several elements receives a
+contribution from each.
+\end{definition}
+
+\Cref{fig:gatherscatter} draws the pair. Gather pulls a copy of element $K$'s
+nodal values out of the long global vector; element-local computation happens on
+that short vector; scatter-add pushes the results back, summing into any slot two
+elements share.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % ---- global vector (vertical stack of cells) ----
+  \def\cw{0.62}
+  \foreach \k/\lab in {0/$x_1$,1/$x_2$,2/$x_3$,3/$x_4$,4/$x_5$}{
+    \draw[simInk] (0,-\k*\cw) rectangle (\cw,-\k*\cw-\cw);
+    \node at (\cw/2,-\k*\cw-\cw/2) {\lab};
+  }
+  \node[above, font=\footnotesize\bfseries] at (\cw/2,0.05) {global $\vx$};
+  % highlight the two dofs of element K2: x2, x3 (indices 1,2)
+  \draw[simBlue, very thick] (0,-1*\cw) rectangle (\cw,-3*\cw);
+  % ---- element-local vector for K2 ----
+  \def\ex{4.4}
+  \foreach \k/\lab in {0/$u_1^{K_2}$,1/$u_2^{K_2}$}{
+    \draw[simBlue, fill=simBgBlue] (\ex,-\k*\cw-0.62) rectangle (\ex+\cw,-\k*\cw-0.62-\cw);
+    \node at (\ex+\cw/2,-\k*\cw-0.62-\cw/2) {\lab};
+  }
+  \node[above, font=\footnotesize\bfseries, simBlue!70!simInk] at (\ex+\cw/2,-0.5) {element $K_2$};
+  % gather arrow
+  \draw[flow, simBlue] (\cw+0.1,-1.4*\cw) to[bend left=12]
+     node[above, font=\scriptsize]{$\mat{R}_{K_2}$ (gather)} (\ex-0.1,-1.0);
+  % element computation box
+  \def\bx{4.2}
+  \node[stage, minimum width=20mm] (comp) at (\ex+\cw/2,-3.4) {compute\\$\mat{K}^{\mathrm{elem}}_{K_2}\vu$};
+  \draw[flow, simBlue] (\ex+\cw/2,-2.0) -- (comp.north);
+  % scatter-add arrow back, into x2 and x3
+  \draw[backflow] (comp.west) to[bend right=18]
+     node[below, font=\scriptsize, align=center]{$\mat{R}_{K_2}^{\mathsf T}$\\(scatter-add)} (\cw+0.1,-2.6*\cw);
+  % a SECOND element K1 also writing into x2 (the shared dof)
+  \draw[backflow, simGold] (-1.5,-1.6*\cw) to[bend left=20]
+     node[left, font=\scriptsize, align=center]{from\\$K_1$} (-0.05,-1.5*\cw);
+  \node[simGold!70!simInk, font=\scriptsize, align=center] at (-1.85,-3.0*\cw)
+    {$x_2$ shared:\\two contributions};
+  % bracket the shared dof
+  \draw[simGold, thick] (-0.06,-1*\cw) -- (-0.06,-2*\cw);
+\end{tikzpicture}
+\caption[Gather and scatter-add]{The gather/scatter picture, for element $K_2$ of
+a 1-D mesh. \emph{Gather} ($\mat{R}_{K_2}$) copies the two global degrees of
+freedom belonging to $K_2$---here $x_2$ and $x_3$---into a short element-local
+vector. The element matrix acts on that local vector. \emph{Scatter-add}
+($\mat{R}_{K_2}^{\mathsf T}$) writes the results back into the global slots,
+\emph{accumulating} rather than overwriting. The global degree of freedom $x_2$
+sits on the boundary between $K_1$ and $K_2$, so it receives one contribution
+from each element (the gold arrow is $K_1$'s)---this superposition is what
+\emph{assembly} means.}
+\label{fig:gatherscatter}
+\end{figure}
+
+\subsection{Assembly multiplicity and the diagonal \texorpdfstring{$\mat{R}^{\mathsf T}\mat{R}$}{R'R}}
+
+The fact that worries newcomers---a shared node being written by two
+elements---is not a bug to be guarded against; it \emph{is} the discretization.
+A basis function $\phi_i$ on a shared node is, by construction, supported on
+\emph{both} adjacent cells, so the integral $\int_\dom(\cdots)$ that defines its
+matrix row genuinely receives a piece from each cell (\cref{eq:cellsplit}). The
+scatter-\emph{add} reproduces that sum exactly. Overwriting instead of adding
+would silently drop half of each shared row.
+
+There is a clean way to measure how much sharing a mesh has. Stack the gathers of
+all elements and ask: what does ``gather everything, then immediately
+scatter-add it all back'' do to the global vector? For one element,
+$\mat{R}_K^{\mathsf T}\mat{R}_K$ is the diagonal matrix that is $1$ on every
+global slot $K$ touches and $0$ elsewhere. Summing over all elements,
+\begin{equation}
+\sum_{K\in\mathcal{T}}\mat{R}_K^{\mathsf T}\mat{R}_K
+=\operatorname{diag}(\,m_1,m_2,\dots,m_N\,),
+\qquad
+m_i=\#\{\,K:\text{ global dof }i\text{ touches }K\,\},
+\label{eq:multiplicity}
+\end{equation}
+the diagonal matrix whose $i$-th entry $m_i$ is the \emph{multiplicity} of global
+degree of freedom $i$---the number of elements sharing it. For an interior 1-D
+node, $m_i=2$; for a boundary node, $m_i=1$; for an interior vertex of a 2-D
+triangular mesh, $m_i$ is the number of triangles in the fan around it.
+
+\begin{notationbox}
+The single-element operators are written $\mat{R}_K$ throughout, matching the
+\code{element\_restrict} operator of the synthesis surface: $\mat{R}_K$ is the
+``gather'' $G$ and $\mat{R}_K^{\mathsf T}$ is the ``scatter-add'' $G^{\mathsf T}$.
+The diagonal \cref{eq:multiplicity} is the \emph{dof-multiplicity diagonal}
+$G^{\mathsf T}G$. Note carefully: $\mat{R}_K^{\mathsf T}\mat{R}_K$ is a diagonal of
+ones and zeros (a single element selects each of its dofs once), but the
+\emph{sum over elements} \cref{eq:multiplicity} counts multiplicities. The
+companion product $G\,G^{\mathsf T}$ on the element-local side is \emph{not} the
+identity---it averages a shared value and redistributes it---a fact worth keeping
+straight when you later meet it in the matrix-free apply of \cref{ch:matrixfree}.
+\end{notationbox}
+
+\section{Element matrices to global matrix}
+\label{sec:elem-to-global}
+
+With gather and scatter named, the assembly formula writes itself. On element
+$K$, compute the $L\times L$ \emph{element matrix}
+\begin{equation}
+\bigl(\mat{K}^{\mathrm{elem}}_K\bigr)_{\ell\ell'}
+=\int_K Q\,\diffop\psi^K_{\ell'}\cdot\diffop\psi^K_{\ell}\dV,
+\label{eq:elemmat}
+\end{equation}
+where $\psi^K_1,\dots,\psi^K_L$ are the \emph{local} basis functions on $K$ (the
+restrictions to $K$ of the global hats touching it, expressed in $K$'s own
+coordinates---this is the reference-element computation of
+\cref{ch:refelement}). The element matrix is small and dense: $2\times2$ for a
+1-D linear element, $3\times3$ for a linear triangle, a few hundred entries even
+for high-order 3-D elements. Now scatter each element matrix into the global one
+and sum:
+\begin{equation}
+\boxed{\;\mat{K}=\sum_{K\in\mathcal{T}}\mat{R}_K^{\mathsf T}\,
+\mat{K}^{\mathrm{elem}}_K\,\mat{R}_K\;}
+\label{eq:assembly}
+\end{equation}
+The sandwich $\mat{R}_K^{\mathsf T}(\cdots)\mat{R}_K$ does exactly what its two
+factors say: $\mat{R}_K$ on the right gathers the global indices into local order
+for the columns, $\mat{R}_K^{\mathsf T}$ on the left scatters the local rows back
+to global order, and the surrounding sum accumulates the overlapping blocks. That
+\cref{eq:assembly} equals the entrywise formula \cref{eq:cellsplit} is immediate:
+the $(i,j)$ entry of $\mat{R}_K^{\mathsf T}\mat{K}^{\mathrm{elem}}_K\mat{R}_K$ is
+$(\mat{K}^{\mathrm{elem}}_K)_{\ell\ell'}$ when $i=g(K,\ell)$ and $j=g(K,\ell')$
+for local slots $\ell,\ell'$ of $K$, and zero otherwise---precisely the cell-$K$
+term of \cref{eq:cellsplit}, written in local coordinates.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.66, every node/.style={font=\scriptsize}]
+  % global 5x5 grid
+  \def\N{5}
+  \foreach \r in {0,...,4}{\foreach \c in {0,...,4}{
+      \draw[simGray!35] (\c,-\r) rectangle ++(0.96,-0.96);}}
+  \draw[simInk, thick] (0,0) rectangle (\N,-\N);
+  % element K1 block: dofs {0,1} -> overlapping diagonal block rows/cols 0,1
+  \fill[simBlue!35] (0,0) rectangle ++(1.96,-1.96);
+  % element K2 block: dofs {1,2}
+  \fill[simRust!35] (1,-1) rectangle ++(1.96,-1.96);
+  % element K3 block: dofs {2,3}
+  \fill[simGreen!35] (2,-2) rectangle ++(1.96,-1.96);
+  % element K4 block: dofs {3,4}
+  \fill[simViolet!35] (3,-3) rectangle ++(1.96,-1.96);
+  % the OVERLAP cells (shared dofs) get two colors stacked: mark with hatch
+  \foreach \d in {1,2,3}{
+    \draw[simInk, thick] (\d,-\d) rectangle ++(0.96,-0.96);
+    \node[font=\tiny\bfseries] at (\d+0.48,-\d-0.48) {$+$};
+  }
+  % labels
+  \node[simBlue!70!simInk] at (0.96,0.45) {$K_1$};
+  \node[simRust!70!simInk] at (3.4,-1.0) {$K_2$};
+  \node[simGreen!70!simInk] at (4.5,-2.4) {$K_3$};
+  \node[simViolet!70!simInk] at (4.7,-3.7) {$K_4$};
+  \node[anchor=west, align=left, text width=30mm] at (5.5,-1.2)
+    {Each element's $2\times2$ block lands on a $2\times2$ diagonal patch.};
+  \node[anchor=west, align=left, text width=30mm] at (5.5,-3.1)
+    {Shared dofs (marked $+$) sit where two blocks \emph{overlap}: the entries \emph{add}.};
+\end{tikzpicture}
+\caption[Scatter-add building the global matrix]{Assembly of a 1-D mesh with four
+elements $K_1,\dots,K_4$ on five nodes (essential boundaries dropped for
+clarity). Each element's small $2\times2$ matrix scatters onto the $2\times2$
+diagonal patch indexed by its two nodes. Consecutive elements share one node, so
+consecutive patches \emph{overlap} on a single diagonal entry (marked $+$): there
+the two element contributions are \emph{added}. The overlapping-blocks-on-the-
+diagonal picture is the geometric content of $\mat{K}=\sum_K\mat{R}_K^{\mathsf T}
+\mat{K}^{\mathrm{elem}}_K\mat{R}_K$, and it is why the assembled matrix comes out
+banded.}
+\label{fig:scatteradd}
+\end{figure}
+
+\begin{workedexample}{Assembling 1-D Poisson by gather/scatter}{assemble-1d}
+\label{wex:assemble-1d}
+We re-derive the tridiagonal stiffness of \cref{ch:galerkin}, but this time the
+\emph{assembly} way---element by element, scatter-adding---so the multiplicity on
+shared nodes is explicit. Take the mesh of $n=4$ cells on $[0,1]$, $h=\tfrac14$,
+with nodes $x_0,\dots,x_4$. The interior nodes $x_1,x_2,x_3$ carry the global
+degrees of freedom $1,2,3$; the boundary nodes carry none. The four elements and
+the global indices of their two local slots are
+\[
+\begin{array}{c|c|c}
+\text{element} & \text{local slot }1 & \text{local slot }2\\\hline
+K_1=[x_0,x_1] & (\text{bdry}) & 1\\
+K_2=[x_1,x_2] & 1 & 2\\
+K_3=[x_2,x_3] & 2 & 3\\
+K_4=[x_3,x_4] & 3 & (\text{bdry})
+\end{array}
+\]
+
+\emph{The element matrix.} Every linear element here is identical. With local
+hats of slope $\pm1/h$ on a cell of length $h$, the $2\times2$ element stiffness
+$\bigl(\mat{K}^{\mathrm{elem}}\bigr)_{\ell\ell'}=\int_K(\psi_{\ell'})'(\psi_\ell)'$
+is
+\[
+\mat{K}^{\mathrm{elem}}=\frac1h\begin{pmatrix}\phantom{-}1 & -1\\ -1 & \phantom{-}1\end{pmatrix}
+=4\begin{pmatrix}\phantom{-}1 & -1\\ -1 & \phantom{-}1\end{pmatrix}\quad(h=\tfrac14).
+\]
+The diagonal $+1/h$ is one node's $(\text{slope})^2\cdot h=(1/h)^2 h$; the
+off-diagonal $-1/h$ is the two opposing slopes $(-1/h)(+1/h)\cdot h$.
+
+\emph{Scatter, element by element.} Start with $\mat{K}=\mathbf 0$ (the
+empty-mesh operator). Now add each $\mat{R}_K^{\mathsf T}\mat{K}^{\mathrm{elem}}
+\mat{R}_K$, dropping rows/columns that scatter to a boundary node.
+\begin{itemize}[nosep]
+\item $K_1$ touches only global dof $1$ (its other slot is boundary). It
+contributes $+\tfrac1h$ to $\mat{K}_{11}$.
+\item $K_2$ touches dofs $1,2$. It contributes $\tfrac1h\!\begin{psmallmatrix}1&-1\\-1&1\end{psmallmatrix}$
+to the $\{1,2\}$ block: $+\tfrac1h$ to each of $\mat{K}_{11},\mat{K}_{22}$ and
+$-\tfrac1h$ to $\mat{K}_{12},\mat{K}_{21}$.
+\item $K_3$ touches dofs $2,3$: $+\tfrac1h$ to $\mat{K}_{22},\mat{K}_{33}$,
+$-\tfrac1h$ to $\mat{K}_{23},\mat{K}_{32}$.
+\item $K_4$ touches only dof $3$: $+\tfrac1h$ to $\mat{K}_{33}$.
+\end{itemize}
+Now read the diagonal as a running tally. Global dof $1$ collected $+\tfrac1h$
+from $K_1$ \emph{and} $+\tfrac1h$ from $K_2$: total $\tfrac2h$. Dof $2$ collected
+$+\tfrac1h$ from $K_2$ and $+\tfrac1h$ from $K_3$: total $\tfrac2h$. Dof $3$,
+symmetrically, $\tfrac2h$. \emph{Each diagonal entry is $\tfrac2h$ because each
+interior node is shared by exactly two elements}---multiplicity $m_i=2$, exactly
+\cref{eq:multiplicity}. The off-diagonals each got a single $-\tfrac1h$ from the
+one element straddling that pair. Assembling,
+\[
+\mat{K}=\frac1h
+\begin{pmatrix} 2 & -1 & 0\\ -1 & 2 & -1\\ 0 & -1 & 2\end{pmatrix},
+\]
+the tridiagonal matrix \cref{eq:tridiag}, now \emph{earned} as a superposition of
+four $2\times2$ blocks rather than read off a stencil. The ``$2$'' on the
+diagonal is not a coincidence of the second-derivative formula---it is two
+elements each depositing a $1$.
+\end{workedexample}
+
+\subsection{Why this is the right factoring}
+
+Equation~\cref{eq:assembly} cleanly separates three concerns that a single global
+integral would tangle. The \emph{geometry and physics} live entirely inside
+$\mat{K}^{\mathrm{elem}}_K$---the material weight $Q$, the element's shape, the
+choice of basis. The \emph{connectivity} lives entirely inside the Boolean
+$\mat{R}_K$---which local slot is which global node. And the \emph{combination}
+is a plain sum. Each can be changed without touching the others: refine the mesh
+and only the $\mat{R}_K$ table grows; change the material and only the element
+matrices change; add a physical effect and---as the next section shows---only the
+list of summands lengthens. This separation is what lets one assembly routine
+serve every analysis in the book.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % two triangles sharing edge 2-3
+  \coordinate (n1) at (0,1.4);
+  \coordinate (n2) at (1.4,2.0);
+  \coordinate (n3) at (1.0,0.0);
+  \coordinate (n4) at (2.6,0.9);
+  \filldraw[simBgBlue, draw=simBlue, thick] (n1)--(n2)--(n3)--cycle;
+  \filldraw[simBgRust, draw=simRust, thick, fill opacity=0.6] (n2)--(n3)--(n4)--cycle;
+  \draw[simGold, very thick] (n2)--(n3);
+  \foreach \p/\lab/\pos in {n1/1/left,n2/2/above,n3/3/below,n4/4/right}{
+    \fill[simInk] (\p) circle (2pt);
+    \node[\pos=2pt] at (\p) {$\lab$};}
+  \node[simBlue!70!simInk] at (0.8,1.25) {$K_a$};
+  \node[simRust!70!simInk] at (1.8,0.95) {$K_b$};
+  \node[simGold!75!simInk, font=\scriptsize, right] at (1.5,1.0) {shared edge $2$--$3$};
+\end{tikzpicture}
+\caption[Two triangles sharing an edge]{The two-triangle mesh of
+\cref{wex:assemble-2d}. Triangles $K_a=\{1,2,3\}$ and $K_b=\{2,3,4\}$ share the
+edge joining nodes $2$ and $3$ (gold). The shared nodes $2,3$ have multiplicity
+$2$; the unshared nodes $1,4$ have multiplicity $1$. Each triangle's $3\times3$
+element matrix scatters onto its three nodes, and the two scatters overlap on the
+$2\times2$ block indexed by $\{2,3\}$---the discrete image of the shared edge.}
+\label{fig:twotri}
+\end{figure}
+
+\begin{workedexample}{Two triangles, a shared edge, multiplicity in 2-D}{assemble-2d}
+\label{wex:assemble-2d}
+The 1-D example made every interior node have multiplicity exactly $2$. To see
+the gather/scatter mechanism cope with richer connectivity---and to watch a shared
+\emph{edge}, not just a shared node---we assemble on the smallest interesting 2-D
+mesh: two linear triangles glued along an edge (\cref{fig:twotri}). Label the four
+nodes $1,2,3,4$; triangle $K_a$ has vertices $\{1,2,3\}$ and triangle $K_b$ has
+vertices $\{2,3,4\}$. Nodes $2$ and $3$ are shared (they lie on the common edge);
+nodes $1$ and $4$ belong to one triangle each.
+
+\emph{The gather tables.} In local vertex order,
+\[
+\mat{R}_{K_a}:\ (\ell_1,\ell_2,\ell_3)\mapsto(1,2,3),
+\qquad
+\mat{R}_{K_b}:\ (\ell_1,\ell_2,\ell_3)\mapsto(2,3,4).
+\]
+Write each triangle's $3\times3$ element stiffness abstractly as
+$\mat{K}^{\mathrm{elem}}_{K}=\bigl(s^K_{pq}\bigr)_{p,q=1}^3$ (its actual entries
+come from the reference-triangle computation of \cref{ch:refelement}; we need only
+\emph{where} they land). Scatter-adding both into the $4\times4$ global matrix:
+\[
+\mat{K}=\mat{R}_{K_a}^{\mathsf T}\mat{K}^{\mathrm{elem}}_{K_a}\mat{R}_{K_a}
+       +\mat{R}_{K_b}^{\mathsf T}\mat{K}^{\mathrm{elem}}_{K_b}\mat{R}_{K_b}
+=\begin{pmatrix}
+s^a_{11} & s^a_{12} & s^a_{13} & 0\\[1pt]
+s^a_{21} & s^a_{22}\!+\!s^b_{11} & s^a_{23}\!+\!s^b_{12} & s^b_{13}\\[1pt]
+s^a_{31} & s^a_{32}\!+\!s^b_{21} & s^a_{33}\!+\!s^b_{22} & s^b_{23}\\[1pt]
+0 & s^b_{31} & s^b_{32} & s^b_{33}
+\end{pmatrix}.
+\]
+Read the four corners of the sharing off the matrix. The $(1,4)$ and $(4,1)$
+entries are \emph{zero}: nodes $1$ and $4$ never share a triangle, so no element
+deposits there---exactly the sparsity rule of \cref{sec:cost}. The
+$\{2,3\}\times\{2,3\}$ block is where the two scatters \emph{overlap}, and every
+entry of it is a \emph{sum} $s^a_{\cdot\cdot}+s^b_{\cdot\cdot}$ of a contribution
+from each triangle: the discrete image of the shared edge. The diagonal entries
+$\mat{K}_{22}=s^a_{22}+s^b_{11}$ and $\mat{K}_{33}=s^a_{33}+s^b_{22}$ are two-term
+sums (multiplicity $2$), while $\mat{K}_{11}=s^a_{11}$ and $\mat{K}_{44}=s^b_{33}$
+are single terms (multiplicity $1$)---precisely
+$\sum_K\mat{R}_K^{\mathsf T}\mat{R}_K=\operatorname{diag}(1,2,2,1)$ of
+\cref{eq:multiplicity}. Nothing about the mechanism changed from 1-D; only the
+element matrices grew from $2\times2$ to $3\times3$ and the gather tables grew a
+column. The fold is identical.
+\end{workedexample}
+
+\section{Assembly is a fold over weak-form terms}
+\label{sec:fold}
+
+So far we have assembled \emph{one} operator from \emph{one} bilinear form, summed
+over elements. Real analyses ask for more. The driven Maxwell operator is the sum
+of three forms, $\mat{A}(\omega)=\mat{K}+i\omega\mat{C}-\omega^2\mat{M}$; a lossy
+or multi-material problem adds still more terms; the mass matrix and the stiffness
+matrix are two \emph{terms} an eigenmode analysis needs side by side. The global
+operator an analysis assembles is a sum over a \emph{list of weak-form terms},
+and each term's own assembly is, as we have just seen, a sum over elements. Two
+sums, nested---and both are folds.
+
+\subsection{The term list and its per-term operator}
+
+Recall from \cref{sec:family} that every term of the bilinear-form family has the
+shape $a_t(u,v)=(Q_t\,\diffop_t u,\diffop_t v)$: a material weight $Q_t$ and a
+differential operator $\diffop_t\in\{\Grad,\,\mathrm{id},\,\Curl,\,\Div\}$.
+Sampling one term on basis pairs and assembling it over the mesh
+(\cref{eq:assembly}) produces one global matrix; call it $\mat{A}_t$, the
+\emph{per-term operator}. An analysis hands the assembler a list of terms
+$[\,t_1,t_2,\dots,t_m\,]$ and wants the matrix of the total form $a=\sum_t a_t$.
+Because sampling and assembly are linear in the form,
+\begin{equation}
+\mat{K}=\sum_{t}\mat{A}_t,
+\qquad
+\mat{A}_t=\sum_{K\in\mathcal{T}}\mat{R}_K^{\mathsf T}\,
+\mat{A}^{\mathrm{elem}}_{t,K}\,\mat{R}_K .
+\label{eq:termsum}
+\end{equation}
+The outer sum is over \emph{terms}; the inner sum, hidden inside each
+$\mat{A}_t$, is over \emph{elements}. \Cref{fig:termfold} draws the outer one:
+each weak-form term enters its own assembly and the per-term operators are summed
+into the global operator.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm and 12mm, every node/.style={font=\footnotesize}]
+  \node[opbox] (t1) {$t_1=(\varepsilon,\Grad)$};
+  \node[opbox, below=of t1] (t2) {$t_2=(\sigma,\mathrm{id})$};
+  \node[opbox, below=of t2] (t3) {$t_3=(\nu,\Curl)$};
+  \node[stage, right=16mm of t1] (a1) {assemble};
+  \node[stage, right=16mm of t2] (a2) {assemble};
+  \node[stage, right=16mm of t3] (a3) {assemble};
+  \draw[flow] (t1) -- (a1);
+  \draw[flow] (t2) -- (a2);
+  \draw[flow] (t3) -- (a3);
+  \node[right=4mm of a1] (m1) {$\mat{A}_1$};
+  \node[right=4mm of a2] (m2) {$\mat{A}_2$};
+  \node[right=4mm of a3] (m3) {$\mat{A}_3$};
+  \draw[flow] (a1)--(m1);
+  \draw[flow] (a2)--(m2);
+  \draw[flow] (a3)--(m3);
+  \node[product, right=14mm of m2] (K) {$\mat{K}=\displaystyle\sum_t\mat{A}_t$};
+  \draw[flow] (m1) -- (K);
+  \draw[flow] (m2) -- (K);
+  \draw[flow] (m3) -- (K);
+  \node[font=\scriptsize\itshape, simGray, above=2mm of t1, xshift=6mm]
+    {list of weak-form terms};
+\end{tikzpicture}
+\caption[The term fold $\mat{K}=\sum_t\mat{A}_t$]{The outer sum of
+\cref{eq:termsum}. An analysis specifies a list of weak-form terms; each term
+$t=(Q,\diffop)$ assembles (via \cref{eq:assembly}, an inner sum over elements)
+into its own global operator $\mat{A}_t$; the global operator of the analysis is
+the sum $\mat{K}=\sum_t\mat{A}_t$. Adding a physical effect---a loss term, a
+second material, the $i\omega\mat{C}$ damping---means appending one term to the
+list, never rebuilding from scratch.}
+\label{fig:termfold}
+\end{figure}
+
+\subsection{Naming the pattern: \texttt{foldr}}
+
+\Cref{eq:termsum} is not merely a formula; it is a \emph{computational pattern}
+with a name. We have a list, a way to turn each list element into a matrix, and a
+way to combine matrices---add them, starting from the zero matrix. Walking a list
+and combining its elements into a single accumulated result is the job of the
+higher-order function \texttt{fold}. In the pseudo-language of Part~III, the
+assembly operator \code{fe\_assemble} is written exactly this way:
+\begin{lstlisting}[style=l4style]
+fe_assemble :: (space: FiniteElementSpace, terms: [WeakFormTerm]) -> LinOp
+fe_assemble space terms = foldr (\t acc -> assembleTerm space t + acc) zero terms
+                        -- = sum over t in terms of  assembleTerm space t
+\end{lstlisting}
+Read the body left to right. \code{foldr} walks the list \code{terms} from the
+right; for each term \code{t} it computes that term's operator
+\code{assembleTerm\ space\ t} and \emph{adds} it to the accumulator \code{acc};
+the walk starts from \code{zero}, the zero operator. Unfolded, the call is
+\[
+\texttt{assembleTerm}\,t_1+\bigl(\texttt{assembleTerm}\,t_2+\cdots
++(\texttt{assembleTerm}\,t_m+\mathbf 0)\bigr)
+=\sum_t\mat{A}_t,
+\]
+which is \cref{eq:termsum} exactly. The single per-term map
+\code{assembleTerm\ space\ t}---the realization of one $(Q,\diffop)$ term as a
+global matrix---is itself the inner element-fold \cref{eq:assembly}; we treat it
+here as an opaque leaf and fold over it. The point is the \emph{outer} structure:
+assembly of an analysis is one fold over the term list.
+
+\begin{keyidea}
+\textbf{Assembly is a commutative-monoid fold over the list of weak-form terms.}
+The ingredients are a combine operation (operator addition $+$), an identity for
+it (the zero operator $\mathbf 0$), and a list (the weak-form terms). Operator
+addition is associative and commutative and has $\mathbf 0$ as identity---it forms
+a \emph{commutative monoid}---and folding a list with a commutative-monoid
+operation is the cleanest combinator pattern there is. Three consequences follow
+purely from this algebra, with no reference to any code: assembling no terms
+yields the zero operator; assembling a concatenated list equals assembling the
+parts and adding; and the order of the terms never matters. We prove all three in
+\cref{sec:laws}. This is the reader's first deep encounter with a thesis Part~III
+makes central---\emph{the simulator's structure is folds over lists}
+(\cref{ch:fold}, \cref{ch:combinators}).
+\end{keyidea}
+
+\section{The three laws of the assembly fold}
+\label{sec:laws}
+
+The commutative-monoid structure is not decoration; it is a set of guarantees an
+engineer relies on. We state them as a theorem and prove them from the algebra of
+operator addition alone---so they hold for \emph{every} analysis, regardless of
+which terms are in the list or how the per-term operators are computed.
+
+\begin{theorem}[Algebraic laws of assembly]
+\label{thm:foldlaws}
+Let $\mathrm{asm}(\mathit{terms})=\sum_{t\in\mathit{terms}}\mat{A}_t$ be the
+assembled global operator on a fixed finite-element space, where $\mat{A}_t$ is
+the per-term operator and $+$ is operator addition with identity the zero operator
+$\mathbf 0$. Then:
+\begin{enumerate}[label=\textup{(\roman*)},nosep]
+\item \emph{(Empty-list identity)} $\mathrm{asm}([\,])=\mathbf 0$.
+\item \emph{(Concatenation homomorphism)} for any two term lists $T_1,T_2$,
+\[
+\mathrm{asm}(T_1\!+\!\!+\,T_2)=\mathrm{asm}(T_1)+\mathrm{asm}(T_2),
+\]
+where $+\!\!+$ is list concatenation.
+\item \emph{(Order independence)} $\mathrm{asm}(\mathit{terms})$ is unchanged
+under any permutation of $\mathit{terms}$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+All three are properties of the sum, inherited from operator addition.
+
+\emph{(i)} The empty list has no summands, and the empty sum is by convention the
+identity of the operation summed: $\sum_{t\in[\,]}\mat{A}_t=\mathbf 0$. (This is
+the base case of the fold: \code{foldr\ f\ zero\ [\,]\ =\ zero}.)
+
+\emph{(ii)} Concatenating two lists concatenates their summands, and a sum over a
+concatenated index set splits:
+\[
+\mathrm{asm}(T_1\!+\!\!+\,T_2)
+=\sum_{t\in T_1+\!\!+\,T_2}\mat{A}_t
+=\sum_{t\in T_1}\mat{A}_t+\sum_{t\in T_2}\mat{A}_t
+=\mathrm{asm}(T_1)+\mathrm{asm}(T_2).
+\]
+The middle equality is associativity of $+$ (regroup the summands into the two
+sublists). A map from list-concatenation to a combine on results is exactly a
+\emph{list homomorphism}; (ii) says assembly \emph{is} one.
+
+\emph{(iii)} A permutation reorders the summands but changes neither the set of
+summands nor their total, because $+$ is commutative and associative: any
+reordering of $\mat{A}_{t_1}+\cdots+\mat{A}_{t_m}$ gives the same operator. The
+list of terms is therefore effectively an unordered \emph{bag}.
+\end{proof}
+
+\begin{remark}
+The three laws are not independent novelties; they are the universal property of
+folding over a commutative monoid, specialized to (operators, $+$, $\mathbf 0$).
+Any fold over any commutative monoid satisfies the analogues. We will meet the
+same three laws again when we fold over \emph{elements} inside a single
+$\mat{A}_t$ (the inner sum of \cref{eq:termsum}, also a commutative-monoid fold),
+and yet again, abstracted away from finite elements entirely, in
+\cref{ch:combinators}. Recognizing the pattern once buys it everywhere.
+\end{remark}
+
+\begin{workedexample}{The concatenation homomorphism, numerically}{concat-homo}
+\label{wex:concat-homo}
+Law (ii) of \cref{thm:foldlaws} says we may assemble a combined term list, or
+assemble the pieces and add, and get the same operator. We check it on the
+$3$-node 1-D mesh of \cref{wex:assemble-1d}, with a two-term list: a stiffness
+term $t_K=(1,\Grad)$ and a mass term $t_M=(1,\mathrm{id})$.
+
+\emph{The two per-term operators.} The stiffness operator is the
+$\mat{K}=\tfrac1h\operatorname{tridiag}(-1,2,-1)$ of \cref{wex:assemble-1d}; with
+$h=\tfrac14$, $\mat{K}=4\operatorname{tridiag}(-1,2,-1)$. The mass operator is the
+$\mat{M}=\tfrac h6\operatorname{tridiag}(1,4,1)$ of \cref{wex:mass}; with
+$h=\tfrac14$, $\mat{M}=\tfrac1{24}\operatorname{tridiag}(1,4,1)$. (Each is itself
+an inner element-fold, assembled exactly as in \cref{wex:assemble-1d}.)
+
+\emph{Route A: assemble the concatenated list.} Feed the assembler the single
+list $[\,t_K,t_M\,]$. Its fold computes
+$\mathrm{asm}([t_K,t_M])=\mat{A}_{t_K}+\mat{A}_{t_M}=\mat{K}+\mat{M}$:
+\[
+\mat{K}+\mat{M}
+=4\!\begin{pmatrix}2&-1&0\\-1&2&-1\\0&-1&2\end{pmatrix}
++\frac1{24}\!\begin{pmatrix}4&1&0\\1&4&1\\0&1&4\end{pmatrix}
+=\begin{pmatrix}
+\tfrac{49}{6} & -\tfrac{95}{24} & 0\\[2pt]
+-\tfrac{95}{24} & \tfrac{49}{6} & -\tfrac{95}{24}\\[2pt]
+0 & -\tfrac{95}{24} & \tfrac{49}{6}
+\end{pmatrix}.
+\]
+(Diagonal: $8+\tfrac{4}{24}=8+\tfrac16=\tfrac{49}{6}$. Off-diagonal:
+$-4+\tfrac{1}{24}=-\tfrac{95}{24}$.)
+
+\emph{Route B: assemble each, then add.} Call the assembler twice---once on
+$[t_K]$, once on $[t_M]$---obtaining $\mat{K}$ and $\mat{M}$ separately, and add
+the two matrices. The result is the very same $\mat{K}+\mat{M}$ above, entry for
+entry. The two routes agree, as law (ii) promised: $\mathrm{asm}([t_K,t_M])
+=\mathrm{asm}([t_K])+\mathrm{asm}([t_M])$.
+
+\emph{Why it matters.} Route B is what an analysis actually does when it caches
+the stiffness once and reuses it while sweeping a frequency-dependent combination
+$\mat{K}-\omega^2\mat{M}$ (the driven analysis, \cref{ch:driven}): law (ii)
+guarantees the cached-and-combined operator is bit-for-bit the from-scratch
+assembly. It is also the law that makes assembly \emph{splittable across
+processors}---hand half the term list (or half the elements) to each of two
+machines, assemble independently, and add the results.
+\end{workedexample}
+
+\section{What is \emph{not} in the fold}
+\label{sec:notinfold}
+
+A fold's discipline is as much about what it excludes as what it includes. Two
+operations that beginners often imagine are part of assembly are deliberately
+\emph{outside} it.
+
+\subsection{Boundary conditions are separable post-compositions}
+
+The assembled operator $\mat{K}=\sum_t\mat{A}_t$ of \cref{eq:termsum} knows
+nothing about boundary conditions. Essential (Dirichlet) conditions---pinning
+certain degrees of freedom to prescribed values---are imposed \emph{after} the
+fold, by acting on the already-assembled $\mat{K}$: the rows and columns of the
+pinned dofs are eliminated, and any inhomogeneous data is lifted into the
+right-hand side. Crucially, this elimination is a function of the assembled
+operator alone; it does not care which terms were folded to build it, or in what
+order. Assembly builds the operator; boundary-condition elimination is a
+\emph{separable post-composition} on it, valid independently of the assembly. This
+is why \cref{thm:foldlaws} can hold without any boundary-condition hypothesis: the
+laws are about the fold, and the fold ends before the boundary conditions begin.
+\Cref{ch:bc} takes up the elimination in full, including why keeping it separate
+preserves symmetry and how inhomogeneous data moves to the load vector.
+
+\begin{pitfall}
+It is tempting to ``apply the boundary conditions as you assemble''---skipping the
+pinned rows inside the element loop. This works, but it fuses two stages that are
+cleaner apart, and it breaks the fold laws: an assembler that eliminates
+mid-fold is no longer a homomorphism, because $\mathrm{asm}(T_1\!+\!\!+\,T_2)$
+would eliminate twice. Keep the fold pure and post-compose the elimination once;
+\cref{thm:foldlaws} is the reward. We assembled the \emph{interior} dofs in
+\cref{wex:assemble-1d} precisely by dropping boundary slots, but notice we dropped
+them from the \emph{connectivity} ($\mat{R}_K$), not by altering the fold's combine
+step---the fold itself stayed a clean sum.
+\end{pitfall}
+
+\subsection{The matrix need not be formed at all}
+
+The second exclusion is subtler and points forward to \cref{ch:matrixfree}.
+Equation~\cref{eq:assembly} \emph{forms} the global matrix $\mat{K}$---it
+materializes every nonzero entry into storage. But the only thing the iterative
+solvers of \cref{part:framework} ever ask of $\mat{K}$ is its \emph{action} on a
+vector, $\vw\mapsto\mat{K}\vw$. And the action distributes through both folds
+without ever building the matrix:
+\begin{equation}
+\mat{K}\vw=\Bigl(\sum_t\sum_{K}\mat{R}_K^{\mathsf T}\mat{A}^{\mathrm{elem}}_{t,K}\mat{R}_K\Bigr)\vw
+=\sum_t\sum_{K}\mat{R}_K^{\mathsf T}\bigl(\mat{A}^{\mathrm{elem}}_{t,K}(\mat{R}_K\vw)\bigr).
+\label{eq:matrixfree-preview}
+\end{equation}
+Read the right-hand side as an algorithm: for each term and each element, gather
+the element's slice of $\vw$ (apply $\mat{R}_K$), hit it with the small element
+matrix, scatter-add the result (apply $\mat{R}_K^{\mathsf T}$); sum over all
+elements and terms. No global matrix is ever assembled---only the small element
+matrices (or, in libCEED, not even those) and the gather/scatter tables are kept.
+This is the \emph{matrix-free} operator, and it is exactly the same fold, with the
+combine step ``add into the global matrix'' replaced by ``add into the global
+\emph{output vector}.''~\Cref{ch:matrixfree} develops it; \cref{eq:matrixfree-preview}
+is the seed.
+
+There is one more layer to peel, which we record now because it justifies the
+notation $\mat{R}_K=G$ and points squarely at the production code. The element
+matrix $\mat{A}^{\mathrm{elem}}_{t,K}$ is itself never formed in a high-performance
+matrix-free kernel; it factors as
+\begin{equation}
+\mat{A}^{\mathrm{elem}}_{t,K}=B^{\mathsf T}_{\diffop}\,D\,B_{\diffop},
+\label{eq:bdb}
+\end{equation}
+where $B_{\diffop}$ \emph{evaluates} the differential operator $\diffop$ of the
+term at the element's quadrature points (the ``basis apply''), $D$ is a diagonal
+of \emph{quadrature weights times the material coefficient $Q$} at those points,
+and $B^{\mathsf T}_{\diffop}$ integrates back. Substituting \cref{eq:bdb} into
+\cref{eq:matrixfree-preview}, one term's global action is the five-stage pipeline
+\begin{equation}
+\mat{A}_t=\;G^{\mathsf T}\;B^{\mathsf T}_{\diffop}\;D\;B_{\diffop}\;G,
+\label{eq:gtbdbg}
+\end{equation}
+read right to left: gather to elements ($G$), evaluate at quadrature points
+($B_{\diffop}$), scale by weighted material values ($D$), integrate back
+($B^{\mathsf T}_{\diffop}$), scatter-add to global ($G^{\mathsf T}$). Only the
+diagonal $D$ carries any floating-point ``physics''; $G$ and $B$ are fixed,
+problem-independent index-and-interpolation maps. This factorization is the
+contract of the libCEED library Palace assembles through, and its vocabulary---an
+``$E$-vector'' is the element-local $G\vw$, an ``$L$-vector'' is the global $\vw$,
+a ``$Q$-vector'' is the quadrature-point data---is precisely the gather/scatter
+language of \cref{sec:gatherscatter}. We will not need \cref{eq:gtbdbg} again until
+\cref{ch:matrixfree}, but it is worth seeing once that the entire matrix-free
+apply is \emph{still the same two folds}, with the per-element work itself expanded
+into a tiny pipeline.
+
+\section{Sparsity, storage, and cost}
+\label{sec:cost}
+
+We close with the practical consequences of the fold structure: where the
+sparsity comes from, what it costs to assemble, and where the parallelism lives.
+
+\subsection{Why the assembled matrix is sparse}
+
+The sparsity of $\mat{K}$ that \cref{ch:galerkin} attributed to the local support
+of the basis is, from the assembly viewpoint, even more transparent. Each term
+$\mat{R}_K^{\mathsf T}\mat{A}^{\mathrm{elem}}_{t,K}\mat{R}_K$ in \cref{eq:assembly}
+is nonzero \emph{only} on the $L\times L$ block of rows and columns indexed by
+element $K$'s degrees of freedom. A global entry $\mat{K}_{ij}$ can be nonzero
+only if some single element $K$ owns \emph{both} dof $i$ and dof $j$---i.e.\ only
+if nodes $i$ and $j$ are vertices of a common cell. Since each node belongs to a
+bounded number of cells (two in 1-D, a small fan in 2-D/3-D), each row of
+$\mat{K}$ has only a bounded number of nonzeros, independent of how large the mesh
+grows. The matrix has $\mathcal{O}(N)$ nonzeros, not $N^2$. The sparsity
+\emph{pattern} is read straight off the gather tables: $\mat{K}_{ij}\neq0$ iff
+$i,j$ share an element. \Cref{fig:sparsitypattern} shows a small 2-D example.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\scriptsize}]
+  % left: tiny 2D mesh (3x3 nodes, split into triangles)
+  \begin{scope}[shift={(0,0)}]
+    \foreach \x in {0,1,2}\foreach \y in {0,1,2}{
+      \fill[simInk] (\x,\y) circle (1.4pt);}
+    % grid lines + diagonals
+    \foreach \y in {0,1,2}{\draw[simGray] (0,\y)--(2,\y);}
+    \foreach \x in {0,1,2}{\draw[simGray] (\x,0)--(\x,2);}
+    \foreach \x in {0,1}\foreach \y in {0,1}{\draw[simGray] (\x,\y+1)--(\x+1,\y);}
+    % label center node 4 and highlight its star
+    \node[simRust, below right, font=\tiny] at (1,1) {$4$};
+    \fill[simRust] (1,1) circle (2.0pt);
+    \node[font=\tiny] at (1,-0.5) {mesh: node $4$ couples to its neighbours};
+  \end{scope}
+  % right: the sparsity grid (9x9) with node 4's row marked
+  \begin{scope}[shift={(4.6,-0.3)}, scale=0.34]
+    \foreach \r in {0,...,8}\foreach \c in {0,...,8}{
+      \draw[simGray!35] (\c,-\r) rectangle ++(0.94,-0.94);}
+    % node numbering: bottom-left=0..8 row-major; node4=center couples to 1,3,4,5,7 (and diag 0,8 via triangles)
+    \def\nbrs{1,3,4,5,7,0,8}
+    \foreach \c in {1,3,4,5,7,0,8}{
+      \fill[simBlue!45] (\c,-4) rectangle ++(0.94,-0.94);
+      \fill[simBlue!45] (4,-\c) rectangle ++(0.94,-0.94);}
+    \fill[simRust!60] (4,-4) rectangle ++(0.94,-0.94);
+    \draw[simInk,thick] (0,0) rectangle (9,-9);
+    \node[anchor=west, scale=2.2, align=left] at (9.6,-4.5) {row/col\\of node $4$};
+  \end{scope}
+\end{tikzpicture}
+\caption[Sparsity from local support]{Sparsity of the assembled matrix on a small
+$3\times3$-node triangular mesh. \emph{Left:} the centre node $4$ shares an
+element with only its immediate mesh neighbours. \emph{Right:} the resulting
+sparsity pattern. Row $4$ of $\mat{K}$ (and, by symmetry, column $4$) has a
+nonzero only in the columns of those neighbours; all other entries of the row are
+exactly zero, because no single element owns both node $4$ and a far node. Each
+row has a bounded number of nonzeros no matter how large the mesh grows: $\mat{K}$
+has $\mathcal{O}(N)$ nonzeros, and is stored as a sparse matrix---never as the
+full $N\times N$ array.}
+\label{fig:sparsitypattern}
+\end{figure}
+
+\subsection{The cost of assembly, and the scatter-add race}
+
+The element-fold runs over $n_e$ elements; on each it computes a dense
+$L\times L$ element matrix (a fixed amount of work set by the element type and
+polynomial degree, not by $N$) and scatters it. Assembly therefore costs
+\begin{equation}
+\mathcal{O}\bigl(n_e\times(\text{per-element work})\bigr)
+=\mathcal{O}(N)
+\label{eq:asmcost}
+\end{equation}
+total work, linear in the problem size---one of the cheapest stages of the whole
+pipeline. And because the element-fold is a commutative-monoid fold
+(\cref{thm:foldlaws}(iii)), the elements may be processed in \emph{any} order,
+and---more powerfully---in \emph{parallel}: order independence is exactly the
+licence to split the list across processors. Assembly is, in this sense,
+embarrassingly parallel over elements.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\footnotesize}]
+  % four element "workers" computing in parallel
+  \foreach \i/\x/\col in {1/0/simBlue,2/2.2/simRust,3/4.4/simGreen,4/6.6/simViolet}{
+    \node[opbox, draw=\col, minimum width=14mm] (w\i) at (\x,1.5)
+       {worker\\$K_\i$};
+  }
+  \node[font=\scriptsize\itshape, simGray] at (3.3,2.4) {parallel: element-local work is independent};
+  % global vector slots
+  \foreach \k/\lab in {0/1,1/2,2/3,3/4,4/5}{
+    \draw[simInk] (1.6+\k*0.9,-0.6) rectangle ++(0.8,0.8);
+    \node[font=\scriptsize] at (2.0+\k*0.9,-0.2) {$x_{\lab}$};
+  }
+  \node[anchor=east, font=\footnotesize\bfseries] at (1.5,-0.2) {global $\vx$:};
+  % scatter-add arrows: K1->x1,x2 ; K2->x2,x3 (collision on x2) etc
+  \draw[flow, simBlue] (w1) -- (2.0,0.25);
+  \draw[flow, simBlue] (w1) -- (2.9,0.25);
+  \draw[flow, simRust] (w2) -- (2.9,0.25);
+  \draw[flow, simRust] (w2) -- (3.8,0.25);
+  \draw[flow, simGreen] (w3) -- (3.8,0.25);
+  \draw[flow, simGreen] (w3) -- (4.7,0.25);
+  \draw[flow, simViolet] (w4) -- (4.7,0.25);
+  \draw[flow, simViolet] (w4) -- (5.6,0.25);
+  % collision markers on shared dofs x2,x3,x4
+  \foreach \k in {2,3,4}{
+    \node[circle,draw=simRust,fill=simBgRust,inner sep=1pt,font=\tiny]
+      at (1.1+\k*0.9,0.55) {$\scriptstyle\rightleftarrows$};}
+  \node[simRust!80!simInk, font=\scriptsize, align=left, anchor=west] at (6.2,0.5)
+     {shared dof:\\two writers\\$\Rightarrow$ race};
+\end{tikzpicture}
+\caption[Parallel over elements, race on shared dofs]{Assembly parallelizes over
+elements---each worker computes its element's contribution independently
+(top)---but the \emph{scatter-add} into the global vector is where independence
+breaks down. A degree of freedom shared by two elements has two workers trying to
+add into the same slot at once (the $\rightleftarrows$ markers). Because the
+underlying operation is addition, the \emph{result} is order-independent
+(\cref{thm:foldlaws}(iii)); but two simultaneous read--modify--write updates can
+interleave and lose one, a \emph{data race}. The race is resolved with atomic
+adds, per-colour scheduling, or thread-private buffers summed at the end---an
+implementation concern that does not change the assembled value.}
+\label{fig:parallelrace}
+\end{figure}
+
+There is exactly one place where the parallelism is not free, and the fold laws
+pinpoint it. The element-local \emph{computation} is perfectly independent across
+elements; the \emph{scatter-add} is not, because two elements sharing a degree of
+freedom write into the same global slot (\cref{fig:parallelrace}). The
+\emph{mathematical} result is order-independent---that is precisely
+\cref{thm:foldlaws}(iii)---but two threads performing
+read--modify--write on the same memory location can interleave and lose an
+update: a \emph{data race}. The fix is a matter of implementation, not
+mathematics: make the additions atomic, colour the elements so that no two
+sharing a dof run simultaneously, or give each thread a private accumulator and
+sum them at the end (itself one more application of \cref{thm:foldlaws}(ii)).
+Whichever is chosen, the assembled operator is the same: the race threatens the
+\emph{schedule}, never the \emph{answer}, because the answer is a commutative-
+monoid fold.
+
+\begin{physicsbox}
+The two parallel structures of assembly mirror the physics. Element-local work is
+parallel because, in the continuum, the contribution of each little region of
+space to the weak form is independent---fields do not interact across a region
+boundary except through the shared boundary itself. The scatter-add ``race'' on
+shared dofs is the discrete echo of that one exception: a node on the interface
+between two elements feels both, and its equation must collect both
+contributions. Superposition of local energies is the physics; scatter-add is its
+arithmetic; the commutative-monoid fold is its structure.
+\end{physicsbox}
+
+\summarysection
+Global assembly turns small, dense element matrices into the one large sparse
+global operator the solver sees, by a pair of indexing operations. The
+\emph{gather} $\mat{R}_K$ copies an element's global degrees of freedom into local
+order; the \emph{scatter-add} $\mat{R}_K^{\mathsf T}$ writes element-local results
+back, \emph{accumulating} where elements share a degree of freedom. The global
+operator is the element sum $\mat{K}=\sum_K\mat{R}_K^{\mathsf
+T}\mat{K}^{\mathrm{elem}}_K\mat{R}_K$, and the diagonal $\sum_K\mat{R}_K^{\mathsf
+T}\mat{R}_K$ counts each dof's element-multiplicity. An analysis assembles a
+\emph{list of weak-form terms}, each term assembling (an inner element-sum) into a
+per-term operator $\mat{A}_t$, and the global operator is the outer sum
+$\mat{K}=\sum_t\mat{A}_t$. Both sums are folds: assembly is a
+\emph{commutative-monoid fold}, \code{fe\_assemble} $=$ \code{foldr (+) zero},
+whose three laws---empty-list identity, concatenation homomorphism, and order
+independence---follow from operator addition alone and underwrite caching,
+splitting, and parallelism. Boundary-condition elimination is a \emph{separable
+post-composition} on the assembled operator (\cref{ch:bc}), not part of the fold;
+and the matrix need not be formed at all---the same fold, scattering into an
+output vector instead of a matrix, is the matrix-free operator of
+\cref{ch:matrixfree}. Sparsity follows from local support (a row is nonzero only
+in the columns sharing an element), assembly costs $\mathcal{O}(N)$, and it is
+embarrassingly parallel over elements save for the scatter-add race on shared
+dofs---a race in the \emph{schedule}, never the \emph{answer}. That assembly is a
+fold over a list is the reader's first deep meeting with the thread Part~III makes
+the spine of the whole book.
+
+\furtherreading
+The element-by-element assembly procedure, local-to-global maps, and the sparse
+storage of the resulting matrix are covered in every finite-element text; Brenner
+and Scott~\citep{brennerscott2008} give the mathematical framing (the assembly
+operator as a sum of restrictions) while Jin~\citep{jin2014} gives the engineering
+practice for electromagnetics specifically, including the element-matrix
+computations for the $\Hcurl$ and $\Hdiv$ bases we have only previewed. The
+gather/scatter-and-element-matrix decomposition $A=G^{\mathsf
+T}B^{\mathsf T}DBG$, and the matrix-free assembly that exploits it, are the
+organizing idea of the libCEED project~\citep{ceed2021}, whose ``$E$-vector /
+$L$-vector'' vocabulary is precisely the element-local versus global distinction
+of \cref{sec:gatherscatter}; readers headed for \cref{ch:matrixfree} will find the
+CEED interface a faithful realization of \cref{eq:matrixfree-preview}. The
+recognition of assembly as a fold and a list homomorphism, and the parallel
+decompositions it licenses, are developed abstractly in \cref{ch:combinators}.
+
+\exercisessection
+\begin{enumerate}[nosep]
+  \item \textbf{Multiplicity by hand.} For the four-element 1-D mesh of
+  \cref{wex:assemble-1d}, write out the diagonal matrix $\sum_K
+  \mat{R}_K^{\mathsf T}\mat{R}_K$ of \cref{eq:multiplicity} on the three interior
+  dofs. Confirm each entry is $2$ and explain, in one sentence, why the (omitted)
+  boundary nodes would have multiplicity $1$.
+
+  \item \textbf{Five elements.} Repeat \cref{wex:assemble-1d} for a mesh of $n=5$
+  cells ($h=\tfrac15$, four interior dofs). List the five elements and the global
+  indices of their local slots, then scatter-add the five $2\times2$ blocks and
+  read off the $4\times4$ tridiagonal $\mat{K}$. Which dofs have multiplicity $2$?
+
+  \item \textbf{A triangle's element matrix.} A single linear triangle has three
+  local dofs (its vertices) and a $3\times3$ element matrix. Without computing its
+  entries, write the assembly contribution $\mat{R}_K^{\mathsf
+  T}\mat{K}^{\mathrm{elem}}\mat{R}_K$ for a triangle whose vertices are global dofs
+  $\{2,5,7\}$: which $9$ entries of the global matrix does it touch, and what is
+  the multiplicity contribution to dof $5$ if three triangles meet there?
+
+  \item \textbf{Empty and singleton.} Using \cref{thm:foldlaws}, evaluate
+  $\mathrm{asm}([\,])$ and $\mathrm{asm}([t])$ for a single term $t$. Then show
+  $\mathrm{asm}([t_1,t_2])=\mathrm{asm}([t_2,t_1])$ directly from the two laws you
+  need, naming each.
+
+  \item \textbf{The homomorphism, again.} An eigenmode analysis needs both a
+  stiffness term $t_K$ and a mass term $t_M$. Using law (ii), express
+  $\mathrm{asm}([t_K,t_M])$ in terms of the separately-assembled $\mat{K}$ and
+  $\mat{M}$. Then explain why the driven analysis, which forms
+  $\mat{K}-\omega^2\mat{M}$ at many frequencies $\omega$, assembles $\mat{K}$ and
+  $\mat{M}$ \emph{once} rather than re-running the fold at each frequency---and
+  which law guarantees this is correct.
+
+  \item \textbf{Matrix-free apply.} Starting from \cref{eq:matrixfree-preview},
+  write out $\mat{K}\vw$ for the single-term four-element mesh of
+  \cref{wex:assemble-1d} acting on $\vw=(1,0,0)^{\mathsf T}$, by gathering,
+  applying the $2\times2$ element matrix, and scatter-adding---without ever forming
+  $\mat{K}$. Check your answer against the first column of the tridiagonal
+  $\mat{K}$.
+
+  \item \textbf{Boundary conditions outside the fold.} Suppose you ``optimize'' the
+  assembler to skip the equation of a pinned dof \emph{inside} the element loop,
+  before summing. Give a two-term list $T_1\!+\!\!+\,T_2$ for which this fused
+  assembler violates the concatenation homomorphism (ii), and identify the double-
+  counting. (Hint: what happens to the pinned dof's row when both sublists pass
+  through the elimination?)
+
+  \item \textbf{The scatter-add race.} On the parallel picture of
+  \cref{fig:parallelrace}, suppose two threads each execute
+  \texttt{x[2] = x[2] + (local contribution)} on the shared dof $x_2$ without
+  synchronization. Describe a specific interleaving of their reads and writes that
+  loses one contribution, and explain why \cref{thm:foldlaws}(iii) nonetheless
+  guarantees the \emph{intended} result is independent of which thread goes first.
+  Which of the three fixes named in the text (atomics, colouring, private buffers)
+  relies on law (ii)?
+\end{enumerate}

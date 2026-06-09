@@ -1,0 +1,42 @@
+% simtikz.sty — shared TikZ styles for the recurring textbook diagrams.
+% Loaded after simbook.sty (which pulls in tikz + libraries + the palette).
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{style/simtikz}[2026/06/09 Shared TikZ styles]
+
+\tikzset{
+  % generic pipeline / block-diagram nodes
+  stage/.style={
+    draw=simBlue, fill=simBgBlue, rounded corners=2pt, thick,
+    minimum height=8mm, minimum width=20mm, align=center,
+    font=\small, text=simInk, inner sep=4pt},
+  opbox/.style={
+    draw=simTeal, fill=simBgGray, rounded corners=2pt, semithick,
+    minimum height=7mm, align=center, font=\footnotesize, text=simInk, inner sep=3pt},
+  product/.style={
+    draw=simRust, fill=simBgRust, rounded corners=2pt, thick,
+    minimum height=8mm, align=center, font=\small\bfseries, text=simInk, inner sep=4pt},
+  extern/.style={
+    draw=simViolet, fill=simBgViolet, rounded corners=1pt, semithick, densely dashed,
+    minimum height=7mm, align=center, font=\footnotesize, text=simInk, inner sep=3pt},
+  data/.style={
+    draw=simGray, fill=white, rounded corners=6pt, semithick,
+    minimum height=6mm, align=center, font=\footnotesize\itshape, text=simInk, inner sep=3pt},
+  % flow arrows
+  flow/.style={-{Stealth[length=2.5mm]}, thick, simInk},
+  backflow/.style={-{Stealth[length=2.5mm]}, thick, simRust, densely dashed},
+  refedge/.style={-{Stealth[length=2mm]}, semithick, simGray, densely dotted},
+  depedge/.style={-{Stealth[length=2.5mm]}, thick, simBlue},
+  % a labeled "corner" tag
+  cornertag/.style={font=\scriptsize\bfseries, text=simGray},
+  % de Rham space node
+  space/.style={
+    draw=simGreen, fill=simBgGreen, rounded corners=2pt, thick,
+    minimum height=9mm, minimum width=16mm, align=center, font=\small, text=simInk},
+  % a thin "stratum band"
+  band/.style={rounded corners=2pt, minimum height=6mm, align=center, font=\footnotesize,
+    inner sep=3pt},
+}
+
+% A reusable "physical-setup" framed mini-canvas size hint (used inside physicsbox figures)
+\newcommand{\physicsframe}[1]{%
+  \begin{center}\begin{tikzpicture}[scale=1,every node/.style={font=\footnotesize}]#1\end{tikzpicture}\end{center}}

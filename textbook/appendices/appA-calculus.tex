@@ -1,0 +1,844 @@
+\chapter{The Formal Calculus: Grammar and Reduction Rules}
+\label{app:calculus}
+
+\chapterorient{Part~III taught the calculus the way one learns a spoken
+language---by use, with intuition leading and precision following. This appendix
+is the grammar book. It states, in one place and with no hand-waving, the two
+pieces that \emph{define} the language: a \emph{grammar} (the legal types and
+terms---what you are allowed to write down) and a \emph{small-step reduction
+relation} (how an expression computes, one rewrite at a time---what those terms
+\emph{mean}). Everything the main text said informally about values, records,
+the state monad, \texttt{iterate\_while}, and demand-driven pruning is here as a
+formal rule. You can read this appendix as the precise companion to
+\cref{ch:language} (values and functions), \cref{ch:monad} (the state monad),
+and \cref{ch:fold} (the fold and its pruning); each rule below carries a
+back-reference to the chapter that uses it. The reward for the formality is
+concrete: the whole language is a handful of reduction rules, and its one
+genuinely unusual rule---demand-driven pruning---is what makes ``compute the
+diagnostics'' and ``skip them for speed'' the \emph{same program}.}
+
+\section{What a formal calculus is, and why this one is small}
+\label{app:calc:orient}
+
+A \emph{calculus}, in the sense used here, is a tiny formal language given by two
+ingredients. The first is a \emph{grammar}: a finite set of rules, written in
+Backus--Naur form (BNF), that says exactly which strings of symbols are legal
+\emph{types} and legal \emph{terms}. The grammar is purely syntactic---it tells
+you what you may write, not what it does. The second is an \emph{operational
+semantics}: a \emph{reduction relation} $e \to e'$, read ``the expression $e$
+steps to the expression $e'$,'' that says how a term computes by rewriting,
+one small step at a time, until no rule applies and we are left with a
+\emph{value}---a fully reduced answer.
+
+This is the same machinery that defines the lambda calculus and, through it, every
+typed functional language; our notation is a deliberately small dialect of it.
+``Small'' is a design goal, not an accident. The calculus admits exactly what
+Palace's algorithms need to be written cleanly---immutable values, records,
+first-class functions, a state monad for orchestration, and one iteration
+combinator---and nothing more. There is no inheritance, no exception machinery,
+no mutable reference cell, no general recursion beyond the one loop combinator.
+The smaller the calculus, the shorter the argument that an L3 form and its L4
+re-expression compute the same thing (\cref{ch:rotations}), and the less there is
+for a reader---or a checking tool---to get wrong.
+
+\begin{keyidea}
+The entire computational content of the calculus is a \emph{handful of reduction
+rules}: $\beta$-reduction and \code{let} for functions, projection and
+destructuring for records, three monad laws and the state effects for
+orchestration, one rule for operator application, one recursive rule for
+\code{iterate\_while}, and---the signature move---one rule for demand-driven
+pruning. Master those and you have the formal meaning of every program in the
+book. The grammar says what you may write; the reduction rules say what it means.
+\end{keyidea}
+
+\Cref{fig:appA:layered} shows the shape of the whole appendix: the grammar
+defines two layers (the type language and the term language), and the reduction
+relation acts on the term layer, rewriting terms to values while the type
+language stands guard over what is well-formed.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm]
+  % ===== top band: the TYPE language =====
+  \node[band, fill=simBgBlue, draw=simBlue, minimum width=118mm, thick] (typesband)
+    at (0,2.6) {};
+  \node[font=\small\bfseries, simBlue, anchor=west] at (-5.7,2.6)
+    {\textsc{type language}~~$\tau$};
+  \node[font=\scriptsize, simInk, anchor=east, align=right] at (5.7,2.6)
+    {\code{Scalar} \;\code{Tensor[$\sigma$]} \;\code{\{l:$\tau$\}} \;$\tau_1{\to}\tau_2$
+     \;\code{Sim $\tau$} \;\code{Op[$\cdot$]} \;\code{!$\tau$}};
+  % ===== middle band: the TERM language =====
+  \node[band, fill=simBgGray, draw=simGray, minimum width=118mm, thick] (termsband)
+    at (0,1.3) {};
+  \node[font=\small\bfseries, simInk, anchor=west] at (-5.7,1.3)
+    {\textsc{term language}~~$e$};
+  \node[font=\scriptsize, simInk, anchor=east, align=right] at (5.7,1.3)
+    {$x$ \;$\lambda x.e$ \;$e_1\,e_2$ \;\code{let} \;\code{\{l:e\}} \;\code{e.l}
+     \;\code{if} \;\code{op($\bar e$)} \;\code{apply} \;\code{do} \;\code{iterate\_while}};
+  % types classify terms
+  \draw[depedge] (typesband.south) -- node[right, font=\scriptsize, simBlue]
+    {classifies (\;$\Gamma \vdash e : \tau$\;)} (termsband.north);
+  % ===== reduction acts on terms, producing values =====
+  \node[product, minimum width=26mm] (val) at (0,-0.9) {a \emph{value} $v$};
+  \draw[flow] (termsband.south) -- node[right, font=\scriptsize]
+    {reduction $e \to e'$ (\cref{app:calc:reduction})} (val);
+  \node[align=left, font=\scriptsize\itshape, simGray, text width=40mm]
+    at (4.9,-0.4) {a term reduces, one small step at a time, until no rule
+    applies---then it is a value.};
+\end{tikzpicture}
+\caption[The layered structure of the calculus]{The calculus has two grammatical
+layers and one dynamics. The \emph{type language} $\tau$
+(\cref{app:calc:types}) names the kinds of thing that exist---scalars, tensors,
+records, functions, the simulator monad, operators. The \emph{term language} $e$
+(\cref{app:calc:terms}) names the expressions you may write. A typing judgment
+$\Gamma \vdash e : \tau$ says a term is well-formed and assigns it a type
+(\cref{app:calc:typing}). The \emph{reduction relation} $e \to e'$
+(\cref{app:calc:reduction}) is the dynamics: it rewrites a well-typed term, one
+step at a time, down to a value. This appendix gives all three.}
+\label{fig:appA:layered}
+\end{figure}
+
+\section{The grammar: types}
+\label{app:calc:types}
+
+We give the grammar in two halves, types first. A \emph{type} classifies values:
+it is the static description of what kind of thing an expression denotes, checked
+before any reduction happens. The type language is the following BNF, with each
+production a way of forming a legal type $\tau$. (Throughout, $\tau$ ranges over
+types, $\sigma$ over shape expressions, $l$ over field labels.)
+
+\begin{lstlisting}[style=l4style, language=]
+tau ::= Scalar | Bool | Int | Float         -- ground scalar types
+      | Tensor[sigma]                        -- tensor with symbolic shape sigma
+      | { l1: tau1, ..., ln: taun }          -- record (TypeScript-flavored)
+      | tau1 x ... x taun                    -- tuple
+      | tau1 -> tau2                          -- function
+      | Sim tau                              -- simulator monad
+      | Op[tau_in -> tau_out]                -- operator carrying baked-in params
+      | !tau                                 -- shareable (non-linear) annotation
+\end{lstlisting}
+
+\noindent Each production earns its place. We name what it is \emph{for}, with a
+one-line example, taking them in the order written.
+
+\begin{description}[style=nextline, leftmargin=1.4em, font=\normalfont\itshape]
+  \item[Ground scalars \code{Scalar}, \code{Bool}, \code{Int}, \code{Float}.] The
+  atoms: a single number, a truth value, an integer, a floating-point number.
+  \code{Scalar} is the generic numeric atom (a coefficient $\alpha$ in
+  \code{axpy}); \code{Bool} types a predicate's answer; \code{Int} an iteration
+  counter; \code{Float} an explicit floating value. \emph{Example:}
+  \lstinline[style=l4style]|tol : Float|, \lstinline[style=l4style]|converged : Bool|.
+  \item[Tensors \code{Tensor[$\sigma$]}.] An immutable multidimensional array
+  whose shape is the symbolic expression $\sigma$ (the shape grammar is
+  \cref{app:shapes}; we treat $\sigma$ as opaque here). This is the
+  workhorse---every field, every vector, every operator's argument is a tensor.
+  \emph{Example:} \lstinline[style=l4style]|Tensor[N]| is a length-$N$ vector;
+  \lstinline[style=l4style]|Tensor[m, n]| a matrix.
+  \item[Records \code{\{$l_1$: $\tau_1$, \dots, $l_n$: $\tau_n$\}}.] A bundle of
+  named fields, each with its own type---the calculus's only aggregate
+  (\cref{ch:records}). Solver state, configuration, and every step's output are
+  records. \emph{Example:}
+  \lstinline[style=l4style]|{ x: Float, residual: Float }|.
+  \item[Tuples \code{$\tau_1 \times \cdots \times \tau_n$}.] A positional bundle:
+  a fixed-length, heterogeneous sequence accessed by position rather than by
+  name. Used where a couple of results travel together and naming them would be
+  ceremony. \emph{Example:} \lstinline[style=l4style]|(Tensor[N], Scalar)|.
+  \item[Functions \code{$\tau_1 \to \tau_2$}.] The type of a value that maps a
+  $\tau_1$ to a $\tau_2$. The arrow associates to the right, so
+  \lstinline[style=l4style]|A -> B -> C| is \lstinline[style=l4style]|A -> (B -> C)|
+  (\cref{ch:language}). \emph{Example:}
+  \lstinline[style=l4style]|Tensor[N] -> Scalar| is the type of \code{nrm2}.
+  \item[The simulator monad \code{Sim $\tau$}.] The type of an \emph{action} that,
+  when run against the simulator's state, produces a $\tau$ while threading that
+  state (\cref{ch:monad}). It marks orchestration---file I/O, multi-stage
+  workflows, RNG threading---as distinct from pure per-step computation.
+  \emph{Example:} \lstinline[style=l4style]|get : Sim S|.
+  \item[Operators \code{Op[$\tau_{\text{in}} \to \tau_{\text{out}}$]}.] A function
+  value that \emph{also carries baked-in parameters}---matrix entries, a
+  factorization, basis tables (\cref{ch:operators}). It is the closure ``configure
+  once, apply many times'' given a first-class spelling; the brackets group the
+  in/out arrow. \emph{Example:}
+  \lstinline[style=l4style]|Op[Tensor[N] -> Tensor[N]]|, an assembled linear
+  operator.
+  \item[The shareable annotation \code{!$\tau$}.] A tag marking a value as
+  \emph{shareable} (non-linear): it may be read repeatedly without being consumed.
+  It distinguishes an operator's read-only baked-in parameters from the linearly
+  threaded simulator state (\cref{app:calc:ownership}). \emph{Example:}
+  \lstinline[style=l4style]|!LbmTables|, the velocity/weight tables closed into an
+  operator.
+\end{description}
+
+\begin{notationbox}
+The shape expression $\sigma$ inside \code{Tensor[$\sigma$]} has its own grammar
+and its own algebra (literal axes, named axes, congruence groups
+\lstinline[style=l4style]|Tensor[(S: ...)]|, rank wildcards). That grammar is the
+subject of \cref{app:shapes} and is treated as opaque here: as far as the
+\emph{term} calculus is concerned, \code{Tensor[$\sigma$]} is one ground type,
+and shape checking is a side condition resolved by a separate shape solver. The
+two appendices compose---this one gives the term dynamics, that one gives the
+shape discipline---but neither depends on the internals of the other.
+\end{notationbox}
+
+\section{The grammar: terms}
+\label{app:calc:terms}
+
+The term language is what you actually write. Each production is an expression
+form $e$; the reduction rules of \cref{app:calc:reduction} act on exactly these.
+
+\begin{lstlisting}[style=l4style, language=]
+e ::= x                                      -- variable
+    | c                                      -- constant / literal
+    | \(x: tau). e                           -- lambda abstraction
+    | e1 e2                                  -- application
+    | let x = e1 in e2                       -- let-binding
+    | let { l1, ..., ln } = e1 in e2         -- destructuring let
+    | let { l1, ..., lk, ...r } = e1 in e2   -- destructure with rest
+    | { l1: e1, ..., ln: en }                -- record literal
+    | { ...e0, li: ei, ..., lj: ej }         -- record spread / update
+    | e.l                                    -- field access
+    | (e1, ..., en)                          -- tuple literal
+    | proj_i e                               -- tuple projection
+    | if e0 then e1 else e2                  -- conditional
+    | op(e1, ..., en)                        -- primitive operator application
+    | op-with-params { p = e ; \(x: t). e }  -- operator-VALUE introducer
+    | apply A e                              -- operator application (eliminator)
+    | return e                               -- monadic return (Sim)
+    | e1 >>= e2                              -- monadic bind
+    | do { s1; ...; sn; e }                  -- do-notation block
+    | get | put e | modify e                 -- state effects (Sim)
+    | while_loop init cond step              -- pure tail-recursive loop
+\end{lstlisting}
+
+\noindent We group the productions by role and explain what each is for. The
+order mirrors the reduction rules to come.
+
+\paragraph{The lambda core.} A \emph{variable} \code{x} stands for a value bound
+in scope; a \emph{constant} \code{c} is a literal (\code{7}, \code{true}). A
+\emph{lambda} \lstinline[style=l4style]|\(x: tau). e| is an anonymous function of
+one parameter \code{x} of type \code{tau} with body \code{e}---the only way to
+introduce a function value. \emph{Application} \code{e1 e2} supplies an argument
+to a function by juxtaposition. \emph{Let} \lstinline[style=l4style]|let x = e1 in e2|
+names an intermediate: bind \code{x} to the value of \code{e1}, then evaluate
+\code{e2} with \code{x} in scope. These four are the lambda calculus, and they
+do everything the main text's ``values and functions'' chapter teaches
+(\cref{ch:language}). \emph{Example:}
+\lstinline[style=l4style]|let sq = \(x: Float). x * x in sq 5|.
+
+\paragraph{Records.} A \emph{record literal}
+\lstinline[style=l4style]|{ l1: e1, ..., ln: en }| builds a bundle of named
+fields. \emph{Field access} \code{e.l} reads one field out. The two
+\emph{destructuring lets} pull several fields at once---the plain form names a
+fixed set of fields, the rest form
+\lstinline[style=l4style]|{ l1, ..., lk, ...r }| binds some fields and collects
+the remainder into \code{r}. \emph{Record spread / update}
+\lstinline[style=l4style]|{ ...e0, li: ei }| builds a new record equal to
+\code{e0} but with the listed fields replaced---never a mutation, always a fresh
+record (\cref{ch:records}). \emph{Example:}
+\lstinline[style=l4style]|{ ...s, dist: dist_next, step: s.step + 1 }|.
+
+\paragraph{Tuples and conditionals.} A \emph{tuple literal}
+\code{(e1, ..., en)} bundles values positionally; \emph{projection}
+\lstinline[style=l4style]|proj_i e| reads the $i$-th component. The
+\emph{conditional} \lstinline[style=l4style]|if e0 then e1 else e2| chooses a
+branch on a \code{Bool}. \emph{Example:}
+\lstinline[style=l4style]|if s.residual > tol then keep else stop|.
+
+\paragraph{Operators.} \emph{Primitive operator application}
+\lstinline[style=l4style]|op(e1, ..., en)| applies a built-in primitive
+(\code{axpy}, \code{dot}, \code{matvec}, \dots), each governed by its own
+$\delta$-rule (\cref{app:laws}). The \emph{operator-value introducer}
+\lstinline[style=l4style]|op-with-params { p = e ; \(x: t). e_body }| builds a
+first-class operator value: a record of closed-over \code{!}-shareable parameters
+\code{p}, paired with a body lambda over the run-time argument \code{x}, of type
+\lstinline[style=l4style]|Op[t -> t_out]| (\cref{ch:operators}). Its eliminator is \emph{operator
+application} \code{apply A e}, which supplies the run-time argument to an operator
+value \code{A}. \emph{Example:}
+\lstinline[style=l4style]|apply bgkOp streamed|.
+
+\paragraph{The monad and state effects.} \emph{Return}
+\lstinline[style=l4style]|return e| injects a pure value into a \code{Sim}
+action; \emph{bind} \lstinline[style=l4style]|e1 >>= e2| sequences two actions,
+feeding the first's result into the second; a \emph{do-block}
+\lstinline[style=l4style]|do { s1; ...; sn; e }| is the readable sugar for a chain
+of binds (\cref{ch:monad}). A \code{do}-statement \code{s} is one of
+\lstinline[style=l4style]|x <- e| (bind), \lstinline[style=l4style]|let x = e|
+(pure binding), or a bare \code{e} (an effect of type \code{Sim ()}). The
+\emph{state effects} \code{get} (read the current state), \lstinline[style=l4style]|put e|
+(replace it), and \lstinline[style=l4style]|modify e| (apply a function to it) are
+the only way state is touched. \emph{Example:}
+\lstinline[style=l4style]|do { s <- get; put (step s) }|.
+
+\paragraph{The loop.} \lstinline[style=l4style]|while_loop init cond step| is the
+one primitive iteration form---a pure tail-recursive loop. The book's
+\code{iterate\_while} (\cref{ch:fold}) is the named, trajectory-collecting
+specialization of it, and its small-step rule is \cref{app:calc:iterate} below.
+This is the \emph{only} unbounded control construct in the calculus; everything
+else terminates structurally.
+
+\begin{keyidea}
+The grammar is closed: there is no production for a mutable variable, no
+assignment, no \code{goto}, no general recursion outside \code{while\_loop}.
+Every term is built from this finite list, and every term's behavior is fixed by
+the reduction rules of the next section. The expressive reach---six simulators
+from one vocabulary---comes from \emph{first-class functions and operators}
+(lambda, \code{apply}, \code{Op}) combined with the single loop, not from a large
+language.
+\end{keyidea}
+
+\section{Ownership: three categories the syntax enforces}
+\label{app:calc:ownership}
+
+Before the dynamics, one static distinction the grammar quietly encodes, because
+several reduction rules below depend on it. The calculus sorts every value into
+exactly one of three \emph{ownership categories}, and the sort is syntactic---you
+can read it off the form.
+
+\begin{description}[style=nextline, leftmargin=1.4em, font=\normalfont\itshape]
+  \item[Simulator state.] Values threaded through the \code{Sim} monad, touched
+  only via \code{get} / \code{put} / \code{modify}. Treated as \emph{linear}:
+  a \code{Sim} action consumes the current state and produces the next, so the old
+  state is shadowed and aliasing is structurally impossible. There is exactly one
+  state slot in scope at any point in a \code{do} block.
+  \item[Operator internal parameters.] Values closed over inside an
+  \code{Op[$\cdot$]} and tagged \code{!} (shareable). Read-only across a solve;
+  they never evolve. Matrix entries, factorizations, basis and lattice tables,
+  time-step constants.
+  \item[Ephemeral intermediates.] Values bound by a \code{let} or a \code{do}
+  binding. Local in scope; they participate in neither state evolution nor
+  operator closure. The residual computed mid-iteration, the CG search direction,
+  a predictor in a multi-step integrator.
+\end{description}
+
+\noindent Linearity is tracked only to enforce the first-versus-second
+distinction---which slot owns the canonical current value. It is \emph{not}
+tracked at the tensor level: every tensor is immutable, so two names for one
+tensor can never surprise each other, and \code{clone()} is meaningless
+(\cref{ch:language}). The \code{!} annotation is the syntactic marker; inside an
+\code{Op[$\cdot$]}, all closed-over data is \code{!}-tagged by construction. We
+will see this category distinction surface in the state-effect rules
+(\cref{app:calc:state}) and the operator-application rule
+(\cref{app:calc:apply}).
+
+\section{Small-step operational semantics}
+\label{app:calc:reduction}
+
+We now give the dynamics: the reduction relation $e \to e'$, presented as a set
+of \emph{inference rules}. An inference rule is read as ``\emph{if} the premises
+above the line hold, \emph{then} the conclusion below the line holds.'' For most
+of our reduction rules there are no premises---they are \emph{axioms}, an
+unconditional rewrite, drawn as a conclusion with an empty line above it (or
+simply stated as an equation $e \to e'$). The pruning rule of
+\cref{app:calc:pruning} is the one rule with a genuine premise.
+
+Throughout, $v$ ranges over \emph{values}---fully reduced terms that no rule
+rewrites further (a literal, a lambda, a fully-built record of values, an operator
+value). The notation $e[v/x]$ means ``the term $e$ with every free occurrence of
+the variable $x$ replaced by $v$''---capture-avoiding substitution, the single
+operation underlying nearly every rule.
+
+\Cref{fig:appA:reduction} traces a small expression all the way down to a value
+by these rules, to fix the idea of ``reduce one step at a time'' before we
+catalogue the steps.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=3mm]
+  \node[opbox, align=left, minimum width=104mm] (e0) at (0,0)
+    {\lstinline[style=l4style]|let r = axpy 2 x y in r.|... \quad\textit{(start: a let over an operator app)}};
+  \node[font=\scriptsize, simBlue, right=24mm of e0.east, anchor=west] (l0) {};
+  \node[opbox, align=left, minimum width=104mm, below=8mm of e0] (e1)
+    {\lstinline[style=l4style]|let r = (2 .* x .+ y) in r.|... \quad\textit{($\delta$-rule for \code{axpy}: unfold the primitive)}};
+  \node[opbox, align=left, minimum width=104mm, below=8mm of e1] (e2)
+    {\lstinline[style=l4style]|let r = v_r in r.|... \quad\textit{(the tensor arithmetic evaluates to a value $v_r$)}};
+  \node[opbox, align=left, minimum width=104mm, below=8mm of e2] (e3)
+    {\lstinline[style=l4style]|v_r.|... \quad\textit{(\textbf{let} rule, \S\ref{app:calc:lambda}: substitute $v_r$ for \code{r})}};
+  \node[product, align=left, minimum width=104mm, below=8mm of e3] (e4)
+    {a \emph{value} --- no rule applies; reduction halts.};
+  % step arrows with rule labels
+  \draw[flow] (e0) -- node[right, font=\scriptsize, simBlue]{$\to$ \;$\delta$} (e1);
+  \draw[flow] (e1) -- node[right, font=\scriptsize, simBlue]{$\to^{*}$ \;(arith)} (e2);
+  \draw[flow] (e2) -- node[right, font=\scriptsize, simBlue]{$\to$ \;\textsf{let}} (e3);
+  \draw[flow] (e3) -- node[right, font=\scriptsize, simBlue]{$\to^{*}$ \;\textsf{proj}} (e4);
+\end{tikzpicture}
+\caption[A term reducing step by step]{Reduction is rewriting, one small step at
+a time. An expression is repeatedly matched against the reduction rules; each
+match rewrites it to a simpler term ($\to$ is one step, $\to^{*}$ several), until
+no rule applies and the term is a \emph{value}. Here a \code{let} over an
+operator application unfolds the \code{axpy} $\delta$-rule (\cref{app:laws}),
+evaluates the tensor arithmetic, then fires the \code{let} rule
+(\cref{app:calc:lambda}) to substitute the result. The rule fired at each step is
+named on the arrow. The order is forced only by data dependency
+(\cref{app:calc:confluence}); the answer does not depend on which legal step we
+take first.}
+\label{fig:appA:reduction}
+\end{figure}
+
+\subsection{The lambda core: \texorpdfstring{$\beta$}{beta} and \texttt{let}}
+\label{app:calc:lambda}
+
+The two foundational rules. \emph{$\beta$-reduction} is function
+application---supply an argument to a lambda by substituting it into the body.
+\emph{The \code{let} rule} names a value---bind a value to a name by substituting
+it into the body. They are the same operation (substitution) wearing two faces.
+
+\[
+\begin{array}{rcll}
+(\lambda(x:\tau).\, e)\ v &\;\to\;& e[v/x] & \text{($\beta$)} \\[2pt]
+\textsf{let}\ x = v\ \textsf{in}\ e &\;\to\;& e[v/x] & \text{(\textsf{let})}
+\end{array}
+\]
+
+\noindent \emph{Intuition.} $\beta$ says: to apply
+\lstinline[style=l4style]|(\(x: Float). x * x)| to \code{5}, erase the lambda and
+replace \code{x} by \code{5} in the body, giving \lstinline[style=l4style]|5 * 5|.
+The \code{let} rule says the same for naming: \lstinline[style=l4style]|let y = 6 in y + 1|
+becomes \lstinline[style=l4style]|6 + 1|. There are no boxes and no overwrites
+(\cref{ch:language}): a name is a stand-in for a value, and reduction simply
+substitutes the value back in. Currying and partial application
+(\cref{ch:language}) are nothing more than $\beta$ applied one argument at a time:
+\lstinline[style=l4style]|add 3 4| is \lstinline[style=l4style]|(add 3) 4|, two
+$\beta$-steps.
+
+\subsection{Records: projection, destructuring, spread}
+\label{app:calc:records}
+
+Records have three rules: \emph{projection} reads one field; \emph{destructuring}
+binds several fields at once; \emph{spread} builds an updated copy. All operate on
+a record of \emph{values} $\{l_1\!:\!v_1, \dots, l_n\!:\!v_n\}$.
+
+\[
+\begin{array}{rcll}
+\{l_1\!:\!v_1,\dots,l_n\!:\!v_n\}.l_k &\;\to\;& v_k & \text{(proj)} \\[3pt]
+\textsf{let}\ \{l_1,\dots,l_n\} = \{l_1\!:\!v_1,\dots,l_n\!:\!v_n\}\ \textsf{in}\ e
+  &\;\to\;& e[v_1/l_1,\dots,v_n/l_n] & \text{(destr)} \\[3pt]
+\{\dots\{l_1\!:\!v_1,\dots,l_n\!:\!v_n\},\ l_k\!:\!w\}
+  &\;\to\;& \{l_1\!:\!v_1,\dots,l_k\!:\!w,\dots,l_n\!:\!v_n\} & \text{(spread)}
+\end{array}
+\]
+
+\noindent \emph{Intuition.} Projection \code{r.x} pulls the named field's value
+straight out. Destructuring is projection done in bulk: it binds each field name
+to its value in one stroke, so
+\lstinline[style=l4style]|let { x, residual } = s in ...| makes both fields
+available without writing \code{s.x} and \code{s.residual} everywhere. Spread is
+the immutable update: \lstinline[style=l4style]|{ ...s, x: x' }| produces a
+\emph{new} record identical to \code{s} except in field \code{x}---the original
+\code{s} is untouched, exactly as immutability requires (\cref{ch:records}). The
+``destructure with rest'' form
+\lstinline[style=l4style]|let { l1, ..., lk, ...r } = ...| is the same destr rule
+with \code{r} bound to the record of remaining fields; we elide its rule as a
+routine variant. The spread rule is the formal content of every
+``\lstinline[style=l4style]|{ ...s, dist: dist_next }|'' you have seen: it is how
+a step ``updates'' state without mutating it.
+
+\subsection{The monad: \texttt{return}, \texttt{>>=}, and \texttt{do}}
+\label{app:calc:monad}
+
+Orchestration is sequenced by the three \emph{monad laws}. These govern how
+\code{Sim} actions compose; they are the precise meaning of a \code{do}-block
+(\cref{ch:monad}).
+
+\[
+\begin{array}{rcll}
+\textsf{return}\ v \,\mathbin{\texttt{>>=}}\, f &\;\to\;& f\ v & \text{(left identity)} \\[2pt]
+m \,\mathbin{\texttt{>>=}}\, \textsf{return} &\;\to\;& m & \text{(right identity)} \\[2pt]
+(m \,\mathbin{\texttt{>>=}}\, f) \,\mathbin{\texttt{>>=}}\, g
+  &\;\to\;& m \,\mathbin{\texttt{>>=}}\, (\lambda x.\, f\ x \,\mathbin{\texttt{>>=}}\, g)
+  & \text{(associativity)}
+\end{array}
+\]
+
+\noindent \emph{Intuition.} \emph{Left identity}: injecting a value with
+\code{return} and then binding it is just calling the continuation on the
+value---\code{return} adds no effect. \emph{Right identity}: binding an action to
+\code{return} changes nothing---returning the result is a no-op. \emph{Associativity}:
+how you parenthesize a chain of binds does not matter, which is exactly why the
+flat \code{do}-block notation is well-defined---\lstinline[style=l4style]|do { x <- m; y <- n; k }|
+is unambiguous because the binds re-associate freely. A \code{do}-block desugars
+to a right-nested chain of \code{>>=}: \lstinline[style=l4style]|do { x <- m; rest }|
+is \lstinline[style=l4style]|m >>= (\x -> do { rest })|, and a pure
+\lstinline[style=l4style]|let x = e; rest| desugars to
+\lstinline[style=l4style]|(\x -> do { rest }) e|. The three laws guarantee these
+desugarings all mean the same thing.
+
+\subsection{State effects}
+\label{app:calc:state}
+
+The state effects \code{get} / \code{put} / \code{modify} are the only way the
+threaded simulator state (\cref{app:calc:ownership}, category one) is touched.
+Two rewrite rules relate them, capturing that \code{modify} is exactly
+``get, transform, put'':
+
+\[
+\begin{array}{rcl}
+\textsf{do}\ \{\, x \leftarrow \textsf{get};\ \textsf{put}\ f(x);\ \textsf{return}\ ()\,\}
+  &\;\to\;& \textsf{modify}\ f \\[3pt]
+\textsf{modify}\ (f \circ g) &\;\to\;& \textsf{do}\ \{\,\textsf{modify}\ g;\ \textsf{modify}\ f\,\}
+\end{array}
+\]
+
+\noindent \emph{Intuition.} The first rule says \code{modify f} is shorthand for
+reading the state, applying \code{f}, and writing it back---there is no separate
+``read-modify-write'' hazard because the state slot is linear and the old value is
+shadowed. The second rule says modifying by a composed function $f \circ g$ is the
+same as modifying by $g$ then by $f$: state updates compose in application order.
+Together they let the orchestration layer be rewritten freely between the explicit
+\code{get}/\code{put} form and the compact \code{modify} form without changing
+meaning. Crucially, per-algorithm state evolution does \emph{not} need these---a
+solver's state threads through \code{iterate\_while} as a pure carry
+(\cref{app:calc:iterate}); \code{Sim} recedes to genuine orchestration (I/O,
+multi-stage workflows).
+
+\subsection{Operator application}
+\label{app:calc:apply}
+
+An operator value pairs closed-over parameters \code{p} with a body lambda
+$\lambda x.\, e$ (\cref{app:calc:terms}, the operator-value introducer). Applying
+it substitutes \emph{both} the parameters and the run-time argument into the body:
+
+\[
+\textsf{apply}\ (\textsf{op-with-params}\ p,\ \lambda x.\, e)\ v
+  \;\to\; e[p/\textsf{params},\ v/x]
+\]
+
+\noindent \emph{Intuition.} This is $\beta$-reduction with a twist: an ordinary
+lambda has only its parameter to substitute, but an operator value also carries a
+record of baked-in parameters (the matrix, the factorization, the basis tables),
+and applying it substitutes those \emph{and} the run-time argument
+simultaneously. The notation $e[p/\textsf{params}]$ means the body's references to
+its closed-over parameters are replaced by the actual closed-over values \code{p}.
+This is the formal content of ``build once with configuration baked in, apply many
+times'' (\cref{ch:operators}): the \code{op-with-params} introducer is the
+``build'' (it captures \code{p} once), and each \code{apply A v} is one ``apply.''
+The parameters \code{p} are \code{!}-shareable
+(\cref{app:calc:ownership}, category two), so the same operator value may be
+applied to many arguments with no copying and no consumption.
+
+\subsection{Primitive \texorpdfstring{$\delta$}{delta}-rules}
+\label{app:calc:delta}
+
+Each primitive operator---\code{axpy}, \code{dot}, \code{matvec}, \code{conv},
+\code{reduce}, \dots---comes with its own \emph{$\delta$-rule}, an axiom giving
+its action on value arguments. We do not enumerate them here: the primitive
+semantics live in the concept library and the algebraic-law appendix
+(\cref{app:laws}), where each $\delta$-rule can be checked against a reference
+implementation. The calculus assumes only that every primitive \code{op} comes
+\emph{with} such a rule, so that \lstinline[style=l4style]|op(v1, ..., vn)|
+reduces to a value. \Cref{fig:appA:reduction} fired the \code{axpy} $\delta$-rule
+as its first step. The point of structure here is the division of labor: the
+\emph{shape} of computation (functions, records, loops, pruning) is fixed by this
+appendix; the \emph{arithmetic} of each primitive is fixed by its $\delta$-rule
+elsewhere.
+
+\subsection{The \texttt{iterate\_while} rule}
+\label{app:calc:iterate}
+
+Here is the heart of the dynamics: the small-step rule for the iteration
+combinator the whole book turns on (\cref{ch:fold}). Given a carry $a$, a
+predicate $p : \alpha \to \code{Bool}$, and a step
+$f : \alpha \to \{\code{state}\!:\!\alpha, \dots e\}$, one unrolling step of
+\code{iterate\_while} is:
+
+\[
+\begin{aligned}
+\textsf{iterate\_while}\ a\ p\ f \;\to\;\ &\textsf{if}\ p(a)\\
+  &\quad\textsf{then}\ \textsf{let}\ \{\textsf{state}\!:\!a',\ \dots e\} = f(a)\ \textsf{in}\\
+  &\qquad \textsf{let}\ \{\textsf{final\_state},\ \textsf{trajectory}\}
+        = \textsf{iterate\_while}\ a'\ p\ f\ \textsf{in}\\
+  &\qquad \{\textsf{final\_state},\ \textsf{trajectory}\!:\
+        [\{\dots e\}] \mathbin{+\!\!+} \textsf{trajectory}\}\\
+  &\quad\textsf{else}\ \{\textsf{final\_state}\!:\ a,\ \textsf{trajectory}\!:\ [\,]\,\}
+\end{aligned}
+\]
+
+\noindent \emph{Intuition.} Read it as a recursion that unrolls one loop step per
+firing. Test the predicate on the \emph{current} carry $a$. If it is false, stop:
+the answer is $a$ as \code{final\_state} with an empty \code{trajectory}. If it is
+true, run one step $f(a)$, which yields the next carry $a'$ together with this
+step's per-step extras $e$; recurse on $a'$; and prepend $e$ to whatever
+trajectory the recursion returns. Two structural facts are baked into the rule and
+are load-bearing in \cref{ch:fold}. First, the predicate fires \emph{before} any
+step (the \code{while}, not \code{do}/\code{while}, convention): an
+already-converged input does zero work. Second, the predicate reads only the carry
+$a$---its type is $\alpha \to \code{Bool}$---so any termination quantity must be
+\emph{folded into the carry}; letting the predicate read the step's extras would
+be a circular dependency, and the type forbids it. The recursion sits in tail
+position, so an implementation realizes it as an ordinary loop.
+
+\Cref{fig:appA:unroll} draws one firing of the rule as the operation it really
+is: a single step splits into a \emph{carry update} (the next $a'$, threaded
+forward) and a \emph{trajectory extension} (the extras $e$, prepended to the
+list).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=7mm]
+  % the rule as: one application splits into carry-update + trajectory-extend
+  \node[stage, minimum width=40mm, align=center] (lhs) at (0,0)
+    {\lstinline[style=l4style]|iterate_while a p f|};
+  \node[font=\scriptsize, simBlue] (arrow) at (3.3,0) {$\to$ \;(one unrolling)};
+  % predicate gate
+  \node[diamond, draw=simBlue, fill=simBgBlue, aspect=1.7, inner sep=1pt,
+        font=\scriptsize, text=simInk] (p) at (6.7,0) {$p(a)$?};
+  \draw[flow] (lhs.east) -- (p.west);
+  % FALSE branch
+  \node[product, minimum width=34mm, align=center] (stop) at (6.7,-2.2)
+    {\lstinline[style=l4style]|{ final_state: a, trajectory: [] }|};
+  \draw[backflow] (p.south) -- node[right, font=\scriptsize, simRust]{no} (stop.north);
+  % TRUE branch: run the step
+  \node[opbox, minimum width=20mm] (step) at (10.4,0) {\lstinline[style=l4style]|f(a)|};
+  \draw[flow] (p.east) -- node[above, font=\scriptsize, simGreen]{yes} (step.west);
+  % step splits into carry-update and trajectory-extend
+  \node[data, fill=white, draw=simGray, minimum width=20mm] (carry) at (10.4,-1.5)
+    {carry update: $a'$};
+  \node[data, fill=simBgGold, draw=simGold, minimum width=26mm] (traj) at (10.4,-2.9)
+    {trajectory ext.: $[\{\dots e\}]\mathbin{+\!\!+}\cdots$};
+  \draw[flow] (step.south) -- node[right, font=\scriptsize]{\code{.state}} (carry.north);
+  \draw[refedge, simGold!80!black] (step.south west) to[out=240,in=80] (traj.north);
+  % the recursion arrow: carry update feeds the recursive call
+  \draw[flow, simBlue, densely dashed] (carry.west) to[out=180,in=270]
+    node[below, font=\scriptsize, simBlue, pos=0.4]{recurse on $a'$} (lhs.south);
+\end{tikzpicture}
+\caption[One unrolling step of \texttt{iterate\_while}]{The
+\code{iterate\_while} small-step rule (\cref{app:calc:iterate}), drawn as the
+single operation it performs. The predicate $p(a)$ gates the firing. On
+\textcolor{simRust}{no}, the loop stops, surfacing the current carry as
+\code{final\_state} with an empty trajectory. On \textcolor{simGreen}{yes}, one
+step \code{f(a)} runs and \emph{splits in two}: its \code{.state} field becomes
+the next carry $a'$ (threaded forward, and fed back into the recursive call,
+dashed), while its extras $e$ are prepended to the growing
+\code{trajectory}. This is the formal version of the carry-update-plus-append
+picture of \cref{ch:fold}: every iterative algorithm in the book is this rule
+fired repeatedly, with ``step'' replaced by the algorithm's per-step kernel.}
+\label{fig:appA:unroll}
+\end{figure}
+
+The combinator has a sugared special case,
+\lstinline[style=l4style]|iterate_while_pure init cont step|, for steps with no
+extras: it is \lstinline[style=l4style]|(iterate_while init cont (\a -> { state: step a })).final_state|,
+the general rule with $\code{extras} = ()$ and the trajectory always empty
+(\cref{ch:fold}). Total correctness---that the loop halts---is an obligation on
+the \emph{algorithm} that uses the rule (a bounded \code{max\_it} folded into the
+carry, or a convergence proof), not a guarantee of the rule itself; the type
+promises nothing about termination.
+
+\subsection{Demand-driven pruning: the signature move}
+\label{app:calc:pruning}
+
+The calculus has one rule unlike anything in an ordinary operational
+semantics, and it is the most important rule in the appendix. It formalizes the
+demand-driven pruning of \cref{ch:fold}: an output that no consumer reads is never
+computed. It is the only rule here with a real premise.
+
+The calculus is a \emph{graph-evaluation language}: operators and aggregate
+operations produce \emph{records} of outputs, and at solve time only the outputs
+that some root consumer transitively reaches are computed. Observation propagates
+structurally through bindings---if a body reads field $l_k$, then $l_k$ is
+observed in the producing record; if the body never references $l_k$ (uses a
+\code{\_} placeholder, or simply omits it), $l_k$ is unobserved. The pruning rule
+is then an equivalence:
+
+\[
+\dfrac{\;\text{output } l_k \text{ of } \textsf{op} \text{ is not observed in } \textsf{body}\;}
+{\;
+  \textsf{let}\ \{l_1\!:\!x_1, \dots, l_k\!:\!\_, \dots, l_n\!:\!x_n\}
+    = \textsf{op}(\bar{e})\ \textsf{in}\ \textsf{body}
+  \;\equiv\;
+  \textsf{let}\ \{l_i\!:\!x_i\}_{i \neq k} = \textsf{op}_{\neg k}(\bar{e})\ \textsf{in}\ \textsf{body}
+\;}
+\]
+
+\noindent where $\textsf{op}_{\neg k}$ is the subgraph of $\textsf{op}$ that does
+\emph{not} compute the $l_k$-output---formally, the dependency-closure of the
+remaining outputs over $\textsf{op}$'s body. \emph{Intuition.} The premise (above
+the line) is a fact about \emph{use}: nothing downstream reads field $l_k$. Given
+that fact, the conclusion (below the line) licenses rewriting the producer to a
+strictly smaller operator that omits $l_k$ entirely, along with every
+sub-computation that fed \emph{only} into $l_k$. This is dead-code elimination,
+lifted from a compiler's view of a function body to the evaluation of the whole
+computation graph. The rule reads as a subgraph-derivation: from the full graph
+and a non-observation premise, derive the pruned subgraph.
+
+\Cref{fig:appA:pruning} draws the derivation as the graph transformation it is:
+the full dependency graph on the left, and on the right the subgraph that survives
+when one output is unread, with the dead nodes and edges erased.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize, node distance=6mm]
+  % ============ LEFT: full graph (all outputs observed) ============
+  \begin{scope}
+    \node[font=\small\bfseries, simBlue] at (0,2.7) {full graph: every output observed};
+    \node[data, minimum width=14mm] (in) at (0,1.8) {inputs $\bar e$};
+    \node[opbox, minimum width=12mm] (core) at (-1.2,0.7) {core};
+    \node[opbox, minimum width=14mm] (extra) at (1.4,0.7) {extra calc};
+    \draw[flow] (in.south) -- (core.north);
+    \draw[flow] (in.south) -- (extra.north);
+    \node[product, minimum width=12mm] (o1) at (-1.2,-0.7) {$l_1$};
+    \node[product, fill=simBgGold, draw=simGold, minimum width=12mm] (ok) at (1.4,-0.7) {$l_k$};
+    \draw[flow] (core.south) -- (o1.north);
+    \draw[flow] (extra.south) -- (ok.north);
+    % both consumed
+    \draw[refedge] (o1.south) -- ++(0,-0.55) node[below, font=\scriptsize]{read};
+    \draw[refedge] (ok.south) -- ++(0,-0.55) node[below, font=\scriptsize, simGold!80!black]{read};
+  \end{scope}
+  \draw[simGray!50, thick] (3.4,-1.6) -- (3.4,2.9);
+  % the rule arrow with the premise
+  \node[align=center, font=\scriptsize, simBlue] at (4.5,1.0)
+    {premise:\\$l_k$ \emph{not}\\observed\\[2pt]$\Longrightarrow$};
+  % ============ RIGHT: pruned subgraph ============
+  \begin{scope}[xshift=8.4cm]
+    \node[font=\small\bfseries, simGreen] at (0,2.7) {pruned subgraph: \code{op}$_{\neg k}$};
+    \node[data, minimum width=14mm] (in2) at (0,1.8) {inputs $\bar e$};
+    \node[opbox, minimum width=12mm] (core2) at (-1.2,0.7) {core};
+    % the extra calc is dead (greyed)
+    \node[opbox, draw=simGray!40, fill=white, text=simGray!55, minimum width=14mm]
+      (extra2) at (1.4,0.7) {\textcolor{simGray!55}{extra calc}};
+    \draw[flow] (in2.south) -- (core2.north);
+    \draw[flow, simGray!35] (in2.south) -- (extra2.north);
+    \node[product, minimum width=12mm] (o12) at (-1.2,-0.7) {$l_1$};
+    \node[product, draw=simGray!40, fill=white, text=simGray!55, minimum width=12mm]
+      (ok2) at (1.4,-0.7) {\textcolor{simGray!55}{$l_k$}};
+    \draw[flow] (core2.south) -- (o12.north);
+    \draw[flow, simGray!35] (extra2.south) -- (ok2.north);
+    \draw[refedge] (o12.south) -- ++(0,-0.55) node[below, font=\scriptsize]{read};
+    \node[font=\scriptsize, simGray!60] at (1.4,-1.45) {pruned};
+  \end{scope}
+\end{tikzpicture}
+\caption[Demand-driven pruning as graph dead-code elimination]{The pruning rule
+(\cref{app:calc:pruning}) as a subgraph derivation. \emph{Left}: the full
+operator graph---two outputs $l_1$ and $l_k$, each produced by its own
+sub-computation, both read by a consumer. \emph{Right}: the premise ``$l_k$ is
+not observed'' fires the rule, deriving $\textsf{op}_{\neg k}$---the subgraph that
+omits $l_k$ \emph{and} the \emph{extra calc} node that fed only into it (greyed,
+erased). The surviving graph computes exactly the observed outputs. This is the
+calculus's signature move: no verbosity flag, no conditional branch, no Writer
+monad---one operator definition, and what materializes is decided by what the
+consumer reads. Applied inside \code{iterate\_while}, it is why an unread
+\code{trajectory} costs nothing (\cref{ch:fold}).}
+\label{fig:appA:pruning}
+\end{figure}
+
+This single rule subsumes three mechanisms other systems need separately: a
+\emph{Writer monad} (logging/metric accumulation), a \emph{verbosity flag}
+(``if verbose, also compute the residual''), and a \emph{conditional branch}
+around each optional output. In the calculus none of those exist as separate
+concepts: every operator unconditionally declares all its outputs as record
+fields, every consumer reads what it needs, and pruning removes the rest. An
+algorithm is written \emph{once} and is correct whether or not its optional
+outputs are consumed---which is why no solver chapter in this book presents a
+``debug version'' beside a ``fast version'' (\cref{ch:fold}).
+
+\begin{keyidea}
+Demand-driven pruning is the calculus's one genuinely unusual rule, and its whole
+payoff. ``Compute the residual history for monitoring'' and ``skip it for speed''
+are not two algorithms but \emph{one}, distinguished only by what a downstream
+consumer reads. The rule is graph dead-code elimination given as a formal
+equivalence: a non-observation premise licenses replacing a producer by the
+subgraph of its observed outputs. It is what lets the framework write each solver
+once and use it for both diagnostics and production.
+\end{keyidea}
+
+\section{Typing in one paragraph}
+\label{app:calc:typing}
+
+The grammar and reduction rules are the load-bearing content; the type system is
+standard typed-$\lambda$ and we state only its shape. A typing judgment
+$\Gamma \vdash e : \tau$ reads ``in context $\Gamma$ (a set of variable-to-type
+assumptions), the term $e$ has type $\tau$.'' The selected rules are the usual
+ones---a variable has the type the context assigns it; an application
+$e_1\,e_2$ requires $e_1 : \tau_1 \to \tau_2$ and $e_2 : \tau_1$ and yields
+$\tau_2$; a record literal is typed field-by-field; a spread preserves the record
+type; \code{return} lifts a $\tau$ to \code{Sim $\tau$}; and \code{>>=} sequences
+\code{Sim $\alpha$} with $\alpha \to \code{Sim $\beta$}$ to give \code{Sim $\beta$}:
+
+\begin{gather*}
+\dfrac{}{\Gamma, x{:}\tau \vdash x : \tau}\;(\textsf{var})
+\qquad
+\dfrac{\Gamma \vdash e_1 : \tau_1 \to \tau_2 \quad \Gamma \vdash e_2 : \tau_1}
+      {\Gamma \vdash e_1\,e_2 : \tau_2}\;(\textsf{app})
+\\[6pt]
+\dfrac{\Gamma \vdash m : \textsf{Sim}\,\alpha \quad \Gamma, x{:}\alpha \vdash k : \textsf{Sim}\,\beta}
+      {\Gamma \vdash m \mathbin{\texttt{>>=}} \lambda x.k : \textsf{Sim}\,\beta}\;(\textsf{bind})
+\end{gather*}
+
+\noindent The one place the type system does real, distinctive work is
+\emph{shapes}: a primitive's signature carries symbolic tensor shapes
+(\lstinline[style=l4style]|axpy : Scalar -> Tensor[s] -> Tensor[s] -> Tensor[s]|),
+and the requirement that two shapes ``match'' is a side condition discharged by a
+separate shape solver, not by these rules. That discipline---congruence groups,
+rank wildcards, the named-axis algebra---is the entire subject of
+\cref{app:shapes}. Linearity, the second distinctive ingredient, is tracked only
+to enforce the simulator-state-versus-operator-parameter ownership split
+(\cref{app:calc:ownership}); it rides on the \code{Sim} monad's \code{get}/\code{put}
+discipline and the \code{!} annotation rather than on per-tensor annotations.
+
+\section{Evaluation order and confluence}
+\label{app:calc:confluence}
+
+A final, reassuring property. The reduction rules above can often fire in more
+than one place in a term---in \cref{fig:appA:reduction}, we could have evaluated a
+sub-expression before or after another. Does the order matter? \emph{No, beyond
+what data dependency forces.} Because every function is pure---its output depends
+only on its inputs, with no side effects (\cref{ch:language})---the value of an
+expression depends only on the values of its sub-expressions, never on the order
+in which those sub-expressions were reduced. Two redexes that do not depend on
+each other may be fired in either order, or simultaneously, and reach the same
+value; this is the calculus's \emph{confluence}. The only ordering the dynamics
+respects is the one the data edges demand: a step that consumes the residual must
+wait for the step that produces it.
+
+Two qualifications keep this honest. First, demand-driven pruning
+(\cref{app:calc:pruning}) means some redexes are never fired at all---an unobserved
+output's sub-computation is pruned rather than reduced---but this does not disturb
+the observed result, since a pruned node by definition feeds nothing observed.
+Second, the calculus is deterministic only \emph{up to floating-point
+reassociation}: when a load-bearing numerical trick fixes a particular reduction
+or accumulation order for a property it buys (determinism, a condition number, IEEE
+compliance), that order is part of the algorithm and is preserved as an explicit
+algebraic claim, not freely reassociated (the load-bearing-versus-transparent
+distinction of the main text). With that caveat, the program text \emph{is} the
+dependency graph: there is no hidden sequencing, only data flowing along visible
+edges, exactly as \cref{ch:language} promised.
+
+\summarysection
+This appendix is the formal companion to the main text's calculus chapters. The
+\emph{grammar} fixes the legal syntax in two layers: a \emph{type language} $\tau$
+(\cref{app:calc:types}: ground scalars, \code{Tensor[$\sigma$]}, records, tuples,
+functions, \code{Sim $\tau$}, \code{Op[$\cdot$]}, and the \code{!} shareable
+annotation) and a \emph{term language} $e$ (\cref{app:calc:terms}: the lambda core,
+records, tuples, conditionals, primitive and operator application, the monad and
+state effects, and the single loop \code{while\_loop}). The \emph{small-step
+operational semantics} (\cref{app:calc:reduction}) is the dynamics, a reduction
+relation $e \to e'$ presented as inference rules: $\beta$ and \code{let} for the
+lambda core; projection, destructuring, and spread for records; the three monad
+laws and the state-effect rewrites for orchestration; one substitution rule for
+operator \code{apply}; the recursive unrolling rule for \code{iterate\_while}; and
+the demand-driven pruning rule. The grammar says what you may write; the reduction
+rules say what it means; and the whole computational content is the handful of
+rules collected here. The signature move is \emph{pruning}: a non-observation
+premise licenses replacing a producer by the subgraph of its observed outputs, so
+diagnostics and production are one program. Because every function is pure, the
+calculus is confluent (\cref{app:calc:confluence})---evaluation order beyond data
+dependency is unobservable, deterministic up to deliberate floating-point
+reassociation---so the program text is exactly the dependency graph. The ownership
+split (\cref{app:calc:ownership}) and the standard typing judgment
+(\cref{app:calc:typing}) round out the static side; tensor shapes are handed off
+to \cref{app:shapes} and primitive $\delta$-rules and algebraic laws to
+\cref{app:laws}.
+
+\furtherreading
+The calculus is a small dialect of the typed lambda calculus extended with a state
+monad and one iteration combinator; the two most readable entry points are the
+standard reference for the language whose grammar and reduction conventions we
+borrow~\citep{peytonjones2003}, and Wadler's exposition of how a pure calculus
+nonetheless models stateful computation through monads~\citep{wadler1995monads},
+which underwrites both the \code{Sim} effects of \cref{app:calc:state} and the
+\code{do}-notation desugaring of \cref{app:calc:monad}. Readers who want the
+operational-semantics machinery itself---inference rules, $\beta$-reduction,
+substitution, confluence---in its original setting will find it in any text on the
+lambda calculus or programming-language theory. The two companion appendices carry
+the pieces this one hands off: \cref{app:shapes} formalizes the shape grammar
+$\sigma$ and its congruence algebra, and \cref{app:laws} collects the primitive
+$\delta$-rules and the algebraic equational laws the reduction chains of
+\cref{ch:rotations} appeal to.
