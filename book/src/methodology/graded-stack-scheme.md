@@ -309,6 +309,28 @@ entries, all concept pages. How each acquires a `rank:`:
   primitive is a node" reading; `chebyshev-iteration` (pre-redirect literature-background page
   with no authoritative L_n forward) stays a **non-node**.
 
+### The outside-DAG-by-design carve-out (expected-untyped pages)
+
+A set of pages carry **no `rank:` and no typed edges BY DESIGN** — they are not nodes in the
+subject DAG, so they are **expected-untyped** (rank axis) and **expected-unreachable**
+(reachability axis), NOT edge-typing debt and NOT detritus. The linter excludes them from the
+headline `untyped` WARNING (reporting them separately as `untyped_outside_dag_by_design`) and
+counts them under `expected_unreachable_outside_dag`. The set:
+
+- **`L0/`** — the **ground-truth evidence leaf layer** (file / class / convention overview
+  reference notes). The resolution rank is over *constructive* resolution; it is **vacuous at
+  the base the resolution rests on** — L0 *is* the cited evidence floor, not a node that
+  "resolves" to anything below it.
+- **`meta-reviews/`** — historical meta-review process records (regenerated mirrors).
+- **`methodology/`** + **`design/`** — reader-facing methodology mirrors and the superseded L4
+  calculus strawman seed.
+- **Navigational pages** — the book TOC (`SUMMARY`), `introduction`, the semantic surface
+  (`semantics/index`), and every `*/index` page.
+
+The carve-out is **exact**: it covers only this by-design set and deliberately does NOT cover
+any `L1/`/`L2/`/`L3/`/`L4/`/lowering-theme/`concepts/`/`feature/`/`synthesis/` node — so a
+*future* genuine untyped operator or theme node still surfaces as `untyped` debt.
+
 ## 6. Authoring checklist (the contract, condensed)
 
 When you author or touch a DAG-node chapter:

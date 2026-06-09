@@ -732,8 +732,25 @@ def reference_augmented_reachable(
     return reachable, ref_inbound
 
 
-OUTSIDE_DAG_PREFIXES = ("methodology/", "design/")
-OUTSIDE_DAG_SUFFIXES = ("/index", "index")  # index.md pages
+# Outside-DAG-by-design page sets (scheme §6, c155 untyped-carve-out convergence).
+# These pages carry NO constructive-resolution rank and are NOT DAG nodes, so they
+# are expected-unreachable (reachability axis) AND expected-untyped (rank axis) BY
+# DESIGN — NOT edge-typing debt and NOT detritus. The carve-out matches EXACTLY the
+# c155 by-design set; it deliberately does NOT cover any L1//L2//L3//L4//lowering-
+# theme/concepts//feature//synthesis/ node, so a FUTURE genuine-untyped operator or
+# theme node still surfaces as `untyped` debt.
+#   - methodology/  — reader-facing mirror pages (non-authoritative synthesized view)
+#   - design/       — the L4 calculus strawman seed (superseded by semantics/)
+#   - L0/           — the GROUND-TRUTH evidence leaf layer: file/class/convention
+#                     overview reference notes. Rank is over CONSTRUCTIVE resolution;
+#                     it is vacuous at the base the resolution rests on (L0 IS the
+#                     cited evidence floor, not a node that "resolves" to anything).
+#   - meta-reviews/ — historical meta-review process records (regenerated mirrors).
+OUTSIDE_DAG_PREFIXES = ("methodology/", "design/", "L0/", "meta-reviews/")
+# Exact navigational / container pages that are not under an outside-DAG prefix:
+# the book root TOC + intro, and the semantic surface (a reader-facing surface, not
+# a constructive DAG node). The `*/index` pages are caught structurally below.
+OUTSIDE_DAG_EXACT = {"SUMMARY", "introduction", "semantics/index"}
 # group-intro feature pages (not columns): driver-leaf, output-product, spine-root
 FEATURE_NON_COLUMN = {"feature/driver-leaf", "feature/output-product",
                       "feature/spine-root", "feature/index"}
@@ -749,6 +766,8 @@ NAVIGATIONAL_CONTAINER_KINDS = {
 
 def is_likely_outside_dag(slug: str, node: Node) -> bool:
     if slug.startswith(OUTSIDE_DAG_PREFIXES):
+        return True
+    if slug in OUTSIDE_DAG_EXACT:
         return True
     if slug.endswith("/index") or slug == "index":
         return True
@@ -785,8 +804,20 @@ def build_summary(nodes: dict[str, Node]) -> dict:
     ref_reachable, ref_inbound = reference_augmented_reachable(nodes)
 
     roots = sorted(n.slug for n in nodes.values() if n.is_root)
-    untyped = sorted(n.slug for n in nodes.values() if n.untyped)
     typed = [n for n in nodes.values() if not n.untyped]
+
+    # UNTYPED split (c155 untyped-carve-out convergence). A page with no rank and
+    # no typed edges is only EDGE-TYPING DEBT if it is a DAG node; an outside-DAG-
+    # by-design page (L0 ground-truth leaf / meta-reviews process record /
+    # methodology+design reader-mirror / navigational TOC) carries no rank BY
+    # DESIGN and is NOT debt. We separate the two so the headline `untyped`
+    # WARNING counts ONLY the genuine edge-typing debt (a future untyped operator
+    # or theme node still surfaces here); the by-design set is reported separately
+    # as `untyped_outside_dag_by_design` and stays visible under --show-untyped.
+    untyped_all = sorted(n.slug for n in nodes.values() if n.untyped)
+    untyped_outside_dag = sorted(
+        s for s in untyped_all if is_likely_outside_dag(s, nodes[s]))
+    untyped = sorted(set(untyped_all) - set(untyped_outside_dag))
 
     # detritus = unreachable AND not-likely-outside-DAG AND typed-as-a-DAG-node
     detritus = sorted(
@@ -844,6 +875,7 @@ def build_summary(nodes: dict[str, Node]) -> dict:
             "files": len(nodes),
             "typed": len(typed),
             "untyped": len(untyped),
+            "untyped_outside_dag_by_design": len(untyped_outside_dag),
             "roots": len(roots),
             "rank_violations": len(violations),
             "unresolved_depends_on_targets": len(unresolved),
@@ -880,6 +912,7 @@ def build_summary(nodes: dict[str, Node]) -> dict:
         "untyped": untyped,
         "lowering_theme_notes": {
             n.slug: n.notes for n in nodes.values() if n.notes},
+        "untyped_outside_dag_by_design": untyped_outside_dag,
         "inbound_reference_report": {
             s: sorted(set(inbound[s])) for s in sorted(inbound) if inbound[s]},
     }
@@ -894,7 +927,10 @@ def render_text(summary: dict, show_untyped: bool, show_inbound: bool,
     print(f"files scanned:        {t['files']}")
     print(f"  typed nodes:        {t['typed']}")
     print(f"  untyped (WARNING):  {t['untyped']}   "
-          f"(pre-P1 expected; warn-not-fail)")
+          f"(genuine edge-typing debt; warn-not-fail)")
+    print(f"  untyped outside-DAG:{t['untyped_outside_dag_by_design']}   "
+          f"(expected-untyped BY DESIGN — L0 ground-truth / meta-reviews / "
+          f"methodology+design / navigational; NOT debt)")
     print(f"  feature roots:      {t['roots']}")
     print()
     print(f"rank histogram (typed nodes): {summary['rank_histogram']}")
@@ -993,11 +1029,22 @@ def render_text(summary: dict, show_untyped: bool, show_inbound: bool,
     print(f"\nexpected-unreachable (outside-DAG: methodology/design/index/"
           f"group-intro pages): {t['expected_unreachable_outside_dag']}")
 
-    if show_untyped and summary["untyped"]:
-        print(f"\nUNTYPED files ({len(summary['untyped'])}) — no rank/edges yet "
-              f"(P1 will type these):")
-        for s in summary["untyped"]:
-            print(f"  [untyped] {s}")
+    if show_untyped:
+        if summary["untyped"]:
+            print(f"\nUNTYPED files ({len(summary['untyped'])}) — genuine "
+                  f"edge-typing debt (DAG nodes with no rank/edges yet):")
+            for s in summary["untyped"]:
+                print(f"  [untyped] {s}")
+        else:
+            print("\nUNTYPED files: none (no genuine edge-typing debt — every "
+                  "DAG node is typed).")
+        if summary["untyped_outside_dag_by_design"]:
+            print(f"\noutside-DAG (expected untyped BY DESIGN, "
+                  f"{len(summary['untyped_outside_dag_by_design'])}) — L0 "
+                  f"ground-truth leaf / meta-reviews / methodology+design / "
+                  f"navigational; carry no constructive rank, NOT debt:")
+            for s in summary["untyped_outside_dag_by_design"]:
+                print(f"  [outside-DAG] {s}")
 
     if show_inbound:
         print("\nINBOUND-REFERENCE REPORT (per file: who depends-on it):")
@@ -1010,7 +1057,8 @@ def render_text(summary: dict, show_untyped: bool, show_inbound: bool,
           f"{t['detritus']} detritus node(s) "
           f"({t['true_detritus']} true-detritus / "
           f"{t['detritus_reference_reachable_re11_cohort']} reference-reachable §2g), "
-          f"{t['untyped']} untyped (warning).")
+          f"{t['untyped']} untyped debt "
+          f"(+{t['untyped_outside_dag_by_design']} outside-DAG by design).")
     print("=" * 72)
 
 
