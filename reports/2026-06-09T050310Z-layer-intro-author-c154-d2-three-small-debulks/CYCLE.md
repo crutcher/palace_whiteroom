@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T050310Z
 scope: cycle-154 D2 — three small finite-backlog hygiene de-bulks (direct-edit, de-bulk convention)
 status: pending
 integrated_at: 2026-06-09T051526Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 40b69f2eba4d07c7b9c75d185f6b357191fe326c
 integration_notes: |
   batch-51 CONVERGENCE OPENER (cycle-154, 1/3 of meta-batch-51). Applied clean by integrator-per-report
   (1 staging row). 3 small hygiene de-bulks across 4 files (5 ins / 47 del) discharging all 3 batch-51-head
