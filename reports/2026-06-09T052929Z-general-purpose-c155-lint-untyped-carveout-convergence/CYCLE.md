@@ -5,7 +5,7 @@ cycle: 155
 batch: 51
 kind: tooling + methodology-note
 integrated_at: 2026-06-09T054250Z
-integration_commit: PLACEHOLDER_SHA_CYCLE155
+integration_commit: d5598e537140872973879bebd6cce27387e2065e
 integration_notes: |
   Applied clean (1/1 staging row). THE CONVERGENCE enactment of `p1-edge-typing-true-detritus-sweep`
   (the last finite maintenance item). 2 files committed: tools/graded-stack-lint/graded_stack_lint.py
