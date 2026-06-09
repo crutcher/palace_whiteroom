@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T004721Z
 scope: FINALIZATION de-bulk (cycle-149 D1) — book/src/L3-L2/ksp-solve-outer-driver.md
 status: pending
 integrated_at: 2026-06-09T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0877522
 integration_notes: "cycle-149 FINALIZATION de-bulk wave (D1). Applied (de-bulk ALREADY on disk per FINALIZATION convention; STAGED, not re-applied). book/src/L3-L2/ksp-solve-outer-driver.md: 13 process attributions -> 0, retired-directive footer removed, kernel/driver contrast + table + disjoint-subjects law lifted to static, Verified-against -> Evidence. Status firm sole-rank-carrier token PRESERVED. No node/edge/rank/status move. graded-stack baseline HELD EXACTLY; build EXIT 0; step-5c/5d PASS."
 inputs:
   - book/src/L3-L2/ksp-solve-outer-driver.md (the target — 13 cycle/batch/wave attributions, batch-47 finalization miss)

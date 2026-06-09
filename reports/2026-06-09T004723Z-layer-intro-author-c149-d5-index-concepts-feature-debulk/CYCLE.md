@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T004723Z
 scope: cycle-149 FINALIZATION de-bulk wave (D5) — 6 index/concepts/feature/synthesis-shell files (7 attributions)
 status: pending
 integrated_at: 2026-06-09T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0877522
 integration_notes: "cycle-149 FINALIZATION de-bulk wave (D5, LAST per-report). Applied (de-bulk ALREADY on disk; STAGED). 6 index/concepts/feature/synthesis-shell files: 7 inline process attributions -> 0; constructed-operators.md GMRES side-counter-example worked example REPHRASED-not-deleted (code + walkthrough preserved). L2/index.md dep-map status cells (18 firm, 6 partly-constructive) byte-preserved. TWO OQs promoted for batch-49 meta: concept-page-context-origin-working-notes-narrative-debulk-scope + verified-against-section-residue-cohort. graded-stack baseline HELD EXACTLY; build EXIT 0; step-5c/5d PASS."
 ---
 

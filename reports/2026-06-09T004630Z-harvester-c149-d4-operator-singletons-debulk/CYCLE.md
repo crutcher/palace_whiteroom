@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T004630Z
 scope: FINALIZATION de-bulk (batch-47 directive) — cycle-149 wave D4
 status: pending
 integrated_at: 2026-06-09T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0877522
 integration_notes: "cycle-149 FINALIZATION de-bulk wave (D4). Applied (de-bulk ALREADY on disk; STAGED). 3 low-residue singletons (L2/reciprocal.md, L2-L1/inner-product-fold-specialization.md, L4/frequency_sweep.md): 1 process attribution each -> 0, framing stripped, every design-finality/witness/coupling fact + citation kept. Citation multiset IDENTICAL per file. L2-L1 Status firm sole-rank-carrier token PRESERVED. OQ promoted: reciprocal-stale-prose-slug-dot-l2-leaf-floor-ref (pre-existing stale prose slug, conserved). graded-stack baseline HELD EXACTLY; build EXIT 0; step-5c/5d PASS."
 inputs:
   - skills/finalization-debulk/SKILL.md

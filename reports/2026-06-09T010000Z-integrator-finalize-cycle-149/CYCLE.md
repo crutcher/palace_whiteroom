@@ -11,7 +11,7 @@ staging_rows: 5
 dispatched_ready: 5
 gate_hits_total: 0
 build_exit: 0
-commit: PLACEHOLDER_SHA
+commit: 0877522
 ---
 
 # CYCLE-149 batch CYCLE.md — FINALIZATION-residue de-bulk wave (17 files, 5 reports applied clean)
@@ -79,7 +79,7 @@ authoritative.
   de-bulk).
 - 0 implied-component stubs.
 - consumed-report frontmatter integrity: all 5 reports' `integrated_at` / `integration_commit`
-  (PLACEHOLDER_SHA, two-phase patch follows) / `integration_notes` set.
+  (0877522, two-phase patch follows) / `integration_notes` set.
 - commit atomicity: single commit (below).
 
 ## Build-status

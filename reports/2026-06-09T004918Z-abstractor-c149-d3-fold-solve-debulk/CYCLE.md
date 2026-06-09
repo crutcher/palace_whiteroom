@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T004918Z
 scope: FINALIZATION de-bulk (skill finalization-debulk) — fold_solve family (3 files)
 status: pending
 integrated_at: 2026-06-09T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0877522
 integration_notes: "cycle-149 FINALIZATION de-bulk wave (D3). Applied (de-bulk ALREADY on disk; STAGED). fold_solve family (3 files): 6 process attributions -> 0. L4/fold_solve.md (frontmatter rank: firm) Status promotion-section DELETED, load-bearing Scope content LIFTED to Scope section; 2 dropped roll-up aggregate spans, all constituent pinpoints survive in Evidence. L3 partial-obstruction + L3-L2 firm Status sole-rank-carrier tokens PRESERVED. One-combinator classification + schedule-source variant axis kept. graded-stack baseline HELD EXACTLY (firm:224, partial-obstruction:4); build EXIT 0; step-5c/5d PASS."
 inputs:
   - book/src/L4/fold_solve.md

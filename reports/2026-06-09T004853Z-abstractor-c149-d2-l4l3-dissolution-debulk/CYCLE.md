@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T00:48:53Z
 scope: cycle-149 FINALIZATION de-bulk wave D2 — L4>L3 dissolution/migration cohort (4 files)
 status: pending
 integrated_at: 2026-06-09T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0877522
 integration_notes: "cycle-149 FINALIZATION de-bulk wave (D2). Applied (de-bulk + repairer citation re-anchor ALREADY on disk; STAGED). 4 L4>L3 dissolution/migration files: 9 cycle-002 attributions -> 0, process-framed Audit section rewritten to static Body identity-in-form structural-fact section with 6 sibling refs re-pointed, 2x Verified-against -> Evidence, Sibling Status-tail lifted. REPAIRED citation re-anchor: all inbound krylov-step-typed-wrapper-dissolution refs uniform :196-202. All 4 Status firm sole-rank-carrier tokens PRESERVED. graded-stack baseline HELD EXACTLY; build EXIT 0; step-5c/5d PASS."
 inputs:
   - book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md
