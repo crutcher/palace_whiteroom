@@ -732,6 +732,22 @@ This shape is load-bearing, and it follows three principles:
 > *forward-frontier* R&D has been complete for eight consecutive batches; what remains is finishing the finalization surface to a
 > genuinely clean static state — which, when the last residue tail is exhausted, leaves the artifact in its handoff-ready form.
 
+> **The finalization residue tail is exhausted — the artifact is book-wide residue-clean (batch-50).** Batch-50 ran the
+> adjudicated de-bulk campaign to completion: every slice-era process-framing section (the `## Origin` / `## Working Notes` /
+> `## Critic's role` narrative, the woven directive-date provenance, the duplicated concept bodies the comprehensive scan kept
+> surfacing) was stripped or its buried coupling fact lifted to an explicit static section, across all targeted concept pages and
+> layer indexes. The completion criterion was not a cohort tally but a *clean book-wide A–F residue-class scan* — and that scan now
+> returns empty (the only matches left are the two deliberately-kept governing headers: the semantic-surface consolidation directive
+> and the table-of-contents). The graded-stack baseline held exactly through all three cycles; no node, edge, rank, or status moved
+> — the de-bulk is pure prose finalization. The arc's recurring lesson held one more time: each comprehensive scan surfaced a new
+> *adjacent* residue sub-class the previous regex did not target (this batch, date-less `meta-review #N` references and a duplicate
+> concept body), but the trajectory is convergence, not escalation — the residue is a finite, fully-enumerable set of slice-era
+> process forms, and the scan is self-correcting (each recurrence widens the standing grep so the next sweep catches the sub-class
+> mechanically). The artifact is now what the finalization campaign was for: a static-state surface that states what each component
+> *is*, carrying no process or judgment accounting — complete, finalized, and book-wide residue-clean. This is the strongest
+> handoff-ready signal in the project's history; the meta-phase's standing recommendation remains the downstream-burn handoff, and
+> the strategic call (for the ninth consecutive batch at steady-state completeness) is the human's.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
