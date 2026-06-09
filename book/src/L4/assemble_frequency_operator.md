@@ -26,7 +26,7 @@ the operator-domain image of the tensor-domain BLAS-1 linear-combination cohort.
 It re-expresses **through** `linear_combination`'s **operand-category** variant
 axis (`tensor-operand | operator-operand`; the operator-operand corner,
 `L4/linear_combination.md:196-204`); it is **not** a new fold algebra
-(replace-and-propagate, 2026-06-01 anti-mirror discipline). This is the driven
+(replace-and-propagate, anti-mirror discipline). This is the driven
 (frequency-domain) pipeline's **assemble half** reaching the L4 feature surface
 (directive-1: L4 is the outward backend-lowering target — the per-ω system
 operator the driven sweep wants named as a backend verb).
@@ -69,7 +69,7 @@ operator-operand corner: the operands are the FE-assembled operators
 `{K, C, M, A2}` (`LinearOperator[N, N]` values), the operand monoid is
 operator-addition with scalar-operator scaling (realized at L0 by
 `SumOperator::AddOperator`), and the scalar weights are the affine-in-ω schedule
-`{1, iω, −ω²}` (plus coeff `1` on `A2`). Per the 2026-06-01 vocabulary-shift
+`{1, iω, −ω²}` (plus coeff `1` on `A2`). Per the vocabulary-shift
 redirect this is handled by the existing combinator's operand-category axis — NOT
 by authoring a mirrored `operator_linear_combination` chapter.
 `assemble_frequency_operator` is then the **driven-pipeline specialization** of

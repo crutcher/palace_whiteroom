@@ -54,10 +54,9 @@ Each theme:
 - **Justification kind**: `algebraic` | `structural` | `reduction-chain` | `empirical-match` | `obstruction`
 - **Verified-against**: cited L3 evidence ranges or test references
 
-## Working Notes
+## Structural fact
 
-- Themes are coalesced as the artifact grows; multiple narrow themes are preferred over one mega-theme.
-- Negative results (L4 form has no L3 lowering for principled reasons) live here too as `obstruction`-justified entries.
+- Negative results (an L4 form that has no L3 lowering for principled reasons) are themes in this layer too, as `obstruction`-justified entries.
 
 ## Vocabulary-cohort
 

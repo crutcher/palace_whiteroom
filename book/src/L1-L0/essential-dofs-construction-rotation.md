@@ -100,8 +100,8 @@ The translation is sharp on the last line of the block: `...GetEssentialTrueDofs
   the essential-dof semantics are **MFEM-owned, read-as-given** (the same posture
   [`fe_space`](../L1/fe_space.md) takes toward dof structure). This theme treats the dof-set as an
   opaque index structure tagged by the space's true-dof axis `N`; it does NOT crack open the dof
-  numbering (doing so would be the identity-in-named-terms smell the 2026-06-01 vocabulary-shift
-  redirect warns against — the dof set is a *value over* the space, not a separate L1 operation that
+  numbering (doing so would be the identity-in-named-terms smell the vocabulary-shift discipline
+  warns against — the dof set is a *value over* the space, not a separate L1 operation that
   re-mirrors MFEM dof internals).
 
 This split is the exact analogue, at the essential-dof-construction altitude, of the

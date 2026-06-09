@@ -55,9 +55,8 @@ The ownership boundary splits cleanly:
   resolution, and the essential-dof semantics are **MFEM-owned, read-as-given** (the same posture
   `fe_space` takes toward dof structure, `book/src/L1/fe_space.md`). This entry treats the dof-set as an
   opaque index structure tagged by the space's true-dof axis `N`; it does NOT crack open the
-  dof numbering (doing so would be the identity-in-named-terms smell the 2026-06-01 vocabulary-shift
-  redirect warns against — the dof set is a *value over* the space, not a separate L1 operation that
-  re-mirrors MFEM dof internals).
+  dof numbering (doing so would be the identity-in-named-terms smell — the dof set is a
+  *value over* the space, not a separate L1 operation that re-mirrors MFEM dof internals).
 
 ## Signature
 

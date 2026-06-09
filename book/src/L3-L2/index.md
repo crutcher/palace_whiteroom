@@ -46,6 +46,8 @@ L3 forms are whole-tensor; L2 forms are compositions of base algebraic primitive
 - `nrm2` — an in-line §"Downward to L2" CONSUMER note on `book/src/L3/nrm2.md` (`nrm2` = `√ ∘ abs ∘ inner_product` consumer at `y=x`, NOT a fold member — do-NOT-merge; the `std::abs` load-bearing guard is preserved as an explicit claim in the note).
 - The standalone-floor / gate edges (`assemble_diagonal`, `elementwise-product`, `reciprocal`, `jacobi-smoother`, `divfree_projector`) — in-line §"Downward to L2" notes on their standalone L3 entries (none has a fold-parent, so no operator chapter collapses). The `assemble_diagonal` edge's **load-bearing matrix-free approximate-diagonal non-law is preserved through the edge, NOT erased**. The divfree step-4 `Grad → AddMult` re-fusion is the L2>L1 edge's content (the KEPT `L2-L1/divfree-projector-leaf-identity` theme), NOT this edge's.
 
+### Erasure-scope taxonomy
+
 *Substantive / non-identity iteration-rotation themes (the L3>L2 edges where the rotation carries real content — the iteration view is erased and a `sequential-obstruction` named first-class at L3 shadows to its L2-vocabulary non-law(s)):*
 
 - `ksp-solve-outer-driver` — the **substantive / non-identity** driver complement of `krylov-step-body-identity`: the L3 `iterate_while_L3` tail recursion over `krylov_step` (carrying the outer-loop `sequential-obstruction`) lowers to the L2 outer-driver-by-role composition (iteration view erased; obstruction shadowed to the §"Algebraic laws" non-laws). **Unconditional** — the whole operator IS the loop. `kernel-identity + driver-non-identity = the full per-solver L3>L2 story`.

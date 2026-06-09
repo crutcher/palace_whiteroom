@@ -53,7 +53,7 @@ not by whether it decomposes:
 ## The discriminating test is judgment, not "does it decompose"
 
 The naive test — *if the operator decomposes into a combinator application,
-stop it low; otherwise raise it* — is **wrong**, and the 2026-06-01 blanket
+stop it low; otherwise raise it* — is **wrong**, and the blanket
 leaf-collapse that applied it was an over-correction. The decompose-or-not test
 alone cannot separate case (2) from case (3): both decompose. The deciding
 factor is **abstraction value** — does the named form simplify the description

@@ -127,12 +127,9 @@ restate the operators' algebraic laws — those live in the authoritative L_n op
 **Referenced by.**
 - [`<chapter>`](../L<n>/<chapter>.md)
 - [`<feature column>`](../feature/<name>.L<n>.md)
-
-## Working Notes
-(optional — todos, ambiguities, open questions tied to this concept)
 ```
 
-The `Context` and `Working Notes` sections are general agent-facing affordances available on any chapter content.
+The `Context` section is a general orientation affordance available on any chapter content.
 
 ## Index
 

@@ -226,7 +226,5 @@ The scaffolding version at `scaffolding/concept-dependency-map.md` is the worksh
 - Cross-cutting dependencies the meta-phase notices but hasn't yet incorporated are tracked.
 - Hypothetical concepts ("we'll need something like X eventually") are listed for future cycles to act on.
 
-## Origin
-
-Introduced 2026-05-23 to operationalize the "build vocabulary bottom-up" principle (CLAUDE.md §Bunsen methodology
-conventions). The Mermaid node set is anchored to the on-disk concept pages.
+The Mermaid node set is anchored to the on-disk concept pages, operationalizing the "build vocabulary bottom-up"
+principle (CLAUDE.md §Bunsen methodology conventions).

@@ -2,8 +2,8 @@
 layer: L1
 operator: multigrid-relaxation-smoother
 firmness: firm
-# Graded-stack scheme: this L1 entry is the kernel-IMPLEMENTATION node (DIRECTIVE-3,
-# 2026-06-07) — the constructive realization of the multigrid relaxation slot. It carries a
+# Graded-stack scheme: this L1 entry is the kernel-IMPLEMENTATION node (DIRECTIVE-3) —
+# the constructive realization of the multigrid relaxation slot. It carries a
 # normal rank/status (firm on the firm-on-positive-structure escape) and the `## Status`
 # role-label `kernel-impl`. The `realizes-kernel-api` edge to the KEPT
 # `triangular-solve-obstruction` theme is `reference`-class (navigational, free): the impl
@@ -46,7 +46,7 @@ threaded through the de-Rham discrete gradient — every piece a firm L1 primiti
 ## Context
 
 This node is the **`kernel-impl`** half of the DIRECTIVE-3 kernel-API/impl pair
-(2026-06-07; CLAUDE.md §Methodology-invariants "Kernel-API vs
+(CLAUDE.md §Methodology-invariants "Kernel-API vs
 kernel-IMPLEMENTATION distinction"). The **kernel-api** half is the kept
 [`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) theme
 (`obstruction (opaque-library-ownership)`), which documents the opaque contract:

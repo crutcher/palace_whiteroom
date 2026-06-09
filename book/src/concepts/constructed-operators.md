@@ -17,7 +17,7 @@ The construction and the application are separated by phase:
 - **Construction phase.** Inputs include configs, raw tables, problem-specific data. Output is an operator object with internal immutable state. Often expensive (factorize, precompute, allocate).
 - **Application phase.** Inputs include only the operand (the sim state being transformed). Output is the new sim state. Pure with respect to the operator's internals.
 
-This concept was introduced by the user during 2026-05-24 meta-review #3 enactment, motivated by friction in cycles 7+9 where variant-absorption recurred because configs and selectors were being deep-plumbed through every L1 step. Constructed operators are one of the canonical routes to procedural and primitive-sequence absorption (per `variant-absorption.md` *Levels of absorption*).
+Constructed operators are one of the canonical routes to procedural and primitive-sequence absorption (per `variant-absorption.md` *Levels of absorption*): they resolve the failure mode where configs and selectors are deep-plumbed through every L1 step.
 
 This concept is **methodology**, not a tensor primitive (same kind as `rotation.md` and `variant-absorption.md`).
 
@@ -112,8 +112,6 @@ Constructed operators are **the realization of "operator internal parameters as 
 
 ## Limits of constructed-operator absorption
 
-(Added 2026-05-24 meta-review #5, from cycle 14's FGMRES friction — the 4th instance of the variant-absorption recurrence cluster, all on `gmres`.)
-
 Constructed operators absorb variants when the variant is **bound once at construction and applied many times** without changing. They DO NOT absorb variants when the variant is **per-step** — when the operator changes between applications during a single solve.
 
 ### When the pattern works
@@ -166,24 +164,9 @@ apply(op: X, operand: Operand) -> Operand
 
 The slice should name the type, the construct function, and the apply function. Internal-state fields are listed (so the Critic can verify what is hidden) but not inspected by the apply-side caller.
 
-## Synthesizer / Critic responsibilities
+## Relationship to burn's `Module`
 
-For now (until friction-from-use motivates a dedicated check):
-
-- **Synthesizer**: when a slice's L1 procedure repeatedly inspects the same parameter, OR when a tabular config is being threaded through many layers, consider constructing an operator that internalizes it. This is one route to satisfying variant-absorption levels (b) and (c) per `variant-absorption.md`, and to rotation criterion (1) per `rotation.md`.
-- **Critic**: when verdicting variant-absorption (check #9), constructed operators are a legitimate path to all three absorption levels. A slice that uses constructed operators to absorb variants passes check #9 even when the construct-side has variant logic — that's where the variant logic belongs.
-
-A dedicated Critic check is not added on first introduction. Friction-from-use will reveal whether one is needed (over-construction, under-construction, or construction that hides load-bearing spec content).
-
-## Origin
-
-Introduced by the user during 2026-05-24 meta-review #3 enactment, motivated by the variant-absorption friction in cycles 7+9 (`side`-conditional smuggled into procedural L1 sites) and the general observation that deep-plumbing of configs through every layer is the failure mode that constructed operators were invented to solve in graph-evaluation traditions. See `book/src/meta-reviews/2026-05-24-cycles-7-9.md`.
-
-## Working Notes
-
-- Not yet exercised in a real cycle. First cycle that touches a slice with serious variant + tabular state — FE assembly with quadrature tables and basis caches, preconditioner construction with factorization, time-stepping coefficient tables — will be the first test. Watch whether the Synthesizer correctly identifies construction opportunities, or whether the rule needs to be more prescriptive (e.g., "if you inspect a parameter at ≥2 L1 sites, you MUST consider a constructed-operator absorption").
-- Relationship to the burn-realization downstream artifact: burn's `Module` pattern is essentially constructed operators with backward-pass support added. The spec-level abstraction here ("constructed operator") is the right grain for L1/L2; the burn realization is a separate downstream concern. The L4 calculus's "operator internal parameters" category is the formal home for this concept once L4 is built out for a slice that uses it.
-- Possible future extension: a slice that uses a constructed operator could declare both construction-cost class (`cheap` / `expensive-but-once` / `per-iteration`) and apply-cost class. This information is load-bearing for L3/L4 work but not required at L1.
+burn's `Module` pattern is essentially constructed operators with backward-pass support added. The spec-level abstraction here ("constructed operator") is the right grain for L1/L2; the burn realization is a separate downstream concern. The L4 calculus's "operator internal parameters" category is the formal home for this concept.
 
 ## Use in GMRES / FGMRES
 

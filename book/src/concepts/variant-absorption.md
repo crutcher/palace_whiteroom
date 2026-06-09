@@ -12,13 +12,6 @@ edges:
 
 A peer concept to `rotation.md`. **Variant absorption** is the principle that when a slice has orthogonal axes of algorithmic variation — preconditioner side, orthogonalization variant, flexible vs. fixed preconditioner, restart vs. full Krylov, real vs. complex scalar type, etc. — the L1 form must absorb those variants **parametrically** rather than appending them as separate paragraphs.
 
-This concept was extracted during the 2026-05-24 meta-review #2 (cycles 4–6 enactment) in response to two friction observations:
-
-- **Cycle 5** (back-push on GMRES L1): variant combinations (`pc_side` × `gs_orthog` × flexible vs. fixed) were under-specified — the L1 form named the variants but did not show how they compose at the per-step level.
-- **Cycle 6** (back-push on GMRES L1, with the Critic acknowledging cycle-5's improvements): the FGMRES paragraph was "bolted onto the end of L1 rather than absorbed: the rotation `x_m = x_0 + V_m y_m` has to be locally patched to `x_m = x_0 + Z_m y_m` for FGMRES, which suggests the L1 form should have been stated as `x_m = x_0 + W_m y_m` where W_m is the *update basis* (= V_m for GMRES, = Z_m for FGMRES) and `A W_m = V_{m+1} H̄_m`. That unified form would make FGMRES a parameter choice rather than a variant."
-
-The Critic correctly applied check #8 (rotation quality) and found L0→L1 was a genuine rotation, but flagged the variant-handling as a separate quality failure deserving its own check (#9 in `prompts/critic.md`).
-
 This concept is **methodology**, not a tensor primitive (same kind as `rotation.md`).
 
 ## The parametric-vs-appended test
@@ -61,29 +54,27 @@ The "no, and bolt it on" path is **not** an option — that's the failure mode t
 
 ## Levels of absorption
 
-(Added 2026-05-24 meta-review #3, in response to cycles 7+9 friction where invariant-level absorption was achieved but procedural and primitive-sequence levels were not.)
-
 Variant absorption operates at three levels. A genuine absorption holds at **all three**; partial absorption — typically (a) without (b) or (c) — must be explicitly declared.
 
 ### (a) Invariant-level absorption
 
 The mathematical statement unifies. Example: `x = x_0 + W_m y_m` with `W_m = V_m` for GMRES and `W_m = Z_m` for FGMRES is invariant-level absorbed — one equation, parameter binding chooses the variant.
 
-This is the level the original `variant-absorption.md` "parametric vs appended" test catches. Necessary but not sufficient.
+This is the level the "parametric vs appended" test (above) catches. Necessary but not sufficient.
 
 ### (b) Procedural absorption
 
 The L1 procedure mentions the variant parameter **at most once**, in a binding or dispatch step, and never re-inspects it. Example: a procedure that says "let `op = construct_krylov_operator(A, M, side)`; then for each step, `w = op.apply(v)`" is procedurally absorbed — `side` appears once, at construction.
 
-A procedure that re-inspects the variant at multiple steps (`if side == LEFT: ...; elif side == RIGHT: ...`) is **not** procedurally absorbed even if the invariant unifies. Cycle 9's GMRES (`W ∈ {V, Z}` selector referenced at Arnoldi step AND solution update) is the worked counter-example.
+A procedure that re-inspects the variant at multiple steps (`if side == LEFT: ...; elif side == RIGHT: ...`) is **not** procedurally absorbed even if the invariant unifies. GMRES with a `W ∈ {V, Z}` selector referenced at the Arnoldi step AND the solution update is the worked counter-example.
 
 ### (c) Primitive-sequence absorption
 
 The L_{n+1} primitive chain is the **same shape** across parameter values, with the parameter binding only the operands (not the chain itself). Example: `[matvec, dot, axpy]` for all `side` values, with the matvec's operator argument changing.
 
-A rotation whose L_{n+1} chain has different lengths or different primitives per parameter value is **not** primitive-sequence absorbed. Cycle 7's GMRES (right-fixed-M needs trailing `M.apply`; left and FGMRES don't) is the worked counter-example — three sequences masquerading as one.
+A rotation whose L_{n+1} chain has different lengths or different primitives per parameter value is **not** primitive-sequence absorbed. GMRES, where right-fixed-`M` needs a trailing `M.apply` that left and FGMRES don't, is the worked counter-example — three sequences masquerading as one.
 
-**Note (added 2026-05-24 meta-review #5):** Achieving primitive-sequence absorption may require **state-schema changes**, not just a constructed operator. When the variant is *per-step* (e.g., FGMRES with `M_k` changing between Arnoldi iterations), constructing an operator can't absorb the variant — the threaded sim state itself must expand (add the per-step preconditioned basis `Z` to L1 state). See `constructed-operators.md` *Limits of constructed-operator absorption* for the worked GMRES↔FGMRES example and the decision rule.
+**Note:** Achieving primitive-sequence absorption may require **state-schema changes**, not just a constructed operator. When the variant is *per-step* (e.g., FGMRES with `M_k` changing between Arnoldi iterations), constructing an operator can't absorb the variant — the threaded sim state itself must expand (add the per-step preconditioned basis `Z` to L1 state). See `constructed-operators.md` *Limits of constructed-operator absorption* for the worked GMRES↔FGMRES example and the decision rule.
 
 ## Partial absorption: how to disclose
 
@@ -94,7 +85,7 @@ Required disclosure when ≥1 of (b)/(c) fails:
 - List the **parameter sites in L1 procedure** where the variant is re-inspected. The Critic uses this to verify completeness.
 - List the **primitive-sequence divergences in L_{n+1}** as **residual axes**. The Critic verifies these are necessary (genuinely irreducible) rather than absorbable through a different framing (e.g., constructed operators — see `constructed-operators.md`).
 
-A slice that achieves all three levels does not need a "residual axes" section. A slice that achieves only (a) and silently glosses over (b)/(c) fails Critic check #9.
+A slice that achieves all three levels does not need a "residual axes" section. A slice that achieves only (a) and silently glosses over (b)/(c) is a silent partial absorption — the failure mode this concept exists to catch.
 
 ## Routes to full absorption
 
@@ -108,29 +99,15 @@ When (b) or (c) fails, consider the canonical fixes:
 
 - **Not a requirement that every axis be parametric.** Scoping-out is equally acceptable when the variant is genuinely deferable.
 - **Not a ban on per-variant notes.** A parametric L1 form can (and should) note "MGS = J communication-collective calls; CGS = 1 communication-collective call" without bolting on a whole paragraph. The note is *about* the parameter, not a replacement for parametric absorption.
-- **Not a license to over-parameterize.** If a slice has so many orthogonal variants that parametric absorption obscures the algorithm, that's signal that the slice is over-scoped (per `book/src/spec/index.md` slice-acceptance criterion #1). Split the slice.
+- **Not a license to over-parameterize.** If a slice has so many orthogonal variants that parametric absorption obscures the algorithm, that's signal that the slice is over-scoped. Split the slice.
 
-## Critic's role
+## Relationship to rotation
 
-`prompts/critic.md` verification check #9 applies this concept. For each slice with orthogonal variation:
+Variant absorption is *necessary* for the `rotation.md` criterion (1) state hiding to hold robustly. If the L1 form bolts on FGMRES paragraphs, an L1→L2 attempt either hides the variant logic (in which case the L1 form was over-detailed) or exposes it (in which case the L2 form has parallel branches that defeat state-hiding). Parametric L1 → clean L2.
 
-- If variants are parametric, check #9 passes.
-- If variants are scoped out explicitly, check #9 passes.
-- If variants are appended as bolt-on paragraphs, verdict: `revise`, `kind: labored_rotation_push_back_candidate`, `push_back_suggestion`: which parameter would unify the variants, or which slice should hold the scoped-out variant.
-
-## Origin
-
-Codified during the **2026-05-24 meta-review #2 enactment** (cycles 4–6). Cycle 6's Critic note (in `lessons.md` and `episodic.jsonl`) was the originating observation. The previous meta-review (`2026-05-24.md`, cycles 1–3) left the variant-handling lesson in `lessons.md` only — read by the Critic but not enforced by the Synthesizer. Meta-review #2 promoted it to this concept page + producer-side (Synthesizer) + consumer-side (Critic) enforcement.
-
-## Working Notes
-
-- The boundary between "orthogonal variant" and "fundamentally different algorithm" is fuzzy. FGMRES is parametrically absorbable into GMRES because they share the Arnoldi skeleton; LOBPCG vs. Arnoldi is not parametric — those are different slices. The test is whether the shared abstraction (Arnoldi-like inner loop, Krylov-basis-with-Galerkin-projection) is the same across variants; if yes, parametric is possible.
-- The cycle 6 observation that suggested unifying `W_m = V_m | Z_m` is a clean example of variant absorption emerging from Critic friction. Future meta-reviews should look for similar friction-driven unifications — the loop is producing methodology, not just slices.
-- This concept's relationship to `rotation.md`: variant absorption is *necessary* for criterion (1) state hiding to hold robustly. If the L1 form bolts on FGMRES paragraphs, an L1→L2 attempt either hides the variant logic (in which case the L1 form was over-detailed) or exposes it (in which case the L2 form has parallel branches that defeat state-hiding). Parametric L1 → clean L2.
+The boundary between "orthogonal variant" and "fundamentally different algorithm" is fuzzy. FGMRES is parametrically absorbable into GMRES because they share the Arnoldi skeleton; LOBPCG vs. Arnoldi is not parametric — those are different slices. The test is whether the shared abstraction (Arnoldi-like inner loop, Krylov-basis-with-Galerkin-projection) is the same across variants; if yes, parametric is possible.
 
 ## Structurally-distinct variants in otherwise-uniform families
-
-(Added 2026-05-25 meta-review #11 after cycle 40 surfaced the pattern on the orthogonalization-family slice; predicted recurrence on the curl-curl projector slice and on FGMRES per-step preconditioner — the latter was the originating signal in cycle 7.)
 
 A common variant family has the shape *N members share threaded-state structure but ONE member has fundamentally different state*. The shared-structure members absorb cleanly at all three levels under either parametric or constructed-operator strategies; the outlier breaks level-(c) primitive-sequence absorption no matter what strategy you reach for.
 
@@ -145,7 +122,7 @@ A common variant family has the shape *N members share threaded-state structure 
 
 2. **Split the outlier into a sibling slice with shared concept references.** The main slice's `## Scope` declares the outlier scoped out; the sibling slice shares concept references for the common primitives (`apply_linop`, `dot`, …) and provides its own L1/L2 forms. Level-(c) absorption is full *within each slice*; the inter-slice consolidation lives in cross-references and the shared concept entries.
 
-**How to choose**: option (1) is preferred when the outlier is a small minority (1 of 4 members) and the conditional state is bounded in size (one extra array, not a tree of new types). Option (2) is preferred when the outlier's primitives are substantially distinct enough that the residual-axis prose would dominate the slice. The Synthesizer applies the [`classify-variant-axis`](../../../skills/classify-variant-axis/SKILL.md) skill to make the call.
+**How to choose**: option (1) is preferred when the outlier is a small minority (1 of 4 members) and the conditional state is bounded in size (one extra array, not a tree of new types). Option (2) is preferred when the outlier's primitives are substantially distinct enough that the residual-axis prose would dominate the slice.
 
 **What's NOT this pattern**: differing *collective shape* / *cost annotation* across variants (e.g., CGS2 has 2× the dots-and-reductions of CGS) does NOT trigger structurally-distinct-variant treatment. That is cost annotation, captured per the `## L2` numerical-claim register: cost annotation is not absorption failure.
 
@@ -202,8 +179,7 @@ Four ways to handle a variant axis at L1:
 ## Anti-pattern
 
 Silent partial absorption — the L1 form looks uniform but the L2
-unfolding reveals branching the L1 prose did not disclose. Critic
-check #9 flags this.
+unfolding reveals branching the L1 prose did not disclose.
 
 ## Slices that use this methodology
 
