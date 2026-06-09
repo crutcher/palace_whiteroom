@@ -748,6 +748,25 @@ This shape is load-bearing, and it follows three principles:
 > handoff-ready signal in the project's history; the meta-phase's standing recommendation remains the downstream-burn handoff, and
 > the strategic call (for the ninth consecutive batch at steady-state completeness) is the human's.
 
+> **The finite maintenance backlog is driven to convergence — it is now empty (batch-51).** On the human directive to "drive the
+> finite maintenance backlog to convergence," batch-51 closed out the last enumerable maintenance debts. The opener landed three small
+> hygiene de-bulks (uniformizing the output-product feature-column glosses; dropping date-less meta-review references; removing a
+> duplicate concept body) and — load-bearingly — *classified* the linter's 61 `untyped` pages: 35 non-DAG navigational/methodology
+> carve-outs + 26 L0 ground-truth evidence leaves + **zero genuine-untyped DAG nodes**. That `(c) = 0` is the key fact: there was no
+> un-typed operator, theme, or record node left to edge-type — the entire `untyped` count was by-design outside-DAG pages the warning
+> should never have flagged as debt. The convergence was therefore a precise lint-definition fix, not a book-authoring campaign: the
+> middle cycle extended the linter's outside-DAG carve-out to cover the L0 evidence layer, the historical meta-review records, and the
+> navigational pages, and split the `untyped` count so the headline warning now counts *only* genuine edge-typing debt (a future
+> untyped operator or theme still surfaces — a temporary probe node confirmed the carve-out is exact, not a blanket warning-off). The
+> reclassification is fully accounted: genuine `untyped` 61 → 0, the by-design set reported separately as 61, the reachability axis's
+> expected-unreachable count rising by exactly the 52 reclassified L0/meta-review/navigational pages with zero genuine-DAG nodes added.
+> Every hard invariant and key total held exactly across all three cycles (`rank_violations 0`, `unresolved_depends_on_targets 0`,
+> `typed 331`, `files 392`, `roots 45`, `detritus 123`, `true_detritus 51`); the closer confirmed the converged baseline byte-identical.
+> This is the tenth consecutive in-scope-complete batch. The artifact is now complete, finalized, book-wide residue-clean, *and*
+> graded-stack edge-typing-debt-free; the finite maintenance backlog is empty, leaving only the perpetual floor (a per-batch sweep + a
+> per-cycle tripwire) and the consumer-gated deferred fronts. The handoff-ready signal is now the strongest it has ever been; the
+> strategic forward call (tenth consecutive batch) remains the human's.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
