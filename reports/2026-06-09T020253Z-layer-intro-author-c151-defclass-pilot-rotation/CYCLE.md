@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T020253Z
 scope: c151 D2 FINALIZATION-residue de-bulk PILOT — concepts/rotation.md
 status: pending
 integrated_at: 2026-06-09T022600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0ce6aeda93e7f5dc1475416bfea7b75358bff4aa
 integration_notes: |
   Applied clean as the cycle-151 (batch-50 OPENER) D/E/F FINALIZATION-residue de-bulk PILOT.
   book/src/concepts/rotation.md de-bulked on disk by the producer per the FINALIZATION de-bulk
