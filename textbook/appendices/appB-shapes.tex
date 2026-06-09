@@ -302,6 +302,7 @@ claimed run participates in congruence, while the free axes (\texttt{k},
 Read as a unification rule, the binding/use machinery is one inference:
 
 \[
+\resizebox{\linewidth}{!}{$\displaystyle
 \dfrac{
   \begin{array}{c}
   \text{$\hat{S}$ is the run matched by \lstinline[style=l4style]|(S: p)| in the binding position}
@@ -314,6 +315,7 @@ Read as a unification rule, the binding/use machinery is one inference:
   \text{a shape $\tau$ at a use position \lstinline[style=l4style]|$S| resolves (is congruent)}
 }
 \quad(\textsc{congr})
+$}
 \]
 
 \noindent and the dual---a rank mismatch---is the rejection rule:
@@ -626,6 +628,7 @@ side-condition its groups and axis names impose under \textsc{prim}.
 \centering
 \small
 \renewcommand{\arraystretch}{1.35}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}>{\ttfamily}l l l@{}}
 \toprule
 \normalfont\textbf{op} & \textbf{signature} & \textbf{shape side-condition} \\
@@ -655,7 +658,8 @@ conv &
   \lstinline[style=l4style]|Tensor[N,Ci,Si] -> Tensor[Co,Ci,Sk] -> Tensor[N,Co,So]| &
   channels $C_i$ match; $S_o$ from $S_i,S_k$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \caption[Primitive shape contracts]{The primitive operators and their shape
 contracts, the formal reference behind \cref{ch:tensors}'s picture-per-op
 treatment. \emph{Same-shape} ops (\lstinline[style=l4style]|axpy|,

@@ -39,6 +39,7 @@ cannot compose a vocabulary you have not yet met.
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[font=\footnotesize, node distance=4mm]
   \def\shelfw{34mm}
   % ---- types ----
@@ -75,7 +76,8 @@ cannot compose a vocabulary you have not yet met.
      \code{solve\_family}\\
      \code{frequency\_sweep} \code{fold\_solve}\\
      \scriptsize\itshape \code{Outcome} \code{EigState}};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The four libraries side by side]{The four libraries this chapter tours,
 each a shelf stocked with the operators and types we will render. \emph{types}
 holds the three cross-cutting records every solve threads. \emph{iteration} holds
@@ -541,11 +543,13 @@ chain $G^{\!\top}\!\cdot B^{\!\top}\!\cdot D \cdot B \cdot G$ of \cref{ch:matrix
 rendered inline because that chain \emph{is} the implementation:
 
 \begin{lstlisting}[style=l4style]
--- A = G^T . B_D^T . D . B_D . G  (the un-materialized contraction chain; ch:matrixfree)
+-- A = G^T . B_D^T . D . B_D . G
+--   (the un-materialized contraction chain; ch:matrixfree)
 mk_matrix_free_operator space term geom = mkOp (\v -> apply_chain v)
   where apply_chain v =
     element_restrict_T (basis_apply_T term
-      (quad_point_contract geom (basis_apply term (element_restrict space v))))
+      (quad_point_contract geom
+        (basis_apply term (element_restrict space v))))
 \end{lstlisting}
 And \code{fe\_assemble} folds the weak-form-term list into a global operator,
 $K = \sum_t \code{assemble\_term}(\text{space}, t)$---a \code{foldr} over a

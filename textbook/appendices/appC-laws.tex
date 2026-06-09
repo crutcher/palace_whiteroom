@@ -450,7 +450,8 @@ the monoid of tensors under addition:
   \textsf{linear\_combination}\ [\,] &\;=\; \mathbf{0}
     & \text{(empty list $\mapsto$ unit)} \label{eq:lcempty}\\
   \textsf{linear\_combination}\ (a \mathbin{+\!\!+} b)
-    &\;=\; \textsf{linear\_combination}\ a + \textsf{linear\_combination}\ b
+    &\;=\; \textsf{linear\_combination}\ a \notag\\
+    &\quad\;+\; \textsf{linear\_combination}\ b
     & \text{(concatenation-homomorphism)} \label{eq:lcconcat}\\
   \textsf{linear\_combination}\ ((\kappa a, t):\mathit{rest})
     &\;=\; \textsf{linear\_combination}\ ((a, \kappa t):\mathit{rest})

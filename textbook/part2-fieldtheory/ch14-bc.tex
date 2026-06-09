@@ -429,9 +429,11 @@ separability: elimination distributes over the assembly fold's term-sum. If
 $\mat{K}=\mat{K}_1+\mat{K}_2$ is the sum of two assembled term-contributions, then
 under \texttt{DIAG\_ZERO},
 \[
+  \begin{aligned}
   \texttt{eliminate\_essential\_bc}(\mat{K}_1+\mat{K}_2,E)
-  = \texttt{eliminate\_essential\_bc}(\mat{K}_1,E)
-  + \texttt{eliminate\_essential\_bc}(\mat{K}_2,E).
+  &= \texttt{eliminate\_essential\_bc}(\mat{K}_1,E) \\
+  &\quad + \texttt{eliminate\_essential\_bc}(\mat{K}_2,E).
+  \end{aligned}
 \]
 The \texttt{DIAG\_ONE} policy is the same projection plus the constant $\mat{I}_E$
 on the essential block---an affine, not linear, map---so it distributes up to that

@@ -94,6 +94,7 @@ keep it in view as we take the swaps one at a time.
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[node distance=6mm and 13mm, font=\footnotesize]
   % --- shared config input ---
   \node[data, align=center, text width=20mm] (cfg) {config\\\footnotesize geometry,
@@ -126,7 +127,8 @@ keep it in view as we take the swaps one at a time.
   \draw[refedge] (asm) -- (s12);
   \draw[refedge] (slv) -- (ss);
   \draw[refedge] (red) -- (s3);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The magnetostatic pipeline, three swaps from electrostatics]{The
 magnetostatic driver drawn over the electrostatic skeleton of
 \cref{ch:electrostatics}. The three rust boxes are the \emph{only} things that

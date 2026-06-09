@@ -432,6 +432,7 @@ ways, plus a third that is worse than expensive.
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
   width=12cm, height=6.3cm,
@@ -461,7 +462,8 @@ ways, plus a third that is worse than expensive.
 \node[font=\scriptsize\bfseries, text=simGreen, rotate=90, anchor=south]
   at (axis cs:40,3e-7) {restart here ($m=k_{\max}$)};
 \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The restart problem]{Why the basis cannot be allowed to grow without bound. As the
 basis size $m$ increases, three costs climb. \emph{Storage} (blue) grows linearly---every
 basis vector is a full field, and a thousand of them may not fit in memory. \emph{Orthogonalization
@@ -802,6 +804,7 @@ and makes full reorthogonalization affordable.}
 \small
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.25}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}llll@{}}
 \toprule
 Policy & When to reorthogonalize & Against & Cost \\
@@ -811,7 +814,8 @@ Full & every step & whole stored basis & most robust; $O(m)$/step, $O(m)$ storag
 Selective & monitored loss high & converged Ritz vectors only & moderate \\
 Partial & monitored loss $>\sqrt{u}$ & recent basis window & moderate; near-full safety \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{pitfall}

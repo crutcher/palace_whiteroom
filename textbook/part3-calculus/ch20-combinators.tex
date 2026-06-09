@@ -951,11 +951,13 @@ Numerically $\code{axpbypcz}(2,\vx,10,\vy,100,\vz) = 2\vx + 10\vy + 100\vz =
 \emph{The concatenation law makes the subsumption exact.} Watch the three-term sum
 split into a two-term and a one-term list:
 \[
+  \resizebox{\linewidth}{!}{$\displaystyle
   \underbrace{\code{linear\_combination}\,[(a,\vx),(b,\vy),(c,\vz)]}_{\code{axpbypcz}}
   \;=\;
   \underbrace{\code{linear\_combination}\,[(a,\vx),(b,\vy)]}_{\code{axpby}}
   \;+\;
   \underbrace{\code{linear\_combination}\,[(c,\vz)]}_{\code{scal}}.
+  $}
 \]
 Numerically $\begin{psmallmatrix}532\\644\end{psmallmatrix} =
 \begin{psmallmatrix}32\\44\end{psmallmatrix} + \begin{psmallmatrix}500\\600\end{psmallmatrix}$:

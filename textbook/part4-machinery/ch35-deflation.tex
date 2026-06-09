@@ -780,6 +780,7 @@ correct.
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[font=\footnotesize, node distance=8mm]
   % outer loop: one-at-a-time over eigenpairs
   \node[stage, minimum width=26mm, minimum height=11mm] (seed)
@@ -806,7 +807,8 @@ correct.
     {\scriptsize each Newton step: one\\\scriptsize bordered, deflated linear solve\\
      \scriptsize (\cref{fig:dense-sparse-split})};
   \draw[refedge] (solve.north) -- (newton.south);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The deflated quasi-Newton loop, nested]{The full method as two nested
 loops. The \emph{outer} loop peels eigenpairs one at a time
 (\cref{fig:peel-spectrum}): \textbf{seed} a guess from the linear eigensolver of

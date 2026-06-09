@@ -45,6 +45,7 @@ what it expresses, and what impedance it has rotated relative to the layer below
 
 \begin{figure}[p]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[node distance=0mm]
   \def\lw{96mm}    % layer width
   \def\lh{14mm}    % layer height
@@ -87,7 +88,8 @@ what it expresses, and what impedance it has rotated relative to the layer below
     {\textbf{top:} the accelerator-ready surface (what the backend consumes)};
   \node[font=\scriptsize\itshape, simInk, anchor=north] at (0, -0.5*\lh-2mm)
     {\textbf{ground:} every claim in the stack rests on an $L_0$ citation};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The five-layer impedance-matching stack]{The impedance-matching stack, in
 full. Read it from the ground up. $L_0$ is the cited Palace/MFEM source---the only
 layer that \emph{is} the machine rather than a description of it. Each rotation above

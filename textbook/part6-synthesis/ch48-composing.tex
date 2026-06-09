@@ -1005,12 +1005,12 @@ The \code{drivers} library is the top module of the synthesized library
 (\cref{ch:fivelibs}): it holds the six entry-point analyses, each a short composition
 over the four calculus libraries (\code{types}, \code{iteration}, \code{data-algebra},
 \code{coordination}) and adding no new vocabulary. The six are one-liners in a single
-algebra---\code{electrostatic} $=$ \code{gram\_reduce}$(w{=}1)\circ$%
-\code{solve\_family}$\circ$\code{fe\_assemble}; \code{magnetostatic} the same with the
-weight $1/(I_iI_j)$; \code{driven} $=$ \code{sparameter\_reduce}$\circ$%
-\code{frequency\_sweep}$\circ$\code{fe\_assemble}$^{\times3}$; \code{transient} $=$
-\code{fold\_solve}$\circ$\code{fe\_assemble}$^{\times3}$; \code{eigenmode} and
-\code{boundary\_mode} $=$ \code{map readout}$\circ$\code{eigsolve}$\circ$%
+algebra---\code{electrostatic} $=$ \code{gram\_reduce}$(w{=}1)\circ$\allowbreak%
+\code{solve\_family}$\circ$\allowbreak\code{fe\_assemble}; \code{magnetostatic} the same with the
+weight $1/(I_iI_j)$; \code{driven} $=$ \code{sparameter\_reduce}$\circ$\allowbreak%
+\code{frequency\_sweep}$\circ$\allowbreak\code{fe\_assemble}$^{\times3}$; \code{transient} $=$
+\code{fold\_solve}$\circ$\allowbreak\code{fe\_assemble}$^{\times3}$; \code{eigenmode} and
+\code{boundary\_mode} $=$ \code{map readout}$\circ$\allowbreak\code{eigsolve}$\circ$\allowbreak%
 \code{eig\_pencil}$\circ\cdots$. Beneath the four solve corners of \cref{ch:situating}
 lie just three coordination shapes---\texttt{map} (independent solves), \texttt{fold}
 (sequential chain), and \texttt{single call} (opaque eigensolve)---and every driver is

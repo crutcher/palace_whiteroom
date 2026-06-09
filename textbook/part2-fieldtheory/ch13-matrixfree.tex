@@ -196,6 +196,7 @@ below walks its five boxes left to right.
 
 \begin{figure}[p]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[node distance=8mm and 9mm]
   % input
   \node[data, text width=18mm] (in) {global vector\\\texttt{Tensor[N]}};
@@ -237,7 +238,8 @@ below walks its five boxes left to right.
     ([yshift=7mm]G.north west) -- ([yshift=7mm]Gt.north east)
     node[midway, above=4pt, font=\scriptsize, simRust]
     {element-local: independent, parallel over $E$};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The five-stage matrix-free pipeline]{The matrix-free operator
 $\mat{A}\vv = G^{\mathsf T}B_{\diffop}^{\mathsf T}\,D\,B_{\diffop}\,G\,\vv$ as a
 dataflow pipeline, with the tensor shape annotated on each wire. A global vector
@@ -714,12 +716,13 @@ $x_1$:
 \textbf{Check against the assembled matrix.} The consistent linear mass matrix on
 this uniform two-element mesh is the classic
 \[
-  \mat{M}=\frac{h}{6}\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix}
-        =\frac16\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix},
-  \quad
-  \mat{M}\vv=\frac16\begin{pmatrix}2{\cdot}1+1{\cdot}2\\1{\cdot}1+4{\cdot}2+1{\cdot}3\\1{\cdot}2+2{\cdot}3\end{pmatrix}
+  \begin{aligned}
+  \mat{M}&=\frac{h}{6}\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix}
+        =\frac16\begin{pmatrix}2&1&0\\1&4&1\\0&1&2\end{pmatrix}, \\
+  \mat{M}\vv&=\frac16\begin{pmatrix}2{\cdot}1+1{\cdot}2\\1{\cdot}1+4{\cdot}2+1{\cdot}3\\1{\cdot}2+2{\cdot}3\end{pmatrix}
             =\frac16\begin{pmatrix}4\\12\\8\end{pmatrix}
             =(0.6667,\,2.0000,\,1.3333).
+  \end{aligned}
 \]
 The two agree exactly. The matrix-free pipeline reproduced $\mat{M}\vv$ to the
 last digit---without ever forming the $3\times3$ matrix.

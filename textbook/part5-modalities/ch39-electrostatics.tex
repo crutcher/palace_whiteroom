@@ -619,6 +619,7 @@ one or two boxes replaced.
 
 \begin{figure}[p]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[node distance=7mm and 13mm, font=\footnotesize]
   % the pipeline, left to right
   \node[data, align=center, text width=20mm] (cfg)
@@ -646,7 +647,8 @@ one or two boxes replaced.
     {fixed-operator map\\(\cref{ch:situating}, corner 1)};
   \node[font=\scriptsize\itshape, text=simGold, above=2mm of red, align=center]
     {rank-2 symmetric Gram};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The electrostatic pipeline---the anchor diagram]{The complete
 electrostatic pipeline, $\texttt{electrostatic} = \code{gram\_reduce}\circ
 \code{solve\_family}\circ\code{fe\_assemble}$. A configuration of permittivity,

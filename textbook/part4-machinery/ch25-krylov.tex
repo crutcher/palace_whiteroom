@@ -526,6 +526,7 @@ spends.
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[node distance=7mm and 10mm]
   % input carry
   \node[data, text width=20mm] (in) {carry $K$\\\footnotesize $\vx,\vr,\vp,\dots$};
@@ -557,7 +558,8 @@ spends.
     ([yshift=-2mm]apply.south west) -- ([yshift=-2mm]apply.south east)
     node[midway, below=4pt, font=\scriptsize, simRust, align=center]
     {one apply\\per step};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The shared Krylov step kernel]{The kernel \code{krylov\_step} every Krylov
 method shares, as a dataflow. A carry $K$ (the working vectors $\vx,\vr,\vp$ and
 scalars) enters; the \textbf{one operator apply} $\vw=\mat{A}\vp$ (rust, the single

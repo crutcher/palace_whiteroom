@@ -72,7 +72,7 @@
 }
 \lstdefinestyle{l4style}{
   language=L4,
-  basicstyle=\small\ttfamily\color{simInk},
+  basicstyle=\footnotesize\ttfamily\color{simInk},
   keywordstyle=\color{simBlue}\bfseries,
   commentstyle=\color{simGray}\itshape,
   stringstyle=\color{simRust},
@@ -81,6 +81,7 @@
   keepspaces=true,
   breaklines=true,
   breakatwhitespace=true,
+  breakindent=1.5em,
   backgroundcolor=\color{simCode},
   frame=single,
   rulecolor=\color{simGray!45},
@@ -93,6 +94,11 @@
            {>>=}{{>>=}}3 {::}{{::}}2,
 }
 \lstset{style=l4style}
+
+% Typographic polish: let TeX stretch hard-to-break lines rather than overflow
+% the right margin (absorbs most prose/inline-code overfull boxes). microtype
+% (loaded above) handles the fine kerning; this handles the residual hard cases.
+\setlength{\emergencystretch}{3em}
 % inline pseudocode. For simple snippets (escape `_` as \_); for snippets that
 % contain `$` or literal braces, use \lstinline[style=l4style]|...| directly in
 % running text (never inside \item[] / captions / section titles).
