@@ -16,7 +16,7 @@ edges:
     - feature/electrostatic.L4
 ---
 
-# capacitance — L4 composition-root
+# capacitance — L4 composition-root (output product)
 
 The **Maxwell capacitance matrix** output product, presented at L4 as a single composition of firm-track L4 combinators. This chapter is a **composition root** of the *output-product* sub-kind (a **leaf feature column**): its constituents at stage (2) are *vocabulary ops* (the [`gram_reduce`](../L4/gram_reduce.md) reduction combinator), and its upstream stage is *another feature column* (the [`electrostatic`](./electrostatic.L4.md) driver, which produces the solution family the reduction consumes). It introduces no new combinator; it wires the already-firm-track L4 vocabulary into the user-facing product (config → capacitance matrix `C`), and links DOWN to each composed piece.
 

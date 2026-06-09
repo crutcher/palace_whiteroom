@@ -20,7 +20,7 @@ edges:
     - feature/driven.L4
 ---
 
-# sparameters — L4 composition-root
+# sparameters — L4 composition-root (output product)
 
 The **scattering matrix `S`** output product, presented at L4 as a single composition of L4 combinators. This chapter is a **composition root** of the *output-product* sub-kind (a **leaf feature column**): its stage-(2) constituent is a *vocabulary op* (the [`sparameter_reduce`](../L4/sparameter_reduce.md) port-projection reduction), and its upstream stage is *another feature column* (the [`driven`](./driven.L4.md) driver, which produces the per-ω solution family the reduction consumes). It introduces no new combinator; it wires the already-decomposed L4 vocabulary into the user-facing product (config → scattering matrix `S`), and links DOWN to each composed piece.
 

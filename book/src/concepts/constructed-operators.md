@@ -170,46 +170,4 @@ burn's `Module` pattern is essentially constructed operators with backward-pass 
 
 ## Use in GMRES / FGMRES
 
-The `apply_BA(op, v) → (w, z)` operation in the `gmres` slice is the canonical preconditioning-side absorber. It internalises the `pc_side ∈ {LEFT, RIGHT}` axis so the main solve procedure issues a single, uniform call per Arnoldi step rather than branching at every operator application. The returned `z` (the preconditioned input on the `RIGHT` branch) is *captured* when the preconditioner is flexible (FGMRES), threading the per-step preconditioned vector into the basis `Z[j]`; it is *discarded* when the preconditioner is fixed (standard GMRES with `RIGHT`-side preconditioning). This is the same construction pattern — a thin operator wrapper whose internal config absorbs an axis of variation — applied to a *side-output* rather than just the primary output.
-
-## Concept: constructed operators
-
-A methodology pattern for variant absorption: when a slice exposes an
-orthogonal variant axis (an enum, a flag, a configuration choice) that
-would otherwise be re-inspected at every primitive site, **absorb the
-variant at solve-start time by constructing an operator that
-internalizes the variant**, then have the per-step procedure invoke
-the constructed operator uniformly.
-
-The pattern achieves variant-absorption levels (b) and (c) — procedural
-and primitive-sequence absorption — even when level (a) (a single
-mathematical statement unifying all variants) is awkward or impossible.
-See [variant-absorption](./variant-absorption.md) for the three levels.
-
-## When to use
-
-- The variant axis affects **which operator is applied** at a primitive
-  site (not just a scalar parameter or a no-op switch).
-- Naïve absorption would require the per-step procedure to branch on
-  the variant repeatedly, breaking level (b).
-- The variant is fixed for the duration of the solve (decided at solve
-  start; not changing per step).
-
-Counter-pattern: if the variant is just a scalar parameter that flows
-through cleanly, plain parametric absorption suffices — no constructed
-operator needed.
-
-## Canonical example
-
-GMRES preconditioner side (`LEFT | RIGHT | NONE`) determines which
-operator is applied at each Arnoldi step and what auxiliary vector
-must be stored for the correction. Naïve L1 would branch on `side` at
-every Arnoldi step, every residual computation, and every correction.
-The [`apply_BA`](./apply_BA.md) constructed operator absorbs the
-three-way choice at solve start; the per-step procedure invokes
-`apply_BA.apply(v_j)` once, getting back `(w, z?)`, and never
-re-inspects `side`. See the firm [`krylov_step` (GMRES instance)](../L2/krylov_step.md).
-
-## Slices that use this methodology
-
-- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — preconditioner side via `apply_BA`.
+The [`apply_BA(op, v) → (w, z)`](./apply_BA.md) operation in the `gmres` slice is the canonical preconditioning-side absorber. It internalises the `pc_side ∈ {LEFT, RIGHT}` axis so the main solve procedure issues a single, uniform call per Arnoldi step rather than branching at every operator application. The returned `z` (the preconditioned input on the `RIGHT` branch) is *captured* when the preconditioner is flexible (FGMRES), threading the per-step preconditioned vector into the basis `Z[j]`; it is *discarded* when the preconditioner is fixed (standard GMRES with `RIGHT`-side preconditioning). This is the same construction pattern — a thin operator wrapper whose internal config absorbs an axis of variation — applied to a *side-output* rather than just the primary output. See the firm [`krylov_step` (GMRES instance)](../L2/krylov_step.md).
