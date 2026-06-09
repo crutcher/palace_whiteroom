@@ -32,7 +32,7 @@ A concept is a candidate for "constructed operator" treatment when:
 
 ## Worked example: GMRES preconditioning
 
-**Without constructed operators (cycle-7 / cycle-9 shape):**
+**Without constructed operators (the deep-plumbed `side`-conditional shape):**
 
 L1 per-step procedure mentions `side` at multiple sites:
 
@@ -90,7 +90,7 @@ The carry-through clause in `rotation.md` applies cleanly: tables and factorizat
 
 ### To `variant-absorption.md` (levels of absorption)
 
-Constructed operators are one of the canonical routes to achieving **all three levels** of variant absorption simultaneously. When a slice has orthogonal variants that don't admit a clean invariant unification (cycle-7's `side` case is the worked counter-example), constructing an operator that internalizes the variant decision is the standard fix.
+Constructed operators are one of the canonical routes to achieving **all three levels** of variant absorption simultaneously. When a slice has orthogonal variants that don't admit a clean invariant unification (the GMRES preconditioner-`side` case is the worked counter-example), constructing an operator that internalizes the variant decision is the standard fix.
 
 The `variant-absorption.md` "test" question — "can the variant be expressed as a binding of a parameter introduced in the main L1 statement?" — generalizes for constructed operators to: "can the variant be made an argument to the constructor, so the binding happens once at construct time?"
 

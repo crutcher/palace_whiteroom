@@ -52,7 +52,7 @@ Current members (alpha-within-this-kind):
 - [**matrix-free-operator**](./matrix-free-operator.L4.md) — the matrix-free FE operator
   **backend-lowering surface** every high-order driver's assemble stage composes when the
   order-threshold `UseFullAssembly` dispatch selects partial assembly; the **assemble-side**
-  infrastructure analog of the solve-side GMG column. The batch-41 "A" / DIRECTIVE-3 grounded
+  infrastructure analog of the solve-side GMG column. The DIRECTIVE-3 grounded
   consumer that firms the [`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) cap off
   `roadmap_goal` (composing the constructor cap + the firm L2 contraction-chain combinator by name)
   and GROUNDS the RE11 libceed-substrate sub-cohort (its L1 surface names the four firm element-local

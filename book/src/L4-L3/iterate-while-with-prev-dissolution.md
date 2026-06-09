@@ -109,7 +109,7 @@ $$
 }
 $$
 
-This is exactly the L3-side image of **Law 2** of [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) (`iterate_while_with_prev.md:137-147`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on **both** step bodies (the parent theme's §"Audit of cycle-002 identity-in-form claim", `krylov-step-typed-wrapper-dissolution.md:202-213`, establishes the body-identity that licenses the transport; the bootstrap and steady bodies are the Form-B first/steady pair audited there). The unpruned `iterate_while_with_prev_L3` is the ground form; the pruned `iterate_while_with_prev_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing** (identical to the companion theme): the pruned form is NOT a contradiction of the firm L4 Law 2 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 2's collapse rule fired under a `final_state`-only consumer.
+This is exactly the L3-side image of **Law 2** of [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) (`iterate_while_with_prev.md:137-147`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on **both** step bodies (the parent theme's §"Body identity-in-form across the L4>L3>L2 chain", `krylov-step-typed-wrapper-dissolution.md:196-202`, establishes the body-identity that licenses the transport; the bootstrap and steady bodies are the Form-B first/steady pair covered there). The unpruned `iterate_while_with_prev_L3` is the ground form; the pruned `iterate_while_with_prev_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing** (identical to the companion theme): the pruned form is NOT a contradiction of the firm L4 Law 2 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 2's collapse rule fired under a `final_state`-only consumer.
 
 ### Degeneracy to the companion dissolution
 
@@ -117,7 +117,7 @@ When `PrevCarry = ()` (`β = ()`), this combinator definitionally reduces to `it
 
 ### What does NOT change in the rotation
 
-Both step bodies' primitive sequences survive the rotation textually unchanged — the dissolution is **identity-in-form on the bodies** (`krylov-step-typed-wrapper-dissolution.md:202-213`). The rotation touches only the **wrapper**: the `Solve` monad becomes positional `sim`, the record-spread step return becomes a positional tuple, the `prev` closure parameter becomes a positional tuple slot, the bootstrap becomes a non-recursive first call, and the trajectory becomes either an explicit list accumulator (unpruned) or nothing (pruned). The bootstrap and steady kernels — whatever the slice's per-step kernels are — pass through unchanged in their dataflow positions.
+Both step bodies' primitive sequences survive the rotation textually unchanged — the dissolution is **identity-in-form on the bodies** (`krylov-step-typed-wrapper-dissolution.md:196-202`). The rotation touches only the **wrapper**: the `Solve` monad becomes positional `sim`, the record-spread step return becomes a positional tuple, the `prev` closure parameter becomes a positional tuple slot, the bootstrap becomes a non-recursive first call, and the trajectory becomes either an explicit list accumulator (unpruned) or nothing (pruned). The bootstrap and steady kernels — whatever the slice's per-step kernels are — pass through unchanged in their dataflow positions.
 
 The **outer-loop `sequential-obstruction`** survives at L3: both L3 forms name the steady loop tail-recursively but do **not** claim it lifts to a global tensor-field op. This is the expected outcome for Krylov-family iterations at L3 per [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the firm anchor is its §"MGS as sequential-obstruction". The bootstrap call is a single non-recursive step and carries no loop obstruction; only the steady tail recursion does. The unpruned form additionally allocates the `O(N)` trajectory accumulator; the pruned form does not.
 
@@ -154,11 +154,11 @@ The rewrite is valid when all five of the following hold (the four inherited fro
 
 None. This theme is an extraction of an already-firm form; the L4 cap it lowers ([`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) is a firm L4 row, and the companion no-prev combinator ([`iterate_while`](../L4/iterate_while.md)) is firm. No new speculative operator is introduced.
 
-## Verified-against
+## Evidence
 
 L4 source (the LHS of this rewrite):
 
-- `book/src/L4/iterate_while_with_prev.md:41-50` — the firm L4 `iterate_while_with_prev` `Solve`-threaded signature (the LHS); `:52` the argument order; `:74-93` the §Semantics bootstrap-then-`steady_loop` small-step rules; `:97-103` the three semantic points (bootstrap always runs / predicate after bootstrap / `prev` as closure parameter); `:129-135` Law 1 (degeneracy to `iterate_while` when `β = ()`); `:137-147` Law 2 (trajectory-pruning, the load-bearing transported property); `:182-198` the firm §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`) extracted as the RHS; `:202` the L3>L2 identity-in-form note; `:200` the standalone-pending deferral and `:223` the §"L4 vs L3 distinction" deferral, both re-anchored by this dispatch.
+- `book/src/L4/iterate_while_with_prev.md:41-50` — the firm L4 `iterate_while_with_prev` `Solve`-threaded signature (the LHS); `:52` the argument order; `:74-93` the §Semantics bootstrap-then-`steady_loop` small-step rules; `:97-103` the three semantic points (bootstrap always runs / predicate after bootstrap / `prev` as closure parameter); `:129-135` Law 1 (degeneracy to `iterate_while` when `β = ()`); `:137-147` Law 2 (trajectory-pruning, the load-bearing transported property); `:182-198` the firm §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`) extracted as the RHS; `:202` the L3>L2 identity-in-form note.
 - `book/src/L4/iterate_while.md:123-133` — the companion Law 1 (single-body demand-pruning) that Law 2 lifts to two bodies; the rule transported through the dissolution.
 - `book/src/semantics/index.md:150-184` — the strawman §3.7 `iterate_while` small-step rule the bootstrap-then-loop semantics generalise (`:164-171` the rule block, `:179-182` the `iterate_while_pure` sugar).
 - `book/src/semantics/index.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 2.
@@ -168,7 +168,7 @@ L3 source (the RHS of this rewrite; extracted from the firm cap + firm sub-compo
 - `book/src/L4/iterate_while_with_prev.md:182-198` — the firm L4 cap's own §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`), the bootstrap-then-tail-recursive ground shape extracted here.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:74-89` — the Form-B-in-L3 dissolution (`krylov-step-L3-first`/`krylov-step-L3-steady`, point 4): the `PrevCarry`-as-positional-value-in-the-threaded-tuple framing, extracted as the `prev`-positional delta.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:150-154` — the `iterate_while_with_prev` speculative-operator signature the Form-B body consumes (the bootstrap-step / steady-step split this theme renders positionally).
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:202-213` — the §"Audit of cycle-002 identity-in-form claim" verdict that establishes the body-identity licensing the Law-2 transport for both bodies.
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:196-202` — the §"Body identity-in-form across the L4>L3>L2 chain" structural fact that establishes the body-identity licensing the Law-2 transport for both bodies.
 - [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md) §"MGS as sequential-obstruction" — the firm `sequential-obstruction` anchor for the steady loop surviving at L3.
 
 L0 consumer-surface evidence (selects the pruned form for Palace's KSP case, Condition 5):
@@ -188,7 +188,7 @@ Concept-page references:
 
 ## Status
 
-`firm` — extraction of the form (the firm L4 cap's own §"Lowers to" `iterate_while_with_prev.md:182-198` + the sub-component `krylov-step-typed-wrapper-dissolution.md:74-89` point 4) into a dedicated layer-coherent chapter. The L4 cap it lowers ([`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) and the companion combinator ([`iterate_while`](../L4/iterate_while.md)) are firm L4 rows; the two L3 forms, the §3.8 collapse rule, the bootstrap-prefix shape, and the identity-in-form-on-bodies verdict are cited against the strawman §3.7/§3.8, the firm L4 Law 1 / Law 2, and the parent theme's body-identity audit. Justification is `structural` + secondary `reduction-chain`.
+`firm` — the L4 cap it lowers ([`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) and the companion combinator ([`iterate_while`](../L4/iterate_while.md)) are firm L4 rows; the two L3 forms, the §3.8 collapse rule, the bootstrap-prefix shape, and the identity-in-form-on-bodies result are cited against the strawman §3.7/§3.8, the firm L4 Law 1 / Law 2, and the parent theme's body-identity fact. Justification is `structural` + secondary `reduction-chain`.
 
 ## L4 vs L3 distinction
 

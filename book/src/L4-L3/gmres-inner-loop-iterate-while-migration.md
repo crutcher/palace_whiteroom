@@ -103,7 +103,7 @@ Four structural differences from the L4 form, all at the wrapper level (none at 
 
 4. **`stop_reason` carry-field threads positionally through the L3 worker**, the GMRES-specific addition over the krylov_step theme. The witness lives in the carry from the moment `check_stop_into_carry` writes it; the L3 worker reads it from the carry on each iteration's branch test; the outer wrapper `gmres_inner_loop_L3` extracts it via `fromJust K_final.stop_reason` after the worker returns. No `StopReason`-positional return-tuple slot at the worker level — the witness rides in the carry.
 
-The body's primitive sequence (`apply_BA`, `orthogonalize`, `ls_update_column`, `check_stop_into_carry`, carry-update) is textually unchanged between the L4 body and the L3 body; the rotation is identity-in-form on the body per the `krylov-step-typed-wrapper-dissolution` §"Audit of cycle-002 identity-in-form claim" verdict.
+The body's primitive sequence (`apply_BA`, `orthogonalize`, `ls_update_column`, `check_stop_into_carry`, carry-update) is textually unchanged between the L4 body and the L3 body; the rotation is identity-in-form on the body per the `krylov-step-typed-wrapper-dissolution` §"Body identity-in-form across the L4>L3>L2 chain".
 
 ### What does NOT change in the rotation
 
@@ -172,7 +172,7 @@ L4 source (the LHS of this rewrite):
 
 L4>L3 precedent (the theme this theme parallels):
 
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"L3 form (RHS)", §"Audit of cycle-002 identity-in-form claim", §"What the L3 form for `iterate_while` looks like" — the parallel firm theme. This theme inherits the wrapper-dissolution rotation and the body-identity-in-form claim; the GMRES additions are (a) the `stop_reason` carry-field threading and (b) the trajectory-pruning resolution.
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"L3 form (RHS)", §"Body identity-in-form across the L4>L3>L2 chain", §"What the L3 form for `iterate_while` looks like" — the parallel firm theme. This theme inherits the wrapper-dissolution rotation and the body-identity-in-form claim; the GMRES additions are (a) the `stop_reason` carry-field threading and (b) the trajectory-pruning resolution.
 
 Concept references:
 
@@ -183,4 +183,6 @@ Concept references:
 
 `firm` — the theme's LHS is the migrated GMRES §L4 form (the witness-into-carry hoist via `check_stop_into_carry`). The RHS (L3 form) is structurally derived from the LHS and inherits the firm [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) rotation shape. The `check_stop_into_carry` L4 helper is a thin pure record-update wrapper around the `check_stop` test.
 
-**Sibling**: [`fgmres-inner-loop-iterate-while-migration`](./fgmres-inner-loop-iterate-while-migration.md) applies this same rotation with two variant-axis collapses (`pc_side = RIGHT`, `flexible = true`) plus a per-iteration `Z[j]` workspace; it shares the same migrated form.
+## Sibling
+
+[`fgmres-inner-loop-iterate-while-migration`](./fgmres-inner-loop-iterate-while-migration.md) applies this same rotation with two variant-axis collapses (`pc_side = RIGHT`, `flexible = true`) plus a per-iteration `Z[j]` workspace; it shares the same migrated form.

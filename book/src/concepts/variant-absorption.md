@@ -147,7 +147,7 @@ A common variant family has the shape *N members share threaded-state structure 
 
 **How to choose**: option (1) is preferred when the outlier is a small minority (1 of 4 members) and the conditional state is bounded in size (one extra array, not a tree of new types). Option (2) is preferred when the outlier's primitives are substantially distinct enough that the residual-axis prose would dominate the slice. The Synthesizer applies the [`classify-variant-axis`](../../../skills/classify-variant-axis/SKILL.md) skill to make the call.
 
-**What's NOT this pattern**: differing *collective shape* / *cost annotation* across variants (e.g., CGS2 has 2× the dots-and-reductions of CGS) does NOT trigger structurally-distinct-variant treatment. That is cost annotation, captured per the `## L2` numerical-claim register. Per cycle 23 lesson: "cost annotation is not absorption failure."
+**What's NOT this pattern**: differing *collective shape* / *cost annotation* across variants (e.g., CGS2 has 2× the dots-and-reductions of CGS) does NOT trigger structurally-distinct-variant treatment. That is cost annotation, captured per the `## L2` numerical-claim register: cost annotation is not absorption failure.
 
 Cross-reference: [`constructed-operators`](./constructed-operators.md) *Limits of constructed-operator absorption*.
 

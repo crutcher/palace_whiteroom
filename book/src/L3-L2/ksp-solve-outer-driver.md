@@ -11,9 +11,9 @@ The L3>L2 lowering theme for the `ksp_solve` **outer-driver fold**. The rewrite 
 The `ksp_solve` lowering chain stretches across the layer-edges of the artifact:
 
 - **L1 firm** ([`L1/ksp_solve`](../L1/ksp_solve.md)) — the opaque solver-as-operator collapse `(K: Solver[A], b) -> SolveResult`; the loop and the kernel are both invisible (a solve is one indivisible operator application).
-- **L2 firm** ([`L2/ksp_solve`](../L2/ksp_solve.md), firm cycle-021 wave-1) — the **outer-driver composition**: `(K, b) -> SolveResult` with body = the convergence-test fold of [`krylov_step`](../L2/krylov_step.md), the fold **named by role** (the iteration view erased). The RHS of this theme.
+- **L2 firm** ([`L2/ksp_solve`](../L2/ksp_solve.md)) — the **outer-driver composition**: `(K, b) -> SolveResult` with body = the convergence-test fold of [`krylov_step`](../L2/krylov_step.md), the fold **named by role** (the iteration view erased). The RHS of this theme.
 - **L2>L1 firm** (recorded in-line in the L2 entry's §"Lowers from") — the un-collapse of the L1 opacity into the kernel-fold composition; non-identity.
-- **L3 firm** ([`L3/ksp_solve`](../L3/ksp_solve.md), firm cycle-020 wave-1) — the **iteration-rotation** view: the explicit value-threaded `iterate_while_L3` tail recursion `(op, K_0, s_0) -> (s_final, result)`, carrying the first-class outer-loop `sequential-obstruction`. The LHS of this theme.
+- **L3 firm** ([`L3/ksp_solve`](../L3/ksp_solve.md)) — the **iteration-rotation** view: the explicit value-threaded `iterate_while_L3` tail recursion `(op, K_0, s_0) -> (s_final, result)`, carrying the first-class outer-loop `sequential-obstruction`. The LHS of this theme.
 - **L3>L2 firm — this theme.** Narrates how the L3 explicit fold lowers into the L2 outer-driver-by-role wrap. Substantive (non-identity): the iteration view is erased and the named obstruction shadows down to the L2 non-laws.
 
 This theme is the **driver complement** of the kernel theme [`krylov-step-body-identity`](./krylov-step-body-identity.md). A Krylov solver's L3>L2 lowering has exactly two parts: the per-step kernel (identity-in-form on the body) and the per-solve driver loop (the substantive iteration-rotation erasure). The two themes together are the complete per-solver L3>L2 lowering. See §"Kernel-identity / driver-non-identity contrast".
@@ -102,11 +102,11 @@ The rewrite is valid when all of the following hold (satisfied for the firm L3 a
 
 ## Speculative L3 operators
 
-**None.** This theme is the substantive erasure rotation between two firm endpoints; no new L3 vocabulary is introduced. The L3 form referenced in the LHS is the firm [`L3/ksp_solve`](../L3/ksp_solve.md) entry; the L2 form referenced in the RHS is the firm [`L2/ksp_solve`](../L2/ksp_solve.md) entry. The `iterate_while_L3` / `iterate_while` combinators are firm (`book/src/L4/iterate_while.md`, firmed cycle-007); they are referenced, not introduced. The `krylov_step` kernel both endpoints fold is firm at both layers ([`L3/krylov_step`](../L3/krylov_step.md), [`L2/krylov_step`](../L2/krylov_step.md)).
+**None.** This theme is the substantive erasure rotation between two firm endpoints; no new L3 vocabulary is introduced. The L3 form referenced in the LHS is the firm [`L3/ksp_solve`](../L3/ksp_solve.md) entry; the L2 form referenced in the RHS is the firm [`L2/ksp_solve`](../L2/ksp_solve.md) entry. The `iterate_while_L3` / `iterate_while` combinators are firm (`book/src/L4/iterate_while.md`); they are referenced, not introduced. The `krylov_step` kernel both endpoints fold is firm at both layers ([`L3/krylov_step`](../L3/krylov_step.md), [`L2/krylov_step`](../L2/krylov_step.md)).
 
 ## Kernel-identity / driver-non-identity contrast
 
-The two L3>L2 themes for a Krylov solver divide labour by subject, and the division resolves the cycle-020 critic's "mild tension" cleanly:
+The two L3>L2 themes for a Krylov solver divide labour by subject:
 
 - **[`krylov-step-body-identity`](./krylov-step-body-identity.md) (kernel body)**: **identity-in-form** on the per-step body's primitive sequence (every primitive call maps line-for-line), with two information-preserving wrapper surface adjustments (`(op, K, s)` → unified `IterState`; outer-loop tail-recursion reference → outer-driver-by-role reference).
 - **`ksp-solve-outer-driver` (this theme; driver loop)**: **substantive (non-identity)** — the loop *is* the operator, so the wrapper rotation (explicit `iterate_while_L3` tail recursion → outer-driver-by-role wrap) is the whole content of the hop, and it erases the iteration view (and the named `sequential-obstruction`, which shadows to the L2 non-laws).
@@ -118,27 +118,27 @@ The contrast table:
 | **kernel body** (`krylov_step`) | five-primitive-group let-chain, value-threaded | same composition over `IterState` | **identity-in-form** + 2 wrapper surface adjustments |
 | **driver loop** (`ksp_solve`) | explicit `iterate_while_L3` tail recursion + named outer-loop `sequential-obstruction` | `iterate_while (krylov_step op) …` named-by-role; obstruction erased | **substantive (non-identity)**: iteration view erased |
 
-**`kernel-identity + driver-non-identity = the full per-solver L3>L2 story.`** The "mild tension" the cycle-020 critic noticed — that `ksp_solve` is classified non-identity while the kernel is classified identity — is **not a tension** because the two classifications are about disjoint subjects: the kernel *body* (the work inside each step, which survives the hop unchanged) versus the *iteration over the body* (the loop, whose explicit-recursion view L2 erases). The layer-edge judgment is ratified: the kernel body collapses identity-in-form, the driver loop is the genuine iteration-rotation. Both are true; they do not conflict.
+**`kernel-identity + driver-non-identity = the full per-solver L3>L2 story.`** That `ksp_solve` is classified non-identity while the kernel is classified identity is **not a conflict**: the two classifications are about disjoint subjects — the kernel *body* (the work inside each step, which survives the hop unchanged) versus the *iteration over the body* (the loop, whose explicit-recursion view L2 erases). The kernel body collapses identity-in-form; the driver loop is the genuine iteration-rotation. Both are true; they do not conflict.
 
 This division mirrors the kernel chain's own `L3>L2 vs L4>L3` division (substantive content at one hop, identity at the other), but along a different axis: here the split is **kernel vs driver at the same hop**, not **wrapper vs body across two hops**. The pair of themes makes the kernel/driver division visible in the `book/src/L3-L2/` Part, exactly as the kernel theme's §"L3>L2 vs L4>L3 distinction" makes the wrapper/body division visible.
 
-## Verified-against
+## Evidence
 
 L3 evidence (the LHS):
 
-- `book/src/L3/ksp_solve.md` (firm, cycle-020 wave-1) — the L3 explicit-fold form this theme references as LHS. §Signature (the `iterate_while_L3` tail recursion), §"Iteration-rotation marker" (the first-class outer-loop `sequential-obstruction`), §"Lowers to" (records the L3>L2 rotation as substantive / non-identity — the same rotation this theme narrates forward).
-- `book/src/L3/krylov_step.md` (firm, cycle-010) — the L3 kernel half both endpoints fold; §"Iteration-rotation marker" attributes the obstruction to "the surrounding `iterate_while_L3` tail-recursion, not the `krylov_step` body itself" — i.e., to `ksp_solve`, this theme's subject.
+- `book/src/L3/ksp_solve.md` — the L3 explicit-fold form this theme references as LHS. §Signature (the `iterate_while_L3` tail recursion), §"Iteration-rotation marker" (the first-class outer-loop `sequential-obstruction`), §"Lowers to" (records the L3>L2 rotation as substantive / non-identity — the same rotation this theme narrates forward).
+- `book/src/L3/krylov_step.md` — the L3 kernel half both endpoints fold; §"Iteration-rotation marker" attributes the obstruction to "the surrounding `iterate_while_L3` tail-recursion, not the `krylov_step` body itself" — i.e., to `ksp_solve`, this theme's subject.
 
 L2 evidence (the RHS):
 
-- `book/src/L2/ksp_solve.md` (firm, cycle-021 wave-1) — the L2 outer-driver composition this theme references as RHS. §Signature (the `iterate_while`-by-role fold), §Semantics phase 2 (the iteration view erased to a named-by-role wrap; "the explicit-recursion iteration-rotation view, and the `sequential-obstruction` it carries, are the L3/ksp_solve concern"), §"Algebraic laws" non-laws "Fold-merge / associativity" + "Identity / lift of the fold to a single tensor-field op at L2" (the L2-vocabulary shadow of the erased obstruction), §"Lifts to" (records the reverse direction in-line: L2 role-reference ⟷ L3 explicit fold).
-- `book/src/L2/krylov_step.md` (firm, cycle-005) — the L2 kernel half; §"Algebraic laws" (associativity non-law) cites the restart-as-outer-loop structure and the intrinsic step-boundary sequentiality this driver's fold is built over.
+- `book/src/L2/ksp_solve.md` — the L2 outer-driver composition this theme references as RHS. §Signature (the `iterate_while`-by-role fold), §Semantics phase 2 (the iteration view erased to a named-by-role wrap; "the explicit-recursion iteration-rotation view, and the `sequential-obstruction` it carries, are the L3/ksp_solve concern"), §"Algebraic laws" non-laws "Fold-merge / associativity" + "Identity / lift of the fold to a single tensor-field op at L2" (the L2-vocabulary shadow of the erased obstruction), §"Lifts to" (records the reverse direction in-line: L2 role-reference ⟷ L3 explicit fold).
+- `book/src/L2/krylov_step.md` — the L2 kernel half; §"Algebraic laws" (associativity non-law) cites the restart-as-outer-loop structure and the intrinsic step-boundary sequentiality this driver's fold is built over.
 
 Sibling-theme evidence (the complement):
 
 - `book/src/L3-L2/krylov-step-body-identity.md` (firm) — the kernel-body identity theme this theme complements. §"Rewrite shape" surface-adjustment (2) ("The L3 outer tail-recursive `iterate_while_L3` collapses into L2's outer-driver framing … a wrapper change, not a body change") is exactly the rotation this theme makes the *whole content* of the hop for `ksp_solve` (where the loop is the operator). §"L3>L2 vs L4>L3 distinction" is the kernel chain's labour-division template this theme's §"Kernel-identity / driver-non-identity contrast" mirrors.
 
-L0 evidence (self-verified against `reference/palace/` source via `palace-codemap` `read_range` this dispatch):
+L0 evidence:
 
 - `reference/palace/palace/linalg/iterative.cpp:361-486` — `CgSolver<OperType>::Mult` (def `:361-486`) — the canonical single-fold outer driver the L3 form renders as a tail recursion. Setup + pre-loop test `eps = max(rel_tol·initial_res, abs_tol)` (`:417`), `converged = (res < eps)` pre-loop short-circuit (`:418`); the outer-driver loop guard `for (; it < max_it && !converged; it++)` (`:427`); the per-step in-loop convergence test `converged = (res < eps)` (`:463`); result write `final_res = res; final_it = it;` (`:484-485`).
 - `reference/palace/palace/linalg/iterative.cpp:544-705` — `GmresSolver<OperType>::Mult` (def `:544-705`) — the restart-nested double-fold outer driver. The outer restart loop `for (; it < max_it; restart++)` (`:563`); result write `final_res = beta; final_it = it;` (`:703-704`).
@@ -151,8 +151,8 @@ L0 evidence (self-verified against `reference/palace/` source via `palace-codema
 Strawman / combinator evidence (the reduction-chain backing):
 
 - `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; the L3 tail recursion is the unfolded reduction sequence of the combinator, the L2 role reference is the folded form. §3.8 — the trajectory-accumulator demand-pruning governing the result-extraction identity-modulo-pruning.
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for `iterate_while` looks like" (firm cycle-008) — publishes the L3 tail-recursion rendering of the outer loop with the §3.8 collapse-rule cited; the conventions source the L3 form's explicit recursion follows.
-- `book/src/L4/iterate_while.md` (firm cycle-007) — the firm `iterate_while` combinator both forms reference (L3 explicit tail recursion / L2 named-by-role).
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for `iterate_while` looks like" — publishes the L3 tail-recursion rendering of the outer loop with the §3.8 collapse-rule cited; the conventions source the L3 form's explicit recursion follows.
+- `book/src/L4/iterate_while.md` — the firm `iterate_while` combinator both forms reference (L3 explicit tail recursion / L2 named-by-role).
 
 Cross-cutting concept references (consumed unchanged across the rotation):
 
@@ -168,9 +168,7 @@ Open-questions ledger:
 
 ## Status
 
-`firm` — the theme's content is firm: both endpoints are firm ([`L3/ksp_solve`](../L3/ksp_solve.md) cycle-020; [`L2/ksp_solve`](../L2/ksp_solve.md) cycle-021 wave-1); the substantive non-identity content (the iteration-view erasure + the obstruction's shadow-to-non-laws) is structurally grounded and citation-backed at both layers and the L0 source; the supporting `(op, K, s)` → `(K, b)`/`IterState` consolidation is information-preserving; the rewrite-shape table is total on the fold structure with the two non-identity lines (the fold line and the obstruction line) explicitly delimited; no speculative L3 vocabulary is introduced; the four applicability conditions are stated and confirmed for the five-slice corpus. The kernel-identity / driver-non-identity contrast resolves the cycle-020 critic's "mild tension" by recognizing the two classifications are about disjoint subjects (kernel body vs. iteration over the body). This theme is the **driver complement** of the sibling [`krylov-step-body-identity`](./krylov-step-body-identity.md): `kernel-identity + driver-non-identity = the full per-solver L3>L2 story`.
-
-Authored cycle-021 wave-2 (abstractor), enacting **Identity-lowerings still require both L levels** (both layers carry a `ksp_solve` entry, this theme is the connecting rotation) and **Layers are defined high→low** (LHS L3, RHS L2, forward narration). Unlike the BLAS-1 cohort (clean identity-lowerings) and the kernel-body theme (identity-in-form on the body), the L3>L2 rotation here is **substantive** — the iteration view is erased and the named obstruction shadows down to the L2 non-laws.
+`firm` — both endpoints are firm ([`L3/ksp_solve`](../L3/ksp_solve.md); [`L2/ksp_solve`](../L2/ksp_solve.md)); the substantive non-identity content (the iteration-view erasure + the obstruction's shadow-to-non-laws) is structurally grounded and citation-backed at both layers and the L0 source; the supporting `(op, K, s)` → `(K, b)`/`IterState` consolidation is information-preserving; the rewrite-shape table is total on the fold structure with the two non-identity lines (the fold line and the obstruction line) explicitly delimited; no speculative L3 vocabulary is introduced; the four applicability conditions are confirmed for the five-slice corpus. This theme is the **driver complement** of the sibling [`krylov-step-body-identity`](./krylov-step-body-identity.md): `kernel-identity + driver-non-identity = the full per-solver L3>L2 story`. Unlike the BLAS-1 cohort (clean identity-lowerings) and the kernel-body theme (identity-in-form on the body), the L3>L2 rotation here is **substantive** — the iteration view is erased and the named obstruction shadows down to the L2 non-laws.
 
 ## L3>L2 vs kernel-theme distinction
 

@@ -86,7 +86,7 @@ $$
 }
 $$
 
-This is exactly the L3-side image of **Law 1** of [`iterate_while`](../L4/iterate_while.md) (`iterate_while.md:123-133`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on the body (the parent theme's §"Audit of cycle-002 identity-in-form claim", `krylov-step-typed-wrapper-dissolution.md:202-213`, establishes the body-identity that licenses the transport). The unpruned `iterate_while_L3` is the ground form; the pruned `iterate_while_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing**: the pruned form is NOT a contradiction of the firm L4 Law 1 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 1's collapse rule fired under a `final_state`-only consumer.
+This is exactly the L3-side image of **Law 1** of [`iterate_while`](../L4/iterate_while.md) (`iterate_while.md:123-133`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on the body (the parent theme's §"Body identity-in-form across the L4>L3>L2 chain", `krylov-step-typed-wrapper-dissolution.md:196-202`, establishes the body-identity that licenses the transport). The unpruned `iterate_while_L3` is the ground form; the pruned `iterate_while_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing**: the pruned form is NOT a contradiction of the firm L4 Law 1 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 1's collapse rule fired under a `final_state`-only consumer.
 
 ### `iterate_while_pure` — the no-extras sugar
 
@@ -99,7 +99,7 @@ This is the degenerate case of the pruned form where `e = ()` makes the extras-p
 
 ### What does NOT change in the rotation
 
-The body's primitive sequence survives the rotation textually unchanged — the dissolution is **identity-in-form on the body** (`krylov-step-typed-wrapper-dissolution.md:202-213`). The rotation touches only the **wrapper**: the `Solve` monad becomes positional `sim`, the record-spread step return becomes a positional tuple, the trajectory becomes either an explicit list accumulator (unpruned) or nothing (pruned). The `step` itself — whatever the slice's per-step kernel is — passes through unchanged in its dataflow position.
+The body's primitive sequence survives the rotation textually unchanged — the dissolution is **identity-in-form on the body** (`krylov-step-typed-wrapper-dissolution.md:196-202`). The rotation touches only the **wrapper**: the `Solve` monad becomes positional `sim`, the record-spread step return becomes a positional tuple, the trajectory becomes either an explicit list accumulator (unpruned) or nothing (pruned). The `step` itself — whatever the slice's per-step kernel is — passes through unchanged in its dataflow position.
 
 The **outer-loop `sequential-obstruction`** survives at L3: both L3 forms name the loop tail-recursively but do **not** claim it lifts to a global tensor-field op. This is the expected outcome for Krylov-family iterations at L3 per [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the live anchor is `arnoldi_step.md:194-213`; the CG sequential-obstruction evidence is homed in the firm L3 entry [`L3/krylov_step`](../L3/krylov_step.md) §Algebraic-laws non-lift catalogue. The unpruned form additionally allocates the `O(N)` trajectory accumulator; the pruned form does not.
 
@@ -134,7 +134,7 @@ The rewrite is valid when all four of the following hold (inherited from `krylov
 
 None. This theme is an extraction of an already-firm sub-component; both L4 caps it lowers ([`iterate_while`](../L4/iterate_while.md), [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) are firm L4 rows. No new speculative operator is introduced.
 
-## Verified-against
+## Evidence
 
 L4 source (the LHS of this rewrite):
 
@@ -148,7 +148,7 @@ L3 source (the RHS of this rewrite; extracted from the firm sub-component):
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:164-171` — the unpruned `iterate_while_L3` trajectory-keeping ground form (extracted verbatim).
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:176-184` — the pruned `iterate_while_L3_pruned` form (the §3.8 collapse-rule image, extracted verbatim).
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:188-198` — the L3-side collapse rule (extracted verbatim).
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:202-213` — the §"Audit of cycle-002 identity-in-form claim" verdict that establishes the body-identity licensing the Law-1 transport.
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:196-202` — the §"Body identity-in-form across the L4>L3>L2 chain" structural fact that establishes the body-identity licensing the Law-1 transport.
 - `book/src/L3/krylov_step.md` — the firm L3 entry holding the CG non-lift catalogue (the `sequential-obstruction` evidence home).
 - [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md) §"MGS as sequential-obstruction" — the firm `sequential-obstruction` anchor for the outer loop surviving at L3.
 
@@ -164,7 +164,7 @@ Concept-page references:
 
 ## Status
 
-`firm` — extraction of the sub-component (`krylov-step-typed-wrapper-dissolution.md:158-200`) into a dedicated layer-coherent chapter. Both L4 caps it lowers are firm L4 rows; the two L3 forms, the §3.8 collapse rule, and the identity-in-form-on-body verdict are cited against the strawman §3.7/§3.8, the firm L4 Law 1, and the parent theme's body-identity audit. Justification is `structural` + secondary `reduction-chain`. The trajectory-keeping unpruned `iterate_while_L3` is the form the firm L4 Law 1 keeps; the krylov_step sub-component's trajectory-drop is the pruned image, not a gap in the firm L4 form.
+`firm` — both L4 caps it lowers ([`iterate_while`](../L4/iterate_while.md), [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) are firm L4 rows; the two L3 forms, the §3.8 collapse rule, and the identity-in-form-on-body result are cited against the strawman §3.7/§3.8, the firm L4 Law 1, and the parent theme's body-identity fact. Justification is `structural` + secondary `reduction-chain`. The trajectory-keeping unpruned `iterate_while_L3` is the form the firm L4 Law 1 keeps; the krylov_step sub-component's trajectory-drop is the pruned image, not a gap in the firm L4 form.
 
 ## L4 vs L3 distinction
 

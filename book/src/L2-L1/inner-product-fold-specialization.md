@@ -332,7 +332,7 @@ conjugation_caller_inventory:
     - palace/linalg/nleps.cpp:568       # residual deflation coords X[j]ᴴ vv -> Newton numerator via out-param u2
     - palace/linalg/nleps.cpp:675       # complex eigenvalue Newton ratio -(w0ᴴu + u2_w0)/(w0ᴴw); TWO Dot calls on this line
   observable_weighted:                 # bilinear_form leaf
-    - palace/models/boundarymodeoperator.cpp:90   # ComplexWrapperOperator Atn non-Hermitian off-diagonal (wave-1 witness, models/)
+    - palace/models/boundarymodeoperator.cpp:90   # ComplexWrapperOperator Atn non-Hermitian off-diagonal (models/)
   out_of_scope_observable_flagged:
     - palace/models/postoperator.cpp:1759,1760,1795,1796  # port V/I real+imag separately consumed (models/, not audited line-by-line here)
   finding: palace/fem/ has zero Dot callers; the only intra-linalg/ unweighted observable sites are the four nleps.cpp SLEPc-NEP deflation/Newton sites.

@@ -68,8 +68,8 @@ solution family). The combinator differs from [`solve_family`](./solve_family.md
 on exactly one axis — the **operator-capture** axis (§Variant axes): `solve_family`
 is `fixed` (op captured once, hoisted), `frequency_sweep` is `per-element` (op
 rebuilt per member, inside the map). This is the named `per-element` value that the
-firm [`solve_family`](./solve_family.md) entry records as out-of-scope and
-batch-17-gated (`L4/solve_family.md:137,146,163`). It reuses the firm
+firm [`solve_family`](./solve_family.md) entry records as out-of-scope for its
+`fixed`-only laws (`L4/solve_family.md:137,146,163`). It reuses the firm
 [`iterate_while`](./iterate_while.md) family rather than introducing a new iteration
 primitive — the same route [`chebyshev`](./chebyshev.md) and
 [`solve_family`](./solve_family.md) took.

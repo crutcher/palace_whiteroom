@@ -74,14 +74,14 @@ structural distinction from its BLAS-1-floor cohort siblings [`dot`](./inner_pro
   length axis (so it is not an `inner_product` member) and it is not a scalar-weighted-sum
   term (so it is not a `linear_combination` member). No L2 fold subsumes it.
 
-**Consequence — design-finality.** The **leaf-vs-fold design fork** under batch-12
-meta-phase adjudication (`book/src/L2/index.md` §"Working Notes",
+**Consequence — design-finality.** The **leaf-vs-fold design fork**
+(`book/src/L2/index.md` §"Working Notes",
 `dot-l2-leaf-floor-vs-fold-only-design`) concerns whether the per-leaf L2 floors `dot` /
 `scal` should be same-named standalone chapters (the **(b)** reading) or whether the L2
 surface should be the fold-parents only with no per-leaf floor (the **(a)** reading). **That
 fork does not apply to `reciprocal`**: there is no fold-parent for the (a) reading to
 re-anchor this leaf into. `reciprocal`'s L2 floor is **design-final** regardless of the
-meta-phase adjudication — it can only ever be a same-named standalone leaf, because no
+fork's resolution — it can only ever be a same-named standalone leaf, because no
 `inner_product` / `linear_combination` fold-parent subsumes a nonlinear elementwise
 self-map. The closest elementwise siblings are `elementwise_product` (the binary Hadamard
 multiply — an L2-floor candidate not yet authored, referenced here as plain text) and the
