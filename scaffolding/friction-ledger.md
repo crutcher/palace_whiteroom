@@ -26,18 +26,56 @@ addressed_by: <commit-sha> | <skill-slug> | <meta-decision> | null
 - `addressed` — meta-phase enacted a fix (cited); watch for recurrence
 - `resolved` — `addressed` + no recurrence for ≥10 cycles
 
+## completeness-claim-vs-comprehensive-scan
+
+```yaml
+---
+slug: completeness-claim-vs-comprehensive-scan
+first_observed: cycle-148
+last_observed: cycle-150
+recurrence_count: 1
+status: addressed
+addressed_by: meta-150 (residue-class A–F scan codified into the maintenance-floor hygiene sweep + priorities item-1)
+---
+```
+
+**The pattern.** A campaign declared "COMPLETE" on the strength of its own per-wave safety checks (graded-stack baseline held, build EXIT 0, the cohorts it characterized were discharged), but the completeness claim was scoped to *the cohorts the campaign happened to characterize*, not to a *comprehensive book-wide scan of the residue class*. The batch-47 FINALIZATION campaign's "CAMPAIGN COMPLETE 2026-06-08 … all 284 target files de-bulked" narrative (`priorities.md` line 59) was **refuted** by the batch-49 c148 once-per-batch full-hygiene sweep, which found `book/src/L1/index.md` still carried 26+ stale `cycle-NNN` process attributions the campaign had never reached (the no-frontmatter-rank navigational-container `index.md` cohort was outside the per-operator-chapter wave scope). c149 then discharged a further 17-file / 38-attribution cohort; c150 the 2 residual `## Verified-against` renames. The campaign was **incompletely executed**, not complete — a self-scoped "done" claim masked an un-scanned residue tail.
+
+**Why this is a real (if mild) pattern, not a one-off.** It is the *finalization* analog of the long-standing `index-table-status-cell-drifts-when-theme-file-promoted` drift family: a sweep that touches the per-unit chapters but not the navigational-container indexes / a different residue *class* leaves a tail that is invisible until a comprehensive scan runs. The c148 sweep IS the comprehensive scan that should have been the campaign's own completion gate. Recurrence stays 1 (single batch's worth of evidence), but the corrective is real because it is *cheap and standing*: make the comprehensive A–F residue-class scan a permanent part of the per-batch maintenance-floor hygiene sweep, so any future "campaign complete" claim is checked against a book-wide grep, not the campaign's self-characterized cohort list.
+
+**Addressed by (meta-150 go):** the comprehensive book-wide **A–F residue-class scan** (A `## Verified-against` / B `verified_against:` yaml / C `reports/` pointers / D inline cycle-tags / E directive-date provenance / F slice-era `## Origin`/`## Working Notes`/`## Critic's role` narrative) is codified into the maintenance-floor standing-hygiene item (`priorities.md` item-1) and into the cross-layer-cross-cutter once-per-batch full-hygiene sweep checklist. A campaign claiming a residue class "complete" must now show a clean book-wide grep for that class, not a cohort tally. NOT escalating — the cadence already self-corrected within one batch (the sweep caught it); this just makes the catch a standing gate.
+
+## in-cycle-discharge-false-fabrication-critic-verdict
+
+```yaml
+---
+slug: in-cycle-discharge-false-fabrication-critic-verdict
+first_observed: cycle-148
+last_observed: cycle-148
+recurrence_count: 1
+status: addressed
+addressed_by: meta-150 (recorded process hazard; repairer-reconcile-against-HEAD is the existing mitigation; watch for recurrence)
+---
+```
+
+**The pattern (a temporal-ordering hazard, not a content defect).** When a sweep surfaces a residue finding AND its de-bulk fix AND the critic all run in the **same cycle**, the critic can read the file *after* the in-cycle fix has already stripped the residue and wrongly conclude the finding was **fabricated** — producing a FALSE `fail` (citation-does-not-support / surface-or-evidence "the claimed residue does not exist"). c148: the L1-index hygiene-sweep finding ("26 stale `cycle-NNN` tags") was REAL per HEAD (the on-disk-at-dispatch state carried 26 tags), but the de-bulk producer applied the strip directly to disk per the FINALIZATION static-state-surface convention BEFORE the critic ran; the critic checked the post-strip worktree (0 tags) and called the finding fabricated. The repairer reconciled it correctly (re-checked HEAD, confirmed the 26 tags were real, overturned the false fail).
+
+**Why it is intrinsic to the FINALIZATION cadence.** The de-bulk convention has producers apply prose strips directly to disk (critic 8/8 PASS → `ready` set directly, often no repairer); when a *sweep-surfaced* finding and its *fix* share a cycle, the critic's "does the evidence support the claim" check races the fix. The general lesson: a finding whose evidence is "state X existed on disk" is **non-reproducible from the post-fix worktree** — its verification anchor is `git show HEAD:<file>`, not the worktree. The existing mitigation (repairer re-verifies against HEAD, not the worktree) WON here, so no role-spec change is forced. Recorded as a known process hazard; if it recurs (a future sweep+fix+critic same-cycle false-fabrication that the repairer does *not* catch), promote to a critic-role-spec note ("for a sweep-surfaced state-existence finding, verify against `git show HEAD:<file>`, not the worktree"). NOT escalating at recurrence 1.
+
 ## plateau-as-scope-boundary-not-project-boundary
 
 ```yaml
 ---
 slug: plateau-as-scope-boundary-not-project-boundary
 first_observed: meta-36
-last_observed: meta-48
+last_observed: meta-50
 recurrence_count: 3
 status: addressed
 addressed_by: out-of-band-rescope-meta-2026-06-07 + wind-to-maintenance (batch-44/46 human direction)
 ---
 ```
+
+**Batch-49 note (meta-50 — the maintenance floor was NOT near-empty: it surfaced and discharged REAL finalization residue, REFUTING the batch-47 "campaign complete" claim; recurrence STAYS 3, status STAYS `addressed`, NOT escalating; but the *texture* of the plateau has SHIFTED).** Batch-49 (cycles 148/149/150) was the THIRD batch run AS the (A) wind-to-maintenance floor, but — unlike batch-46/48 (1 audit sweep + 2 zero-dispatch cycles) — it was a **FINALIZATION-residue cleanup batch**: the c148 once-per-batch full-hygiene sweep found the batch-47 FINALIZATION campaign had left a residue tail (L1/index.md 26 stale tags; then a 17-file/38-attribution cohort c149; then 2 `## Verified-against` renames c150), all mechanically-clear classes discharged, baseline HELD EXACTLY. This does NOT re-escalate the plateau — the in-scope *forward-frontier* R&D remains complete (no vocabulary authored, no node/edge/rank/status moved) — but it materially **revises the "maintenance floor is near-empty" read**: the maintenance floor has *real, recurring hygiene yield* (a finalization-residue scan that finds and discharges genuine debt), so the per-batch sweep is demonstrably valuable rather than ceremonial. The new finding `completeness-claim-vs-comprehensive-scan` (above) captures the specific lesson and the standing A–F-residue-scan corrective. The §CENTRAL ASK returns an 8th time, but with sharper framing: the choice is no longer "(A) near-empty maintenance vs the rest" — it is "(A) maintenance-with-real-residue-yield until the residue tail is exhausted, then re-assess" vs the strategic forks. No corrective forward-frontier work-item is warranted; the cadence functions as designed and self-corrected the campaign's over-claim within one batch.
 
 **Batch-48 note (meta-48 — the maintenance-floor texture HELD a 7th consecutive batch; recurrence stays 3, status stays `addressed`, NOT escalating).** Batch-48 (cycles 145/146/147) was the SECOND batch run AS the (A) wind-to-maintenance floor and realized the same intended minimum: c145 OPENER = 1 audit-class full-hygiene sweep (CLEAN BILL), c146/c147 = honest zero-producer-dispatch tripwire-only cycles; the graded-stack baseline HELD EXACTLY all 3 cycles. This is the 7th consecutive in-scope steady-state-complete batch (41→48) — the near-empty maintenance texture remains the *same* correctly-understood scope-boundary signal, NOT a new escalating recurrence. **What made batch-48 NOT a pure-near-empty batch: a SUBSTANTIVE meta-phase codification agenda** — the out-of-band batch-47 FINALIZATION directives (de-bulk static-state discipline, legal-identifier chapter naming, the frontmatter-render build invariant, the 2 finalization skills) were folded into CLAUDE.md + the role-specs + integrator-finalize this meta-phase. That is *methodology-surface* work (the meta-phase's own province), distinct from the *forward-frontier* maintenance floor, and it does not change the plateau verdict: the in-scope R&D frontier is complete; the human's strategic call (continue maintenance / re-open a consumer-gated front / hand off downstream / re-scope) is correctly the §CENTRAL ASK (7th time). No corrective forward-frontier work-item is warranted; the cadence functions as designed.
 

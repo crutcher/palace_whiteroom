@@ -717,6 +717,21 @@ This shape is load-bearing, and it follows three principles:
 > strategic forward question returns for the *seventh consecutive batch*; the active posture is the maintenance floor, the
 > meta-phase's standing recommendation remains the downstream-burn handoff, and the call is the human's.
 
+> **The maintenance floor is not empty: it found and discharged real finalization residue (batch-49).** The batch-47
+> finalization campaign had declared itself "complete," but completeness was scoped to the cohorts it happened to characterize,
+> not to a comprehensive book-wide scan. Batch-49's once-per-batch full-hygiene sweep refuted the claim: the navigational-container
+> layer-index files (and a 17-file tail of per-chapter chapters) still carried stale cycle attributions and `## Verified-against`
+> sections the campaign never reached. Batch-49 discharged every *mechanically-clear* residue class book-wide (the per-chapter
+> cycle-tags, the `verified_against` blocks, the `reports/` pointers, the `## Verified-against` → `## Evidence` renames), holding
+> the graded-stack baseline exactly, and the meta-phase *adjudicated* the remaining judgment-class: the slice-era `## Origin` /
+> `## Working Notes` / `## Critic's role` narrative sections on the concept pages and layer indexes (and the woven directive-date
+> provenance) are **process framing, not semantic content** — de-bulk targets, not a carve-out (the carve-out is reserved for the
+> files that *are* the process record: `methodology/` and `meta-reviews/`). The lesson the finalization arc gains: a "campaign
+> complete" claim must be checked against a comprehensive residue-class scan, not its own cohort tally — so the comprehensive scan
+> is now a standing part of the per-batch maintenance sweep. This sharpens the done-ness picture rather than reopening it: the
+> *forward-frontier* R&D has been complete for eight consecutive batches; what remains is finishing the finalization surface to a
+> genuinely clean static state — which, when the last residue tail is exhausted, leaves the artifact in its handoff-ready form.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

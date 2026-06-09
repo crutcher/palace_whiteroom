@@ -48,3 +48,28 @@ The coupling is real spec content; only its *process framing* ("the cross-cutter
 ## Scope
 
 `book/src/**` ONLY. `scaffolding/` stays the process workshop (untouched). Do not de-bulk `concepts/` semantic definitions of their *content* — only their process framing.
+
+## Concept-page + layer-index `## Origin` / `## Working Notes` / `## Critic's role` narrative — STRIP (NOT a carve-out) (meta-150 adjudication)
+
+The batch-49 c149 D5 producer DELIBERATELY left, and flagged for adjudication (OQ `concept-page-context-origin-working-notes-narrative-debulk-scope`), the slice-era process-record sections on `concepts/<slug>.md` pages + the layer/lowering `index.md` cohort: `## Origin` ("Codified during the 2026-05-24 meta-review …"), `## Working Notes` ("Future meta-reviews should look for …", "Watch the next 3 cycles"), `## Critic's role` (references the DELETED `prompts/critic.md` / `lessons.md` / `episodic.jsonl`). **Meta-150 verdict: these are PROCESS FRAMING, not semantic content → they ARE de-bulk targets, NOT a methodology carve-out.** The `methodology/` + `meta-reviews/*` carve-out exists because those files ARE the process record; a *concept page* and a *layer index* state what the concept/layer IS, not its slice-era methodological origin or forward-process speculation. This makes the existing Scope sentence concrete: "do not de-bulk `concepts/` *content*" means the **semantic definition** (what the concept IS — the criteria, the canonical examples, the shape facts), NOT these process-framed sections.
+
+**The discipline (this is a MIXED, coupling-lift-aware de-bulk — per-file judgment, NOT a mechanical section delete):**
+- **STRIP** the pure-process content of `## Origin` / `## Working Notes` / `## Critic's role`: meta-review-enactment narrative, `cycle-N` attributions, references to retired infrastructure (`prompts/`, `lessons.md`, `episodic.jsonl`, the Synthesizer/Critic role names), forward-process speculation ("future meta-reviews should …", "watch the next N cycles", "if genuine rotations are being rejected, soften …").
+- **LIFT** any coupling/semantic fact buried in those sections to an explicit static component — e.g. variant-absorption's `## Working Notes` bullet "This concept's relationship to `rotation.md`: …" becomes a `## Relationship to rotation` section (the coupling is real spec content; only its process framing is stripped). A parenthetical-dated section header like `## Structurally-distinct variants … (Added 2026-05-25 meta-review #11 after cycle 40 …)` KEEPS the section (it is load-bearing semantic content) and drops the date-tag header parenthetical.
+- **PRESERVE** the no-frontmatter-rank `index.md` files' SOLE-rank-carrier dep-map status tokens + every citation/link exactly (the L1-index pass model: 136→136 citations, 57→57 tokens, baseline held). The `## Working Notes` on a layer `index.md` often carries LOAD-BEARING structural prose (fold-cohort boundaries, kernel/driver pairs, gate-floor enumerations) — that is semantic content to KEEP (optionally re-homed to a non-process-framed heading); only the slice-era cohort-growth-log / deleted-section-history narrative is stripped.
+
+This is a careful **pilot-first multi-file campaign** (`priorities.md` batch-50 item-1a), not a blanket sweep: one `layer-intro-author` de-bulk dispatch per affected file, with the coupling-lift judgment applied per section.
+
+## Directive-date provenance (E-class: "per the 2026-MM-DD redirect") — MIXED, rephrase-to-drop-the-date by default (meta-150)
+
+A `2026-MM-DD` directive-date woven into "why this structure is shaped this way" prose is process framing of a fact that is itself static. **Default: rephrase to drop the date, keep the structural fact.** "Per the 2026-06-01 vocabulary-shift redirect, this degenerate edge is recorded in-line" → "This degenerate identity-in-named-terms edge is recorded in-line (the vocabulary does not shift across it, so there is no translation to narrate)." **KEEP the date only in a genuine governing-directive HEADER blockquote** whose job IS to record the directive that governs the file's active-management discipline — e.g. `semantics/index.md`'s `> **⟢ SEMANTIC-CONSOLIDATION DIRECTIVE (user directive 2026-06-06).**` header and the `methodology/` discipline pages (which are carve-outs anyway). When unsure whether a date is load-bearing: it is load-bearing iff deleting it changes *what the reader must do / how the surface is governed*, not merely *when we decided it*.
+
+## The A–F residue-class scan (the comprehensive completeness gate)
+
+A FINALIZATION de-bulk campaign declaring a residue class "complete" must show a **clean book-wide grep for that class**, not a self-characterized cohort tally (friction `completeness-claim-vs-comprehensive-scan`). The standing per-batch maintenance-floor hygiene sweep runs the full A–F scan:
+- **A** `grep -rlE '^## Verified-against' book/src` → 0
+- **B** `grep -rlE '^verified_against:' book/src` → 0
+- **C** `grep -rlE 'reports/[0-9]' book/src | grep -v meta-reviews` → 0
+- **D** `grep -rlE 'cycle-[0-9]+|\bc[0-9]{2,3}\b|batch-[0-9]+|wave-[0-9]' book/src | grep -vE 'meta-reviews|methodology/goal-flow'` → only the methodology/ carve-out mirrors remain
+- **E** `grep -rlE '2026-0[0-9]-[0-9]{2}' book/src | grep -vE 'meta-reviews|methodology/goal-flow'` → only governing-directive headers remain
+- **F** `grep -rlE "^## (Origin|Working Notes|Critic'?s role)" book/src | grep -vE 'meta-reviews|methodology/goal-flow'` → 0 after the batch-50 campaign
