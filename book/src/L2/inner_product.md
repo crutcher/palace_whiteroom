@@ -168,7 +168,7 @@ Per-element kernel (the conjugation × element-type axes):
 The members are **not separate L2 chapters** — they are this fold read at fixed
 axis-values. Each row is the combinator with one axis pinned; there is no co-equal
 `L2/dot` / `L2/bilinear_form` floor beside this entry (the standalone `L2/dot.md` is
-collapsed into this note per the 2026-06-01 redirect; `bilinear_form` never had a
+collapsed into this note per the vocabulary-shift redirect; `bilinear_form` never had a
 standalone L2 chapter — it lives only as the L1 leaf and as the weighted member here):
 
 ```text

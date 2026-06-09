@@ -35,8 +35,8 @@ idiom. The `axpby-as-primitive` decision
 ([`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md))
 keeps the fused scalar-vector update whole at L1 (fuse, don't decompose) — that decision
 governs the L1>L0 mutation rotation, where each fixed-arity symbol mirrors one L0 C++ call
-one-to-one. **At L2, `linear_combination` is the entry for this family** (vocabulary-shift
-redirect 2026-06-01, `CLAUDE.md` §Methodology invariants): the four arity forms `scal` /
+one-to-one. **At L2, `linear_combination` is the entry for this family** (the vocabulary-shift
+redirect, `CLAUDE.md` §Methodology invariants): the four arity forms `scal` /
 `axpy` / `axpby` / `axpbypcz` are **specialization notes under the combinator** (§"Arity
 specializations"), not standalone mirrored L2 chapters. Under the redirect, a same-named
 base-form floor mirrored beside the combinator is the retired rectangular pattern. The L1

@@ -55,9 +55,8 @@ The target repository is `reference/palace/` (gitignored, local clone of <https:
 
 Plain text `relative/path/file.ext:start-end` (relative to `reference/`), e.g., `palace/linalg/cg.cpp:42-67`. Editors with line-aware navigation resolve against local clones. No markdown links in citations — grep/IDE workflow is the navigation.
 
-## Working Notes
+## Reference-note discipline
 
-- L0 cited-evidence pointers also live in the L1>L0 lowering theme entries (per-theme `evidence:` field).
-- Negative-result citations (regions explicitly out of scope: MPI, `Par*` types) get noted in `scaffolding/decisions/` rather than the lowering themes.
 - The reference-note cohort is **discipline-bound**: 2–4 paragraphs of interpretation + 3–6 representative citations per chapter; no line-by-line source duplication. When a reference note would need to grow past that, split it into a new chapter rather than expand the existing one.
-- L1 operator `Context` sections that re-state any of the conventions chapters above should point at the convention chapter rather than re-state it inline — the convention chapters' `Referenced from:` backlinks identify the re-stating entries.
+- L1 operator `Context` sections that re-state any of the conventions chapters above point at the convention chapter rather than re-state it inline — the convention chapters' `Referenced from:` backlinks identify the re-stating entries.
+- L0 cited-evidence pointers also live in the L1>L0 lowering theme entries (per-theme `evidence:` field).

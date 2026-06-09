@@ -74,14 +74,12 @@ structural distinction from its BLAS-1-floor cohort siblings [`dot`](./inner_pro
   length axis (so it is not an `inner_product` member) and it is not a scalar-weighted-sum
   term (so it is not a `linear_combination` member). No L2 fold subsumes it.
 
-**Consequence — design-finality.** The **leaf-vs-fold design fork**
-(`book/src/L2/index.md` §"Working Notes",
-`dot-l2-leaf-floor-vs-fold-only-design`) concerns whether the per-leaf L2 floors `dot` /
-`scal` should be same-named standalone chapters (the **(b)** reading) or whether the L2
-surface should be the fold-parents only with no per-leaf floor (the **(a)** reading). **That
-fork does not apply to `reciprocal`**: there is no fold-parent for the (a) reading to
-re-anchor this leaf into. `reciprocal`'s L2 floor is **design-final** regardless of the
-fork's resolution — it can only ever be a same-named standalone leaf, because no
+**Consequence — design-finality.** The leaf-vs-fold design question for the per-leaf L2
+floors `dot` / `scal` is whether they should be same-named standalone chapters or whether the
+L2 surface should be the fold-parents only with no per-leaf floor. **That question does not
+apply to `reciprocal`**: there is no fold-parent for a fold-parents-only reading to
+re-anchor this leaf into. `reciprocal`'s L2 floor is **design-final** — it can only ever be a
+same-named standalone leaf, because no
 `inner_product` / `linear_combination` fold-parent subsumes a nonlinear elementwise
 self-map. The closest elementwise siblings are `elementwise_product` (the binary Hadamard
 multiply — an L2-floor candidate not yet authored, referenced here as plain text) and the
@@ -250,8 +248,8 @@ sub-operator.
 **Fold-parent**: **NONE**. Unlike [`dot`](./inner_product.md#specializations) (leaf-of [`inner_product`](./inner_product.md))
 and [`scal`](./linear_combination.md#arity-specializations) (arity-1 member-of [`linear_combination`](./linear_combination.md)),
 `reciprocal` is a **standalone elementwise leaf with no fold-parent** — it is a nonlinear
-self-map, not a reduction term. The leaf-vs-fold design fork (`book/src/L2/index.md`
-§"Working Notes") does not apply to this floor (see § "No fold-parent" above).
+self-map, not a reduction term. The leaf-vs-fold design question does not apply to this
+floor (see § "No fold-parent" above).
 
 **Sibling on the elementwise-primitives axis (not dependency)**:
 
@@ -328,8 +326,8 @@ transparent `s = 1/|z|²` factoring of the complex closed form (§ "Fusion note"
 multi-operation kernel fusion to de-fuse — so **the vocabulary does not shift across this edge**.
 
 There is **no dedicated `L2-L1/` theme file** for `reciprocal`: a mirrored L2/L1 entry plus a
-thin identity-in-named-terms theme is the degenerate smell the 2026-06-01 VOCABULARY-SHIFT
-REDIRECT names, so the relationship is recorded here as an in-line note. This follows the in-line identity-rotation discipline for the floor cohort (lowering
+thin identity-in-named-terms theme is the degenerate smell the vocabulary-shift
+redirect names, so the relationship is recorded here as an in-line note. This follows the in-line identity-rotation discipline for the floor cohort (lowering
 directories carry genuine vocabulary-shifting rotations, not identities). The substantive
 rotation in the chain is the firm L1>L0
 [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
@@ -375,9 +373,9 @@ to this L2 entry (paths relative to `reference/palace/`):
   structure status judgement, and the floor-presence framing are inherited from these. The
   do-NOT-merge fold-cohort boundary applies to *them* (leaf-of / member-of a fold); `reciprocal`
   is the fold-parent-free member.
-- [`book/src/L2/index.md`](./index.md) §"Identity-in-form BLAS-1 floors" + §"Working Notes"
-  (the `dot-l2-leaf-floor-vs-fold-only-design` fork) — the floor cohort framing; `reciprocal`'s
-  no-fold-parent status places it outside the fork.
+- [`book/src/L2/index.md`](./index.md) §"Identity-in-form BLAS-1 floors" — the floor cohort
+  framing; `reciprocal`'s no-fold-parent status places it outside the leaf-vs-fold design
+  question.
 - [`book/src/L1-L0/reciprocal-elementwise-product-mutation-rotation.md`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
   (firm) — the substantive L1>L0 rotation in the chain, which reintroduces the L0
   receiver-self-overwrite mutation, the complex kernel decomposition, and the no-zero-guard

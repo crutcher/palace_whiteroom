@@ -59,7 +59,7 @@ The solver classes themselves (`CgSolver`, `GmresSolver`, `FgmresSolver`) live i
 
 - [`L1-L0/minres-iteration`](../L1-L0/minres-iteration.md) — obstruction theme; cites `ksp.cpp:53-57` as the enum-routed-abort anchor.
 - [`L1-L0/bicgstab-iteration`](../L1-L0/bicgstab-iteration.md) — obstruction theme; same anchor.
-- [`L1/index`](../L1/index.md) "Working Notes" — references the abort pattern when discussing rough-in entries from obstruction themes.
+- [`L1/index`](../L1/index.md) "L1 vocabulary conventions" — references the abort pattern when discussing rough-in entries from obstruction themes.
 
 ## Evidence
 

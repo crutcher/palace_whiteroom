@@ -68,8 +68,3 @@ The BLAS-1-floor and other degenerate identity-in-named-terms edges (`dot`/`nrm2
 **Partly-constructive at L2>L1** (firm Schur-form pipeline + a constructive bare-Galerkin sub-part with a stated promotion condition):
 
 - `deflate-composition-lowering` — `coords ▷ (schur-)solve ▷ back-project` reduction chain over `dot` + `gram` + `lu_solve` + `linear_combination` + `axpy`. The Schur fan-down is firm on positive site `nleps.cpp:533-535`; the Galerkin-core single-`lu_solve` fan-down is constructive on negative anchor + literature; gate = a positive bare-Gram-solve site (not closed).
-
-## Working Notes
-
-- Themes here are heavy with optimization-trick unfolding (transparent performance tricks like fusion, tiling, packing; load-bearing numerical tricks preserved).
-- **Leaf-floor design realization (b).** The same-named L2 floors (`dot`/`scal`/`axpy`/…) are realized as standalone L2 chapters cited as leaf-of / member-of the fold-parents but NOT merged (`nrm2` a consumer-of). Their L2>L1 thin-identity edges are not separate theme files — the `dot`/`scal`/`axpy`-family edges are absorbed into the `inner-product-fold-specialization` / `linear-combination-fold-specialization` fold-parents; the standalone-floor / fused-composite edges (`assemble_diagonal`/`jacobi-smoother`/`reciprocal`/`elementwise-product`/`normalize`-`leaf-identity`, each with NO fold-parent) are captured as in-line §"Downward to L1" notes on their L2 entries. `divfree-projector-leaf-identity` stays a standalone theme — it carries one genuine step-4 `Grad->AddMult` apply-accumulate fusion rotation, a real L2↔L1 translation, not an identity.

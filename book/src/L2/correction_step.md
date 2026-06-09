@@ -45,8 +45,8 @@ choice of `B`. Palace names the contract **verbatim** in its own source comments
 `correction_step` is a **step-kernel combinator** (the entry; sibling to
 [`krylov_step`](./krylov_step.md) and [`chebyshev-iteration`](./chebyshev-iteration.md) in the
 Step-kernels cohort). It is the **combinator-as-entry**: the smoothers are specializations that
-choose `B`, NOT same-named floors mirrored beside it (the 2026-06-01 vocabulary-shift redirect,
-`METHODOLOGY-REDIRECT.md` §1d). The outer `pc_it` smoothing sweep / the V-cycle recursion are
+choose `B`, NOT same-named floors mirrored beside it (the combinator-as-entry vocabulary-shift).
+The outer `pc_it` smoothing sweep / the V-cycle recursion are
 the **consumer's** `iterate_while` fold (`distrelaxation.cpp:102` `for (it < pc_it)`;
 `gmg.cpp:172` `VCycle`), NOT folded into this kernel — `correction_step` is the per-sweep body,
 the fold is the driver above it (the same kernel-plus-driver split `krylov_step` (kernel) /
