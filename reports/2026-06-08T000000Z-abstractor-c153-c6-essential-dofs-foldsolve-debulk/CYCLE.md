@@ -8,7 +8,7 @@ inputs:
   - book/src/L3-L2/fold-solve-time-step-body.md (RESIDUAL from c152 — dangling §Working-Notes pointer)
   - skill finalization-debulk (E-class date rule); c152 PILOT pattern; exemplar book/src/L4/krylov_step.md
 integrated_at: 2026-06-09T031600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b
 integration_notes: "Applied clean (staging row C6 — SIXTH/LAST). E-class de-bulked L1-L0/essential-dofs-construction-rotation + cleaned the c152 L3-L2/fold-solve-time-step-body.md pointer residual (dangling §Working-Notes → §\"Erasure-scope taxonomy\"). Cross-reference-integrity warning REPAIRED in-cycle: repairer ADDED ### Erasure-scope taxonomy heading to L3-L2/index.md:49 (heading-only, no node/edge/rank/status move). Build EXIT 0; graded-stack baseline HELD EXACTLY; step-5b/5c/5d clean. Part of cycle-153 batch-50 CLOSER — D/E/F campaign COMPLETE, A–F scan clean (D→0)."
 ---
 

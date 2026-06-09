@@ -107,4 +107,4 @@ None. Single audit-class dispatch (1 producer); no inter-dispatch overlap, no wa
 
 Single atomic commit: the staging log + the consumed-report `integrated_at` touches + all finalize
 housekeeping writes (cycle-record, integrator-signals, log, slice-era rename) + this batch CYCLE.md. Pushed
-immediately. Two-phase SHA patch (PLACEHOLDER_SHA → actual SHA) follows as a small second commit + push.
+immediately. Two-phase SHA patch (90f53b751945f76ee41273e415eaed0d248cf34b → actual SHA) follows as a small second commit + push.

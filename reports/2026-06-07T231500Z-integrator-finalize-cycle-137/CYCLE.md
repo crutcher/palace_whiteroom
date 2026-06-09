@@ -36,7 +36,7 @@ Audit-class report (#2) made NO `book/` mutation.
 - **retroactive-budget global:** 0 (no retroactive claims this cycle) — PASS (<4 block threshold).
 - **build-breakage repair:** 0 build-repairs needed; `cargo make book` EXIT 0.
 - **commit atomicity:** single commit per cycle (below).
-- **consumed-report frontmatter integrity:** 2 reports marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` (two-phase SHA patch follows).
+- **consumed-report frontmatter integrity:** 2 reports marked `integrated_at` + `integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b` + `integration_notes` (two-phase SHA patch follows).
 - **Step-5c KaTeX `$`-sigil collision assertion:** PASS — `class="katex"` inside any `<pre>` block across all built HTML = 0.
 - Per-report gates (retroactive per-slice, concept_writes, edge-label, H1, append-on-missing-slug, variant-axis, bookkeeping, SUMMARY-chapter-registration): all PASS/N/A per the STAGING rows (the `drivers` chapter was already SUMMARY-registered as a shell at c136; no new SUMMARY insert needed).
 
@@ -85,4 +85,4 @@ Resolved by this finalize (mechanical normalization within build-repair authorit
 
 ## Commit
 
-Single atomic commit per cycle: artifact (`book/src/synthesis/{drivers,index}.md`) + scaffolding (`roadmap`, `cycle-record`, `integrator-signals`, `open-questions`, `priorities`) + `log/` (cycle-137.md + README.md + the slice-era rename) + the 2 consumed-report `integrated_at` frontmatter touches + the staging log + the 3 new report dirs. Pushed to `origin main`. Two-phase SHA-patch follows (replaces `PLACEHOLDER_SHA`).
+Single atomic commit per cycle: artifact (`book/src/synthesis/{drivers,index}.md`) + scaffolding (`roadmap`, `cycle-record`, `integrator-signals`, `open-questions`, `priorities`) + `log/` (cycle-137.md + README.md + the slice-era rename) + the 2 consumed-report `integrated_at` frontmatter touches + the staging log + the 3 new report dirs. Pushed to `origin main`. Two-phase SHA-patch follows (replaces `90f53b751945f76ee41273e415eaed0d248cf34b`).

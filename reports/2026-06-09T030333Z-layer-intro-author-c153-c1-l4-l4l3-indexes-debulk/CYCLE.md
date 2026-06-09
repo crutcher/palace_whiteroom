@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T030333Z
 scope: c153 D/E/F de-bulk CLOSER — L4/index.md + L4-L3/index.md (F-class NO-FRONTMATTER-RANK indexes)
 status: pending
 integrated_at: 2026-06-09T031600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b
 integration_notes: "Applied clean (staging row C1). De-bulked L4/index.md + L4-L3/index.md (stripped ## Working Notes, LIFTED ## Structural fact); L4 cites 46→46, L4-L3 23→23; sole-rank tokens byte-preserved. Build EXIT 0; graded-stack baseline HELD EXACTLY; step-5b/5c/5d clean. Part of cycle-153 batch-50 CLOSER — D/E/F campaign COMPLETE, A–F scan clean (D→0)."
 ---
 

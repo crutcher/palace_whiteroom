@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T030337Z
 scope: c153 D/E/F de-bulk CLOSER, dispatch C2 — 3 concept pages (F+E class)
 status: pending
 integrated_at: 2026-06-09T031600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b
 integration_notes: "Applied clean (staging row C2). De-bulked concepts/constructed-operators.md + dependency-map.md + index.md (F+E; LIFTED burn-Module relationship to ## Relationship to burn's \`Module\`); 0 source citations (methodology pages), 0→0. Build EXIT 0; graded-stack baseline HELD EXACTLY; step-5b/5c/5d clean. Part of cycle-153 batch-50 CLOSER — D/E/F campaign COMPLETE, A–F scan clean (D→0). Forward telemetry for batch-50 meta: date-less meta-review #N refs in dependency-map.md + a duplicate concept body in constructed-operators.md (both adjacent to the A–F scan, NOT caught by it)."
 ---
 

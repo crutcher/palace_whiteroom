@@ -11,7 +11,7 @@ inputs:
   - book/src/L1/multigrid-relaxation-smoother.md (E-class — directive-date)
   - book/src/L2/normalize.md (RESIDUAL from c152 — 3× dead prose slug dot-l2-leaf-floor-vs-fold-only-design)
 integrated_at: 2026-06-09T031600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b
 integration_notes: "Applied clean (staging row C5). E-class de-bulked L1/essential_dofs + L1/multigrid-relaxation-smoother (realizes-kernel-api reference-edge + kernel-impl role CONFIRMED INTACT — only dates dropped) + cleaned the c152 L2/normalize.md slug residual (3× dead prose-slug rephrased away, ## Status rank-carrier untouched). Build EXIT 0; graded-stack baseline HELD EXACTLY; step-5b/5c/5d clean. Part of cycle-153 batch-50 CLOSER — D/E/F campaign COMPLETE, A–F scan clean (D→0)."
 ---
 

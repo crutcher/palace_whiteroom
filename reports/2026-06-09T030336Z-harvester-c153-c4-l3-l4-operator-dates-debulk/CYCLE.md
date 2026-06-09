@@ -8,7 +8,7 @@ inputs:
   - exemplar book/src/L4/krylov_step.md
   - c152 PILOT pattern (critic-verified)
 integrated_at: 2026-06-09T031600Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b
 integration_notes: "Applied clean (staging row C4). E-class de-bulked 4 firm operators L3/assemble_diagonal + L3/elementwise_product + L3/linear_combination + L4/assemble_frequency_operator (directive-date framing + 2 process pointers dropped; citation multiset byte-identical HEAD↔WT; all static facts kept). Build EXIT 0; graded-stack baseline HELD EXACTLY; step-5b/5c/5d clean. Part of cycle-153 batch-50 CLOSER — D/E/F campaign COMPLETE, A–F scan clean (D→0)."
 ---
 

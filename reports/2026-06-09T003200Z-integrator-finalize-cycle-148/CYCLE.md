@@ -42,7 +42,7 @@ Rows reconcile: **1 staging row == 1 dispatched-ready applied report** (no skipp
 - **retroactive-budget global:** 0 (well under the ≥4 block threshold; 1 substantive dispatch).
 - **build-breakage repair:** none required.
 - **commit atomicity:** single commit (this finalize).
-- **consumed-report frontmatter integrity:** `integrated_at` + `integration_commit` (PLACEHOLDER_SHA,
+- **consumed-report frontmatter integrity:** `integrated_at` + `integration_commit` (90f53b751945f76ee41273e415eaed0d248cf34b,
   two-phase patch follows) + `integration_notes` set on the 1 consumed de-bulk report.
 
 ## Build status

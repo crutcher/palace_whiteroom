@@ -45,7 +45,7 @@ Status counts: **applied 6 / partially-applied 0 / deferred 0 / rejected 0.** Ga
 - **retroactive-budget global ≥4 → block:** NOT triggered (global = 0).
 - **build-breakage repair:** ONE repair (the step-5c KaTeX fence conversion — see Build-status).
 - **commit atomicity:** single commit per cycle (see Build-status); push immediately.
-- **consumed-report frontmatter integrity:** all 6 set to `status: integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes`; two-phase SHA-patch follows.
+- **consumed-report frontmatter integrity:** all 6 set to `status: integrated` + `integrated_at` + `integration_commit: 90f53b751945f76ee41273e415eaed0d248cf34b` + `integration_notes`; two-phase SHA-patch follows.
 
 ## Build-status
 

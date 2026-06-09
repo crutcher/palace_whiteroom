@@ -58,7 +58,7 @@ consecutive clean staging.
 - **build-breakage repair:** 0 (build EXIT 0 clean; no surgical repair needed).
 - **commit atomicity:** single commit (see below).
 - **consumed-report frontmatter integrity:** all 6 reports' `integrated_at` / `integration_commit`
-  (PLACEHOLDER_SHA, two-phase patch) / `integration_notes` set.
+  (90f53b751945f76ee41273e415eaed0d248cf34b, two-phase patch) / `integration_notes` set.
 - Per-report gates (all rows): citecheck not-run (de-bulk, no new citations), KaTeX pre-fence 0,
   retroactive/forward-edge/edge-label/variant-axis/append-on-missing-slug 0, deleted-slug sweep n/a,
   SUMMARY registration n/a (all targets pre-registered), graded-stack rank gate 0 violations.
@@ -143,7 +143,7 @@ Both recorded; neither is a cycle-153 defect; neither in finalize scope; both un
 
 Single atomic commit (staging log + 6 per-report de-bulks + repairer heading-add + housekeeping writes
 + consumed-report frontmatter touches + slice-era `cycle-153.md` rename), pushed to `origin/main`.
-Two-phase SHA patch follows (PLACEHOLDER_SHA → actual SHA). NO `.claude/agents/` changes from this
+Two-phase SHA patch follows (90f53b751945f76ee41273e415eaed0d248cf34b → actual SHA). NO `.claude/agents/` changes from this
 finalize.
 
 Written by `integrator-finalize` (split integrator-per-report ×6 + finalize ×1). 148th consecutive
