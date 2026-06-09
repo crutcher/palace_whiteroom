@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T022758Z
 scope: c152 D1 — de-bulk F-class (Working Notes) + E-class (date provenance) on L0/index.md, L1/index.md, L1-L0/index.md
 status: integrated
 integrated_at: 2026-06-09T025046Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0e2b1b1560b045451857ea08b9f24d7f0784f13e
 integration_notes: "Applied clean (staging row D1). F/E-class de-bulk of 3 NO-FRONTMATTER-RANK indexes L0/L1/L1-L0 (## Working Notes stripped, ## Reference-note discipline + ## L1 vocabulary conventions LIFTED) + ksp-factory-file.md:62 backlink re-point. Baseline HELD EXACTLY; build EXIT 0; step-5b/5c/5d clean."
 ---
 

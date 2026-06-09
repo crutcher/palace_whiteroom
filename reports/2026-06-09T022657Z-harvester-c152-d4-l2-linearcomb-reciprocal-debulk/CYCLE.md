@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T022657Z
 scope: cycle-152 D/E/F de-bulk scale-out, dispatch D4 — E-class directive-date de-bulk
 status: integrated
 integrated_at: 2026-06-09T025046Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0e2b1b1560b045451857ea08b9f24d7f0784f13e
 integration_notes: "Applied clean (staging row D4). E-class de-bulk of linear_combination/reciprocal (single 2026-06-01 date dropped per file) + fixed the reciprocal.md reference side of the stale prose-slug dot-l2-leaf-floor-vs-fold-only-design (3 sites retired, live ./index.md link kept). Companion to D2 — together fully discharge OQ reciprocal-stale-prose-slug-dot-l2-leaf-floor-ref. Baseline HELD EXACTLY; build EXIT 0; step-5b/5c/5d clean."
 inputs:
   - book/src/L2/linear_combination.md (E-class — 2026-06-01 directive-date provenance)

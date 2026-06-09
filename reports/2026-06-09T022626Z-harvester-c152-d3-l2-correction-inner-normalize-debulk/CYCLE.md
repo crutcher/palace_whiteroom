@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T022626Z
 scope: cycle-152 D/E/F de-bulk scale-out — dispatch D3 (E-class directive-date provenance)
 status: integrated
 integrated_at: 2026-06-09T025046Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0e2b1b1560b045451857ea08b9f24d7f0784f13e
 integration_notes: "Applied clean (staging row D3). E-class de-bulk of 3 firm L2 operator chapters correction_step/inner_product/normalize (directive-date provenance + process-pointers dropped from 4 prose fragments; static facts/laws/citations/edges/ranks conserved). c153 residual recorded: normalize.md still carries 3x the stale prose-slug dot-l2-leaf-floor-vs-fold-only-design (out of D3 scope). Baseline HELD EXACTLY; build EXIT 0; step-5b/5c/5d clean."
 inputs:
   - skill finalization-debulk (incl. the 3 meta-150 sections; E-class directive-date rephrase rule)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T023253Z
 scope: c152 D2 — de-bulk L2/index + L2-L1/index + L3/index + L3-L2/index (F-class + L2 E-class)
 status: integrated
 integrated_at: 2026-06-09T025046Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0e2b1b1560b045451857ea08b9f24d7f0784f13e
 integration_notes: "Applied clean (staging row D2). F-class de-bulk of 4 NO-FRONTMATTER-RANK indexes L2/L2-L1/L3/L3-L2 (## Working Notes stripped; ## Structural fact chebyshev-floor + ## L4 routing of the L3 cohort LIFTED); status tokens byte-exact; 4 witness-log citations preserved-in-authoritative-homes. RETIRED the stale prose-slug dot-l2-leaf-floor-vs-fold-only-design defining home in L2/index.md — OQ reciprocal-stale-prose-slug-dot-l2-leaf-floor-ref RESOLVED (with D4). Baseline HELD EXACTLY; build EXIT 0; step-5b/5c/5d clean."
 ---
 
