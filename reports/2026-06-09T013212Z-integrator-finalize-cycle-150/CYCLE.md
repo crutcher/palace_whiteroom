@@ -4,7 +4,7 @@ cycle: cycle-150
 batch: batch-49
 batch_position: CLOSER 3/3 of meta-batch-49 (cycles 148/149/150)
 finalized_at: 2026-06-09T013212Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2c85440749c73c6161bacc37dc2422b16c38ed70
 reports_consumed: 1
 reports_applied: 1
 reports_deferred: 0

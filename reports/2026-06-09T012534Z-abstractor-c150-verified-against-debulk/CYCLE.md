@@ -9,7 +9,7 @@ inputs:
   - skills/finalization-debulk/SKILL.md
   - exemplar: book/src/L4/krylov_step.md
 integrated_at: 2026-06-09T013212Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2c85440749c73c6161bacc37dc2422b16c38ed70
 integration_notes: >
   Applied clean (cycle-150, batch-49 CLOSER). The 2 `## Verified-against` → `## Evidence`
   heading renames landed (mk-matrix-free-operator-dissolution.md line 358, 33→33 cites;
