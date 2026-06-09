@@ -4,7 +4,7 @@ invoked_at: 2026-06-09T003000Z
 scope: FINALIZATION de-bulk of book/src/L1/index.md (OQ l1-index-finalization-debulk-residue)
 status: pending
 integrated_at: 2026-06-09T003200Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80e0349f1837675fd5eb7f6ccb7b63dd77057325
 integration_notes: |
   Applied clean (1/1 dispatched-ready staging row, cycle-148 batch-49 opener). The de-bulk was
   applied DIRECTLY to disk by the producer per the FINALIZATION static-state-surface convention;
